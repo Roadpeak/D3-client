@@ -14,6 +14,7 @@ import MyBookings from './pages/MyBookings'
 import Chat from './pages/Chat'
 import Booking from './pages/Booking'
 import Profile from './pages/auth/Profile'
+import SearchResults from './pages/SearchResults'
 
 const AppRoutes = () => {
   return (
@@ -31,6 +32,7 @@ const AppRoutes = () => {
         <Route path='/merchants' element={<Stores />} />
         <Route path='/stores/:id/view' element={<ViewStore />} />
 
+        <Route path="/search" element={<SearchResults />} />
 
         <Route path='/:slug/:id/checkout' element={<Checkout />} />
         <Route path='/my-vouchers' element={<MyVouchers />} />
