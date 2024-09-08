@@ -12,7 +12,7 @@ const BottomNav = () => {
     if (authRoutes.includes(location.pathname)) return null;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 transform shadow-lg border-t border-gray-300 flex justify-around items-center py-3 w-full z-50 bg-primary text-white sm:hidden">
+        <div className="fixed bottom-0 left-0 right-0 transform shadow-lg flex justify-around items-center py-3 w-full z-50 bg-primary text-white sm:hidden">
             <button className="flex flex-col items-center justify-center">
                 <IoHomeOutline size={24} />
                 <span className="text-[14px] font-medium">Home</span>
