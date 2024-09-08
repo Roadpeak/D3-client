@@ -13,6 +13,7 @@ import MyVouchers from './pages/MyVouchers'
 import MyBookings from './pages/MyBookings'
 import Chat from './pages/Chat'
 import Booking from './pages/Booking'
+import Profile from './pages/auth/Profile'
 
 const AppRoutes = () => {
   return (
@@ -21,7 +22,8 @@ const AppRoutes = () => {
         <Route path='/' element={<Home />} />
 
         <Route path='/accounts/sign-up' element={<SignUp />} />
-        <Route path='/accounts/sign-in' element={<Login />} />52
+        <Route path='/accounts/sign-in' element={<Login />} />
+        <Route path='/accounts/profile' element={<Profile />} />
 
         <Route path='/offers' element={<Offers />} />
         <Route path='/offers/:slug/:id/see-details' element={<ViewOffer />} />
