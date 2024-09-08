@@ -107,14 +107,14 @@ const Navbar = () => {
                 <div className="flex items-center">
                     <p className="text-2xl font-bold text-primary">d3</p>
                 </div>
-                <div className="flex items-center gap-4 md:px-6">
+                <div className="hidden md:flex items-center gap-4 md:px-6">
                     <Link to='/' className="text-gray-700 text-[15px] font-semibold">Home</Link>
                     <Link to='/merchants' className='text-gray-700 text-[15px] font-semibold'>Stores</Link>
                     <Link to='/deals' className="text-gray-700 text-[15px] font-semibold">Deals</Link>
                 </div>
 
-                <div className="flex-grow hidden md:flex items-center">
-                    <form onSubmit={handleSearch} className="flex items-center border rounded-full w-full md:w-[60%] px-3 py-2 bg-gray-50">
+                <div className="flex items-center px-4">
+                    <form onSubmit={handleSearch} className="flex items-center border rounded-full w-[250px] md:w-[60%] px-3 py-2 bg-gray-50">
                         <input
                             type="text"
                             placeholder="Search products..."
@@ -128,14 +128,14 @@ const Navbar = () => {
                                 }
                             }}
                         />
-                        <button type="submit" className="text-gray-600">
+                        <button type="submit" className="hidden md:flex text-gray-600">
                             <IoIosSearch size={20} />
                         </button>
                     </form>
 
 
                     {user && (
-                        <div className="flex items-center gap-4 ml-8">
+                        <div className="hidden md:flex items-center gap-4 ml-8">
                             <Link to='/my-vouchers' className="text-gray-700 text-[15px] font-semibold">Vouchers</Link>
                             <Link to='/chat' className="text-gray-700 text-[15px] font-semibold">Chat</Link>
                             <Link to='/my-bookings' className="text-gray-700 text-[15px] font-semibold">Bookings</Link>
@@ -146,7 +146,7 @@ const Navbar = () => {
                 <div className="flex items-center gap-6">
                     {user ? (
                         <>
-                            <button onClick={() => setOpenSearch(true)} className="flex md:hidden">
+                            <button onClick={() => setOpenSearch(true)} className="hidden">
                                 <IoIosSearch size={20} />
                             </button>
                             <button onClick={handleUserIconClick} className="md:ml-4 flex items-center gap-2 text-black hover:text-primary">

@@ -112,7 +112,8 @@ export const getShopFollowers = async (shopId) => {
   }
 };
 
-export const getShopById = async (shopId) => {
+export const getShopById = async (shopId
+) => {
   try {
     const response = await axios.get(`${BASE_URL}/shops/${shopId}`, {
       headers: getHeaders(false),
@@ -123,4 +124,14 @@ export const getShopById = async (shopId) => {
     toast.error('An error occurred while fetching shop information.');
     throw error;
   }
+};
+
+export const fetchUserPayments = async () => {
+  const token = getCookie('access_token'); ;
+  const response = await axios.get(`${BASE_URL}/payments/by-current-user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
 };
