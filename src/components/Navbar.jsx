@@ -110,7 +110,7 @@ const Navbar = () => {
                 <div className="hidden md:flex items-center gap-4 md:px-6">
                     <Link to='/' className="text-gray-700 text-[15px] font-semibold">Home</Link>
                     <Link to='/merchants' className='text-gray-700 text-[15px] font-semibold'>Stores</Link>
-                    <Link to='/deals' className="text-gray-700 text-[15px] font-semibold">Deals</Link>
+                    <Link to='/offers' className="text-gray-700 text-[15px] font-semibold">Deals</Link>
                 </div>
 
                 <div className="flex items-center px-4">

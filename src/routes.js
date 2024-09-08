@@ -11,6 +11,7 @@ import ViewStore from './pages/ViewStore'
 import BottomNav from './components/BottomNav'
 import MyVouchers from './pages/MyVouchers'
 import MyBookings from './pages/MyBookings'
+import Chat from './pages/Chat'
 
 const AppRoutes = () => {
   return (
@@ -31,6 +32,7 @@ const AppRoutes = () => {
         <Route path='/:slug/:id/checkout' element={<Checkout />} />
         <Route path='/my-vouchers' element={<MyVouchers />} />
         <Route path='/my-bookings' element={<MyBookings />} />
+        <Route path='/chat' element={<Chat />} />
     </Routes>
     <BottomNav />
     </div>
