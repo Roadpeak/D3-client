@@ -12,6 +12,7 @@ import BottomNav from './components/BottomNav'
 import MyVouchers from './pages/MyVouchers'
 import MyBookings from './pages/MyBookings'
 import Chat from './pages/Chat'
+import Booking from './pages/Booking'
 
 const AppRoutes = () => {
   return (
@@ -20,7 +21,7 @@ const AppRoutes = () => {
         <Route path='/' element={<Home />} />
 
         <Route path='/accounts/sign-up' element={<SignUp />} />
-        <Route path='/accounts/sign-in' element={<Login />} />
+        <Route path='/accounts/sign-in' element={<Login />} />52
 
         <Route path='/offers' element={<Offers />} />
         <Route path='/offers/:slug/:id/see-details' element={<ViewOffer />} />
@@ -33,6 +34,7 @@ const AppRoutes = () => {
         <Route path='/my-vouchers' element={<MyVouchers />} />
         <Route path='/my-bookings' element={<MyBookings />} />
         <Route path='/chat' element={<Chat />} />
+        <Route path='/discount/:id/booking' element={<Booking/>} />
     </Routes>
     <BottomNav />
     </div>
