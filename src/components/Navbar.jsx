@@ -146,9 +146,6 @@ const Navbar = () => {
                 <div className="flex items-center gap-6">
                     {user ? (
                         <>
-                            <button onClick={() => setOpenSearch(true)} className="hidden">
-                                <IoIosSearch size={20} />
-                            </button>
                             <button onClick={handleUserIconClick} className="md:ml-4 flex items-center gap-2 text-black hover:text-primary">
                                 <FaCircleUser size={24} className="text-black" />
                             </button>
@@ -160,9 +157,9 @@ const Navbar = () => {
                         <div className="flex items-center gap-2 ml-4">
                             <div className="flex flex-col items-center relative text-white">
                                 <div className="flex relative w-full items-center">
-                                    <button className="text-gray-700 mr-3 flex md:hidden">
+                                    {/* <button className="text-gray-700 mr-3 flex md:hidden">
                                         <IoIosSearch size={20} />
-                                    </button>
+                                    </button> */}
                                     <Link to='/accounts/sign-in' className="flex text-black md:hidden">
                                         <FiUser size={24} className='text-gray-500 border rounded-full border-gray-400 p-1' />
                                     </Link>
