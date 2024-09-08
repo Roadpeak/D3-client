@@ -8,10 +8,12 @@ import Offers from './pages/Offers'
 import Stores from './pages/Stores'
 import Checkout from './pages/Checkout'
 import ViewStore from './pages/ViewStore'
+import BottomNav from './components/BottomNav'
 
 const AppRoutes = () => {
   return (
-    <Routes>
+    <div>
+      <Routes>
         <Route path='/' element={<Home />} />
 
         <Route path='/accounts/sign-up' element={<SignUp />} />
@@ -26,6 +28,8 @@ const AppRoutes = () => {
 
         <Route path='/:slug/:id/checkout' element={<Checkout />} />
     </Routes>
+    <BottomNav />
+    </div>
   )
 }
 
