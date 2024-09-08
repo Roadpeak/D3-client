@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaRegUser } from "react-icons/fa";
-import { FiUser } from 'react-icons/fi';
+import { FiMenu, FiUser } from 'react-icons/fi';
 import { CiBookmarkPlus } from "react-icons/ci";
 import { Link, useNavigate } from 'react-router-dom';
 import { LuLayoutDashboard } from "react-icons/lu";
@@ -114,7 +114,7 @@ const Navbar = () => {
                 </div>
 
                 <div className="flex items-center px-4">
-                    <form onSubmit={handleSearch} className="flex items-center border rounded-full w-[250px] md:w-[60%] px-3 py-2 bg-gray-50">
+                    <form onSubmit={handleSearch} className="hidden md:flex items-center border rounded-full w-[250px] md:w-[60%] px-3 py-2 bg-gray-50">
                         <input
                             type="text"
                             placeholder="Search products..."
@@ -143,7 +143,10 @@ const Navbar = () => {
                         </div>
                     )}
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex ">
+                    <FiMenu size={20} />
+                </div>
+                {/* <div className="flex items-center gap-6">
                     {user ? (
                         <>
                             <button onClick={handleUserIconClick} className="md:ml-4 flex items-center gap-2 text-black hover:text-primary">
@@ -157,9 +160,6 @@ const Navbar = () => {
                         <div className="flex items-center gap-2 ml-4">
                             <div className="flex flex-col items-center relative text-white">
                                 <div className="flex relative w-full items-center">
-                                    {/* <button className="text-gray-700 mr-3 flex md:hidden">
-                                        <IoIosSearch size={20} />
-                                    </button> */}
                                     <Link to='/accounts/sign-in' className="flex text-black md:hidden">
                                         <FiUser size={24} className='text-gray-500 border rounded-full border-gray-400 p-1' />
                                     </Link>
@@ -185,7 +185,7 @@ const Navbar = () => {
                             </div>
                         </div>
                     )}
-                </div>
+                </div> */}
             </div>
             {open && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
