@@ -44,7 +44,6 @@ export const getReviewsByReviewable = async (reviewableType, reviewableId) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching reviews:', error);
-    // toast.error('An error occurred while fetching reviews.');
     throw error; 
   }
 };

@@ -4,6 +4,9 @@ import Home from './pages/Home'
 import SignUp from './pages/auth/SignUp'
 import Login from './pages/auth/Login'
 import ViewOffer from './pages/ViewOffer'
+import Offers from './pages/Offers'
+import Stores from './pages/Stores'
+import Checkout from './pages/Checkout'
 
 const AppRoutes = () => {
   return (
@@ -13,7 +16,13 @@ const AppRoutes = () => {
         <Route path='/accounts/sign-up' element={<SignUp />} />
         <Route path='/accounts/sign-in' element={<Login />} />
 
-         <Route path='/offers/:slug/:id/see-details' element={<ViewOffer />} />
+        <Route path='/offers' element={<Offers />} />
+        <Route path='/offers/:slug/:id/see-details' element={<ViewOffer />} />
+
+        <Route path='/merchants' element={<Stores />} />
+
+
+        <Route path='/:slug/:id/checkout' element={<Checkout />} />
     </Routes>
   )
 }

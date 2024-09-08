@@ -8,7 +8,7 @@ const LoginModal = ({ onClose, onLogin }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [loginType, setLoginType] = useState < 'user' | 'seller' > ('user'); 
+    const [loginType, setLoginType] = useState('user'); 
 
     const handleSubmit = async (event)=> {
         event.preventDefault();
@@ -18,7 +18,6 @@ const LoginModal = ({ onClose, onLogin }) => {
             const response = await axios.post(endpoint, { email, password });
             const token = response.data.access_token;
             localStorage.setItem('access_token', token);
-            //   console.log(token);
             setError('');
             onClose();
             onLogin();
