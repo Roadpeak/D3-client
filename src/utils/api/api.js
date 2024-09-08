@@ -65,3 +65,62 @@ export const manageReview = async (method, data) => {
     throw error; 
   }
 };
+
+export const fetchShopServices = async (shopId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/shops/${shopId}/services`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching shop services:', error);
+    throw error;
+  }
+};
+
+export const followShop = async (shopId) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/follow`, { shop_id: shopId }, {
+      headers: getHeaders(),
+    });
+    toast.success('Followed shop successfully!');
+    return response.data;
+  } catch (error) {
+    toast.error('An error occurred.');
+    throw error;
+  }
+};
+
+export const unfollowShop = async (shopId) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/unfollow`, { shop_id: shopId }, {
+      headers: getHeaders(),
+    });
+    toast.success('Unfollowed shop successfully!');
+    return response.data;
+  } catch (error) {
+    toast.error('An error occurred.');
+    throw error; 
+  }
+};
+
+export const getShopFollowers = async (shopId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/followers/${shopId}`);
+    return response.data;
+  } catch (error) {
+    toast.error('An error occurred.');
+    throw error; 
+  }
+};
+
+export const getShopById = async (shopId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/shops/${shopId}`, {
+      headers: getHeaders(false),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching shop information:', error);
+    toast.error('An error occurred while fetching shop information.');
+    throw error;
+  }
+};

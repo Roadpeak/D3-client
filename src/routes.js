@@ -7,6 +7,7 @@ import ViewOffer from './pages/ViewOffer'
 import Offers from './pages/Offers'
 import Stores from './pages/Stores'
 import Checkout from './pages/Checkout'
+import ViewStore from './pages/ViewStore'
 
 const AppRoutes = () => {
   return (
@@ -20,6 +21,7 @@ const AppRoutes = () => {
         <Route path='/offers/:slug/:id/see-details' element={<ViewOffer />} />
 
         <Route path='/merchants' element={<Stores />} />
+        <Route path='/stores/:id/view' element={<ViewStore />} />
 
 
         <Route path='/:slug/:id/checkout' element={<Checkout />} />
