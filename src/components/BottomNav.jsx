@@ -2,33 +2,33 @@ import React from 'react';
 import { FaRegCircleUser } from 'react-icons/fa6';
 import { IoHomeOutline } from 'react-icons/io5';
 import { MdOutlineDiscount, MdOutlineShoppingBag } from 'react-icons/md';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const BottomNav = () => {
     const location = useLocation();
 
-    const authRoutes = ['/login', '/signup', '/forgot-password'];
+    const authRoutes = ['/accounts/sign-in', '/accounts/sign-up', '/forgot-password'];
 
     if (authRoutes.includes(location.pathname)) return null;
 
     return (
         <div className="fixed bottom-0 left-0 right-0 transform shadow-lg flex justify-around items-center py-3 w-full z-50 bg-primary text-white sm:hidden">
-            <button className="flex flex-col items-center justify-center">
+            <Link to='/' className="flex flex-col items-center justify-center">
                 <IoHomeOutline size={24} />
                 <span className="text-[14px] font-medium">Home</span>
-            </button>
-            <button className="flex flex-col items-center justify-center">
+            </Link>
+            <Link to='/offers' className="flex flex-col items-center justify-center">
                 <MdOutlineDiscount size={24} />
                 <span className="text-[14px] font-medium">Offers</span>
-            </button>
-            <button className="flex flex-col items-center justify-center">
+            </Link>
+            <Link to='/merchants' className="flex flex-col items-center justify-center">
                 <MdOutlineShoppingBag size={24} />
                 <span className="text-[14px] font-medium">Stores</span>
-            </button>
-            <button className="flex flex-col items-center justify-center">
+            </Link>
+            <Link to='/accounts/profile' className="flex flex-col items-center justify-center">
                 <FaRegCircleUser size={24} />
                 <span className="text-[14px] font-medium">Profile</span>
-            </button>
+            </Link>
         </div>
     );
 };

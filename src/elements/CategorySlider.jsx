@@ -35,13 +35,13 @@ const CategorySlider = () => {
     }, []);
 
     const CustomNextArrow = (props) => (
-        <button {...props} className="slick-arrow next bg-opacity-70 bg-white text-primary p-4 rounded-full shadow-md absolute right-[-25px] top-1/2 transform -translate-y-1/2 z-20 focus:outline-none">
+        <button {...props} className="slick-arrow next bg-opacity-70 bg-white text-primary p-1.5 rounded-full shadow-md absolute right-[-25px] top-1/2 transform -translate-y-1/2 z-20 focus:outline-none">
             <FaChevronRight size={20} />
         </button>
     );
 
     const CustomPrevArrow = (props) => (
-        <button {...props} className="slick-arrow prev bg-opacity-70 bg-white text-primary p-4 rounded-full shadow-md absolute left-[-25px] top-1/2 transform -translate-y-1/2 z-20 focus:outline-none">
+        <button {...props} className="slick-arrow prev bg-opacity-70 bg-white text-primary p-1.5 rounded-full shadow-md absolute left-[-25px] top-1/2 transform -translate-y-1/2 z-20 focus:outline-none">
             <FaAngleLeft size={20} />
         </button>
     );
@@ -62,13 +62,13 @@ const CategorySlider = () => {
     };
 
     const settings = {
-        dots: false,
+        dots: true,
         infinite: true,
         speed: 500,
         slidesToShow: getSlidesToShow(),
         slidesToScroll: 1,
         centerMode: true,
-        arrows: true,
+        arrows: false,
         nextArrow: <CustomNextArrow />,
         prevArrow: <CustomPrevArrow />,
         autoplay: true,
