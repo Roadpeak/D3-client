@@ -127,18 +127,30 @@ const Navbar = () => {
                     <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setOpenMenu(false)}></div>
                     <div className="fixed top-0 right-0 w-[70%] h-full bg-primary z-50 p-6">
                         <div className="flex flex-col gap-2">
-                            <button onClick={() => setOpenMenu(false)} className="text-white mb-6">
-                                <IoMdClose size={24} />
-                            </button>
-                            <p className="text-white border-b mb-4 w-full text-[18px] font-medium border-gray-50">Manage Account</p>
-                            <Link to='/my-vouchers' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><MdOutlineDiscount size={20} /> Vouchers</Link>
-                            <Link to='/chat' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><IoChatboxEllipsesOutline size={20} /> Chat</Link>
-                            <Link to='/my-bookings' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><CiBookmarkPlus size={20} /> Bookings</Link>
-                            <Link to='/my-tickets' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><BsTicketDetailed size={20} /> Tickets</Link>
-                            {user?.user_type === 'admin' && (
-                                <Link to='/manage' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><LuLayoutDashboard size={20} /> Dashboard</Link>
+                           <div className="flex w-full items-center justify-between mb-4 border-b border-white ">
+                                <button onClick={() => setOpenMenu(false)} className="text-white">
+                                    <IoMdClose size={24} />
+                                </button>
+                                <p className="text-2xl font-bold text-white">d3</p>
+                           </div>                           
+                            {user ? (
+                                <div className="flex flex-col w-full">
+                                    <p className="text-white border-b mb-4 w-full text-[18px] font-medium border-gray-50">Manage Account</p>
+                                    <Link to='/my-vouchers' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><MdOutlineDiscount size={20} /> Vouchers</Link>
+                                    <Link to='/chat' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><IoChatboxEllipsesOutline size={20} /> Chat</Link>
+                                    <Link to='/my-bookings' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><CiBookmarkPlus size={20} /> Bookings</Link>
+                                    <Link to='/my-tickets' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><BsTicketDetailed size={20} /> Tickets</Link>
+                                    {user?.user_type === 'admin' && (
+                                        <Link to='/manage' className="text-[15px] text-white hover:text-primary flex items-center gap-2"><LuLayoutDashboard size={20} /> Dashboard</Link>
+                                    )}
+                                    <button onClick={logoutUser} className="text-[14px] bg-white flex items-center text-center justify-center mt-2 rounded-md py-1.5 text-primary ">Logout</button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col ">
+                                        
+                                </div>
                             )}
-                            <button onClick={logoutUser} className="text-[14px] bg-white flex items-center text-center justify-center mt-2 rounded-md py-1.5 text-primary ">Logout</button></div>
+                        </div>
                     </div>
                 </>
             )}
