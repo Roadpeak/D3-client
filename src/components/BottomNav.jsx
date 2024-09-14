@@ -3,9 +3,11 @@ import { FaRegCircleUser } from 'react-icons/fa6';
 import { IoHomeOutline } from 'react-icons/io5';
 import { MdOutlineDiscount, MdOutlineShoppingBag } from 'react-icons/md';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../utils/context/AuthContext';
 
 const BottomNav = () => {
     const location = useLocation();
+    const { user } = useAuth();
 
     const authRoutes = ['/accounts/sign-in', '/accounts/sign-up', '/forgot-password'];
 
@@ -25,7 +27,7 @@ const BottomNav = () => {
                 <MdOutlineShoppingBag size={24} />
                 <span className="text-[14px] font-medium">Stores</span>
             </Link>
-            <Link to='/accounts/profile' className="flex flex-col items-center justify-center">
+            <Link to={user ? '/accounts/profile' : '/accounts/sign-in'} className="flex flex-col items-center justify-center">
                 <FaRegCircleUser size={24} />
                 <span className="text-[14px] font-medium">Profile</span>
             </Link>
