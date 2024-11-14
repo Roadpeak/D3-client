@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useAuth } from '../utils/context/AuthContext';
 import { getCookie } from '../utils/cookieUtils';
 import Navbar from '../components/Navbar';
-// import Loading from '../utils/elements/Loading';
 
 const MyBookings = () => {
     const [bookings, setBookings] = useState([]);
@@ -111,7 +110,6 @@ const MyBookings = () => {
                         </div>
                     )
                 ) : (
-                    /* Appointments Tab */
                     appointments?.length === 0 ? (
                         <div className="text-gray-600 text-center">You have no appointments.</div>
                     ) : (
@@ -133,7 +131,6 @@ const MyBookings = () => {
                     )
                 )}
 
-                {/* Booking Modal */}
                 {selectedBooking && (
                     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
@@ -176,7 +173,6 @@ const MyBookings = () => {
                     </div>
                 )}
 
-                {/* Appointment Modal */}
                 {selectedAppointment && (
                     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                         <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative">
