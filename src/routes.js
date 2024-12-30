@@ -15,7 +15,7 @@ import Chat from './pages/Chat'
 import Booking from './pages/Booking'
 import Profile from './pages/auth/Profile'
 import SearchResults from './pages/SearchResults'
-
+import Footer from './components/Footer'
 const AppRoutes = () => {
   return (
     <div>
@@ -25,6 +25,7 @@ const AppRoutes = () => {
         <Route path='/accounts/sign-up' element={<SignUp />} />
         <Route path='/accounts/sign-in' element={<Login />} />
         <Route path='/accounts/profile' element={<Profile />} />
+        <Route path='/components/Footer' element={<Footer/>} />
 
         <Route path='/offers' element={<Offers />} />
         <Route path='/offers/:slug/:id/see-details' element={<ViewOffer />} />
