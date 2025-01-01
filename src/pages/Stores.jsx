@@ -69,9 +69,9 @@ const Stores = () => {
                 <p className="text-black-600 font-medium mb-2 text-[20px]">
                     All Stores
                 </p>
-                {/* Sort by Location Heading */}
+                
                 <p className="text-gray-800 font-semibold text-[18px] mb-2">Sort by Location</p>
-                {/* Location Filter */}
+               
                 <div className="flex flex-wrap mb-4">
                     {locations.map(location => (
                         <button

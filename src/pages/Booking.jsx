@@ -10,6 +10,7 @@ import { useAuth } from '../utils/context/AuthContext';
 import Loading from '../elements/Loading';
 import toast from 'react-hot-toast';
 
+
 const Booking = () => {
     const [timeSlots, setTimeSlots] = useState([]);
     const [loading, setLoading] = useState(true);
