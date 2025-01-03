@@ -39,7 +39,7 @@ const AppRoutes = () => {
         <Route path='/my-vouchers' element={<MyVouchers />} />
         <Route path='/my-bookings' element={<MyBookings />} />
         <Route path='/chat' element={<Chat />} />
-        <Route path='/discount/:id/booking' element={<Booking/>} />
+        <Route path='/Booking' element={<Booking/>} />
     </Routes>
     <BottomNav />
     </div>
