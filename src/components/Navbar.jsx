@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { IoIosSearch, IoMdClose } from 'react-icons/io';
-import { FaCircleUser } from 'react-icons/fa6';
+import { FaCircleUser, FaStore } from 'react-icons/fa6';
+import { CiHome, CiDiscount1, CiShoppingTag, CiChat1, CiBookmarkCheck } from 'react-icons/ci';
+import { IoTicket } from 'react-icons/io5';
 import { FiMenu } from 'react-icons/fi';
-import { AiOutlineHome, AiOutlineShop, AiOutlineTags, AiOutlineMessage, AiOutlineTag } from 'react-icons/ai';
-import { MdOutlineConfirmationNumber } from 'react-icons/md';
-import { useAuth } from '../utils/context/AuthContext';
-import { CiHome } from "react-icons/ci";
-import { FaStore } from "react-icons/fa6";
-import { CiDiscount1 } from "react-icons/ci";
-import { CiShoppingTag } from "react-icons/ci";
-import { CiChat1 } from "react-icons/ci";
-import { CiBookmarkCheck } from "react-icons/ci";
-import { IoTicket } from "react-icons/io5";
 
 const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -20,19 +11,14 @@ const Navbar = () => {
     const [showNavBar, setShowNavBar] = useState(true);
     const [lastScrollTop, setLastScrollTop] = useState(0);
     const navigate = useNavigate();
-    const { user } = useAuth();
 
     useEffect(() => {
         const handleScroll = () => {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
             setShowNavBar(scrollTop < lastScrollTop || scrollTop < 50);
-
             setLastScrollTop(scrollTop <= 0 ? 0 : scrollTop);
         };
-
         window.addEventListener('scroll', handleScroll);
-
         return () => window.removeEventListener('scroll', handleScroll);
     }, [lastScrollTop]);
 
@@ -51,88 +37,78 @@ const Navbar = () => {
 
     return (
         <>
-            <div
-                className={`fixed top-0 left-0 w-full bg-white border-b border-gray-200 z-50 shadow-md transition-transform duration-300 ${
-                    showNavBar ? 'translate-y-0' : '-translate-y-full'
-                }`}
-                style={{ background: 'rgba(255, 255, 255, 0.95)' }}
-            >
-                <div className="w-full py-3 px-[5%] flex justify-between items-center">
+            <div className={`fixed top-0 left-0 w-full bg-red-600 z-50 shadow-lg transition-transform duration-300 ${showNavBar ? 'translate-y-0' : '-translate-y-full'}`}>
+                <div className="w-full py-4 px-[5%] flex justify-between items-center">
                     <div className="flex items-center">
-                        <p className="text-3xl font-bold text-[#ff9021]" style={{ fontFamily: 'Museo Moderno, sans-serif' }}>
-                            d3
+                        <p className="text-2xl font-bold text-white" style={{ fontFamily: 'Museo Moderno, sans-serif' }}>
+                            Qualy
                         </p>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-12 w-full">
-                        <div className="flex items-center gap-8 ml-12">
-                            <Link to="/" className="flex items-center gap-2 text-black-700 hover:text-red-500">
-                            <CiHome />Home
-                            </Link>
-                            <Link to="/merchants" className="flex items-center gap-2 text-black-700 hover:text-red-500">
-                            <FaStore /> Stores
-                            </Link>
-                            <Link to="/offers" className="flex items-center gap-2 text-black-700 hover:text-red-500">
-                            <CiDiscount1 /> Deals
-                            </Link>
-                            <Link to="/my-vouchers" className="flex items-center gap-2 text-black-700 hover:text-red-500">
-                            <CiShoppingTag />
-                            Vouchers
-                            </Link>
-                            <Link to="/chat" className="flex items-center gap-2 text-black-700 hover:text-red-500">
-                            <CiChat1 /> Chat
-                            </Link>
-                            <Link to="/my-bookings" className="flex items-center gap-2 text-black-700 hover:text-red-500">
-                            <CiBookmarkCheck />Bookings
-                            </Link>
-                            <Link to="/my-tickets" className="flex items-center gap-2 text-black-700 hover:text-red-500">
-                            <IoTicket /> Tickets
-                            </Link>
-                        </div>
-
-                        <div className="flex w-full max-w-lg mr-12">
-                            <form
-                                onSubmit={handleSearch}
-                                className="flex items-center w-full bg-white border border-gray-300 rounded-full overflow-hidden"
-                            >
-                                <input
-                                    type="text"
-                                    placeholder="Search on d3..."
-                                    className="flex-grow px-4 py-2 text-gray-700 text-sm outline-none"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                />
-                                <button
-                                    type="submit"
-                                    className="bg-gray-800 text-white px-6 py-2 text-sm font-medium"
-                                >
-                                    Search
-                                </button>
-                            </form>
-                        </div>
+                    <div className="hidden md:flex items-center gap-8 w-full max-w-2xl mx-8">
+                        <form onSubmit={handleSearch} className="flex items-center w-full bg-white rounded-lg overflow-hidden shadow-sm">
+                            <input
+                                type="text"
+                                placeholder="Search for products, stores..."
+                                className="flex-grow px-4 py-3 text-gray-700 text-sm outline-none"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <button type="submit" className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 text-sm font-medium transition-colors">
+                                Search
+                            </button>
+                        </form>
                     </div>
 
                     <div className="hidden md:flex items-center gap-6">
-                        <button className="text-gray-700 hover:text-red-500">
+                        <button className="text-white hover:text-yellow-300 transition-colors">
                             <FaCircleUser size={24} />
                         </button>
                         <button
                             onClick={logoutUser}
-                            className="bg-[#ff9021] text-white px-4 py-2 rounded-full text-[15px] font-semibold"
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg text-sm font-semibold transition-colors"
                         >
                             Logout
                         </button>
                     </div>
 
                     <div className="md:hidden flex items-center">
-                        <FiMenu size={24} onClick={() => setOpenMenu(true)} />
+                        <FiMenu size={24} className="text-white" onClick={() => setOpenMenu(true)} />
+                    </div>
+                </div>
+
+                {/* Secondary Navigation */}
+                <div className="hidden md:block bg-red-700 py-2">
+                    <div className="px-[5%] flex items-center gap-8">
+                        <Link to="/" className="flex items-center gap-2 text-white hover:text-yellow-300 text-sm transition-colors">
+                            <CiHome size={16} /> Home
+                        </Link>
+                        <Link to="/merchants" className="flex items-center gap-2 text-white hover:text-yellow-300 text-sm transition-colors">
+                            <FaStore size={14} /> Stores
+                        </Link>
+                        <Link to="/offers" className="flex items-center gap-2 text-white hover:text-yellow-300 text-sm transition-colors">
+                            <CiDiscount1 size={16} /> Deals
+                        </Link>
+                        <Link to="/my-vouchers" className="flex items-center gap-2 text-white hover:text-yellow-300 text-sm transition-colors">
+                            <CiShoppingTag size={16} /> Vouchers
+                        </Link>
+                        <Link to="/chat" className="flex items-center gap-2 text-white hover:text-yellow-300 text-sm transition-colors">
+                            <CiChat1 size={16} /> Chat
+                        </Link>
+                        <Link to="/my-bookings" className="flex items-center gap-2 text-white hover:text-yellow-300 text-sm transition-colors">
+                            <CiBookmarkCheck size={16} /> Bookings
+                        </Link>
+                        <Link to="/my-tickets" className="flex items-center gap-2 text-white hover:text-yellow-300 text-sm transition-colors">
+                            <IoTicket size={16} /> Tickets
+                        </Link>
                     </div>
                 </div>
             </div>
-
-            <div style={{ marginTop: '72px' }}></div>
+            {/* Spacer to prevent content from being hidden behind navbar */}
+            <div style={{ marginTop: '120px' }}></div>
         </>
     );
 };
 
 export default Navbar;
+

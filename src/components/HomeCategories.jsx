@@ -1,5 +1,5 @@
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
 
 const HomeCategories = () => {
     const [categories, setCategories] = useState([]);
@@ -17,17 +17,15 @@ const HomeCategories = () => {
                 const response = await axios.get('https://api.discoun3ree.com/api/random-categories');
                 setCategories(response.data);
                 localStorage.setItem('cachedCategories', JSON.stringify(response.data));
-                setLoading(false);
             } catch (error) {
                 console.error('Error fetching categories:', error);
+            } finally {
                 setLoading(false);
             }
         };
 
         fetchCategories();
-
-        const interval = setInterval(fetchCategories, 180000);
-
+        const interval = setInterval(fetchCategories, 180000); // Refresh every 3 minutes
         return () => clearInterval(interval);
     }, []);
 
@@ -36,26 +34,41 @@ const HomeCategories = () => {
     };
 
     return (
-        <div className="flex flex-col w-full px-[5%]">
-            <p className="text-[22px] font-medium -mb-1">Browse by category</p>
-            <p className="text-gray-400 font-medium text-[14px]">Trending categories</p>
-            <div className="flex flex-wrap gap-2 py-4">
-                <button
-                    onClick={() => handleCategoryClick('All')}
-                    className={`px-4 py-2 rounded-full ${activeCategory === 'All' ? 'bg-black text-white' : 'bg-white text-black'} border border-gray-400 whitespace-nowrap`}
-                >
-                    All
-                </button>
-                {categories.map((category, index) => (
-                    <button
-                        key={index}
-                        onClick={() => handleCategoryClick(category.name)}
-                        className={`px-4 py-2 rounded-full ${activeCategory === category.name ? 'bg-black text-white' : 'bg-gray-200 text-black'} whitespace-nowrap hover:bg-gray-300 transition`}
-                    >
-                        {category.name}
-                    </button>
-                ))}
+        <div className="bg-white py-12 px-[5%]">
+            <div className="mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Browse Categories</h2>
+                <p className="text-gray-600">Find what you're looking for</p>
             </div>
+
+            {loading ? (
+                <p className="text-gray-500">Loading categories...</p>
+            ) : (
+                <div className="flex flex-wrap gap-3 mb-8">
+                    <button
+                        onClick={() => handleCategoryClick('All')}
+                        className={`px-6 py-3 rounded-full font-medium transition-all ${
+                            activeCategory === 'All'
+                                ? 'bg-red-600 text-white shadow-lg'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                    >
+                        All Categories
+                    </button>
+                    {categories.map((category, index) => (
+                        <button
+                            key={index}
+                            onClick={() => handleCategoryClick(category.name)}
+                            className={`px-6 py-3 rounded-full font-medium transition-all ${
+                                activeCategory === category.name
+                                    ? 'bg-red-600 text-white shadow-lg'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            {category.name}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

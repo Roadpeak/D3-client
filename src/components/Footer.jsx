@@ -1,46 +1,52 @@
-import React from "react";
-import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaWhatsapp } from "react-icons/fa";
+import React from 'react';
+import {
+    FaFacebookF,
+    FaTwitter,
+    FaInstagram,
+    FaLinkedinIn,
+    FaWhatsapp,
+} from 'react-icons/fa';
 
 const Footer = () => {
     const footerSections = [
         {
             title: "Discover Services",
             links: [
-                "Beauty & Wellness",
-                "Home Maintenance",
-                "Health & Fitness",
-                "Professional Services",
-                "Pet Care",
+                { text: "Beauty & Wellness", href: "#" },
+                { text: "Home Maintenance", href: "#" },
+                { text: "Health & Fitness", href: "#" },
+                { text: "Professional Services", href: "#" },
+                { text: "Pet Care", href: "#" },
             ],
         },
         {
             title: "Offers & Deals",
             links: [
-                "Seasonal Discounts",
-                "Referral Rewards",
-                "Loyalty Programs",
-                "Bundle Deals",
-                "Gift Cards",
+                { text: "Seasonal Discounts", href: "#" },
+                { text: "Referral Rewards", href: "#" },
+                { text: "Loyalty Programs", href: "#" },
+                { text: "Bundle Deals", href: "#" },
+                { text: "Gift Cards", href: "#" },
             ],
         },
         {
             title: "Help & Support",
             links: [
-                "FAQs",
-                "Customer Service",
-                "Cancellation Policy",
-                "Service Guarantee",
-                "Feedback",
+                { text: "FAQs", href: "#" },
+                { text: "Customer Service", href: "#" },
+                { text: "Cancellation Policy", href: "#" },
+                { text: "Service Guarantee", href: "#" },
+                { text: "Feedback", href: "#" },
             ],
         },
         {
             title: "Company",
             links: [
-                "About Us",
-                "Careers",
-                "Press Releases",
-                "Investor Relations",
-                "Sustainability",
+                { text: "About Us", href: "#" },
+                { text: "Careers", href: "#" },
+                { text: "Press Releases", href: "#" },
+                { text: "Investor Relations", href: "#" },
+                { text: "Sustainability", href: "#" },
             ],
         },
     ];
@@ -54,94 +60,64 @@ const Footer = () => {
     ];
 
     return (
-        <footer className="bg-gray-50 text-gray-700 text-sm border-t border-gray-200">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8">
-                {footerSections.map((section) => (
-                    <div key={section.title}>
-                        <h3 className="text-md font-semibold text-gray-900 mb-4">
-                            {section.title}
-                        </h3>
-                        <ul>
-                            {section.links.map((link) => (
-                                <li key={link} className="mb-2">
-                                    <a
-                                        href="#"
-                                        className="text-gray-600 hover:text-gray-900 transition-colors"
-                                    >
-                                        {link}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ))}
-            </div>
-
-            <div className="border-t border-gray-200"></div>
-
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8 flex flex-col lg:flex-row justify-between items-center gap-4">
-                <p className="text-center lg:text-left text-gray-500 text-xs">
-                    Join our newsletter for exclusive offers and updates on services tailored
-                    for you.
-                </p>
-                <div className="flex gap-2">
-                    <input
-                        type="email"
-                        placeholder="Enter your email"
-                        className="text-sm px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                    <button className="px-6 py-2 bg-gray-800 text-white rounded-r-md text-sm hover:bg-gray-700 transition-colors">
-                        Subscribe
-                    </button>
+        <footer className="bg-gray-900 text-gray-300">
+            {/* Section Links */}
+            <div className="py-12 px-[5%]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {footerSections.map((section) => (
+                        <div key={section.title}>
+                            <h3 className="text-lg font-semibold text-white mb-4">
+                                {section.title}
+                            </h3>
+                            <ul className="space-y-2">
+                                {section.links.map(({ text, href }) => (
+                                    <li key={`${section.title}-${text}`}>
+                                        <a
+                                            href={href}
+                                            className="text-gray-400 hover:text-white transition-colors"
+                                            title={text}
+                                        >
+                                            {text}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            <div className="border-t border-gray-200"></div>
-
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 flex flex-col lg:flex-row justify-between items-center">
-                <p className="text-xs text-gray-500 text-center lg:text-left">
-                    © {new Date().getFullYear()} d3 ltd. All rights reserved.
-                </p>
-                <ul className="flex flex-wrap justify-center lg:justify-end gap-4 mt-4 lg:mt-0 text-xs">
-                    <li>
-                        <a
-                            href="#"
-                            className="text-gray-500 hover:text-gray-900 transition-colors"
-                        >
-                            Privacy Policy
-                        </a>
-                    </li>
-                    <li>
-                        <a
-                            href="#"
-                            className="text-gray-500 hover:text-gray-900 transition-colors"
-                        >
-                            Terms of Service
-                        </a>
-                    </li>
-                    <li>
-                        <a
-                            href="#"
-                            className="text-gray-500 hover:text-gray-900 transition-colors"
-                        >
-                            Contact Us
-                        </a>
-                    </li>
-                </ul>
+            {/* Branding and Social Links */}
+            <div className="border-t border-gray-800 py-8 px-[5%]">
+                <div className="flex flex-col lg:flex-row justify-between items-center gap-4 text-center">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
+                        <p className="text-2xl font-bold text-white">Qualy</p>
+                        <p className="text-gray-400 text-sm">
+                            © {new Date().getFullYear()} D3 Ltd. All rights reserved.
+                        </p>
+                    </div>
+                    <div className="flex gap-4">
+                        {socialLinks.map((social) => (
+                            <a
+                                key={social.name}
+                                href={social.href}
+                                className="text-gray-400 hover:text-white hover:scale-110 transition-all"
+                                aria-label={social.name}
+                                title={social.name}
+                            >
+                                {social.icon}
+                            </a>
+                        ))}
+                    </div>
+                </div>
             </div>
 
-            <div className="border-t border-gray-200 py-6">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8 flex justify-center gap-6">
-                    {socialLinks.map((social) => (
-                        <a
-                            key={social.name}
-                            href={social.href}
-                            className="text-gray-600 hover:scale-110 hover:text-gray-900 text-xl transition-transform"
-                            aria-label={social.name}
-                        >
-                            {social.icon}
-                        </a>
-                    ))}
+            {/* Bottom Links */}
+            <div className="border-t border-gray-800 py-4 px-[5%] text-center">
+                <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+                    <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+                    <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+                    <a href="#" className="hover:text-white transition-colors">Contact Us</a>
                 </div>
             </div>
         </footer>
