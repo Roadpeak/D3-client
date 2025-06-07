@@ -10,12 +10,14 @@ import Checkout from './pages/Checkout'
 import ViewStore from './pages/ViewStore'
 import BottomNav from './components/BottomNav'
 import MyVouchers from './pages/MyVouchers'
-import MyBookings from './pages/MyBookings'
+// import MyBookings from './pages/MyBookings'
 import Chat from './pages/Chat'
 import Booking from './pages/Booking'
-import Profile from './pages/auth/Profile'
+import Profile from './pages/Profile'
 import SearchResults from './pages/SearchResults'
 import Footer from './components/Footer'
+import Requestservice from './pages/Requestservice'
+import Hotdeals from './pages/Hotdeals'
 const AppRoutes = () => {
   return (
     <div>
@@ -24,24 +26,26 @@ const AppRoutes = () => {
 
         <Route path='/accounts/sign-up' element={<SignUp />} />
         <Route path='/accounts/sign-in' element={<Login />} />
-        <Route path='/accounts/profile' element={<Profile />} />
+        <Route path='/profile' element={<Profile />} />
         <Route path='/components/Footer' element={<Footer/>} />
 
         <Route path='/offers' element={<Offers />} />
-        <Route path='/offers/:slug/:id/see-details' element={<ViewOffer />} />
+        <Route path='/offer' element={<ViewOffer />} />
 
-        <Route path='/merchants' element={<Stores />} />
-        <Route path='/stores/:id/view' element={<ViewStore />} />
+        <Route path='/Stores' element={<Stores />} />
+        <Route path='/ViewStore' element={<ViewStore />} />
 
         <Route path="/search" element={<SearchResults />} />
 
-        <Route path='/:slug/:id/checkout' element={<Checkout />} />
+        <Route path='/Checkout' element={<Checkout />} />
         <Route path='/my-vouchers' element={<MyVouchers />} />
-        <Route path='/my-bookings' element={<MyBookings />} />
+        {/* <Route path='/my-bookings' element={<MyBookings />} /> */}
         <Route path='/chat' element={<Chat />} />
         <Route path='/Booking' element={<Booking/>} />
+        <Route path='/Requestservice' element={<Requestservice/>} />
+        <Route path='/Hotdeals' element={<Hotdeals/>} />
     </Routes>
-    <BottomNav />
+    {/* <BottomNav /> */}
     </div>
   )
 }

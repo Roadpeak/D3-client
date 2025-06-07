@@ -1,247 +1,490 @@
-import React, { useEffect, useState } from 'react';
-import { FaAngleLeft, FaFacebookF, FaInstagram, FaLink, FaRegHeart, FaWhatsapp } from 'react-icons/fa';
-import { FaTwitter } from 'react-icons/fa';
-import { FacebookShareButton, WhatsappShareButton, TwitterShareButton, InstapaperShareButton } from 'react-share';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import ReviewComponent from '../components/ReviewComponent';
-import { MdContentCopy } from 'react-icons/md';
-import { useAuth } from '../utils/context/AuthContext';
+import React, { useState } from 'react';
+import { Share2, Copy, Facebook, Twitter, Instagram, Linkedin, Star, Clock, MapPin, Tag, Users, Calendar } from 'lucide-react';
 import Navbar from '../components/Navbar';
-const ViewOffer = () => {
+import Footer from '../components/Footer';
 
-    const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('details');
-    const [discount, setDiscount] = useState(null);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false)
-    const placeholderImage = 'https://imgs.search.brave.com/1qOy-0Ymw2K6EdSAI4515c9T4mh-eoIQbDsp-koZkLw/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA1Lzk3LzQ3Lzk1/LzM2MF9GXzU5NzQ3/OTU1Nl83YmJRN3Q0/WjhrM3hiQWxvSEZI/VmRaSWl6V0sxUGRP/by5qcGc';
+const OffersPage = () => {
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [newReview, setNewReview] = useState({
+    name: '',
+    rating: 0,
+    comment: ''
+  });
+  const [userReviews, setUserReviews] = useState([]);
 
-    const { user } = useAuth();
-    const { id } = useParams();
-    const discounId = id ? parseInt(id, 10) : 0;
+  // Mock data
+  const offerData = {
+    title: "Wyndham Garden at Palmas del Mar - Puerto Rico",
+    location: "Puerto Rico",
+    platform: "Ebay",
+    region: "California",
+    purchases: "75 Bought",
+    originalPrice: "$200.00",
+    offerPrice: "$60.00",
+    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Velit harum quidem eaque amet pariatur aspernatur mollitia ratione maxime.",
+    urgencyText: "HURRY UP ONLY A FEW DEALS LEFT",
+    expiryText: "This offer has expired!",
+    offerDuration: "Valid until June 15, 2025",
+    images: [
+      "/api/placeholder/600/400",
+      "/api/placeholder/600/400", 
+      "/api/placeholder/600/400",
+      "/api/placeholder/600/400",
+      "/api/placeholder/600/400"
+    ]
+  };
 
-    useEffect(() => {
-        const fetchDiscount = async () => {
-            setLoading(true)
-            try {
-                const response = await axios.get(`https://api.discoun3ree.com/api/discounts/${id}`);
-                setDiscount(response.data);
-                setLoading(false);
-            } catch (error) {
-                setLoading(false);
-                setError('An error occurred while fetching discount data.');
-            }
-        };
+  const reviews = [
+    { id: 1, name: "John Doe", rating: 5, comment: "Amazing experience! Great value for money.", date: "2 days ago" },
+    { id: 2, name: "Sarah Smith", rating: 4, comment: "Good service, would recommend to others.", date: "1 week ago" },
+    { id: 3, name: "Mike Johnson", rating: 5, comment: "Exceeded my expectations. Will book again!", date: "2 weeks ago" },
+    { id: 4, name: "Emma Wilson", rating: 4, comment: "Nice location and great amenities.", date: "3 weeks ago" }
+  ];
 
-        fetchDiscount();
-    }, [id]);
+  const relatedOffers = [
+    { id: 1, title: "Luxury Resort in Bahamas", price: "$89.00", originalPrice: "$250.00", image: "/api/placeholder/300/200", rating: 4.5 },
+    { id: 2, title: "Beachfront Hotel Miami", price: "$120.00", originalPrice: "$300.00", image: "/api/placeholder/300/200", rating: 4.2 },
+    { id: 3, title: "Mountain Lodge Colorado", price: "$75.00", originalPrice: "$180.00", image: "/api/placeholder/300/200", rating: 4.7 },
+    { id: 4, title: "City Center Hotel NYC", price: "$95.00", originalPrice: "$220.00", image: "/api/placeholder/300/200", rating: 4.1 }
+  ];
 
-    const handleCopyLink = () => {
-        navigator.clipboard.writeText(window.location.href)
-            .then(() => {
-                console.log("Copied!")
-            })
-            .catch((error) => {
-                console.error('Failed to copy link: ', error);
-            });
+  const handleShare = (platform) => {
+    const url = window.location.href;
+    const text = `Check out this amazing offer: ${offerData.title}`;
+    
+    const shareUrls = {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+      instagram: `https://www.instagram.com/`
     };
 
-    const formatDate = (dateString) => {
-        const options = {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-        };
-        return new Date(dateString).toLocaleDateString('en-GB', options);
-    };
+    if (shareUrls[platform]) {
+      window.open(shareUrls[platform], '_blank');
+    }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    });
+  };
+
+  const renderStars = (rating) => {
+    return [...Array(5)].map((_, i) => (
+      <Star
+        key={i}
+        className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+      />
+    ));
+  };
+
+  const renderInteractiveStars = (rating, onRatingChange) => {
+    return [...Array(5)].map((_, i) => (
+      <button
+        key={i}
+        type="button"
+        onClick={() => onRatingChange(i + 1)}
+        className={`w-6 h-6 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} hover:text-yellow-400 transition-colors`}
+      >
+        <Star className="w-full h-full" />
+      </button>
+    ));
+  };
+
+  const handleSubmitReview = (e) => {
+    e.preventDefault();
+    if (newReview.name && newReview.rating > 0 && newReview.comment) {
+      const review = {
+        id: Date.now(),
+        name: newReview.name,
+        rating: newReview.rating,
+        comment: newReview.comment,
+        date: 'Just now'
+      };
+      setUserReviews([review, ...userReviews]);
+      setNewReview({ name: '', rating: 0, comment: '' });
+      setShowReviewForm(false);
+    }
+  };
+
   return (
-      <div>
-          <Navbar />
-          {user && user.first_discount === 0 && (
-              <div className="bg-yellow-200">
-                  <p className="text-yellow-800 px-4 text-center py-3 text-sm">
-                      You have one free voucher. You will use it to access this discount and book an appointment.
-                  </p>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Images */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="relative">
+                <img 
+                  src={offerData.images[selectedImage]} 
+                  alt="Main offer image"
+                  className="w-full h-96 object-cover"
+                />
+                <div className="absolute top-4 left-4">
+                  <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
+                    {Math.round(((parseFloat(offerData.originalPrice.replace('$', '')) - parseFloat(offerData.offerPrice.replace('$', ''))) / parseFloat(offerData.originalPrice.replace('$', ''))) * 100)}% OFF
+                  </span>
+                </div>
               </div>
-          )}
-          <div className="flex px-[5%] flex-col py-[2%]">
-              <div className="flex w-full flex-col gap-2 items-start ">
-                  <button onClick={() => navigate(-1)} className="flex text-gray-600 font-light text-[15px] items-center gap-2">
-                      <FaAngleLeft />
-                      <span>Go back</span>
-                  </button>
-                  <div className="w-full flex flex-col md:flex-row gap-[2%]">
-                      <div className="flex flex-col w-full gap-[2%] md:w-2/3">
-                          {
-                              loading ? (
-                                  <div className="border rounded-md p-4 flex flex-col md:flex-row w-full">
-                                      <div className="flex flex-col md:flex-row flex-wrap overflow-x-auto w-full md:w-1/2">
-                                          <div className="px-[5%] w-full md:w-2/3 mt-4 md:mt-0">
-                                              <div className="bg-gray-300 h-64 rounded-md animate-pulse"></div>
-                                          </div>
-                                      </div>
+              
+              {/* Thumbnail Images */}
+              <div className="p-4">
+                <div className="flex space-x-2 overflow-x-auto">
+                  {offerData.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                        selectedImage === index ? 'border-blue-500' : 'border-gray-200'
+                      }`}
+                    >
+                      <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-                                      <div className="flex flex-col w-full md:w-1/2 space-y-4">
-                                          <div className="h-4 bg-gray-300 rounded w-1/2 animate-pulse"></div>
-                                          <div className="h-8 bg-gray-300 rounded animate-pulse"></div>
-                                          <div className="h-6 bg-gray-300 rounded w-1/3 animate-pulse"></div>
-                                          <div className="flex items-center gap-2">
-                                              <div className="h-6 bg-gray-300 rounded animate-pulse"></div>
-                                              <div className="h-6 bg-gray-300 rounded animate-pulse"></div>
-                                          </div>
-                                          <div className="h-12 bg-gray-300 rounded-md animate-pulse"></div>
-                                          <div className="flex flex-col space-y-2">
-                                              <div className="h-6 bg-gray-300 rounded animate-pulse"></div>
-                                              <div className="flex border rounded-md border-gray-300 px-2 py-1.5 w-fit items-center gap-2">
-                                                  <div className="h-6 bg-gray-300 rounded-full animate-pulse"></div>
-                                                  <div className="h-6 bg-gray-300 rounded-full animate-pulse"></div>
-                                              </div>
-                                          </div>
-                                          <div className="flex flex-col space-y-2">
-                                              <div className="h-6 bg-gray-300 rounded animate-pulse"></div>
-                                              <div className="flex flex-wrap items-center gap-4">
-                                                  <div className="h-12 w-12 bg-gray-100 rounded-full items-end flex gap-1 animate-pulse">
-                                                      <div className="h-6 bg-blue-500 rounded-full"></div>
-                                                      <div className="h-6 bg-gray-400 rounded-full"></div>
-                                                  </div>
-                                                  <div className="h-12 w-12 bg-gray-100 rounded-full items-end flex gap-1 animate-pulse">
-                                                      <div className="h-6 bg-green-500 rounded-full"></div>
-                                                      <div className="h-6 bg-gray-400 rounded-full"></div>
-                                                  </div>
-                                                  <div className="h-12 w-12 bg-gray-100 rounded-full items-end flex gap-1 animate-pulse">
-                                                      <div className="h-6 bg-rose-200 rounded-full"></div>
-                                                      <div className="h-6 bg-gray-400 rounded-full"></div>
-                                                  </div>
-                                                  <div className="h-12 w-12 bg-gray-100 rounded-full items-end flex gap-1 animate-pulse">
-                                                      <div className="h-6 bg-gray-200 rounded-full"></div>
-                                                      <div className="h-6 bg-gray-400 rounded-full"></div>
-                                                  </div>
-                                              </div>
-                                          </div>
-                                      </div>
-                                  </div>
-                              ) : (
-                                  <div className="border p-4 flex flex-col md:flex-row w-full">
-                                      <div className="flex flex-col md:flex-row flex-wrap overflow-x-auto w-full md:w-1/2">
-                                          <div className="w-full md:w-2/3 mt-4 md:mt-0">
-                                              <img className="rounded-md" alt="image" src={discount?.image_url || placeholderImage} />
-                                          </div>
-                                      </div>
-                                      <div className="flex flex-col w-full md:w-1/2">
-                                          <p className="text-gray-400 font-light text-[11px]">{discount?.category}</p>
-                                          <p className="font-medium text-[20px] ">{discount?.name}</p>
-                                          <span className="text-primary text-[15px]">
-                                              {discount?.percentage_discount}% OFF
-                                          </span>
-                                          <div className="flex items-center gap-2 ">
-                                              <span className="font-light text-[12px] text-gray-600">was</span>
-                                              <p className="text-[13px] line-through">Ksh {discount?.initial_price}</p>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                              <span className="font-light text-gray-600">now</span>
-                                              <p className="font-medium text-[18px]">Ksh {discount?.price_after_discount}</p>
-                                          </div>
-                                          <p className="text-[13px] font-light text-gray-600 mt-1.5">
-                                              Expires {discount?.expiry_date ? formatDate(discount.expiry_date) : 'N/A'}
-                                          </p>
-                                          <button
-                                              onClick={() => {
-                                                  if (!user) {
-                                                      navigate(`/${discount?.slug}/${discount?.id}/checkout`);
-                                                  } else if (user.first_discount === 1) {
-                                                      navigate(`/${discount?.slug}/${discount?.id}/checkout`);
-                                                  } else {
-                                                      navigate(`/discount/${discount?.id}/booking`);
-                                                  }
-                                              }}
-                                              className="w-full py-1.5 bg-primary rounded-md text-white capitalize text-[13px] font-medium flex items-center justify-center mb-2"
-                                          >
-                                              {!user ? (
-                                                  <>
-                                                      Get voucher @ Ksh <span>{discount?.amount}</span>
-                                                  </>
-                                              ) : user.first_discount === 1 ? (
-                                                  <>
-                                                      Get voucher @ Ksh <span>{discount?.amount}</span>
-                                                  </>
-                                              ) : (
-                                                  'Book appointment'
-                                              )}
-                                          </button>
-                                          <div className="flex flex-col my-3.5">
-                                              <span className="text-[15px]">Save this for later</span>
-                                              <button className="flex border rounded-md border-gray-300 px-6 py-1.5 w-fit items-center gap-2">
-                                                  <FaRegHeart />
-                                                  Favorite
-                                              </button>
-                                          </div>
-                                          <div className="flex flex-col mb-2">
-                                              <p className="text-[16px] font-light">Share with friends and family</p>
-                                              <div className="flex flex-wrap items-center w-fit gap-4">
-                                                  <FacebookShareButton url={window.location.href} className="flex items-center">
-                                                      <div className="bg-gray-100 rounded-md p-1 items-end flex gap-1">
-                                                          <FaFacebookF size={24} className="bg-blue-500 text-white p-1" />
-                                                          <span className="text-gray-600 text-[14px] font-light">share</span>
-                                                      </div>
-                                                  </FacebookShareButton>
-                                                  <WhatsappShareButton url={window.location.href} className="flex items-center">
-                                                      <div className="bg-gray-100 p-1 rounded-md items-end flex gap-1">
-                                                          <FaWhatsapp size={24} className="bg-green-500 text-white p-1" />
-                                                          <span className="text-gray-600 text-[14px] font-light">share</span>
-                                                      </div>
-                                                  </WhatsappShareButton>
-                                                  <InstapaperShareButton url={window.location.href} className="flex items-center">
-                                                      <div className="bg-gray-100 p-1 rounded-md items-end flex gap-1">
-                                                          <FaInstagram size={24} className="bg-rose-200 text-black p-1" />
-                                                          <span className="text-gray-600 text-[14px] font-light">share</span>
-                                                      </div>
-                                                  </InstapaperShareButton>
-                                                  <TwitterShareButton url={window.location.href} className="flex items-center">
-                                                      <div className="bg-gray-100 p-1 items-end rounded-md flex gap-1">
-                                                          <FaTwitter size={24} className="bg-gray-200 text-black p-1" />
-                                                          <span className="text-gray-600 text-[14px] font-light">share</span>
-                                                      </div>
-                                                  </TwitterShareButton>
-                                                  <button onClick={handleCopyLink} className="p-1 flex items-center gap-1 text-gray-600 text-[14px]">
-                                                      <MdContentCopy className="text-[17px] text-gray-500" /> Copy Link
-                                                  </button>
-                                              </div>
-                                          </div>
-                                      </div>
-                                  </div>
-                              )
-                          }
-                      </div>
-                      <div className="w-full md:w-1/3">
-                          <div className="flex gap-6 w-full items-center mb-2">
-                              <p
-                                  className={`font-medium text-[18px] cursor-pointer ${activeTab === 'details' ? 'text-primary border-b border-primary' : 'text-gray-600'
-                                      }`}
-                                  onClick={() => setActiveTab('details')}
-                              >
-                                  Details
-                              </p>
-                              <a href={`/stores/${discount?.shop_id}/view`} className="text-primary font-nromal text-[14px] flex items-center gap-1">View Store <FaLink /></a>
-                          </div>
-                          {activeTab === 'details' ? (
-                              <div className="">
-                                  <p className="font-light text-[14px] text-gray-600">
-                                      {discount?.description}
-                                  </p>
-                              </div>
-                          ) : (
-                              <></>
-                          )}
-                      </div>
+            {/* Description */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+              <h3 className="text-xl font-semibold mb-4">Description</h3>
+              <p className="text-gray-600 leading-relaxed">{offerData.description}</p>
+              
+              <div className="mt-6 pt-6 border-t">
+                <h4 className="font-semibold mb-3">Offer Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center text-gray-600">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    <span>{offerData.location}</span>
                   </div>
-                  <div className="w-full mt-4 rounded-md">
-                      <ReviewComponent reviewableType="discount" reviewableId={discounId} />
+                  <div className="flex items-center text-gray-600">
+                    <Tag className="w-4 h-4 mr-2" />
+                    <span>{offerData.platform}</span>
                   </div>
+                  <div className="flex items-center text-gray-600">
+                    <Users className="w-4 h-4 mr-2" />
+                    <span>{offerData.purchases}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <span>{offerData.offerDuration}</span>
+                  </div>
+                </div>
               </div>
+            </div>
           </div>
-      </div>
-  )
-}
 
-export default ViewOffer
+          {/* Right Column - Offer Details */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">{offerData.title}</h1>
+              
+              <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+                <span className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  {offerData.platform}
+                </span>
+                <span>{offerData.region}</span>
+                <span>{offerData.purchases}</span>
+              </div>
+
+              <p className="text-gray-600 mb-6">{offerData.description}</p>
+
+              {/* Pricing */}
+              <div className="mb-6">
+                <div className="flex items-center space-x-3">
+                  <span className="text-2xl font-bold text-red-500 line-through">
+                    {offerData.originalPrice}
+                  </span>
+                  <span className="text-3xl font-bold text-green-500">
+                    {offerData.offerPrice}
+                  </span>
+                </div>
+              </div>
+
+              {/* Offer Duration */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <div className="flex items-center text-blue-800">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span className="text-sm font-medium">{offerData.offerDuration}</span>
+                </div>
+              </div>
+
+              {/* Get Offer Button */}
+              <button className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 mb-4">
+                GET OFFER
+              </button>
+
+              {/* Urgency Message */}
+              <div className="text-center mb-4">
+                <p className="text-red-600 font-medium text-sm">{offerData.urgencyText}</p>
+                <div className="flex items-center justify-center text-gray-500 text-sm mt-2">
+                  <Clock className="w-4 h-4 mr-1" />
+                  <span>{offerData.expiryText}</span>
+                </div>
+              </div>
+
+              {/* Share Options */}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Share this offer:</span>
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="flex items-center text-blue-600 hover:text-blue-700 text-sm"
+                  >
+                    <Share2 className="w-4 h-4 mr-1" />
+                    Share
+                  </button>
+                </div>
+                
+                <div className="flex items-center justify-center space-x-3 mt-3">
+                  <button
+                    onClick={() => handleShare('facebook')}
+                    className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition duration-200"
+                  >
+                    <Facebook className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleShare('twitter')}
+                    className="w-10 h-10 bg-blue-400 text-white rounded-full flex items-center justify-center hover:bg-blue-500 transition duration-200"
+                  >
+                    <Twitter className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleShare('linkedin')}
+                    className="w-10 h-10 bg-blue-700 text-white rounded-full flex items-center justify-center hover:bg-blue-800 transition duration-200"
+                  >
+                    <Linkedin className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleShare('instagram')}
+                    className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-500 text-white rounded-full flex items-center justify-center hover:from-purple-700 hover:to-pink-600 transition duration-200"
+                  >
+                    <Instagram className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={handleCopyLink}
+                    className="w-10 h-10 bg-gray-600 text-white rounded-full flex items-center justify-center hover:bg-gray-700 transition duration-200"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                {copySuccess && (
+                  <p className="text-green-600 text-sm text-center mt-2">Link copied to clipboard!</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center">
+                  {renderStars(4)}
+                </div>
+                <span className="text-gray-600">({205 + userReviews.length} reviews)</span>
+              </div>
+              <button
+                onClick={() => setShowReviewForm(!showReviewForm)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-200"
+              >
+                Write Review
+              </button>
+            </div>
+          </div>
+
+          {/* Review Form */}
+          {showReviewForm && (
+            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
+              <form onSubmit={handleSubmitReview} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newReview.name}
+                    onChange={(e) => setNewReview({...newReview, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your name"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rating
+                  </label>
+                  <div className="flex items-center space-x-1">
+                    {renderInteractiveStars(newReview.rating, (rating) => 
+                      setNewReview({...newReview, rating})
+                    )}
+                    <span className="ml-2 text-sm text-gray-600">
+                      {newReview.rating > 0 ? `${newReview.rating} star${newReview.rating !== 1 ? 's' : ''}` : 'Select rating'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Review
+                  </label>
+                  <textarea
+                    value={newReview.comment}
+                    onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Share your experience..."
+                    required
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition duration-200"
+                  >
+                    Submit Review
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReviewForm(false);
+                      setNewReview({ name: '', rating: 0, comment: '' });
+                    }}
+                    className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Display user reviews first */}
+            {userReviews.map((review) => (
+              <div key={review.id} className="border border-gray-200 rounded-lg p-4 bg-blue-50">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-gray-900">{review.name}</h4>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">New</span>
+                    <span className="text-sm text-gray-500">{review.date}</span>
+                  </div>
+                </div>
+                <div className="flex items-center mb-2">
+                  {renderStars(review.rating)}
+                </div>
+                <p className="text-gray-600 text-sm">{review.comment}</p>
+              </div>
+            ))}
+            
+            {/* Display existing reviews */}
+            {reviews.map((review) => (
+              <div key={review.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-gray-900">{review.name}</h4>
+                  <span className="text-sm text-gray-500">{review.date}</span>
+                </div>
+                <div className="flex items-center mb-2">
+                  {renderStars(review.rating)}
+                </div>
+                <p className="text-gray-600 text-sm">{review.comment}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Related Offers Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Offers</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedOffers.map((offer) => (
+              <div key={offer.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition duration-200">
+                <img src={offer.image} alt={offer.title} className="w-full h-48 object-cover" />
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{offer.title}</h3>
+                  <div className="flex items-center mb-2">
+                    {renderStars(Math.floor(offer.rating))}
+                    <span className="text-sm text-gray-500 ml-2">({offer.rating})</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-lg font-bold text-green-500">{offer.price}</span>
+                    <span className="text-sm text-gray-500 line-through">{offer.originalPrice}</span>
+                  </div>
+                  <button className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition duration-200">
+                    View Offer
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Share this offer</h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-3">
+              <button
+                onClick={() => { handleShare('facebook'); setShowShareModal(false); }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50"
+              >
+                <Facebook className="w-5 h-5 text-blue-600" />
+                <span>Share on Facebook</span>
+              </button>
+              <button
+                onClick={() => { handleShare('twitter'); setShowShareModal(false); }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50"
+              >
+                <Twitter className="w-5 h-5 text-blue-400" />
+                <span>Share on Twitter</span>
+              </button>
+              <button
+                onClick={() => { handleShare('linkedin'); setShowShareModal(false); }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50"
+              >
+                <Linkedin className="w-5 h-5 text-blue-700" />
+                <span>Share on LinkedIn</span>
+              </button>
+              <button
+                onClick={() => { handleCopyLink(); setShowShareModal(false); }}
+                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50"
+              >
+                <Copy className="w-5 h-5 text-gray-600" />
+                <span>Copy Link</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Footer />
+    </div>
+  );
+};
+
+export default OffersPage;
