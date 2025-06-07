@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Tag, Gift, Store, MapPin, Settings, LogOut, Heart, Star, Users, DollarSign, Clock, CheckCircle, XCircle, ArrowRight, Copy, Wallet, TrendingUp } from 'lucide-react';
+import { User, Tag, Gift, Store, MapPin, Settings, LogOut, Heart, Star, Users, DollarSign, Clock, Copy, Wallet, TrendingUp } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 

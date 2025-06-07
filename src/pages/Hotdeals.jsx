@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, ShoppingCart, User, Star, Heart, Grid, List, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import {  Heart, Grid, List, ChevronLeft, ChevronRight,  X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
@@ -161,8 +161,8 @@ export default function Hotdeals() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-3">
             <div className="flex items-center space-x-8">
-              <a href="#" className="text-gray-600 hover:text-red-500">Home</a>
-              <a href="#" className="text-red-500 font-medium">Nairobi</a>
+              <a href='/Home' className="text-gray-600 hover:text-red-500">Home</a>
+              <a href='/Home' className="text-red-500 font-medium">Nairobi</a>
             </div>
             
             {/* Mobile Filter Button */}
