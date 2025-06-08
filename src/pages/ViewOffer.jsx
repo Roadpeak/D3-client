@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Share2, Copy, Facebook, Twitter, Instagram, Linkedin, Star, Clock, MapPin, Tag, Users, Calendar } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { Link } from 'react-router-dom';
 
 const OffersPage = () => {
   const [showShareModal, setShowShareModal] = useState(false);
@@ -124,7 +125,7 @@ const OffersPage = () => {
               <div className="relative">
                 <img 
                   src={offerData.images[selectedImage]} 
-                  alt="Main offer image"
+                  alt="Main offer "
                   className="w-full h-96 object-cover"
                 />
                 <div className="absolute top-4 left-4">
@@ -217,10 +218,13 @@ const OffersPage = () => {
                 </div>
               </div>
 
-              {/* Get Offer Button */}
-              <button className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 mb-4">
-                GET OFFER
-              </button>
+              <Link 
+             to="/Booking" 
+             className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 mb-4 inline-block text-center no-underline"
+              >
+             GET OFFER
+             </Link>
+
 
               {/* Urgency Message */}
               <div className="text-center mb-4">
