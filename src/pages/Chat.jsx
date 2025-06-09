@@ -8,7 +8,6 @@ const StoreChatInterface = () => {
   const [selectedStore, setSelectedStore] = useState(null);
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showSidebar, setShowSidebar] = useState(true);
   const messagesEndRef = useRef(null);
 
   // Sample stores data
@@ -94,6 +93,14 @@ const StoreChatInterface = () => {
     }
   ] : [];
 
+  const handleStoreSelect = (store) => {
+    setSelectedStore(store);
+  };
+
+  const handleBackToSidebar = () => {
+    setSelectedStore(null);
+  };
+
   const filteredStores = stores.filter(store =>
     store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     store.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -130,7 +137,13 @@ const StoreChatInterface = () => {
 
         <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ height: '600px' }}>
           <div className="flex h-full">
-            <div className={`${showSidebar ? 'w-full md:w-80' : 'w-0'} ${selectedStore && !showSidebar ? 'hidden md:flex' : 'flex'} md:flex flex-col bg-white border-r border-gray-200 transition-all duration-300`}>
+            {/* Sidebar - Hidden on mobile when chat is selected */}
+            <div className={`${
+              selectedStore 
+                ? 'hidden md:flex' 
+                : 'flex'
+            } w-full md:w-80 flex-col bg-white border-r border-gray-200`}>
+              {/* Search Header */}
               <div className="p-4 border-b border-gray-200 bg-gray-50">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -144,14 +157,12 @@ const StoreChatInterface = () => {
                 </div>
               </div>
 
+              {/* Store List */}
               <div className="flex-1 overflow-y-auto">
                 {filteredStores.map((store) => (
                   <div
                     key={store.id}
-                    onClick={() => {
-                      setSelectedStore(store);
-                      setShowSidebar(false);
-                    }}
+                    onClick={() => handleStoreSelect(store)}
                     className={`flex items-center p-4 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 ${
                       selectedStore?.id === store.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
                     }`}
@@ -189,16 +200,23 @@ const StoreChatInterface = () => {
               </div>
             </div>
 
-            <div className={`flex-1 flex flex-col ${!selectedStore ? 'hidden md:flex' : 'flex'}`}>
+            {/* Chat Area */}
+            <div className={`${
+              selectedStore 
+                ? 'flex w-full' 
+                : 'hidden md:flex md:flex-1'
+            } flex-col`}>
               {selectedStore ? (
                 <>
+                  {/* Chat Header */}
                   <div className="bg-white p-4 border-b border-gray-200 flex items-center justify-between">
                     <div className="flex items-center">
+                      {/* Back button - Only visible on mobile */}
                       <button
-                        onClick={() => setShowSidebar(true)}
-                        className="md:hidden mr-3 p-1 hover:bg-gray-100 rounded-lg"
+                        onClick={handleBackToSidebar}
+                        className="md:hidden mr-3 p-1 hover:bg-gray-100 rounded-lg transition-colors"
                       >
-                        <ArrowLeft className="w-5 h-5" />
+                        <ArrowLeft className="w-5 h-5 text-gray-600" />
                       </button>
                       <img
                         src={selectedStore.avatar}
@@ -225,7 +243,8 @@ const StoreChatInterface = () => {
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" style={{ height: '400px' }}>
+                  {/* Messages Area */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                     {messages.map((msg) => (
                       <div
                         key={msg.id}
@@ -260,6 +279,7 @@ const StoreChatInterface = () => {
                     <div ref={messagesEndRef} />
                   </div>
 
+                  {/* Message Input */}
                   <div className="bg-white p-4 border-t border-gray-200">
                     <div className="flex items-end space-x-2">
                       <div className="flex-1 relative">
@@ -283,6 +303,7 @@ const StoreChatInterface = () => {
                   </div>
                 </>
               ) : (
+                /* Welcome Screen - Only visible on desktop when no chat selected */
                 <div className="flex-1 flex items-center justify-center bg-gray-50">
                   <div className="text-center">
                     <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
