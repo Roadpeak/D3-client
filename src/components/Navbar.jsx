@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 // Custom SVG Icons
 const Search = ({ className }) => (
@@ -314,11 +315,11 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-            <a href="../" className="text-gray-700 hover:text-red-600">Home</a>
-           <a href="../Hotdeals" className="text-gray-700 hover:text-red-600">Hot Deals</a>
-           <a href="../Stores" className="text-gray-700 hover:text-red-600">Stores</a>
-           <a href="../Requestservice" className="text-gray-700 hover:text-red-600">Request Service</a>
-           <a href="../chat" className="text-gray-700 hover:text-red-600">chat</a>
+            <Link to="/" className="text-gray-700 hover:text-red-600">Home</Link>
+            <Link to="/hotdeals" className="text-gray-700 hover:text-red-600">Hot Deals</Link>
+            <Link to="/stores" className="text-gray-700 hover:text-red-600">Stores</Link>
+            <Link to="/requestservice" className="text-gray-700 hover:text-red-600">Request Service</Link>
+            <Link to="/chat" className="text-gray-700 hover:text-red-600">Chat</Link>
           </nav>
           
           <div className="flex-1 max-w-2xl mx-8">
@@ -372,26 +373,26 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
-              <a href="../" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
+              <Link to="/" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
                 <HomeIcon className="w-4 h-4" />
                 <span>Home</span>
-              </a>
-              <a href="../Hotdeals" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
+              </Link>
+              <Link to="/hotdeals" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
                 <FireIcon className="w-4 h-4" />
                 <span>Hot Deals</span>
-              </a>
-              <a href="../Stores" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
+              </Link>
+              <Link to="/stores" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
                 <StoreIcon className="w-4 h-4" />
                 <span>Stores</span>
-              </a>
-              <a href="../Requestservice" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
+              </Link>
+              <Link to="/requestservice" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
                 <ServiceIcon className="w-4 h-4" />
                 <span>Request Service</span>
-              </a>
-              <a href="../chat" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
+              </Link>
+              <Link to="/chat" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
                 <ChatIcon className="w-4 h-4" />
                 <span>Chat</span>
-              </a>
+              </Link>
             </nav>
           </div>
         )}

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { ChevronDown, MapPin, Star, Grid3X3, List } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Add this import
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const Stores = () => {
-  const navigate = useNavigate(); // Add this hook
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Popular');
   const [selectedLocation, setSelectedLocation] = useState('All Locations');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
 
   const categories = [
     'All',
@@ -210,7 +210,6 @@ const Stores = () => {
     return categoryMatch && locationMatch;
   });
 
-  // Handle store click navigation
   const handleStoreClick = (store) => {
     navigate('/ViewStore', { state: { store } });
   };
@@ -218,35 +217,72 @@ const Stores = () => {
   const StoreCard = ({ store, isListView = false }) => (
     <div 
       className={`bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group ${
-        isListView ? 'p-4' : 'p-6'
+        isListView ? 'p-4' : 'p-4 md:p-6'
       }`}
-      onClick={() => handleStoreClick(store)} // Add click handler
+      onClick={() => handleStoreClick(store)}
     >
-      <div className={`flex items-start ${isListView ? 'justify-between' : 'justify-between mb-4'}`}>
-        <div className={`flex items-center ${isListView ? 'space-x-3' : 'space-x-4'}`}>
-          <div className="relative">
-            <img 
-              src={store.logo} 
-              alt={`${store.name} logo`}
-              className={`${isListView ? 'w-10 h-10' : 'w-12 h-12'} rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg`}
-            />
+      {isListView ? (
+        // List view layout
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <img 
+                src={store.logo} 
+                alt={`${store.name} logo`}
+                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
+              />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 text-base">{store.name}</h3>
+              <div className="flex items-center space-x-1 mt-1">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="text-sm text-gray-600 font-medium">{store.rating}</span>
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className={`font-semibold text-gray-900 ${isListView ? 'text-base' : 'text-lg'}`}>{store.name}</h3>
-            <div className="flex items-center space-x-1 mt-1">
+          <div className="text-right">
+            <div className="text-red-500 font-bold text-lg">{store.cashback}</div>
+            <div className="text-gray-500 text-sm font-medium">Cashback</div>
+            {store.wasRate && (
+              <div className="text-gray-400 text-sm mt-1">{store.wasRate}</div>
+            )}
+          </div>
+        </div>
+      ) : (
+        // Grid view layout - improved for mobile
+        <div className="flex flex-col h-full">
+          {/* Header with logo and cashback */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="relative flex-shrink-0">
+                <img 
+                  src={store.logo} 
+                  alt={`${store.name} logo`}
+                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-gray-900 text-sm md:text-base leading-tight truncate">{store.name}</h3>
+              </div>
+            </div>
+            <div className="text-right flex-shrink-0 ml-2">
+              <div className="text-red-500 font-bold text-lg md:text-xl">{store.cashback}</div>
+              <div className="text-gray-500 text-xs md:text-sm font-medium">Cashback</div>
+            </div>
+          </div>
+          
+          {/* Rating and was rate */}
+          <div className="flex items-center justify-between mt-auto">
+            <div className="flex items-center space-x-1">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
               <span className="text-sm text-gray-600 font-medium">{store.rating}</span>
             </div>
+            {store.wasRate && (
+              <div className="text-gray-400 text-xs">{store.wasRate}</div>
+            )}
           </div>
         </div>
-        <div className={`text-right ${isListView ? '' : ''}`}>
-          <div className={`text-red-500 font-bold ${isListView ? 'text-lg' : 'text-xl'}`}>{store.cashback}</div>
-          <div className="text-gray-500 text-sm font-medium">Cashback</div>
-          {store.wasRate && (
-            <div className="text-gray-400 text-sm mt-1">{store.wasRate}</div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 
@@ -363,11 +399,7 @@ const Stores = () => {
             ))}
           </div>
         ) : (
-          <div className={`grid gap-6 ${
-            viewMode === 'grid' && window.innerWidth < 768 
-              ? 'grid-cols-2' 
-              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-          }`}>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filteredStores.map((store, index) => (
               <StoreCard key={index} store={store} />
             ))}
