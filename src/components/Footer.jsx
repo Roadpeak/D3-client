@@ -4,64 +4,12 @@ const Footer = () => {
   return (
     <footer className="bg-white py-16 px-4 border-t">
       <div className="max-w-6xl mx-auto">
-        {/* Top Footer */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12"> */}
-          {/* Customer Support */}
-          {/* <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-              <span>💬</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2">24/7 Customer Support</h3>
-              <p className="text-gray-600 text-sm mb-2">Start live Chat how with us, we can Live Chat or Live Chat</p>
-              <a href="#" className="text-red-500 text-sm">📞 Start Live Chat</a>
-            </div>
-          </div> */}
-
-          {/* Contact Us */}
-          {/* <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-              <span>✉️</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2">Contact Us</h3>
-              <p className="text-gray-600 text-sm mb-1">Email: support@daily.com</p>
-              <p className="text-gray-600 text-sm mb-1">Phone: 0401 271 3365</p>
-              <p className="text-gray-600 text-sm">0401 271 3365</p>
-            </div>
-          </div> */}
-
-          {/* Verified Deals */}
-          {/* <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-              <span>✅</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2">Verified Deals</h3>
-              <p className="text-gray-600 text-sm mb-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
-              <a href="#" className="text-red-500 text-sm">Know More</a>
-            </div>
-          </div> */}
-
-          {/* Premium Gift Cards */}
-          {/* <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-              <span>🎁</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2">Premium Gift Cards</h3>
-              <p className="text-gray-600 text-sm mb-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
-              <a href="#" className="text-red-500 text-sm">Know More</a>
-            </div>
-          </div>
-        </div> */}
-
-        {/* Bottom Footer */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pt-8 border-t">
+        {/* Bottom Footer - Modified for mobile 2x2 grid */}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-8 border-t">
           {/* Our Location */}
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-4">Our Location</h3>
-            <div className="space-y-2 text-sm text-gray-600">
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-800 mb-4 text-sm md:text-base">Our Location</h3>
+            <div className="space-y-2 text-xs md:text-sm text-gray-600">
               <p>📍 2307 Beverley Rd Brooklyn,</p>
               <p>Brooklyn, NY 11226</p>
               <p>📧 support@daily.com</p>
@@ -71,9 +19,9 @@ const Footer = () => {
           </div>
 
           {/* ListZilla */}
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-4">ListZilla</h3>
-            <div className="space-y-2 text-sm text-gray-600">
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-800 mb-4 text-sm md:text-base">ListZilla</h3>
+            <div className="space-y-2 text-xs md:text-sm text-gray-600">
               <p>📧 Contact us</p>
               <p>📝 Feedback</p>
               <p> FAQ</p>
@@ -84,15 +32,15 @@ const Footer = () => {
           </div>
 
           {/* Business */}
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-4">Business</h3>
-            <div className="space-y-2 text-sm text-gray-600">
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-800 mb-4 text-sm md:text-base">Business</h3>
+            <div className="space-y-2 text-xs md:text-sm text-gray-600">
               <p>➕ Add your business</p>
               <p>📢 Advertise with us</p>
             </div>
             
-            <h4 className="font-semibold text-gray-800 mb-2 mt-6">Quick links</h4>
-            <div className="space-y-2 text-sm text-gray-600">
+            <h4 className="font-semibold text-gray-800 mb-2 mt-4 md:mt-6 text-sm md:text-base">Quick links</h4>
+            <div className="space-y-2 text-xs md:text-sm text-gray-600">
               <p>🏢 Browse Company</p>
               <p>🔍 Browse Directory</p>
               <p>🔐 Login to your account</p>
@@ -100,23 +48,23 @@ const Footer = () => {
           </div>
 
           {/* Follow Us & Newsletter */}
-          <div>
-            <h3 className="font-semibold text-gray-800 mb-4">Follow Us</h3>
-            <div className="flex gap-2 mb-6">
-              <span className="w-8 h-8 bg-blue-600 rounded text-white flex items-center justify-center text-sm">f</span>
-              <span className="w-8 h-8 bg-blue-400 rounded text-white flex items-center justify-center text-sm">t</span>
-              <span className="w-8 h-8 bg-pink-500 rounded text-white flex items-center justify-center text-sm">i</span>
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-800 mb-4 text-sm md:text-base">Follow Us</h3>
+            <div className="flex gap-2 mb-4 md:mb-6">
+              <span className="w-6 h-6 md:w-8 md:h-8 bg-blue-600 rounded text-white flex items-center justify-center text-xs md:text-sm">f</span>
+              <span className="w-6 h-6 md:w-8 md:h-8 bg-blue-400 rounded text-white flex items-center justify-center text-xs md:text-sm">t</span>
+              <span className="w-6 h-6 md:w-8 md:h-8 bg-pink-500 rounded text-white flex items-center justify-center text-xs md:text-sm">i</span>
             </div>
             
-            <h4 className="font-semibold text-gray-800 mb-4">Subscribe to Newsletter</h4>
-            <div className="flex">
+            <h4 className="font-semibold text-gray-800 mb-3 md:mb-4 text-sm md:text-base">Subscribe to Newsletter</h4>
+            <div className="flex flex-col md:flex-row gap-2 md:gap-0">
               <input
                 type="email"
                 placeholder="Enter Email"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l text-sm"
+                className="flex-1 px-2 md:px-3 py-2 border border-gray-300 rounded md:rounded-l md:rounded-r-none text-xs md:text-sm"
               />
-              <button className="bg-red-500 text-white px-4 py-2 rounded-r hover:bg-red-600 transition-colors">
-                
+              <button className="bg-red-500 text-white px-3 md:px-4 py-2 rounded md:rounded-r md:rounded-l-none hover:bg-red-600 transition-colors text-xs md:text-sm">
+                Subscribe
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-2">
@@ -126,8 +74,8 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="text-center pt-8 border-t mt-8">
-          <p className="text-sm text-gray-500">
+        <div className="text-center pt-6 md:pt-8 border-t mt-6 md:mt-8">
+          <p className="text-xs md:text-sm text-gray-500">
             Copyright © 2025, D3. All rights reserved.
           </p>
         </div>
