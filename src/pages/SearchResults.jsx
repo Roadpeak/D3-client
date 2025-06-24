@@ -26,7 +26,7 @@ const SearchResults = () => {
     const fetchSearchResults = async (query) => {
         try {
             setLoading(true);
-            const response = await axios.get(`https://api.discoun3ree.com/api/search?query=${query}`);
+            const response = await axios.get(`http://localhost:4000/api/v1/search?query=${query}`);
             setDiscounts(response.data.discounts);
             setStores(response.data.shops);
         } catch (error) {

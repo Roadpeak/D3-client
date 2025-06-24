@@ -1,479 +1,315 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 
+const Heart = ({ className, filled = false }) => (
+  <svg className={className} fill={filled ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+  </svg>
+);
+
 const PopularStores = () => {
-  return (
-    <>
-      {/* Statistics Section */}
-      <div className="bg-white py-16 px-4">
-  <div className="max-w-6xl mx-auto">
-    <div className="text-center mb-12">
-      <h2 className="text-4xl font-bold text-gray-800 mb-2">Travel with D3</h2>
-      <p className="text-gray-500 text-lg">Here Comes Summer</p>
-    </div>
-    
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-      {/* Hotels.com */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div className="h-32 bg-gradient-to-br from-orange-100 to-orange-200 relative">
-          <img 
-            src="/images/ori.jpg" 
-            alt="Hotels.com" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-2 left-2 bg-white rounded-full p-1">
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">OE</span>
-            </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-800 mb-2">ORIBI Expeditions</h3>
-          <p className="text-red-500 text-sm font-medium">Up to 30% Off</p>
-        </div>
-      </div>
+  const [stores, setStores] = useState({ travel: [], food: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [favorites, setFavorites] = useState(new Set());
 
-      {/* Flight Centre AU */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div className="h-32 bg-gradient-to-br from-blue-100 to-blue-200 relative">
-          <img 
-            src="/images/bn.gif" 
-            alt="Flight Centre AU" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-2 left-2 bg-white rounded-full p-1">
-            <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">BA</span>
-            </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-800 mb-2">Bonfire adventure</h3>
-          <p className="text-red-500 text-sm font-medium">10% Cashback</p>
-        </div>
-      </div>
-
-      {/* HopeGoo */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div className="h-32 bg-gradient-to-br from-green-100 to-green-200 relative">
-          <img 
-            src="/images/safr.jpg" 
-            alt="HopeGoo" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-2 left-2 bg-white rounded-full p-1">
-            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">kts</span>
-            </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-800 mb-2">Kts Safari</h3>
-          <p className="text-red-500 text-sm font-medium">25% Discounts</p>
-        </div>
-      </div>
-
-      {/* IHG Hotels & Resorts */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div className="h-32 bg-gradient-to-br from-amber-100 to-amber-200 relative">
-          <img 
-            src="/images/sna.jpg" 
-            alt="IHG Hotels & Resorts" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-2 left-2 bg-white rounded-full p-1">
-            <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">tns</span>
-            </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-800 mb-2">Twende na snap</h3>
-          <p className="text-red-500 text-sm font-medium">30% Off</p>
-        </div>
-      </div>
-
-      {/* Expedia */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-        <div className="h-32 bg-gradient-to-br from-blue-100 to-cyan-200 relative">
-          <img 
-            src="/images/safr.jpg" 
-            alt="Expedia" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-2 left-2 bg-white rounded-full p-1">
-            <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">E</span>
-            </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-800 mb-2">Expedia</h3>
-          <p className="text-red-500 text-sm font-medium">Up to 50% Off</p>
-        </div>
-      </div>
-    </div>
-
-    {/* Navigation Arrow */}
-    <div className="flex justify-end mt-6">
-      <button className="bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition-colors">
-        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </div>
-  </div>
-</div>
-
-      {/* Brands Section */}
-      <div className="bg-gray-50 py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-gray-500 mb-2">Find your favorite store</p>
-            <h2 className="text-3xl font-bold text-gray-800">POPULAR STORES</h2>
-          </div>
-
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar Categories */}
-            <div className="lg:w-1/4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2 border-b border-red-200">
-                  <span className="text-gray-700">Food</span>
-                  <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">NEW</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-gray-700">Travel</span>
-                  <span className="text-gray-400 text-sm">(32)</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-gray-700">Flight Tickets</span>
-                  <span className="text-gray-400 text-sm">(14)</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-gray-700">Real Estate</span>
-                  <span className="text-gray-400 text-sm">(40)</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-gray-700">Fashion</span>
-                  <span className="text-gray-400 text-sm">(15)</span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-gray-700">Electronics</span>
-                  <span className="text-gray-400 text-sm">(26)</span>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-700">All Brands</span>
-                  <span className="text-red-500">↗</span>
-                </div>
-              </div>
-            </div>
-
-           {/* Store Cards */}
-           <div className="lg:w-3/4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Salad Bay */}
-                <div className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg flex-shrink-0">
-                        <span className="text-white font-bold text-sm">SB</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base">Salad Bay</h3>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-gray-600 font-medium">4.2</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-red-500 font-bold text-lg">25%</div>
-                      <div className="text-gray-500 text-xs font-medium">Cashback</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Coffee Cafe */}
-                <div className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg flex-shrink-0">
-                        <span className="text-white font-bold text-sm">CC</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base">Coffee Cafe</h3>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-gray-600 font-medium">4.5</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-red-500 font-bold text-lg">15%</div>
-                      <div className="text-gray-500 text-xs font-medium">Cashback</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Kare */}
-                <div className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg flex-shrink-0">
-                        <span className="text-white font-bold text-sm">K</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base">Kare</h3>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-gray-600 font-medium">4.8</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-red-500 font-bold text-lg">53%</div>
-                      <div className="text-gray-500 text-xs font-medium">Cashback</div>
-                      <div className="text-gray-400 text-xs mt-1">Was 1%</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Burger Express */}
-                <div className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg flex-shrink-0">
-                        <span className="text-white font-bold text-sm">B</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base">Burger Express</h3>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-gray-600 font-medium">4.3</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-red-500 font-bold text-lg">$5</div>
-                      <div className="text-gray-500 text-xs font-medium">Cashback</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pizza Palace */}
-                <div className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg flex-shrink-0">
-                        <span className="text-white font-bold text-sm">PP</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base">Pizza Palace</h3>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-gray-600 font-medium">4.6</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-red-500 font-bold text-lg">20%</div>
-                      <div className="text-gray-500 text-xs font-medium">Cashback</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Thai Delight */}
-                <div className="bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg flex-shrink-0">
-                        <span className="text-white font-bold text-sm">TD</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 text-base">Thai Delight</h3>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm text-gray-600 font-medium">4.7</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-red-500 font-bold text-lg">35%</div>
-                      <div className="text-gray-500 text-xs font-medium">Cashback</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* View All Stores Button */}
-              <div className="flex justify-center mt-8">
-                <button className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full font-semibold transition-colors duration-300 flex items-center gap-2">
-                  View All Stores
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* App Download Section */}
-      <div className="bg-gradient-to-r from-blue-200 to-purple-200 py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-gray-600 mb-2">Download App from</p>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">GET MORE ON YOUR APP</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto mb-8">
-              Lorem ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and 
-              scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, 
-              remaining essentially unchanged.
-            </p>
-            
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <button className="bg-black text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors">
-                <span>▶</span>
-                Get it on Google Play
-              </button>
-              <button className="bg-black text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors">
-                <span>🍎</span>
-                Get it on Windows
-              </button>
-              <button className="bg-black text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors">
-                <span>🍎</span>
-                Get it on Apple Store
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-col lg:flex-row items-center gap-12">
-            {/* Left Features */}
-            <div className="lg:w-1/3 space-y-8">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white">📋</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Largest Listing</h3>
-                  <p className="text-gray-600 text-sm">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white">🛒</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Maximum Savings</h3>
-                  <p className="text-gray-600 text-sm">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white">⭐</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Premium Offers</h3>
-                  <p className="text-gray-600 text-sm">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Center Phone */}
-            <div className="lg:w-1/3 flex justify-center">
-              <div className="relative">
-                <div className="w-64 h-96 bg-black rounded-3xl p-4">
-                  <div className="w-full h-full bg-gradient-to-b from-purple-600 to-pink-600 rounded-2xl flex flex-col items-center justify-center text-white p-6">
-                    <div className="mb-4">
-                      <span className="text-2xl">📱</span>
-                    </div>
-                    <h3 className="text-lg font-bold mb-2">Daily</h3>
-                    <div className="bg-yellow-400 text-black px-4 py-2 rounded-full font-bold mb-4">
-                      SAVE BIG
-                    </div>
-                    <div className="text-center text-sm">
-                      <p>TRAVEL</p>
-                      <p>FOOD</p>
-                      <p>REAL ESTATE</p>
-                      <p>FLIGHT BOOKING</p>
-                      <p>HOTEL BOOKING</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Features */}
-            <div className="lg:w-1/3 space-y-8">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white">👍</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Verified Products</h3>
-                  <p className="text-gray-600 text-sm">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-green-400 rounded-lg flex items-center justify-center">
-                  <span className="text-white">🛍️</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Value Products</h3>
-                  <p className="text-gray-600 text-sm">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white">💎</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Sale Listings</h3>
-                  <p className="text-gray-600 text-sm">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Statistics Banner */}
-      <div className="bg-gradient-to-r from-blue-100 to-purple-100 py-16 px-4 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="flex flex-wrap justify-center items-center gap-4 mb-8">
-            <span className="text-4xl">🛒</span>
-            <span className="text-4xl">📱</span>
-            <span className="text-4xl">💳</span>
-            <span className="text-4xl">🎁</span>
-          </div>
-          
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">
-            Over <span className="text-red-500">1,51,000</span> Lists Worldwide. Get <span className="text-red-500">$95,00,000</span> worth Coupons Savings
-          </h2>
-          
-          <p className="text-gray-600 mb-8">The Greatest Library of Verified Lists</p>
-          
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-full font-semibold transition-colors">
-              Add a Listing ⚪
-            </button>
-            <button className="bg-yellow-400 hover:bg-yellow-500 text-black px-8 py-3 rounded-full font-semibold transition-colors">
-              Search For a Coupon ⚪
-            </button>
-          </div>
-        </div>
+  // Fetch stores from backend
+  useEffect(() => {
+    const fetchPopularStores = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/v1/stores?limit=8');
+        const data = await response.json();
         
-        {/* Decorative Elements */}
-        <div className="absolute top-10 left-10 text-4xl opacity-20">🛒</div>
-        <div className="absolute top-20 right-10 text-4xl opacity-20">📱</div>
-        <div className="absolute bottom-10 left-20 text-4xl opacity-20">💳</div>
-        <div className="absolute bottom-20 right-20 text-4xl opacity-20">🎁</div>
+        if (data.success) {
+          // Use the grouped stores from backend or all stores if not grouped
+          const storeData = data.data.stores || { travel: [], food: [] };
+          
+          // If backend returns allStores but not grouped, we'll group them manually
+          if (data.data.allStores && (!storeData.travel?.length && !storeData.food?.length)) {
+            const groupedStores = {
+              travel: data.data.allStores.filter(store => store.category?.toLowerCase().includes('travel') || store.categoryId === 2),
+              food: data.data.allStores.filter(store => store.category?.toLowerCase().includes('food') || store.categoryId === 1)
+            };
+            setStores(groupedStores);
+          } else {
+            setStores(storeData);
+          }
+        } else {
+          setError(data.message || 'Failed to fetch stores');
+        }
+      } catch (err) {
+        setError('Network error: ' + err.message);
+        console.error('Error fetching stores:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPopularStores();
+  }, []);
+
+  // Handle store click - navigate to store details
+  const handleStoreClick = (storeId) => {
+    // For React Router users: navigate(`/stores/${storeId}`);
+    // For regular navigation:
+    window.location.href = `/stores/${storeId}`;
+  };
+
+  // Handle view all stores
+  const handleViewAllStores = () => {
+    // For React Router users: navigate('/stores');
+    // For regular navigation:
+    window.location.href = '/stores';
+  };
+
+  // Toggle favorite
+  const toggleFavorite = (storeId, event) => {
+    event.stopPropagation();
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(storeId)) {
+        newFavorites.delete(storeId);
+      } else {
+        newFavorites.add(storeId);
+      }
+      return newFavorites;
+    });
+  };
+
+  // Get tag color based on tag type
+  const getTagColor = (tag) => {
+    switch (tag?.toLowerCase()) {
+      case 'hot deal':
+        return 'bg-red-500';
+      case 'cashback':
+        return 'bg-orange-500';
+      case 'bestseller':
+        return 'bg-green-500';
+      case 'premium':
+        return 'bg-purple-500';
+      case 'healthy':
+        return 'bg-green-600';
+      case 'popular':
+        return 'bg-blue-500';
+      case 'trending':
+        return 'bg-pink-500';
+      case 'featured':
+        return 'bg-indigo-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  // Generate logo from store name
+  const generateLogo = (name) => {
+    if (!name) return 'ST';
+    const words = name.split(' ');
+    if (words.length >= 2) {
+      return words[0][0] + words[1][0];
+    }
+    return name.substring(0, 2);
+  };
+
+  // Get logo color based on store name or category
+  const getLogoColor = (store) => {
+    if (store.logoColor) return store.logoColor;
+    
+    const colors = [
+      'bg-orange-500', 'bg-red-500', 'bg-green-500', 'bg-purple-600',
+      'bg-blue-500', 'bg-pink-500', 'bg-indigo-500', 'bg-yellow-500'
+    ];
+    
+    // Use store ID or name to consistently assign color
+    const index = (store.id || store.name?.length || 0) % colors.length;
+    return colors[index];
+  };
+
+  const renderStoreCard = (store) => (
+    <div 
+      key={store.id} 
+      className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+      onClick={() => handleStoreClick(store.id)}
+    >
+      <div className="relative">
+        <img 
+          src={store.image || '/images/placeholder-store.png'} 
+          alt={store.name} 
+          className="w-full h-48 object-cover"
+          onError={(e) => {
+            e.target.src = '/images/placeholder-store.png';
+          }}
+        />
+        {store.tag && (
+          <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-bold text-white ${getTagColor(store.tag)}`}>
+            {store.tag}
+          </div>
+        )}
+        <button 
+          className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-sm hover:bg-gray-50 transition-colors"
+          onClick={(e) => toggleFavorite(store.id, e)}
+        >
+          <Heart 
+            className={`w-4 h-4 ${favorites.has(store.id) ? 'text-red-500' : 'text-gray-400'}`}
+            filled={favorites.has(store.id)}
+          />
+        </button>
+        <div className="absolute bottom-3 right-3 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-bold text-red-600">
+          {store.discount} OFF
+        </div>
+        <div className={`absolute bottom-3 left-3 ${getLogoColor(store)} rounded-full p-2 shadow-lg`}>
+          <span className="text-white font-bold text-xs">
+            {store.logo || generateLogo(store.name)}
+          </span>
+        </div>
       </div>
-    </>
+      <div className="p-4">
+        <h3 className="font-semibold mb-1 text-sm hover:text-red-600 transition-colors">
+          {store.name}
+        </h3>
+        <p className="text-xs text-gray-600 mb-2">{store.category}</p>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-1">
+            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+            <span className="text-sm font-medium">{store.rating || 'N/A'}</span>
+            <span className="text-xs text-gray-500">({store.reviews || 0})</span>
+          </div>
+          <div className="text-red-500 text-xs font-semibold">
+            {store.offer}
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="text-green-600 font-bold text-sm">
+            {store.activeDealsCount ? `${store.activeDealsCount} Active Deals` : 'Active Deals Available'}
+          </div>
+          <button 
+            className="bg-red-500 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-red-600 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStoreClick(store.id);
+            }}
+          >
+            Visit Store
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Loading state
+  if (loading) {
+    return (
+      <section className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6">TOP RATED STORES</h2>
+        
+        {/* Travel Stores Skeleton */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">Travel & Adventure</h3>
+          <div className="grid md:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, index) => (
+              <div key={`travel-skeleton-${index}`} className="bg-gray-200 rounded-lg h-80 animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+
+        {/* Food Stores Skeleton */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">Food & Restaurants</h3>
+          <div className="grid md:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, index) => (
+              <div key={`food-skeleton-${index}`} className="bg-gray-200 rounded-lg h-80 animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <section className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6">TOP RATED STORES</h2>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p>Error loading stores: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Retry
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // Calculate total stores
+  const totalStores = stores.travel.length + stores.food.length;
+
+  // Empty state
+  if (totalStores === 0) {
+    return (
+      <section className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6">TOP RATED STORES</h2>
+        <div className="text-center py-12">
+          <p className="text-gray-500 mb-4">No stores available at the moment.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600"
+          >
+            Refresh
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">TOP RATED STORES</h2>
+        <span className="text-sm text-gray-500">{totalStores} stores available</span>
+      </div>
+
+      {/* Travel Stores Row */}
+      {stores.travel.length > 0 && (
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-700">Travel & Adventure</h3>
+            <span className="text-sm text-gray-500">{stores.travel.length} stores</span>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {stores.travel.slice(0, 4).map((store) => renderStoreCard(store))}
+          </div>
+        </div>
+      )}
+
+      {/* Food Stores Row */}
+      {stores.food.length > 0 && (
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-700">Food & Restaurants</h3>
+            <span className="text-sm text-gray-500">{stores.food.length} stores</span>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {stores.food.slice(0, 4).map((store) => renderStoreCard(store))}
+          </div>
+        </div>
+      )}
+
+      {/* View All Stores Button */}
+      <div className="flex justify-center mt-8">
+        <button 
+          onClick={handleViewAllStores}
+          className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+        >
+          View All Stores
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </button>
+      </div>
+    </section>
   );
 };
 

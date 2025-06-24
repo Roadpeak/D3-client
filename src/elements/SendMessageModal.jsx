@@ -6,7 +6,7 @@ import { getCookie } from '../utils/cookieUtils';
 
 const SendMessageModal = ({ isOpen, onClose, sellerId }) => {
     const [newMessage, setNewMessage] = useState('');
-    const [attachment, setAttachment] = useState (null);
+    const [attachment, setAttachment] = useState(null);
     const navigate = useNavigate();
 
     const sendMessage = async () => {
@@ -24,7 +24,7 @@ const SendMessageModal = ({ isOpen, onClose, sellerId }) => {
         const accessToken = getCookie('access_token');
 
         try {
-            const response = await axios.post('https://api.discoun3ree.com/api/messages/send', formData, {
+            const response = await axios.post('http://localhost:4000/api/v1/messages/send', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${accessToken}`,

@@ -10,9 +10,9 @@ import { getCookie } from '../utils/cookieUtils';
 import toast from 'react-hot-toast';
 
 const Calendar = ({ serviceId, shopId }) => {
-    const [startDate, setStartDate] = useState (null);
+    const [startDate, setStartDate] = useState(null);
     const [endDate, setEndDate] = useState(null);
-    const [slots, setSlots] = useState ([]);
+    const [slots, setSlots] = useState([]);
     const [error, setError] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ const Calendar = ({ serviceId, shopId }) => {
             const fetchSlots = async () => {
                 try {
                     const response = await axios.get(
-                        `https://api.discoun3ree.com/api/shops/${shopId}/services/${serviceId}/available-slots`,
+                        `http://localhost:4000/api/v1/shops/${shopId}/services/${serviceId}/available-slots`,
                         { params: { start_date: format(startDate, 'yyyy-MM-dd'), end_date: format(endDate, 'yyyy-MM-dd') } }
                     );
                     setSlots(response.data);
@@ -61,7 +61,7 @@ const Calendar = ({ serviceId, shopId }) => {
             const token = getCookie('access_token')
             try {
                 await axios.post(
-                    'https://api.discoun3ree.com/api/appointments',
+                    'http://localhost:4000/api/v1/appointments',
                     {
                         service_id: serviceId,
                         appointment_time: appointmentDateTimeStart,

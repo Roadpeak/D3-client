@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { ChevronDown, MapPin, Star, Grid3X3, List } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, MapPin, Star, Grid3X3, List, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ApiService from '../services/storeService';
 
 const Stores = () => {
   const navigate = useNavigate();
@@ -12,206 +13,99 @@ const Stores = () => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
-
-  const categories = [
-    'All',
-    'Fashion & Clothing',
-    'Beauty',
-    'Electronics',
-    'Handbags & Wallets',
-    'Kids & Babies',
-    'Shoes',
-    'Home',
-    'Jewelry & Watches'
-  ];
-
-  const locations = [
-    'All Locations',
-    'Westlands',
-    'Kilimani',
-    'CBD',
-    'Roysambu',
-    'Karen',
-    'Utawala'
-  ];
+  
+  // API state
+  const [stores, setStores] = useState([]);
+  const [categories, setCategories] = useState(['All']);
+  const [locations, setLocations] = useState(['All Locations']);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const sortOptions = ['Popular', 'Highest Cashback', 'Lowest Cashback', 'A-Z', 'Z-A'];
 
-  const stores = [
-    {
-      name: 'Walmart',
-      logo: '/images/tt.png',
-      cashback: '20%',
-      category: 'All',
-      location: 'United States',
-      rating: 4.5
-    },
-    {
-      name: 'Adidas',
-      logo: '/images/tt.png',
-      cashback: '80%',
-      category: 'Fashion & Clothing',
-      location: 'All Locations',
-      rating: 4.8
-    },
-    {
-      name: 'Samsung UK',
-      logo: '/images/tt.png',
-      cashback: '24%',
-      category: 'Electronics',
-      location: 'United Kingdom',
-      rating: 4.3
-    },
-    {
-      name: "Macy's",
-      logo: '/images/tt.png',
-      cashback: '35%',
-      wasRate: 'Was 1%',
-      category: 'Fashion & Clothing',
-      location: 'United States',
-      rating: 4.2
-    },
-    {
-      name: 'Nike',
-      logo: '/images/tt.png',
-      cashback: '30%',
-      category: 'Shoes',
-      location: 'All Locations',
-      rating: 4.7
-    },
-    {
-      name: 'Dell Technologies',
-      logo: '/images/tt.png',
-      cashback: 'Up to 70%',
-      category: 'Electronics',
-      location: 'All Locations',
-      rating: 4.1
-    },
-    {
-      name: 'Newegg',
-      logo: '/images/tt.png',
-      cashback: '80%',
-      category: 'Electronics',
-      location: 'United States',
-      rating: 4.4
-    },
-    {
-      name: 'StockX',
-      logo: '/images/tt.png',
-      cashback: '1.4%',
-      category: 'Shoes',
-      location: 'All Locations',
-      rating: 4.0
-    },
-    {
-      name: "Lowe's",
-      logo: '/images/tt.png',
-      cashback: '1%',
-      wasRate: 'Was 0.5%',
-      category: 'Home',
-      location: 'United States',
-      rating: 4.3
-    },
-    {
-      name: "Joe's New Balance Outlet",
-      logo: '/images/tt.png',
-      cashback: '1.5%',
-      category: 'Shoes',
-      location: 'United States',
-      rating: 4.2
-    },
-    {
-      name: 'HP.com',
-      logo: '/images/tt.png',
-      cashback: '3%',
-      wasRate: 'Was 1%',
-      category: 'Electronics',
-      location: 'All Locations',
-      rating: 4.1
-    },
-    {
-      name: 'Chewy',
-      logo: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=100&h=100&fit=crop&crop=center',
-      cashback: '3%',
-      category: 'All',
-      location: 'United States',
-      rating: 4.6
-    },
-    {
-      name: 'Neiman Marcus',
-      logo: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=100&h=100&fit=crop&crop=center',
-      cashback: '4.5%',
-      category: 'Fashion & Clothing',
-      location: 'United States',
-      rating: 4.4
-    },
-    {
-      name: 'Sephora',
-      logo: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=100&h=100&fit=crop&crop=center',
-      cashback: '2.5%',
-      category: 'Beauty',
-      location: 'All Locations',
-      rating: 4.5
-    },
-    {
-      name: 'Foot Locker',
-      logo: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=100&h=100&fit=crop&crop=center',
-      cashback: '1.5%',
-      category: 'Shoes',
-      location: 'All Locations',
-      rating: 4.3
-    },
-    {
-      name: 'Saks Off 5TH',
-      logo: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=100&h=100&fit=crop&crop=center',
-      cashback: '3.2%',
-      category: 'Fashion & Clothing',
-      location: 'United States',
-      rating: 4.2
-    },
-    {
-      name: 'Newegg Business',
-      logo: 'https://images.unsplash.com/photo-1486312338219-ce68e2c6b7bd?w=100&h=100&fit=crop&crop=center',
-      cashback: '0.8%',
-      category: 'Electronics',
-      location: 'United States',
-      rating: 4.0
-    },
-    {
-      name: 'Uniqlo',
-      logo: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=100&h=100&fit=crop&crop=center',
-      cashback: '1.2%',
-      category: 'Fashion & Clothing',
-      location: 'All Locations',
-      rating: 4.4
-    },
-    {
-      name: "Kohl's",
-      logo: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=100&h=100&fit=crop&crop=center',
-      cashback: '2.4%',
-      wasRate: 'Was 1%',
-      category: 'Fashion & Clothing',
-      location: 'United States',
-      rating: 4.1
-    },
-    {
-      name: 'Amazon',
-      logo: 'https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=100&h=100&fit=crop&crop=center',
-      cashback: '$0.02',
-      category: 'All',
-      location: 'All Locations',
-      rating: 4.3
-    }
-  ];
+  // Fetch initial data
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setLoading(true);
+        const [categoriesData, locationsData] = await Promise.all([
+          ApiService.getCategories(),
+          ApiService.getLocations()
+        ]);
+        
+        setCategories(categoriesData.categories || ['All']);
+        setLocations(locationsData.locations || ['All Locations']);
+      } catch (err) {
+        console.error('Error fetching initial data:', err);
+        setError('Failed to load filter options');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const filteredStores = stores.filter(store => {
-    const categoryMatch = selectedCategory === 'All' || store.category === selectedCategory;
-    const locationMatch = selectedLocation === 'All Locations' || store.location === selectedLocation || store.location === 'All Locations';
-    return categoryMatch && locationMatch;
-  });
+    fetchInitialData();
+  }, []);
+
+  // Fetch stores when filters change
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        setLoading(true);
+        const filters = {
+          category: selectedCategory,
+          location: selectedLocation,
+          sortBy: sortBy,
+          page: currentPage,
+          limit: 20
+        };
+
+        const response = await ApiService.getStores(filters);
+        setStores(response.stores || []);
+        setPagination(response.pagination || null);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching stores:', err);
+        setError('Failed to load stores');
+        setStores([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStores();
+  }, [selectedCategory, selectedLocation, sortBy, currentPage]);
 
   const handleStoreClick = (store) => {
-    navigate('/ViewStore', { state: { store } });
+    navigate(`/ViewStore/${store.id}`)
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setCurrentPage(1); // Reset to first page when filter changes
+    
+    switch (filterType) {
+      case 'category':
+        setSelectedCategory(value);
+        break;
+      case 'location':
+        setSelectedLocation(value);
+        setShowLocationDropdown(false);
+        break;
+      case 'sort':
+        setSortBy(value);
+        setShowSortDropdown(false);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const clearFilters = () => {
+    setSelectedCategory('All');
+    setSelectedLocation('All Locations');
+    setSortBy('Popular');
+    setCurrentPage(1);
   };
 
   const StoreCard = ({ store, isListView = false }) => (
@@ -227,21 +121,24 @@ const Stores = () => {
           <div className="flex items-center space-x-3">
             <div className="relative">
               <img 
-                src={store.logo} 
+                src={store.logo || store.logo_url || '/images/default-store.png'} 
                 alt={`${store.name} logo`}
                 className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
+                onError={(e) => {
+                  e.target.src = '/images/default-store.png';
+                }}
               />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 text-base">{store.name}</h3>
               <div className="flex items-center space-x-1 mt-1">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm text-gray-600 font-medium">{store.rating}</span>
+                <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
               </div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-red-500 font-bold text-lg">{store.cashback}</div>
+            <div className="text-red-500 font-bold text-lg">{store.cashback || 'N/A'}</div>
             <div className="text-gray-500 text-sm font-medium">Cashback</div>
             {store.wasRate && (
               <div className="text-gray-400 text-sm mt-1">{store.wasRate}</div>
@@ -249,16 +146,18 @@ const Stores = () => {
           </div>
         </div>
       ) : (
-        // Grid view layout - improved for mobile
+        // Grid view layout
         <div className="flex flex-col h-full">
-          {/* Header with logo and cashback */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <div className="relative flex-shrink-0">
                 <img 
-                  src={store.logo} 
+                  src={store.logo || store.logo_url || '/images/default-store.png'} 
                   alt={`${store.name} logo`}
                   className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
+                  onError={(e) => {
+                    e.target.src = '/images/default-store.png';
+                  }}
                 />
               </div>
               <div className="min-w-0 flex-1">
@@ -266,16 +165,15 @@ const Stores = () => {
               </div>
             </div>
             <div className="text-right flex-shrink-0 ml-2">
-              <div className="text-red-500 font-bold text-lg md:text-xl">{store.cashback}</div>
+              <div className="text-red-500 font-bold text-lg md:text-xl">{store.cashback || 'N/A'}</div>
               <div className="text-gray-500 text-xs md:text-sm font-medium">Cashback</div>
             </div>
           </div>
           
-          {/* Rating and was rate */}
           <div className="flex items-center justify-between mt-auto">
             <div className="flex items-center space-x-1">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm text-gray-600 font-medium">{store.rating}</span>
+              <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
             </div>
             {store.wasRate && (
               <div className="text-gray-400 text-xs">{store.wasRate}</div>
@@ -285,6 +183,19 @@ const Stores = () => {
       )}
     </div>
   );
+
+  if (loading && stores.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+          <span className="ml-2 text-gray-600">Loading stores...</span>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -330,10 +241,7 @@ const Stores = () => {
                   {locations.map((location) => (
                     <button
                       key={location}
-                      onClick={() => {
-                        setSelectedLocation(location);
-                        setShowLocationDropdown(false);
-                      }}
+                      onClick={() => handleFilterChange('location', location)}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors"
                     >
                       {location}
@@ -359,10 +267,7 @@ const Stores = () => {
                   {sortOptions.map((option) => (
                     <button
                       key={option}
-                      onClick={() => {
-                        setSortBy(option);
-                        setShowSortDropdown(false);
-                      }}
+                      onClick={() => handleFilterChange('sort', option)}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors"
                     >
                       Sort by {option}
@@ -379,7 +284,7 @@ const Stores = () => {
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => handleFilterChange('category', category)}
               className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-300 ${
                 selectedCategory === category
                   ? 'bg-red-500 text-white shadow-lg'
@@ -391,30 +296,71 @@ const Stores = () => {
           ))}
         </div>
 
-        {/* Stores Grid/List */}
-        {viewMode === 'list' ? (
-          <div className="space-y-4 md:hidden">
-            {filteredStores.map((store, index) => (
-              <StoreCard key={index} store={store} isListView={true} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {filteredStores.map((store, index) => (
-              <StoreCard key={index} store={store} />
-            ))}
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
           </div>
         )}
 
+        {/* Loading indicator for filter changes */}
+        {loading && stores.length > 0 && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+            <span className="ml-2 text-gray-600">Updating results...</span>
+          </div>
+        )}
+
+        {/* Stores Grid/List */}
+        {!loading && stores.length > 0 && (
+          <>
+            {viewMode === 'list' ? (
+              <div className="space-y-4 md:hidden">
+                {stores.map((store, index) => (
+                  <StoreCard key={store.id || index} store={store} isListView={true} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                {stores.map((store, index) => (
+                  <StoreCard key={store.id || index} store={store} />
+                ))}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex items-center justify-center mt-8 space-x-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={!pagination.hasPrevPage}
+                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                
+                <span className="px-4 py-2 text-gray-700">
+                  Page {pagination.currentPage} of {pagination.totalPages}
+                </span>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={!pagination.hasNextPage}
+                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
         {/* No results message */}
-        {filteredStores.length === 0 && (
+        {!loading && stores.length === 0 && (
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg">No stores found for the selected filters.</div>
             <button
-              onClick={() => {
-                setSelectedCategory('All');
-                setSelectedLocation('All Locations');
-              }}
+              onClick={clearFilters}
               className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
               Clear Filters

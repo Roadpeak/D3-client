@@ -33,7 +33,7 @@ const AppRoutes = () => {
         <Route path='/offer' element={<ViewOffer />} />
 
         <Route path='/Stores' element={<Stores />} />
-        <Route path='/ViewStore' element={<ViewStore />} />
+        <Route path='/ViewStore/:id' element={<ViewStore />} />
 
         <Route path="/search" element={<SearchResults />} />
 

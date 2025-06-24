@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
             try {
                 const token = getCookie('access_token');
                 if (token) {
-                    const response = await fetch('https://api.discoun3ree.com/api/profile', {
+                    const response = await fetch('http://localhost:4000/api/v1/profile', {
                         headers: {
                             Authorization: `Bearer ${token}`
                         }
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const response = await fetch('https://api.discoun3ree.com/api/v1/auth/login', {
+            const response = await fetch('http://localhost:4000/api/v1/v1/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -8,13 +8,13 @@ const LoginModal = ({ onClose, onLogin }) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [loginType, setLoginType] = useState('user'); 
+    const [loginType, setLoginType] = useState('user');
 
-    const handleSubmit = async (event)=> {
+    const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
         try {
-            const endpoint = loginType === 'user' ? 'https://api.discoun3ree.com/api/user/login' : 'https://api.discoun3ree.com/api/seller/login';
+            const endpoint = loginType === 'user' ? 'http://localhost:4000/api/v1/user/login' : 'http://localhost:4000/api/v1/seller/login';
             const response = await axios.post(endpoint, { email, password });
             const token = response.data.access_token;
             localStorage.setItem('access_token', token);

@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MdCategory } from 'react-icons/md';
+
+// import { User } from "lucide-react";
 
 // Custom SVG Icons
 const Search = ({ className }) => (
@@ -17,7 +20,7 @@ const MapPin = ({ className }) => (
 
 const User = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
 
@@ -39,7 +42,12 @@ const ChevronDown = ({ className }) => (
   </svg>
 );
 
-// Additional icons for mobile navigation
+const CloseIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
 const HomeIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -154,8 +162,91 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         {/* Top Header */}
         <div className="flex items-center justify-between py-3 border-b">
-          <div className="flex items-center space-x-6">
-            <div className="text-2xl font-bold text-red-500">D3</div>
+          <div className="flex items-center space-x-4 lg:space-x-6">
+            <div className="flex items-center space-x-4">
+              <button onClick={toggleMobileMenu} className="lg:hidden relative">
+                <MenuIcon className="w-6 h-6" />
+                
+                {/* Mobile Menu Popup - Simplified */}
+                {isMobileMenuOpen && (
+                  <div className="absolute top-8 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <div className="p-3 border-b border-gray-200">
+                      <h3 className="text-sm font-semibold text-gray-800">Menu</h3>
+                    </div>
+                    <nav className="py-2">
+                      <button className="flex items-center space-x-3 text-gray-700 hover:text-red-600 hover:bg-gray-50 px-4 py-3 text-left w-full">
+                        <span>📝</span>
+                        <span>List on D3</span>
+                      </button>
+                      <button className="flex items-center space-x-3 text-gray-700 hover:text-red-600 hover:bg-gray-50 px-4 py-3 text-left w-full">
+                        <span>📞</span>
+                        <span>Customer Care</span>
+                      </button>
+                    </nav>
+                  </div>
+                )}
+              </button>
+              
+              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                D3 
+              </div>
+            </div>
+            
+          
+            <div className="flex md:hidden items-center space-x-2 text-sm text-gray-600 relative">
+              <MapPin className="w-4 h-4" />
+              <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-red-600">
+                <span className="text-xs">Westlands</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+              
+              {/* Location Dropdown */}
+              {isLocationOpen && (
+                <div className="absolute top-8 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  <div className="p-3 border-b border-gray-200">
+                    <h3 className="text-sm font-semibold text-gray-800">Select Location</h3>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {locations.map((location) => (
+                      <button 
+                        key={location.id} 
+                        className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        onClick={() => {
+                          setIsLocationOpen(false);
+                          // Handle location selection here
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{location.name}</p>
+                            <p className="text-xs text-gray-500">{location.area}</p>
+                          </div>
+                          {location.area === "Current Location" && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="p-3 border-t border-gray-200">
+                    <button className="text-sm text-red-600 hover:text-red-700 font-medium">
+                      Use Current Location
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            
+            <div className="flex md:hidden items-center space-x-2 text-sm text-gray-600 relative">
+              <button onClick={toggleCategories} className="flex items-center space-x-1 hover:text-red-600">
+                <MdCategory  className="w-4 h-4" />
+                <span className="text-xs">Categories</span>
+                <ChevronDown className="w-3 h-3" />
+              </button>
+            </div>
+            
+            {/* Desktop location dropdown */}
             <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600 relative">
               <MapPin className="w-4 h-4" />
               <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-red-600">
@@ -201,23 +292,37 @@ const Navbar = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-4 text-sm">
-            <button className="flex items-center space-x-1 text-black hover:text-red-600">
+          <div className="flex items-center space-x-3 text-sm">
+            
+            <button className="hidden lg:flex items-center space-x-1 text-black hover:text-red-600">
               <span>List on D3</span>
             </button>
-            <button className="flex items-center space-x-1 text-black hover:text-red-600">
+            <button className="hidden lg:flex items-center space-x-1 text-black hover:text-red-600">
               <span>Customer Care</span>
             </button>
-            <button className="flex items-center space-x-1 text-black hover:text-red-600">
-              <User className="w-4 h-4" />
-              <span>Sign In</span>
-            </button>
+            <Link to="/accounts/sign-in">
+              <button className="flex items-center space-x-1 text-black hover:text-red-600">
+                {/* Desktop: Show icon + text */}
+                <div className="hidden sm:flex items-center space-x-1">
+                  <User className="w-5 h-5" />
+                  <span>Sign In</span>
+                </div>
+                {/* Mobile: Show user image */}
+                <div className="sm:hidden">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold">E</span>
+                  </div>
+                </div>
+              </button>
+            </Link>
             <div className="relative">
-              <button onClick={toggleNotifications} className="relative">
+              <button onClick={toggleNotifications} className="relative flex items-center">
                 <NotificationIcon className="w-5 h-5 text-gray-600 hover:text-red-600" />
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {unreadCount}
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
               
               {/* Notification Popup */}
@@ -277,43 +382,13 @@ const Navbar = () => {
         {/* Main Navigation */}
         <div className="flex items-center justify-between py-4">
           <nav className="hidden lg:flex items-center space-x-8">
+            {/* Categories dropdown for desktop - moved before Home */}
             <div className="relative">
               <button onClick={toggleCategories} className="flex items-center space-x-1 text-gray-700 hover:text-red-600">
-                <MenuIcon className="w-4 h-4" />
+                <MdCategory  className="w-4 h-4" />
                 <span>All Categories</span>
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className="w-4 h-4" />
               </button>
-              
-              {/* Categories Dropdown */}
-              {isCategoriesOpen && (
-                <div className="absolute top-8 left-0 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <div className="p-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-800">All Categories</h3>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    {categories.map((category) => (
-                      <button 
-                        key={category.id} 
-                        className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                        onClick={() => {
-                          setIsCategoriesOpen(false);
-                          // Handle category selection here
-                        }}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <span className="text-2xl">{category.icon}</span>
-                          <span className="text-sm font-medium text-gray-900">{category.name}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="p-4 border-t border-gray-200">
-                    <button className="text-sm text-red-600 hover:text-red-700 font-medium">
-                      View All Services
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
             <Link to="/" className="text-gray-700 hover:text-red-600">Home</Link>
             <Link to="/hotdeals" className="text-gray-700 hover:text-red-600">Hot Deals</Link>
@@ -326,77 +401,84 @@ const Navbar = () => {
             <div className="relative">
               <input 
                 type="text" 
-                placeholder="Search for deals, services, offers..."
+                placeholder="Search for deals & stores..."
                 className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
               />
-              <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-red-600 text-white px-4 py-2 rounded-md">
+              <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-purple-600 text-white px-4 py-2 rounded-md">
                 <Search className="w-4 h-4" />
               </button>
             </div>
           </div>
-
-          <button onClick={toggleMobileMenu} className="lg:hidden">
-            <MenuIcon className="w-6 h-6" />
-          </button>
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden bg-white border-t border-gray-200 py-4">
-            <nav className="flex flex-col space-y-4">
-              <div className="relative">
-                <button onClick={toggleCategories} className="flex items-center space-x-2 text-gray-700 hover:text-red-600 px-4 py-2 text-left w-full">
-                  <MenuIcon className="w-4 h-4" />
-                  <span>All Categories</span>
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-                
-                {/* Mobile Categories Dropdown */}
-                {isCategoriesOpen && (
-                  <div className="mt-2 mx-4 bg-gray-50 rounded-lg">
-                    {categories.map((category) => (
-                      <button 
-                        key={category.id} 
-                        className="w-full p-3 text-left hover:bg-gray-100 border-b border-gray-200 last:border-b-0 first:rounded-t-lg last:rounded-b-lg"
-                        onClick={() => {
-                          setIsCategoriesOpen(false);
-                          setIsMobileMenuOpen(false);
-                          // Handle category selection here
-                        }}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <span className="text-lg">{category.icon}</span>
-                          <span className="text-sm text-gray-900">{category.name}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <Link to="/" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
-                <HomeIcon className="w-4 h-4" />
-                <span>Home</span>
-              </Link>
-              <Link to="/hotdeals" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
-                <FireIcon className="w-4 h-4" />
-                <span>Hot Deals</span>
-              </Link>
-              <Link to="/stores" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
-                <StoreIcon className="w-4 h-4" />
-                <span>Stores</span>
-              </Link>
-              <Link to="/requestservice" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
-                <ServiceIcon className="w-4 h-4" />
-                <span>Request Service</span>
-              </Link>
-              <Link to="/chat" className="text-gray-700 hover:text-red-600 px-4 py-2 block flex items-center space-x-2">
-                <ChatIcon className="w-4 h-4" />
-                <span>Chat</span>
-              </Link>
-            </nav>
+        {/* Mobile Navigation - Below Search Bar */}
+        <div className="lg:hidden pb-4">
+          <div className="flex justify-between items-center bg-gray-200 rounded-lg p-2">
+            <Link to="/" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+              <HomeIcon className="w-5 h-5" />
+              <span className="text-xs font-medium">Home</span>
+            </Link>
+            <Link to="/hotdeals" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+              <FireIcon className="w-5 h-5" />
+              <span className="text-xs font-medium">Hot Deals</span>
+            </Link>
+            <Link to="/stores" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+              <StoreIcon className="w-5 h-5" />
+              <span className="text-xs font-medium">Stores</span>
+            </Link>
+            <Link to="/requestservice" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+              <ServiceIcon className="w-5 h-5" />
+              <span className="text-xs font-medium">Services</span>
+            </Link>
+            <Link to="/chat" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+              <ChatIcon className="w-5 h-5" />
+              <span className="text-xs font-medium">Chat</span>
+            </Link>
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Categories Popup Modal */}
+      {isCategoriesOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800">All Categories</h3>
+              <button 
+                onClick={toggleCategories}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <CloseIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 max-h-80 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {categories.map((category) => (
+                  <button 
+                    key={category.id} 
+                    className="flex items-center space-x-4 p-4 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
+                    onClick={() => {
+                      setIsCategoriesOpen(false);
+                      // Handle category selection here
+                    }}
+                  >
+                    <span className="text-3xl">{category.icon}</span>
+                    <span className="text-sm font-medium text-gray-900 text-left">{category.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <button 
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-colors"
+                onClick={() => setIsCategoriesOpen(false)}
+              >
+                View All Services
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

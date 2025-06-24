@@ -1,159 +1,128 @@
-import { useState } from 'react';
-import {  Heart, Grid, List, ChevronLeft, ChevronRight,  X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+import { offerAPI } from '../services/offerService';
 
 export default function Hotdeals() {
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Data states
+  const [offers, setOffers] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [topDeals, setTopDeals] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [pagination, setPagination] = useState({});
+  
+  // Filter states
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState('latest');
+  const [limit, setLimit] = useState(12);
+
   const navigate = useNavigate();
 
-  const categories = [
-    { name: 'Real Estate', count: 2290 },
-    { name: 'Groceries', count: 1563 },
-    { name: 'Coupons', count: 1290, active: true },
-    { name: 'Baby Products', count: 1169 },
-    { name: 'Travel', count: 1152 },
-    { name: 'Food', count: 945 },
-    { name: 'Flight Tickets', count: 1252 },
-    { name: 'Electronics', count: 943 }
-  ];
+  // Fetch data on component mount and when filters change
+  useEffect(() => {
+    fetchData();
+  }, [currentPage, selectedCategory, sortBy, limit]);
 
-  const topDeals = [
-    {
-      title: 'Martin & Freeman April Wine Exclusive Deal',
-      price: '$350',
-      category: 'Wine'
-    },
-    {
-      title: 'Morice Mary - Sweet Beverages 15% Off',
-      price: '$79',
-      category: 'Beverages'
-    },
-    {
-      title: 'Mario\'s Pizza Valerie Mark Burgers @ 10% Off',
-      price: '$45',
-      category: 'Food'
+  // Fetch categories and top deals on mount
+  useEffect(() => {
+    fetchCategoriesAndDeals();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = {
+        page: currentPage,
+        limit: limit,
+        sortBy: sortBy,
+        ...(selectedCategory && { category: selectedCategory })
+      };
+
+      const response = await offerAPI.getOffers(params);
+      setOffers(response.offers || []);
+      setPagination(response.pagination || {});
+    } catch (err) {
+      setError('Failed to fetch offers. Please try again.');
+      console.error('Error fetching offers:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const brands = [
-    'https://via.placeholder.com/60x40/FF6B35/FFFFFF?text=KFC',
-    'https://via.placeholder.com/60x40/00A651/FFFFFF?text=SB',
-    'https://via.placeholder.com/60x40/FDB913/000000?text=MW',
-    'https://via.placeholder.com/60x40/E31837/FFFFFF?text=Pizza',
-    'https://via.placeholder.com/60x40/0066CC/FFFFFF?text=Star',
-    'https://via.placeholder.com/60x40/FF0000/FFFFFF?text=KFC',
-    'https://via.placeholder.com/60x40/8B4513/FFFFFF?text=Cafe',
-    'https://via.placeholder.com/60x40/228B22/FFFFFF?text=MT',
-    'https://via.placeholder.com/60x40/FF69B4/FFFFFF?text=Ice'
-  ];
+  const fetchCategoriesAndDeals = async () => {
+    try {
+      // Fetch categories
+      const categoriesResponse = await offerAPI.getCategories();
+      setCategories(categoriesResponse.categories || []);
 
-  const deals = [
-    {
-      id: 1,
-      title: 'WellFit Fitness Accessories Year End Sale',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '25% Off',
-      category: 'Fitness',
-      image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=300&h=200&fit=crop'
-    },
-    {
-      id: 2,
-      title: 'Tasty Buds - Cake Factory Promo Code Offer',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '30% Off',
-      category: 'Food',
-      image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&h=200&fit=crop',
-      featured: true
-    },
-    {
-      id: 3,
-      title: 'Lafuns Diamond Jewellery Cash Back 25%',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '25% CB',
-      category: 'Jewelry',
-      image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300&h=200&fit=crop'
-    },
-    {
-      id: 4,
-      title: '30-40min Spa Massage | Hurry Now',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '30% Off',
-      category: 'Spa',
-      image: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=300&h=200&fit=crop'
-    },
-    {
-      id: 5,
-      title: 'Sofie Ice Cream 25% off on Desserts',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '30% Off',
-      category: 'Food',
-      image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=300&h=200&fit=crop'
-    },
-    {
-      id: 6,
-      title: 'Kushi Indian food - 30% off - Hurry Now',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '30% Off',
-      category: 'Food',
-      image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=200&fit=crop'
-    },
-    {
-      id: 7,
-      title: 'Spicy Tacos 3 Pc | Britanay Herbal Tea',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '25% Off',
-      category: 'Food',
-      image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop'
-    },
-    {
-      id: 8,
-      title: 'Cream Cafe Villa Straw Coffee Table Price',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '30% Off',
-      category: 'Coffee',
-      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&h=200&fit=crop'
-    },
-    {
-      id: 9,
-      title: 'Punk Man Shoes | Cashback Over Orders $199',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '25% CB',
-      category: 'Fashion',
-      image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300&h=200&fit=crop'
-    },
-    {
-      id: 10,
-      title: 'Elton Lights Offer at min 20% - Hurry Now',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '25% Off',
-      category: 'Home',
-      image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=200&fit=crop'
-    },
-    {
-      id: 11,
-      title: 'New Year Party Celebration 15% Off',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '30% Off',
-      category: 'Party',
-      image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&h=200&fit=crop'
-    },
-    {
-      id: 12,
-      title: 'Lorenzo Face Blushes at attractive price',
-      description: 'Get exclusive offers at your favourite Pizza Plaza Shop with these coupons',
-      discount: '25% CB',
-      category: 'Beauty',
-      image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=300&h=200&fit=crop'
+      // Fetch top deals
+      const dealsResponse = await offerAPI.getTopDeals(3);
+      setTopDeals(dealsResponse.topDeals || []);
+
+      // For demo purposes, keeping static brands
+      setBrands([
+        'https://via.placeholder.com/60x40/FF6B35/FFFFFF?text=KFC',
+        'https://via.placeholder.com/60x40/00A651/FFFFFF?text=SB',
+        'https://via.placeholder.com/60x40/FDB913/000000?text=MW',
+        'https://via.placeholder.com/60x40/E31837/FFFFFF?text=Pizza',
+        'https://via.placeholder.com/60x40/0066CC/FFFFFF?text=Star',
+        'https://via.placeholder.com/60x40/FF0000/FFFFFF?text=KFC',
+        'https://via.placeholder.com/60x40/8B4513/FFFFFF?text=Cafe',
+        'https://via.placeholder.com/60x40/228B22/FFFFFF?text=MT',
+        'https://via.placeholder.com/60x40/FF69B4/FFFFFF?text=Ice'
+      ]);
+    } catch (err) {
+      console.error('Error fetching categories and deals:', err);
     }
-  ];
+  };
+
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(selectedCategory === category ? '' : category);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleOfferClick = (offerId) => {
+    navigate(`/offer/${offerId}`);
+  };
+
+  if (loading && offers.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="animate-spin" size={24} />
+            <span>Loading offers...</span>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Import and use your Navbar component */}
       <Navbar />
 
       {/* Navigation */}
@@ -175,6 +144,20 @@ export default function Hotdeals() {
           </div>
         </div>
       </nav>
+
+      {error && (
+        <div className="container mx-auto px-4 py-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+            <button 
+              onClick={fetchData} 
+              className="ml-4 underline hover:no-underline"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="container mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
@@ -201,11 +184,22 @@ export default function Hotdeals() {
                   CATEGORIES
                 </h3>
                 <ul className="space-y-2">
+                  <li className="flex items-center justify-between">
+                    <button
+                      onClick={() => handleCategoryChange('')}
+                      className={`text-sm ${!selectedCategory ? 'text-red-500 font-medium' : 'text-gray-600'}`}
+                    >
+                      All Categories
+                    </button>
+                  </li>
                   {categories.map((category, index) => (
                     <li key={index} className="flex items-center justify-between">
-                      <span className={`text-sm ${category.active ? 'text-red-500 font-medium' : 'text-gray-600'}`}>
+                      <button
+                        onClick={() => handleCategoryChange(category.name)}
+                        className={`text-sm ${selectedCategory === category.name ? 'text-red-500 font-medium' : 'text-gray-600'}`}
+                      >
                         {category.name}
-                      </span>
+                      </button>
                       <span className="text-xs text-gray-400">({category.count})</span>
                     </li>
                   ))}
@@ -286,116 +280,182 @@ export default function Hotdeals() {
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600 hidden sm:inline">Sort By:</span>
-                <select className="border border-gray-300 rounded px-3 py-1 text-sm">
-                  <option>Latest</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Discount</option>
-                  <option>Location</option>
+                <select 
+                  className="border border-gray-300 rounded px-3 py-1 text-sm"
+                  value={sortBy}
+                  onChange={(e) => handleSortChange(e.target.value)}
+                >
+                  <option value="latest">Latest</option>
+                  <option value="price_low_high">Price: Low to High</option>
+                  <option value="price_high_low">Price: High to Low</option>
+                  <option value="discount">Discount</option>
                 </select>
               </div>
             </div>
 
-          {/* Deals Grid */}
-<div className={`grid gap-4 sm:gap-6 mb-8 ${
-  viewMode === 'grid' 
-    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
-    : 'grid-cols-1'
-}`}>
-  {deals.map((deal) => (
-    <div key={deal.id} className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
-      viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
-    }`}>
-      <div className={`relative ${viewMode === 'list' ? 'sm:w-1/3' : ''}`}>
-        <img 
-          src={deal.image} 
-          alt={deal.title}
-          className={`w-full object-cover ${
-            viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
-          }`}
-        />
-        <button className="absolute top-3 right-3 bg-white/80 p-2 rounded-full hover:bg-white">
-          <Heart size={16} className="text-gray-600" />
-        </button>
-        <div className="absolute bottom-3 left-3">
-          <span className={`px-2 py-1 rounded text-xs font-medium text-white ${
-            deal.featured ? 'bg-red-500' : 'bg-blue-500'
-          }`}>
-            {deal.category}
-          </span>
-        </div>
-      </div>
-      <div className={`p-4 ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
-        
-        <div className="flex items-center gap-2 mb-3">
-          
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
-            <img 
-              src={deal.store?.googleLogo || '/api/placeholder/20/20'} 
-              alt="logo"
-              className="w-5 h-5"
-            />
-          </div>
-          
-          {/* Store Pill */}
-          <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
-            <span>{deal.store?.name || 'Store name'}</span>
-          </div>
-        </div>
-        
-        <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">{deal.title}</h3>
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{deal.description}</p>
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <span className={`px-3 py-1 rounded text-sm font-medium ${
-            deal.discount.includes('CB') ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-          }`}>
-            {deal.discount}
-          </span>
-          
-          
-          <button 
-        className={`px-8 py-4 rounded text-sm font-medium ${
-         deal.featured ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'
-         }`}
-         onClick={() => navigate('/offer')}
-         >
-        Get Offer
-        </button>
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
+            {/* Loading indicator for pagination */}
+            {loading && offers.length > 0 && (
+              <div className="flex justify-center mb-4">
+                <Loader2 className="animate-spin" size={20} />
+              </div>
+            )}
 
-            {/* Pagination */}
-            <div className="flex items-center justify-center space-x-2 flex-wrap gap-2">
-              <button className="p-2 rounded hover:bg-gray-100">
-                <ChevronLeft size={16} />
-              </button>
-              <div className="flex space-x-2">
-                {[1, 2, 3, 4].map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded ${
-                      currentPage === page 
-                        ? 'bg-red-500 text-white' 
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <span className="px-3 py-2 hidden sm:inline">...</span>
-                <button className="px-3 py-2 rounded bg-white text-gray-700 hover:bg-gray-50 hidden sm:inline-block">
-                  15
+            {/* Deals Grid */}
+            <div className={`grid gap-4 sm:gap-6 mb-8 ${
+              viewMode === 'grid' 
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+                : 'grid-cols-1'
+            }`}>
+              {offers.map((offer) => (
+                <div key={offer.id} className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+                  viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
+                }`}>
+                  <div className={`relative ${viewMode === 'list' ? 'sm:w-1/3' : ''}`}>
+                    <img 
+                      src={offer.image} 
+                      alt={offer.title}
+                      className={`w-full object-cover ${
+                        viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
+                      }`}
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/300x200/f3f4f6/9ca3af?text=No+Image';
+                      }}
+                    />
+                    <button className="absolute top-3 right-3 bg-white/80 p-2 rounded-full hover:bg-white">
+                      <Heart size={16} className="text-gray-600" />
+                    </button>
+                    <div className="absolute bottom-3 left-3">
+                      <span className={`px-2 py-1 rounded text-xs font-medium text-white ${
+                        offer.featured ? 'bg-red-500' : 'bg-blue-500'
+                      }`}>
+                        {offer.category}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`p-4 ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
+                        <img 
+                          src={offer.store?.googleLogo || '/api/placeholder/20/20'} 
+                          alt="logo"
+                          className="w-5 h-5"
+                          onError={(e) => {
+                            e.target.src = '/api/placeholder/20/20';
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Store Pill */}
+                      <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
+                        <span>{offer.store?.name || 'Store name'}</span>
+                      </div>
+                    </div>
+                    
+                    <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">{offer.title}</h3>
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{offer.description}</p>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <span className={`px-3 py-1 rounded text-sm font-medium ${
+                        offer.discount.includes('CB') ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {offer.discount}
+                      </span>
+                      
+                      <button 
+                        className={`px-8 py-4 rounded text-sm font-medium ${
+                          offer.featured ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-700'
+                        }`}
+                        onClick={() => handleOfferClick(offer.id)}
+                      >
+                        Get Offer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* No offers message */}
+            {!loading && offers.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-lg">No offers found.</p>
+                <button 
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setSortBy('latest');
+                    setCurrentPage(1);
+                  }}
+                  className="mt-2 text-red-500 hover:underline"
+                >
+                  Clear filters
                 </button>
               </div>
-              <button className="p-2 rounded hover:bg-gray-100">
-                <ChevronRight size={16} />
-              </button>
-            </div>
-            <p className="text-center text-sm text-gray-500 mt-2">1 - 48 of 432 results</p>
+            )}
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-center space-x-2 flex-wrap gap-2">
+                <button 
+                  className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={!pagination.hasPrevPage}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="flex space-x-2">
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let page;
+                    if (pagination.totalPages <= 5) {
+                      page = i + 1;
+                    } else if (currentPage <= 3) {
+                      page = i + 1;
+                    } else if (currentPage >= pagination.totalPages - 2) {
+                      page = pagination.totalPages - 4 + i;
+                    } else {
+                      page = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded ${
+                          currentPage === page 
+                            ? 'bg-red-500 text-white' 
+                            : 'bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                  {pagination.totalPages > 5 && currentPage < pagination.totalPages - 2 && (
+                    <>
+                      <span className="px-3 py-2 hidden sm:inline">...</span>
+                      <button 
+                        className="px-3 py-2 rounded bg-white text-gray-700 hover:bg-gray-50 hidden sm:inline-block"
+                        onClick={() => handlePageChange(pagination.totalPages)}
+                      >
+                        {pagination.totalPages}
+                      </button>
+                    </>
+                  )}
+                </div>
+                <button 
+                  className="p-2 rounded hover:bg-gray-100 disabled:opacity-50"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={!pagination.hasNextPage}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+            
+            {/* Pagination Info */}
+            {pagination.totalItems > 0 && (
+              <p className="text-center text-sm text-gray-500 mt-2">
+                {Math.min((currentPage - 1) * pagination.itemsPerPage + 1, pagination.totalItems)} - {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} results
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -431,7 +491,6 @@ export default function Hotdeals() {
         </div>
       </div>
 
-      
       <Footer />
     </div>
   );

@@ -4,7 +4,7 @@ const Footer = () => {
   return (
     <footer className="bg-white py-16 px-4 border-t">
       <div className="max-w-6xl mx-auto">
-        {/* Bottom Footer - Modified for mobile 2x2 grid */}
+        
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-8 border-t">
           {/* Our Location */}
           <div className="mb-6">

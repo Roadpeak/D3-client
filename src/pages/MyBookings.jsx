@@ -24,10 +24,10 @@ const MyBookings = () => {
                 }
 
                 const [bookingsResponse, appointmentsResponse] = await Promise.all([
-                    axios.get(`https://api.discoun3ree.com/api/bookings/user`, {
+                    axios.get(`http://localhost:4000/api/v1/bookings/user`, {
                         headers: { Authorization: `Bearer ${accessToken}` },
                     }),
-                    axios.get(`https://api.discoun3ree.com/api/user/appointments`, {
+                    axios.get(`http://localhost:4000/api/v1/user/appointments`, {
                         headers: { Authorization: `Bearer ${accessToken}` },
                     }),
                 ]);

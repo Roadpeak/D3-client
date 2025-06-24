@@ -13,7 +13,7 @@ const Offers = () => {
     useEffect(() => {
         const fetchDiscountsByShop = async () => {
             try {
-                const response = await axios.get(`https://api.discoun3ree.com/api/discounts`);
+                const response = await axios.get(`http://localhost:4000/api/v1/discounts`);
                 setDiscounts(response.data);
                 setLoading(false);
             } catch (error) {

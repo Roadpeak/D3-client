@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -82,153 +82,366 @@ const Briefcase = ({ className }) => (
   </svg>
 );
 
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center py-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+  </div>
+);
+
+// API Configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+
+const api = {
+  // Get all service requests with filters
+  getServiceRequests: async (filters = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== 'all') {
+        queryParams.append(key, value);
+      }
+    });
+
+    const response = await fetch(`${API_BASE_URL}/service-requests?${queryParams}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch service requests');
+    return response.json();
+  },
+
+  // Get service categories
+  getServiceCategories: async () => {
+    const response = await fetch(`${API_BASE_URL}/service-requests/categories`);
+    if (!response.ok) throw new Error('Failed to fetch categories');
+    return response.json();
+  },
+
+  // Create new service request
+  createServiceRequest: async (requestData) => {
+    const response = await fetch(`${API_BASE_URL}/service-requests`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestData)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create service request');
+    }
+    return response.json();
+  },
+
+  // Get user offers
+  getUserOffers: async (page = 1, limit = 10) => {
+    const response = await fetch(`${API_BASE_URL}/service-requests/offers?page=${page}&limit=${limit}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch offers');
+    return response.json();
+  },
+
+  // Create offer for a request
+  createOffer: async (requestId, offerData) => {
+    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/offers`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(offerData)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create offer');
+    }
+    return response.json();
+  },
+
+  // Accept offer
+  acceptOffer: async (offerId) => {
+    const response = await fetch(`${API_BASE_URL}/offers/${offerId}/accept`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to accept offer');
+    }
+    return response.json();
+  },
+
+  // Get platform statistics
+  getStatistics: async () => {
+    const response = await fetch(`${API_BASE_URL}/service-requests/statistics`);
+    if (!response.ok) throw new Error('Failed to fetch statistics');
+    return response.json();
+  }
+};
+
 export default function RequestServicePage() {
   const [activeTab, setActiveTab] = useState('all');
   const [showRequestForm, setShowRequestForm] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [showOfferForm, setShowOfferForm] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
 
-  const serviceCategories = [
-    { name: "Home Services", icon: "🏠", count: 45, color: "bg-blue-100 text-blue-800" },
-    { name: "Auto Services", icon: "🚗", count: 23, color: "bg-green-100 text-green-800" },
-    { name: "Beauty & Wellness", icon: "💄", count: 67, color: "bg-pink-100 text-pink-800" },
-    { name: "Tech Support", icon: "💻", count: 34, color: "bg-purple-100 text-purple-800" },
-    { name: "Event Services", icon: "🎉", count: 28, color: "bg-yellow-100 text-yellow-800" },
-    { name: "Tutoring", icon: "📚", count: 56, color: "bg-indigo-100 text-indigo-800" },
-    { name: "Fitness", icon: "💪", count: 19, color: "bg-orange-100 text-orange-800" },
-    { name: "Photography", icon: "📸", count: 41, color: "bg-teal-100 text-teal-800" }
-  ];
+  // Data states
+  const [serviceCategories, setServiceCategories] = useState([]);
+  const [serviceRequests, setServiceRequests] = useState([]);
+  const [userOffers, setUserOffers] = useState([]);
+  const [statistics, setStatistics] = useState({});
 
-  const serviceRequests = [
-    {
-      id: 1,
-      title: "Need a Professional House Cleaning Service",
-      category: "Home Services",
-      description: "Looking for reliable house cleaning service for a 3-bedroom apartment. Need deep cleaning including bathrooms, kitchen, and all rooms.",
-      budget: "$150 - $300",
-      timeline: "This Weekend",
-      location: "Westlands, Nairobi",
-      postedBy: "Sarah M.",
-      postedTime: "2 hours ago",
-      offers: 8,
-      status: "Open",
-      priority: "Urgent",
-      requirements: ["Licensed", "Insurance", "References"]
-    },
-    {
-      id: 2,
-      title: "Car Air Conditioning Repair Needed",
-      category: "Auto Services",
-      description: "My car's AC stopped working completely. Need experienced mechanic to diagnose and fix the issue. Toyota Camry 2018 model.",
-      budget: "$200 - $500",
-      timeline: "Next Week",
-      location: "Karen, Nairobi",
-      postedBy: "John K.",
-      postedTime: "5 hours ago",
-      offers: 12,
-      status: "Open",
-      priority: "Normal",
-      requirements: ["Certified Mechanic", "Warranty"]
-    },
-    {
-      id: 3,
-      title: "Wedding Photography Package",
-      category: "Photography",
-      description: "Looking for professional wedding photographer for outdoor ceremony. Need full day coverage with edited photos and album.",
-      budget: "$800 - $1500",
-      timeline: "March 15, 2024",
-      location: "Nairobi National Park",
-      postedBy: "Maria & James",
-      postedTime: "1 day ago",
-      offers: 15,
-      status: "Open",
-      priority: "Normal",
-      requirements: ["Portfolio", "Equipment", "Experience"]
-    },
-    {
-      id: 4,
-      title: "Math Tutor for High School Student",
-      category: "Tutoring",
-      description: "Need experienced math tutor for Form 4 student preparing for KCSE. Focus on calculus and algebra. 3 sessions per week.",
-      budget: "$100 - $200/month",
-      timeline: "Ongoing",
-      location: "Kilimani, Nairobi",
-      postedBy: "Grace W.",
-      postedTime: "3 days ago",
-      offers: 6,
-      status: "In Progress",
-      priority: "Normal",
-      requirements: ["Teaching Experience", "KCSE Results"]
-    },
-    {
-      id: 5,
-      title: "Personal Trainer for Weight Loss",
-      category: "Fitness",
-      description: "Looking for certified personal trainer to help with weight loss journey. Need someone who can create custom workout plans.",
-      budget: "$150 - $300/month",
-      timeline: "Starting ASAP",
-      location: "Westlands Gym",
-      postedBy: "David R.",
-      postedTime: "6 hours ago",
-      offers: 9,
-      status: "Open",
-      priority: "High",
-      requirements: ["Certification", "Nutrition Knowledge"]
-    },
-    {
-      id: 6,
-      title: "Laptop Screen Replacement",
-      category: "Tech Support",
-      description: "MacBook Pro 2020 screen is cracked and needs replacement. Looking for authorized repair service with genuine parts.",
-      budget: "$200 - $400",
-      timeline: "This Week",
-      location: "CBD, Nairobi",
-      postedBy: "Alex T.",
-      postedTime: "8 hours ago",
-      offers: 4,
-      status: "Open",
-      priority: "Normal",
-      requirements: ["Authorized Service", "Genuine Parts"]
+  // Loading and error states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    category: 'all',
+    budget: 'all',
+    timeline: 'all',
+    location: '',
+    page: 1,
+    limit: 10
+  });
+
+  // Pagination state
+  const [pagination, setPagination] = useState({});
+
+  // Form states
+  const [requestForm, setRequestForm] = useState({
+    title: '',
+    category: '',
+    description: '',
+    budgetMin: '',
+    budgetMax: '',
+    timeline: '',
+    location: '',
+    requirements: [],
+    priority: 'normal'
+  });
+
+  const [offerForm, setOfferForm] = useState({
+    quotedPrice: '',
+    message: '',
+    availability: ''
+  });
+
+  // Load initial data function
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Try to load data, but provide fallbacks if API fails
+      try {
+        const [categoriesRes, statsRes] = await Promise.all([
+          api.getServiceCategories(),
+          api.getStatistics()
+        ]);
+
+        setServiceCategories(categoriesRes.data || []);
+        setStatistics(statsRes.data || {});
+      } catch (apiError) {
+        console.error('API Error:', apiError);
+        // Provide fallback data
+        setServiceCategories([
+          { name: 'Cleaning', icon: '🧹', count: 45, color: 'bg-blue-100 text-blue-800' },
+          { name: 'Repairs', icon: '🔧', count: 32, color: 'bg-green-100 text-green-800' },
+          { name: 'Gardening', icon: '🌱', count: 28, color: 'bg-yellow-100 text-yellow-800' },
+          { name: 'Tutoring', icon: '📚', count: 15, color: 'bg-purple-100 text-purple-800' },
+          { name: 'Delivery', icon: '📦', count: 22, color: 'bg-red-100 text-red-800' },
+          { name: 'Tech Support', icon: '💻', count: 18, color: 'bg-indigo-100 text-indigo-800' },
+          { name: 'Photography', icon: '📸', count: 12, color: 'bg-pink-100 text-pink-800' },
+          { name: 'Writing', icon: '✍️', count: 9, color: 'bg-gray-100 text-gray-800' }
+        ]);
+        setStatistics({
+          totalProviders: 2500,
+          completedRequests: 15000,
+          averageRating: 4.8,
+          activeRequests: 500
+        });
+      }
+
+      // Load initial requests
+      await loadServiceRequests();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const recentOffers = [
-    {
-      id: 1,
-      providerId: 1,
-      requestId: 1,
-      providerName: "CleanPro Services",
-      rating: 4.8,
-      reviews: 124,
-      price: "$250",
-      message: "We can provide comprehensive house cleaning with eco-friendly products. 5 years experience.",
-      responseTime: "30 minutes ago",
-      verified: true
-    },
-    {
-      id: 2,
-      providerId: 2,
-      requestId: 2,
-      providerName: "AutoFix Garage",
-      rating: 4.6,
-      reviews: 89,
-      price: "$350",
-      message: "Certified Toyota specialist. Can diagnose and fix AC issues same day. 2 year warranty included.",
-      responseTime: "1 hour ago",
-      verified: true
-    },
-    {
-      id: 3,
-      providerId: 3,
-      requestId: 3,
-      providerName: "Capture Moments Studio",
-      rating: 4.9,
-      reviews: 67,
-      price: "$1200",
-      message: "Award-winning wedding photographer with 8+ years experience. Portfolio available for review.",
-      responseTime: "2 hours ago",
-      verified: true
+  // Load service requests function
+  const loadServiceRequests = async () => {
+    try {
+      setError(null);
+      const response = await api.getServiceRequests(filters);
+      setServiceRequests(response.data?.requests || []);
+      setPagination(response.data?.pagination || {});
+    } catch (err) {
+      console.error('Failed to load service requests:', err);
+      // Provide fallback data for demo purposes
+      setServiceRequests([
+        {
+          id: 1,
+          title: "Need house cleaning service",
+          description: "Looking for a reliable cleaning service for my 3-bedroom house. Need deep cleaning including kitchen and bathrooms.",
+          category: "Cleaning",
+          budget: "$100 - $150",
+          location: "Nairobi, Kenya",
+          timeline: "This Week",
+          postedBy: "John Doe",
+          postedTime: "2 hours ago",
+          priority: "normal",
+          status: "open",
+          offers: 3,
+          verified: true,
+          requirements: ["Insurance", "References"]
+        },
+        {
+          id: 2,
+          title: "Laptop repair needed",
+          description: "My laptop screen is flickering and sometimes goes black. Need a technician to diagnose and fix the issue.",
+          category: "Tech Support",
+          budget: "$50 - $100",
+          location: "Westlands, Nairobi",
+          timeline: "Urgent",
+          postedBy: "Jane Smith",
+          postedTime: "4 hours ago",
+          priority: "urgent",
+          status: "open",
+          offers: 5,
+          verified: false,
+          requirements: ["Licensed", "Portfolio"]
+        }
+      ]);
+      setPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 2,
+        hasNext: false,
+        hasPrev: false
+      });
     }
-  ];
+  };
+
+  const loadUserOffers = async () => {
+    try {
+      const response = await api.getUserOffers(filters.page, filters.limit);
+      setUserOffers(response.data?.offers || []);
+      setPagination(response.data?.pagination || {});
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  // Load initial data
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  // Load data when filters change
+  useEffect(() => {
+    if (activeTab === 'all') {
+      loadServiceRequests();
+    } else if (activeTab === 'recent') {
+      loadUserOffers();
+    }
+  }, [filters, activeTab]);
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value,
+      page: 1 // Reset to first page when filters change
+    }));
+  };
+
+  const handleRequestFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      await api.createServiceRequest(requestForm);
+      setShowRequestForm(false);
+      setRequestForm({
+        title: '',
+        category: '',
+        description: '',
+        budgetMin: '',
+        budgetMax: '',
+        timeline: '',
+        location: '',
+        requirements: [],
+        priority: 'normal'
+      });
+      // Reload requests
+      await loadServiceRequests();
+      alert('Service request posted successfully!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOfferFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      await api.createOffer(selectedRequestId, offerForm);
+      setShowOfferForm(false);
+      setOfferForm({
+        quotedPrice: '',
+        message: '',
+        availability: ''
+      });
+      setSelectedRequestId(null);
+      alert('Offer submitted successfully!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAcceptOffer = async (offerId) => {
+    try {
+      setSubmitting(true);
+      await api.acceptOffer(offerId);
+      // Reload offers to reflect the status change
+      await loadUserOffers();
+      alert('Offer accepted successfully!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRequirementChange = (requirement, checked) => {
+    setRequestForm(prev => ({
+      ...prev,
+      requirements: checked
+        ? [...prev.requirements, requirement]
+        : prev.requirements.filter(req => req !== requirement)
+    }));
+  };
 
   const RequestForm = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -236,7 +449,7 @@ export default function RequestServicePage() {
         <div className="p-6 border-b">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Post a Service Request</h2>
-            <button 
+            <button
               onClick={() => setShowRequestForm(false)}
               className="text-gray-500 hover:text-gray-700 text-2xl"
             >
@@ -244,106 +457,134 @@ export default function RequestServicePage() {
             </button>
           </div>
         </div>
-        
-        <form className="p-6 space-y-6">
+
+        <form onSubmit={handleRequestFormSubmit} className="p-6 space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Service Category *</label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500">
+            <select
+              value={requestForm.category}
+              onChange={(e) => setRequestForm(prev => ({ ...prev, category: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+              required
+            >
               <option value="">Select a category</option>
               {serviceCategories.map((cat, index) => (
                 <option key={index} value={cat.name}>{cat.name}</option>
               ))}
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Service Title *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
+              value={requestForm.title}
+              onChange={(e) => setRequestForm(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Briefly describe what service you need"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+              required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
-            <textarea 
+            <textarea
               rows="4"
+              value={requestForm.description}
+              onChange={(e) => setRequestForm(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Provide detailed description of your requirements..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+              required
             ></textarea>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Budget Range *</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500">
-                <option value="">Select budget range</option>
-                <option value="0-100">$0 - $100</option>
-                <option value="100-300">$100 - $300</option>
-                <option value="300-500">$300 - $500</option>
-                <option value="500-1000">$500 - $1000</option>
-                <option value="1000+">$1000+</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Min Budget *</label>
+              <input
+                type="number"
+                value={requestForm.budgetMin}
+                onChange={(e) => setRequestForm(prev => ({ ...prev, budgetMin: e.target.value }))}
+                placeholder="Minimum budget"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                required
+              />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Timeline *</label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500">
-                <option value="">When do you need this?</option>
-                <option value="urgent">ASAP/Urgent</option>
-                <option value="thisweek">This Week</option>
-                <option value="nextweek">Next Week</option>
-                <option value="thismonth">This Month</option>
-                <option value="flexible">Flexible</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Max Budget *</label>
+              <input
+                type="number"
+                value={requestForm.budgetMax}
+                onChange={(e) => setRequestForm(prev => ({ ...prev, budgetMax: e.target.value }))}
+                placeholder="Maximum budget"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                required
+              />
             </div>
           </div>
-          
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Timeline *</label>
+            <select
+              value={requestForm.timeline}
+              onChange={(e) => setRequestForm(prev => ({ ...prev, timeline: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+              required
+            >
+              <option value="">When do you need this?</option>
+              <option value="urgent">ASAP/Urgent</option>
+              <option value="thisweek">This Week</option>
+              <option value="nextweek">Next Week</option>
+              <option value="thismonth">This Month</option>
+              <option value="flexible">Flexible</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
+              value={requestForm.location}
+              onChange={(e) => setRequestForm(prev => ({ ...prev, location: e.target.value }))}
               placeholder="Enter your location"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+              required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Special Requirements</label>
             <div className="space-y-2">
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" />
-                <span className="text-sm">Must be licensed/certified</span>
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" />
-                <span className="text-sm">Insurance required</span>
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" />
-                <span className="text-sm">References needed</span>
-              </label>
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2" />
-                <span className="text-sm">Portfolio/samples required</span>
-              </label>
+              {['Licensed', 'Insurance', 'References', 'Portfolio'].map((req) => (
+                <label key={req} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={requestForm.requirements.includes(req)}
+                    onChange={(e) => handleRequirementChange(req, e.target.checked)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">{req} required</span>
+                </label>
+              ))}
             </div>
           </div>
-          
+
           <div className="flex justify-end space-x-4 pt-4 border-t">
-            <button 
+            <button
               type="button"
               onClick={() => setShowRequestForm(false)}
               className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              disabled={submitting}
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
-              className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+              disabled={submitting}
             >
-              Post Request
+              {submitting ? 'Posting...' : 'Post Request'}
             </button>
           </div>
         </form>
@@ -351,24 +592,116 @@ export default function RequestServicePage() {
     </div>
   );
 
+  const OfferForm = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-lg">
+        <div className="p-6 border-b">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Make an Offer</h2>
+            <button
+              onClick={() => setShowOfferForm(false)}
+              className="text-gray-500 hover:text-gray-700 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleOfferFormSubmit} className="p-6 space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Quoted Price *</label>
+            <input
+              type="number"
+              value={offerForm.quotedPrice}
+              onChange={(e) => setOfferForm(prev => ({ ...prev, quotedPrice: e.target.value }))}
+              placeholder="Enter your price quote"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Message *</label>
+            <textarea
+              rows="4"
+              value={offerForm.message}
+              onChange={(e) => setOfferForm(prev => ({ ...prev, message: e.target.value }))}
+              placeholder="Describe your offer and experience..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+              required
+            ></textarea>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Availability *</label>
+            <input
+              type="text"
+              value={offerForm.availability}
+              onChange={(e) => setOfferForm(prev => ({ ...prev, availability: e.target.value }))}
+              placeholder="When can you start?"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end space-x-4 pt-4 border-t">
+            <button
+              type="button"
+              onClick={() => setShowOfferForm(false)}
+              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+              disabled={submitting}
+            >
+              {submitting ? 'Submitting...' : 'Submit Offer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <LoadingSpinner />
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            Error: {error}
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Banner */}
-      {/* <div className="bg-red-600 text-white text-center py-2 text-sm">
-        🔥 Post your service request and get quotes from verified providers!
-      </div> */}
-
-      {/* Navbar */}
       <Navbar />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-red-600 to-red-500 text-white py-16">
+      <section className="bg-gradient-to-r from-blue-600 to-red-500 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Need a Service?</h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Post your service request and get competitive quotes from verified professionals in your area
           </p>
-          <button 
+          <button
             onClick={() => setShowRequestForm(true)}
             className="bg-white text-red-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors flex items-center space-x-2 mx-auto"
           >
@@ -383,7 +716,11 @@ export default function RequestServicePage() {
         <h2 className="text-2xl font-bold mb-6">Browse Service Categories</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {serviceCategories.map((category, index) => (
-            <div key={index} className="bg-white rounded-lg p-4 text-center hover:shadow-lg transition-shadow cursor-pointer group">
+            <div
+              key={index}
+              className="bg-white rounded-lg p-4 text-center hover:shadow-lg transition-shadow cursor-pointer group"
+              onClick={() => handleFilterChange('category', category.name)}
+            >
               <div className="text-3xl mb-2">{category.icon}</div>
               <h3 className="font-semibold text-sm mb-1 group-hover:text-red-600">{category.name}</h3>
               <span className={`text-xs px-2 py-1 rounded-full ${category.color}`}>
@@ -402,193 +739,333 @@ export default function RequestServicePage() {
               <Filter className="w-4 h-4 text-gray-600" />
               <span className="text-sm font-medium">Filters:</span>
             </div>
-            <select className="border border-gray-200 rounded px-3 py-1 text-sm">
-              <option>All Categories</option>
-              <option>Home Services</option>
-              <option>Auto Services</option>
-              <option>Beauty & Wellness</option>
+            <select
+              value={filters.category}
+              onChange={(e) => handleFilterChange('category', e.target.value)}
+              className="border border-gray-200 rounded px-3 py-1 text-sm"
+            >
+              <option value="all">All Categories</option>
+              {serviceCategories.map((cat, index) => (
+                <option key={index} value={cat.name}>{cat.name}</option>
+              ))}
             </select>
-            <select className="border border-gray-200 rounded px-3 py-1 text-sm">
-              <option>All Budgets</option>
-              <option>$0 - $100</option>
-              <option>$100 - $500</option>
-              <option>$500+</option>
+            <select
+              value={filters.budget}
+              onChange={(e) => handleFilterChange('budget', e.target.value)}
+              className="border border-gray-200 rounded px-3 py-1 text-sm"
+            >
+              <option value="all">All Budgets</option>
+              <option value="0-100">$0 - $100</option>
+              <option value="100-300">$100 - $300</option>
+              <option value="300-500">$300 - $500</option>
+              <option value="500-1000">$500 - $1000</option>
+              <option value="1000+">$1000+</option>
             </select>
-            <select className="border border-gray-200 rounded px-3 py-1 text-sm">
-              <option>All Timelines</option>
-              <option>Urgent</option>
-              <option>This Week</option>
-              <option>This Month</option>
+            <select
+              value={filters.timeline}
+              onChange={(e) => handleFilterChange('timeline', e.target.value)}
+              className="border border-gray-200 rounded px-3 py-1 text-sm"
+            >
+              <option value="all">All Timelines</option>
+              <option value="urgent">Urgent</option>
+              <option value="thisweek">This Week</option>
+              <option value="nextweek">Next Week</option>
+              <option value="thismonth">This Month</option>
+              <option value="flexible">Flexible</option>
             </select>
           </div>
           <div className="text-sm text-gray-600">
-            <span className="font-semibold">247</span> active service requests
+            <span className="font-semibold">{pagination.totalCount || 0}</span> active service requests
           </div>
         </div>
       </section>
+
 
       {/* Service Requests */}
       <section className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Active Service Requests</h2>
           <div className="flex space-x-2">
-            <button 
+            <button
               onClick={() => setActiveTab('all')}
               className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'all' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
             >
               All Requests
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('recent')}
               className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'recent' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
             >
-              Recent Offers
+              My Offers
             </button>
           </div>
         </div>
 
         {activeTab === 'all' && (
           <div className="space-y-6">
-            {serviceRequests.map((request) => (
-              <div key={request.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-xl font-semibold">{request.title}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          request.priority === 'Urgent' ? 'bg-red-100 text-red-800' :
-                          request.priority === 'High' ? 'bg-orange-100 text-orange-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {request.priority}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          request.status === 'Open' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {request.status}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 mb-3">{request.description}</p>
-                      
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
-                        <div className="flex items-center space-x-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{request.location}</span>
+            {serviceRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-xl mb-4">No service requests found</div>
+                <p className="text-gray-600 mb-6">Be the first to post a service request!</p>
+                <button
+                  onClick={() => setShowRequestForm(true)}
+                  className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 font-medium"
+                >
+                  Post First Request
+                </button>
+              </div>
+            ) : (
+              serviceRequests.map((request) => (
+                <div key={request.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-xl font-semibold">{request.title}</h3>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${request.priority === 'urgent' ? 'bg-red-100 text-red-800' :
+                            request.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                            {request.priority}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${request.status === 'open' ? 'bg-blue-100 text-blue-800' :
+                            request.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                            {request.status.replace('_', ' ').toUpperCase()}
+                          </span>
+                          {request.verified && (
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                              Verified User
+                            </span>
+                          )}
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <DollarSign className="w-4 h-4" />
-                          <span>{request.budget}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{request.timeline}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <User className="w-4 h-4" />
-                          <span>by {request.postedBy}</span>
-                        </div>
-                      </div>
+                        <p className="text-gray-600 mb-3 line-clamp-2">{request.description}</p>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-gray-500">{request.postedTime}</span>
-                          <div className="flex items-center space-x-2">
-                            <MessageSquare className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm font-medium text-red-600">{request.offers} offers received</span>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
+                          <div className="flex items-center space-x-1">
+                            <MapPin className="w-4 h-4" />
+                            <span>{request.location}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <DollarSign className="w-4 h-4" />
+                            <span>{request.budget}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{request.timeline}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <User className="w-4 h-4" />
+                            <span>by {request.postedBy}</span>
                           </div>
                         </div>
-                        
-                        <div className="flex space-x-2">
-                          <button className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 font-medium">
-                            View Details
-                          </button>
-                          <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium">
-                            Make Offer
-                          </button>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <span className="text-sm text-gray-500">{request.postedTime}</span>
+                            <div className="flex items-center space-x-2">
+                              <MessageSquare className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm font-medium text-red-600">
+                                {request.offers} offer{request.offers !== 1 ? 's' : ''} received
+                              </span>
+                            </div>
+                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                              {request.category}
+                            </span>
+                          </div>
+
+                          <div className="flex space-x-2">
+                            <button className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 font-medium">
+                              View Details
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedRequestId(request.id);
+                                setShowOfferForm(true);
+                              }}
+                              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium"
+                              disabled={request.status !== 'open'}
+                            >
+                              Make Offer
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {request.requirements && request.requirements.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {request.requirements.map((req, index) => (
-                        <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                          {req}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                    {request.requirements && request.requirements.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
+                        <span className="text-sm text-gray-600 mr-2">Requirements:</span>
+                        {request.requirements.map((req, index) => (
+                          <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                            {req}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
+              ))
+            )}
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-4 mt-8">
+                <button
+                  onClick={() => handleFilterChange('page', Math.max(1, filters.page - 1))}
+                  disabled={!pagination.hasPrev}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+
+                <div className="flex items-center space-x-2">
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    const pageNum = i + Math.max(1, pagination.currentPage - 2);
+                    return pageNum <= pagination.totalPages ? (
+                      <button
+                        key={pageNum}
+                        onClick={() => handleFilterChange('page', pageNum)}
+                        className={`px-3 py-2 rounded-lg ${pageNum === pagination.currentPage
+                          ? 'bg-red-500 text-white'
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                      >
+                        {pageNum}
+                      </button>
+                    ) : null;
+                  })}
+                </div>
+
+                <button
+                  onClick={() => handleFilterChange('page', Math.min(pagination.totalPages, filters.page + 1))}
+                  disabled={!pagination.hasNext}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
               </div>
-            ))}
+            )}
           </div>
         )}
 
         {activeTab === 'recent' && (
           <div className="space-y-6">
-            {recentOffers.map((offer) => (
-              <div key={offer.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                        <Briefcase className="w-6 h-6 text-gray-600" />
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h3 className="text-lg font-semibold">{offer.providerName}</h3>
-                          {offer.verified && (
-                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                              Verified
+            {userOffers.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-xl mb-4">No offers yet</div>
+                <p className="text-gray-600 mb-6">Start making offers on service requests to see them here!</p>
+                <button
+                  onClick={() => setActiveTab('all')}
+                  className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 font-medium"
+                >
+                  Browse Requests
+                </button>
+              </div>
+            ) : (
+              userOffers.map((offer) => (
+                <div key={offer.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                          <Briefcase className="w-6 h-6 text-gray-600" />
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <h3 className="text-lg font-semibold">{offer.providerName}</h3>
+                            {offer.verified && (
+                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                Verified
+                              </span>
+                            )}
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${offer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              offer.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                              {offer.status.toUpperCase()}
                             </span>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
-                          <div className="flex items-center">
-                            <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                            <span className="font-medium">{offer.rating}</span>
                           </div>
-                          <span>({offer.reviews} reviews)</span>
-                          <span className="text-gray-400">•</span>
-                          <span>{offer.responseTime}</span>
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                              <span className="font-medium">{offer.rating}</span>
+                            </div>
+                            <span>({offer.reviews} reviews)</span>
+                            <span className="text-gray-400">•</span>
+                            <span>{offer.responseTime}</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-green-600">{offer.price}</div>
+                        <div className="text-sm text-gray-500">Quoted Price</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600">{offer.price}</div>
-                      <div className="text-sm text-gray-500">Quoted Price</div>
+
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <p className="text-gray-700 italic">"{offer.message}"</p>
+                      {offer.availability && (
+                        <div className="mt-2 text-sm text-gray-600">
+                          <span className="font-medium">Availability:</span> {offer.availability}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                    <p className="text-gray-700 italic">"{offer.message}"</p>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-500">
-                      Offer for: <span className="font-medium">
-                        {serviceRequests.find(req => req.id === offer.requestId)?.title}
-                      </span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
-                        View Store
-                      </button>
-                      <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium">
-                        Accept Offer
-                      </button>
+
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-500">
+                        Offer for: <span className="font-medium text-gray-700">
+                          {offer.requestTitle}
+                        </span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                          View Provider
+                        </button>
+                        {offer.status === 'pending' && (
+                          <button
+                            onClick={() => handleAcceptOffer(offer.id)}
+                            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium"
+                          >
+                            Accept Offer
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))
+            )}
+
+            {/* Pagination for offers */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-4 mt-8">
+                <button
+                  onClick={() => handleFilterChange('page', Math.max(1, filters.page - 1))}
+                  disabled={!pagination.hasPrev}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+
+                <span className="text-sm text-gray-600">
+                  Page {pagination.currentPage} of {pagination.totalPages}
+                </span>
+
+                <button
+                  onClick={() => handleFilterChange('page', Math.min(pagination.totalPages, filters.page + 1))}
+                  disabled={!pagination.hasNext}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
               </div>
-            ))}
+            )}
           </div>
         )}
       </section>
-      
+
       {/* Statistics Section */}
       <section className="bg-white py-16">
         <div className="container mx-auto px-4">
@@ -598,33 +1075,44 @@ export default function RequestServicePage() {
               Connect with verified service providers and get the best deals for your needs
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">2,500+</div>
-              <div className="text-gray-600">Service Providers</div>
+              <div className="text-4xl font-bold text-red-600 mb-2">
+                {statistics.totalProviders?.toLocaleString() || '2,500+'}
+              </div>
+              <div className="text-gray-600">Verified Providers</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">15,000+</div>
+              <div className="text-4xl font-bold text-red-600 mb-2">
+                {statistics.completedRequests?.toLocaleString() || '15,000+'}
+              </div>
               <div className="text-gray-600">Completed Requests</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">4.8★</div>
+              <div className="text-4xl font-bold text-red-600 mb-2">
+                {statistics.averageRating?.toFixed(1) || '4.8'}★
+              </div>
               <div className="text-gray-600">Average Rating</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">24/7</div>
-              <div className="text-gray-600">Support Available</div>
+              <div className="text-4xl font-bold text-red-600 mb-2">
+                {statistics.activeRequests?.toLocaleString() || '500+'}
+              </div>
+              <div className="text-gray-600">Active Requests</div>
             </div>
           </div>
         </div>
       </section>
 
       <Footer />
-     
 
       {/* Request Form Modal */}
       {showRequestForm && <RequestForm />}
+
+      {/* Offer Form Modal */}
+      {showOfferForm && <OfferForm />}
+
     </div>
-  );
+  )
 }
