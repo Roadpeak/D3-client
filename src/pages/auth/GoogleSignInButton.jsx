@@ -16,10 +16,10 @@ const GoogleSignInButton = () => {
     return (
         <button
             onClick={handleGoogleSignIn}
-            className="bg-white gap-2 border-2 border-primary text-primary flex items-center justify-center py-1.5 px-4 rounded-full transition duration-300"
+            className="text-[13px] bg-white gap-2 border-2 border-primary text-primary flex items-center justify-center py-1.5 px-4 rounded-full transition duration-300"
         >
-            <FcGoogle size={20} />
-            Continue with Google
+            or
+            Continue with Google <FcGoogle size={20} />
         </button>
     );
 };

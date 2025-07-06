@@ -33,11 +33,11 @@ export default function Hero() {
     const fetchOffers = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch hero offers and side offers in parallel
         const [heroResponse, sideResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/offers`),
-          fetch(`${API_BASE_URL}/side-offers`)
+          fetch(`${API_BASE_URL}offers`),
+          fetch(`${API_BASE_URL}side-offers`)
         ]);
 
         if (!heroResponse.ok || !sideResponse.ok) {
@@ -146,8 +146,8 @@ export default function Hero() {
       <section className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
           <p className="text-red-600 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
             Try Again
@@ -165,15 +165,15 @@ export default function Hero() {
           {heroOffers.length > 0 && (
             <>
               {/* Carousel Container */}
-              <div 
+              <div
                 className="flex transition-transform duration-500 ease-in-out h-full"
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
               >
                 {heroOffers.map((offer, index) => (
                   <div key={offer.id} className="w-full flex-shrink-0 relative">
-                    <img 
-                      src={offer.image} 
-                      alt={offer.title} 
+                    <img
+                      src={offer.image}
+                      alt={offer.title}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.src = '/images/default.jpg';
@@ -191,7 +191,7 @@ export default function Hero() {
                       {offer.timeLeft && (
                         <p className="text-sm text-gray-300 mb-4">{offer.timeLeft}</p>
                       )}
-                      <button 
+                      <button
                         onClick={() => handleOfferClick(offer.id)}
                         className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors"
                       >
@@ -233,11 +233,10 @@ export default function Hero() {
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all ${
-                        index === currentSlide 
-                          ? 'bg-white' 
+                      className={`w-3 h-3 rounded-full transition-all ${index === currentSlide
+                          ? 'bg-white'
                           : 'bg-white bg-opacity-50 hover:bg-opacity-75'
-                      }`}
+                        }`}
                     />
                   ))}
                 </div>
@@ -250,9 +249,9 @@ export default function Hero() {
         <div className="space-y-4">
           {sideOffers.map((offer) => (
             <div key={offer.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-              <img 
-                src={offer.image} 
-                alt={offer.title} 
+              <img
+                src={offer.image}
+                alt={offer.title}
                 className="w-full h-32 object-cover"
                 onError={(e) => {
                   e.target.src = '/images/default.jpg';
@@ -276,7 +275,7 @@ export default function Hero() {
                 {offer.store && (
                   <p className="text-xs text-gray-500 mb-2">at {offer.store}</p>
                 )}
-                <button 
+                <button
                   onClick={() => handleOfferClick(offer.id)}
                   className="w-full bg-blue-600 text-white py-2 rounded text-sm font-semibold hover:bg-blue-700 transition-colors"
                 >
@@ -285,7 +284,7 @@ export default function Hero() {
               </div>
             </div>
           ))}
-          
+
           {sideOffers.length === 0 && !loading && (
             <div className="bg-white rounded-lg shadow-sm p-8 text-center text-gray-500">
               <p>No side offers available at the moment</p>
