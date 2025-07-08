@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -24,6 +25,7 @@ import {
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import StoreService from '../services/storeService'; 
 
 const StoreViewPage = () => {
   const location = useLocation();
@@ -43,14 +45,9 @@ const StoreViewPage = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
 
-  // Get auth token (adjust this based on your auth implementation)
-  const getAuthToken = () => {
-    return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-  };
-
   // Get current user from localStorage/context (adjust based on your auth implementation)
   const getCurrentUser = () => {
-    const token = getAuthToken();
+    const token = StoreService.getAuthToken();
     if (!token) return { isLoggedIn: false };
 
     try {
@@ -68,33 +65,22 @@ const StoreViewPage = () => {
 
   const currentUser = getCurrentUser();
 
-  // Fetch store data from backend
+  // Fetch store data from backend using StoreService
   const fetchStoreData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const token = getAuthToken();
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      };
-
-      const response = await fetch(`http://localhost:4000/api/v1/stores/${id}`, { headers });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Store not found');
-        }
-        throw new Error('Failed to fetch store data');
-      }
-
-      const data = await response.json();
+      const data = await StoreService.getStoreById(id);
       setStoreData(data.store);
       setIsFollowing(data.store.following || false);
     } catch (err) {
       console.error('Error fetching store:', err);
-      setError(err.message);
+      if (err.message.includes('404')) {
+        setError('Store not found');
+      } else {
+        setError('Failed to fetch store data');
+      }
     } finally {
       setLoading(false);
     }
@@ -109,14 +95,11 @@ const StoreViewPage = () => {
 
     try {
       setToggleFollowLoading(true);
-      const token = getAuthToken();
-
-      const response = await fetch(`/api/stores/${id}/toggle-follow`, {
+      
+      // Use the correct base URL
+      const response = await fetch(`http://localhost:4000/api/v1/stores/${id}/toggle-follow`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        headers: StoreService.getHeaders()
       });
 
       if (!response.ok) {
@@ -153,14 +136,11 @@ const StoreViewPage = () => {
 
     try {
       setSubmittingReview(true);
-      const token = getAuthToken();
 
-      const response = await fetch(`/api/stores/${id}/reviews`, {
+      // Use the correct base URL
+      const response = await fetch(`http://localhost:4000/api/v1/stores/${id}/reviews`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: StoreService.getHeaders(),
         body: JSON.stringify({
           rating: newReview.rating,
           comment: newReview.comment.trim()
@@ -207,9 +187,9 @@ const StoreViewPage = () => {
     setTimeout(() => setCopiedCode(''), 2000);
   };
 
-  useEffect (() => {
-    fetchStoreData()
-  }, [])
+  useEffect(() => {
+    fetchStoreData();
+  }, [id]); // Add id as dependency
 
   // Stars component
   const renderStars = (rating, interactive = false, onRate = null, onHover = null) => {

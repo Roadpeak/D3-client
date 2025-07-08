@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MdCategory } from 'react-icons/md';
 
-// import { User } from "lucide-react";
-
 // Custom SVG Icons
 const Search = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,6 +78,12 @@ const ChatIcon = ({ className }) => (
   </svg>
 );
 
+const TagIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+  </svg>
+);
+
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -106,22 +110,22 @@ const Navbar = () => {
   const notifications = [
     {
       id: 1,
-      title: "New Deal Available!",
-      message: "50% off at Pizza Palace - Limited time offer",
+      title: "🔥 Flash Sale Alert!",
+      message: "Up to 70% off Electronics - Only 2 hours left!",
       time: "2 hours ago",
       isRead: false
     },
     {
       id: 2,
-      title: "Order Confirmed",
-      message: "Your order #12345 has been confirmed",
+      title: "✅ Coupon Applied",
+      message: "Your 25% off coupon was successfully applied",
       time: "1 day ago",
       isRead: true
     },
     {
       id: 3,
-      title: "Welcome to D3!",
-      message: "Discover amazing deals in your area",
+      title: "🎉 Welcome Bonus!",
+      message: "Get 50% off your first purchase with code WELCOME50",
       time: "3 days ago",
       isRead: true
     }
@@ -129,145 +133,133 @@ const Navbar = () => {
 
   // Categories/Services data
   const categories = [
-    { id: 1, name: "Restaurants & Food", icon: "🍽️" },
-    { id: 2, name: "Beauty & Spa", icon: "💅" },
-    { id: 3, name: "Health & Fitness", icon: "💪" },
-    { id: 4, name: "Entertainment", icon: "🎬" },
-    { id: 5, name: "Shopping", icon: "🛍️" },
-    { id: 6, name: "Travel & Hotels", icon: "✈️" },
-    { id: 7, name: "Automotive", icon: "🚗" },
-    { id: 8, name: "Home Services", icon: "🏠" },
-    { id: 9, name: "Education", icon: "📚" },
-    { id: 10, name: "Professional Services", icon: "💼" }
+    { id: 1, name: "Food & Restaurants", icon: "🍕", discount: "Up to 50% off" },
+    { id: 2, name: "Beauty & Wellness", icon: "💄", discount: "Up to 40% off" },
+    { id: 3, name: "Health & Fitness", icon: "💪", discount: "Up to 60% off" },
+    { id: 4, name: "Entertainment", icon: "🎬", discount: "Up to 35% off" },
+    { id: 5, name: "Fashion & Shopping", icon: "👕", discount: "Up to 70% off" },
+    { id: 6, name: "Travel & Hotels", icon: "✈️", discount: "Up to 45% off" },
+    { id: 7, name: "Automotive", icon: "🚗", discount: "Up to 30% off" },
+    { id: 8, name: "Home & Garden", icon: "🏠", discount: "Up to 55% off" },
+    { id: 9, name: "Education", icon: "📚", discount: "Up to 40% off" },
+    { id: 10, name: "Tech & Electronics", icon: "📱", discount: "Up to 65% off" }
   ];
 
   // Locations data
   const locations = [
-    { id: 1, name: "Westlands, Nairobi", area: "Current Location" },
-    { id: 2, name: "CBD, Nairobi", area: "Central Business District" },
-    { id: 3, name: "Karen, Nairobi", area: "Residential Area" },
-    { id: 4, name: "Kilimani, Nairobi", area: "Shopping & Dining" },
-    { id: 5, name: "Upperhill, Nairobi", area: "Business District" },
-    { id: 6, name: "Kileleshwa, Nairobi", area: "Residential" },
-    { id: 7, name: "Lavington, Nairobi", area: "Upmarket Area" },
-    { id: 8, name: "Gigiri, Nairobi", area: "Diplomatic Area" },
-    { id: 9, name: "Runda, Nairobi", area: "Residential Estate" },
-    { id: 10, name: "Muthaiga, Nairobi", area: "Exclusive Suburb" }
+    { id: 1, name: "Westlands, Nairobi", area: "Current Location", offers: "120 deals" },
+    { id: 2, name: "CBD, Nairobi", area: "Central Business District", offers: "95 deals" },
+    { id: 3, name: "Karen, Nairobi", area: "Residential Area", offers: "85 deals" },
+    { id: 4, name: "Kilimani, Nairobi", area: "Shopping & Dining", offers: "110 deals" },
+    { id: 5, name: "Upperhill, Nairobi", area: "Business District", offers: "75 deals" },
+    { id: 6, name: "Kileleshwa, Nairobi", area: "Residential", offers: "60 deals" },
+    { id: 7, name: "Lavington, Nairobi", area: "Upmarket Area", offers: "90 deals" },
+    { id: 8, name: "Gigiri, Nairobi", area: "Diplomatic Area", offers: "45 deals" },
+    { id: 9, name: "Runda, Nairobi", area: "Residential Estate", offers: "55 deals" },
+    { id: 10, name: "Muthaiga, Nairobi", area: "Exclusive Suburb", offers: "40 deals" }
   ];
 
   const unreadCount = notifications.filter(notif => !notif.isRead).length;
 
   return (
-    <header className="static bg-white shadow-sm border-b-2 border-gray-100 mb-4" style={{ position: 'static' }}>
+    <header className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-40">
+      {/* Promotional Banner */}
+      <div className="bg-gradient-to-r from-red-500 via-pink-500 to-purple-600 text-white py-2 px-4">
+        <div className="container mx-auto flex items-center justify-center text-center">
+          <div className="flex items-center space-x-2 animate-pulse">
+            <span className="text-sm font-medium">Get upto 90%OFF from your favourite service providers</span>
+           </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4">
         {/* Top Header */}
-        <div className="flex items-center justify-between py-3 border-b">
+        <div className="flex items-center justify-between py-3 border-b border-gray-100">
           <div className="flex items-center space-x-4 lg:space-x-6">
             <div className="flex items-center space-x-4">
               <button onClick={toggleMobileMenu} className="lg:hidden relative">
-                <MenuIcon className="w-6 h-6" />
+                <MenuIcon className="w-6 h-6 text-gray-700" />
                 
-                {/* Mobile Menu Popup - Simplified */}
+                {/* Mobile Menu Popup */}
                 {isMobileMenuOpen && (
-                  <div className="absolute top-8 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                    <div className="p-3 border-b border-gray-200">
-                      <h3 className="text-sm font-semibold text-gray-800">Menu</h3>
+                  <div className="absolute top-8 left-0 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
+                    <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                      <h3 className="text-sm font-semibold text-gray-800">Quick Menu</h3>
                     </div>
                     <nav className="py-2">
-                      <button className="flex items-center space-x-3 text-gray-700 hover:text-red-600 hover:bg-gray-50 px-4 py-3 text-left w-full">
-                        <span>📝</span>
-                        <span>List on D3</span>
+                      <button className="flex items-center justify-between text-gray-700 hover:text-red-600 hover:bg-red-50 px-4 py-3 text-left w-full transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <span>🏪</span>
+                          <span>List Your Business</span>
+                        </div>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Free</span>
                       </button>
-                      <button className="flex items-center space-x-3 text-gray-700 hover:text-red-600 hover:bg-gray-50 px-4 py-3 text-left w-full">
-                        <span>📞</span>
-                        <span>Customer Care</span>
+                      <button className="flex items-center justify-between text-gray-700 hover:text-red-600 hover:bg-red-50 px-4 py-3 text-left w-full transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <span>🎧</span>
+                          <span>24/7 Support</span>
+                        </div>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Live</span>
                       </button>
                     </nav>
                   </div>
                 )}
               </button>
               
-              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                D3 
+              <div className="flex items-center space-x-2">
+                <div className="text-3xl font-bold">
+                  <span className="bg-gradient-to-r from-red-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">D3</span>
+                  <TagIcon className="w-6 h-6 text-red-500 inline ml-1" />
+                </div>
+                <div className="hidden sm:block">
+                  <div className="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full font-semibold animate-bounce">
+                    DEALS
+                  </div>
+                </div>
               </div>
             </div>
             
-          
-            <div className="flex md:hidden items-center space-x-2 text-sm text-gray-600 relative">
-              <MapPin className="w-4 h-4" />
-              <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-red-600">
-                <span className="text-xs">Westlands</span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
+            {/* Mobile location & categories */}
+            <div className="flex md:hidden items-center space-x-4">
+              <div className="flex items-center space-x-1 text-sm text-gray-600 relative">
+                <MapPin className="w-4 h-4 text-red-500" />
+                <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-red-600 transition-colors">
+                  <span className="text-xs font-medium">Westlands</span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
               
-              {/* Location Dropdown */}
-              {isLocationOpen && (
-                <div className="absolute top-8 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <div className="p-3 border-b border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-800">Select Location</h3>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {locations.map((location) => (
-                      <button 
-                        key={location.id} 
-                        className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                        onClick={() => {
-                          setIsLocationOpen(false);
-                          // Handle location selection here
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{location.name}</p>
-                            <p className="text-xs text-gray-500">{location.area}</p>
-                          </div>
-                          {location.area === "Current Location" && (
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="p-3 border-t border-gray-200">
-                    <button className="text-sm text-red-600 hover:text-red-700 font-medium">
-                      Use Current Location
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            
-            <div className="flex md:hidden items-center space-x-2 text-sm text-gray-600 relative">
-              <button onClick={toggleCategories} className="flex items-center space-x-1 hover:text-red-600">
-                <MdCategory  className="w-4 h-4" />
-                <span className="text-xs">Categories</span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
+              <div className="flex items-center space-x-1 text-sm text-gray-600 relative">
+                <button onClick={toggleCategories} className="flex items-center space-x-1 hover:text-red-600 transition-colors">
+                  <MdCategory className="w-4 h-4 text-red-500" />
+                  <span className="text-xs font-medium">Categories</span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
             </div>
             
             {/* Desktop location dropdown */}
             <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600 relative">
-              <MapPin className="w-4 h-4" />
-              <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-red-600">
-                <span>Westlands, Nairobi,Kenya</span>
+              <MapPin className="w-4 h-4 text-red-500" />
+              <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-red-600 transition-colors">
+                <span className="font-medium">Westlands, Nairobi</span>
                 <ChevronDown className="w-4 h-4" />
               </button>
               
-              {/* Location Dropdown */}
+              {/* Enhanced Location Dropdown */}
               {isLocationOpen && (
-                <div className="absolute top-8 left-0 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <div className="p-3 border-b border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-800">Select Location</h3>
+                <div className="absolute top-8 left-0 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
+                  <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                    <h3 className="text-sm font-semibold text-gray-800">Choose Your Location</h3>
+                    <p className="text-xs text-gray-600 mt-1">Find the best deals near you</p>
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {locations.map((location) => (
                       <button 
                         key={location.id} 
-                        className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        className="w-full p-3 text-left hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 border-b border-gray-100 last:border-b-0 transition-colors"
                         onClick={() => {
                           setIsLocationOpen(false);
-                          // Handle location selection here
                         }}
                       >
                         <div className="flex items-center justify-between">
@@ -275,16 +267,20 @@ const Navbar = () => {
                             <p className="text-sm font-medium text-gray-900">{location.name}</p>
                             <p className="text-xs text-gray-500">{location.area}</p>
                           </div>
-                          {location.area === "Current Location" && (
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          )}
+                          <div className="text-right">
+                            {location.area === "Current Location" && (
+                              <div className="w-2 h-2 bg-green-500 rounded-full mb-1"></div>
+                            )}
+                            <p className="text-xs text-red-600 font-medium">{location.offers}</p>
+                          </div>
                         </div>
                       </button>
                     ))}
                   </div>
-                  <div className="p-3 border-t border-gray-200">
-                    <button className="text-sm text-red-600 hover:text-red-700 font-medium">
-                      Use Current Location
+                  <div className="p-4 border-t border-gray-200 bg-gray-50">
+                    <button className="text-sm text-red-600 hover:text-red-700 font-medium flex items-center space-x-2">
+                      <span>📍</span>
+                      <span>Use My Current Location</span>
                     </button>
                   </div>
                 </div>
@@ -293,55 +289,56 @@ const Navbar = () => {
           </div>
           
           <div className="flex items-center space-x-3 text-sm">
-            
-            <button className="hidden lg:flex items-center space-x-1 text-black hover:text-red-600">
-              <span>List on D3</span>
+            <button className="hidden lg:flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors bg-gradient-to-r from-green-50 to-blue-50 px-3 py-2 rounded-lg">
+              <span>🏪</span>
+              <span className="font-medium">List Your Business</span>
             </button>
-            <button className="hidden lg:flex items-center space-x-1 text-black hover:text-red-600">
-              <span>Customer Care</span>
+            <button className="hidden lg:flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors bg-gradient-to-r from-blue-50 to-purple-50 px-3 py-2 rounded-lg">
+              <span>🎧</span>
+              <span className="font-medium">24/7 Support</span>
             </button>
             <Link to="/accounts/sign-in">
-              <button className="flex items-center space-x-1 text-black hover:text-red-600">
-                {/* Desktop: Show icon + text */}
-                <div className="hidden sm:flex items-center space-x-1">
+              <button className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg">
+                <div className="hidden sm:flex items-center space-x-2">
                   <User className="w-5 h-5" />
-                  <span>Sign In</span>
+                  <span className="font-medium">Sign In</span>
                 </div>
-                {/* Mobile: Show user image */}
                 <div className="sm:hidden">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
                     <span className="text-white text-sm font-semibold">E</span>
                   </div>
                 </div>
               </button>
             </Link>
             <div className="relative">
-              <button onClick={toggleNotifications} className="relative flex items-center">
-                <NotificationIcon className="w-5 h-5 text-gray-600 hover:text-red-600" />
+              <button onClick={toggleNotifications} className="relative flex items-center bg-gradient-to-r from-yellow-50 to-orange-50 p-2 rounded-lg hover:from-yellow-100 hover:to-orange-100 transition-colors">
+                <NotificationIcon className="w-5 h-5 text-gray-600" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
                     {unreadCount}
                   </span>
                 )}
               </button>
               
-              {/* Notification Popup */}
+              {/* Enhanced Notification Popup */}
               {isNotificationOpen && (
-                <div className="absolute right-0 top-8 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <div className="p-4 border-b border-gray-200">
+                <div className="absolute right-0 top-10 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
+                  <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
                     <h3 className="text-lg font-semibold text-gray-800">Notifications</h3>
+                    <p className="text-xs text-gray-600 mt-1">Stay updated with the latest deals</p>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {notifications.length === 0 ? (
                       <div className="p-4 text-center text-gray-500">
-                        No notifications yet
+                        <div className="text-4xl mb-2">🔔</div>
+                        <p>No notifications yet</p>
                       </div>
                     ) : (
                       notifications.map((notification) => (
                         <div 
                           key={notification.id} 
-                          className={`p-4 border-b border-gray-100 hover:bg-gray-50 ${
-                            !notification.isRead ? 'bg-blue-50' : ''
+                          className={`p-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-colors ${
+                            !notification.isRead ? 'bg-gradient-to-r from-yellow-50 to-orange-50' : ''
                           }`}
                         >
                           <div className="flex justify-between items-start">
@@ -359,7 +356,7 @@ const Navbar = () => {
                               </p>
                             </div>
                             {!notification.isRead && (
-                              <div className="w-2 h-2 bg-red-500 rounded-full ml-2 mt-1"></div>
+                              <div className="w-2 h-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-full ml-2 mt-1"></div>
                             )}
                           </div>
                         </div>
@@ -367,7 +364,7 @@ const Navbar = () => {
                     )}
                   </div>
                   {notifications.length > 0 && (
-                    <div className="p-4 border-t border-gray-200">
+                    <div className="p-4 border-t border-gray-200 bg-gray-50">
                       <button className="text-sm text-red-600 hover:text-red-700 font-medium">
                         Mark all as read
                       </button>
@@ -381,56 +378,59 @@ const Navbar = () => {
 
         {/* Main Navigation */}
         <div className="flex items-center justify-between py-4">
-          <nav className="hidden lg:flex items-center space-x-8">
-            {/* Categories dropdown for desktop - moved before Home */}
+          <nav className="hidden lg:flex items-center space-x-6">
             <div className="relative">
-              <button onClick={toggleCategories} className="flex items-center space-x-1 text-gray-700 hover:text-red-600">
-                <MdCategory  className="w-4 h-4" />
-                <span>All Categories</span>
+              <button onClick={toggleCategories} className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors bg-gradient-to-r from-red-50 to-pink-50 px-4 py-2 rounded-lg">
+                <MdCategory className="w-5 h-5" />
+                <span className="font-medium">All Categories</span>
                 <ChevronDown className="w-4 h-4" />
               </button>
             </div>
-            <Link to="/" className="text-gray-700 hover:text-red-600">Home</Link>
-            <Link to="/hotdeals" className="text-gray-700 hover:text-red-600">Hot Deals</Link>
-            <Link to="/stores" className="text-gray-700 hover:text-red-600">Stores</Link>
-            <Link to="/requestservice" className="text-gray-700 hover:text-red-600">Request Service</Link>
-            <Link to="/chat" className="text-gray-700 hover:text-red-600">Chat</Link>
+            <Link to="/" className="text-gray-700 hover:text-red-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50">Home</Link>
+            <Link to="/hotdeals" className="text-gray-700 hover:text-red-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 relative">
+              Hot Deals
+              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">🔥</span>
+            </Link>
+            <Link to="/stores" className="text-gray-700 hover:text-red-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50">Stores</Link>
+            <Link to="/requestservice" className="text-gray-700 hover:text-red-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50">Request Service</Link>
+            <Link to="/chat" className="text-gray-700 hover:text-red-600 font-medium transition-colors px-3 py-2 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50">Chat</Link>
           </nav>
           
           <div className="flex-1 max-w-2xl mx-8">
             <div className="relative">
               <input 
                 type="text" 
-                placeholder="Search for deals & stores..."
-                className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                placeholder="Search for deals, coupons & stores..."
+                className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-colors"
               />
-              <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-purple-600 text-white px-4 py-2 rounded-md">
+              <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-pink-600 transition-colors">
                 <Search className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Mobile Navigation - Below Search Bar */}
-        <div className="lg:hidden pb-4">
-          <div className="flex justify-between items-center bg-gray-200 rounded-lg p-2">
-            <Link to="/" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+       {/* Mobile Navigation - Below Search Bar */}
+       <div className="lg:hidden pb-4">
+          <div className="grid grid-cols-5 gap-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3">
+            <Link to="/" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-2 rounded-lg hover:bg-white transition-colors">
               <HomeIcon className="w-5 h-5" />
               <span className="text-xs font-medium">Home</span>
             </Link>
-            <Link to="/hotdeals" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+            <Link to="/hotdeals" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-2 rounded-lg hover:bg-white transition-colors relative">
               <FireIcon className="w-5 h-5" />
               <span className="text-xs font-medium">Hot Deals</span>
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-2 h-2 rounded-full"></span>
             </Link>
-            <Link to="/stores" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+            <Link to="/stores" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-2 rounded-lg hover:bg-white transition-colors">
               <StoreIcon className="w-5 h-5" />
               <span className="text-xs font-medium">Stores</span>
             </Link>
-            <Link to="/requestservice" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+            <Link to="/requestservice" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-2 rounded-lg hover:bg-white transition-colors">
               <ServiceIcon className="w-5 h-5" />
               <span className="text-xs font-medium">Services</span>
             </Link>
-            <Link to="/chat" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-1 rounded-md hover:bg-white transition-colors">
+            <Link to="/chat" className="flex flex-col items-center space-y-1 text-gray-700 hover:text-red-600 px-2 py-2 rounded-lg hover:bg-white transition-colors">
               <ChatIcon className="w-5 h-5" />
               <span className="text-xs font-medium">Chat</span>
             </Link>
@@ -441,12 +441,15 @@ const Navbar = () => {
       {/* Categories Popup Modal */}
       {isCategoriesOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800">All Categories</h3>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-96 overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800">All Categories</h3>
+                <p className="text-sm text-gray-600 mt-1">Discover amazing deals across all categories</p>
+              </div>
               <button 
                 onClick={toggleCategories}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-white"
               >
                 <CloseIcon className="w-6 h-6" />
               </button>
@@ -456,24 +459,34 @@ const Navbar = () => {
                 {categories.map((category) => (
                   <button 
                     key={category.id} 
-                    className="flex items-center space-x-4 p-4 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 border border-gray-200 hover:border-red-200 transition-all duration-200 group"
                     onClick={() => {
                       setIsCategoriesOpen(false);
                       // Handle category selection here
                     }}
                   >
-                    <span className="text-3xl">{category.icon}</span>
-                    <span className="text-sm font-medium text-gray-900 text-left">{category.name}</span>
+                    <div className="flex items-center space-x-4">
+                      <span className="text-3xl group-hover:scale-110 transition-transform duration-200">{category.icon}</span>
+                      <div className="text-left">
+                        <span className="text-sm font-medium text-gray-900 block">{category.name}</span>
+                        <span className="text-xs text-red-600 font-medium">{category.discount}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        Active
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
             <div className="p-6 border-t border-gray-200 bg-gray-50">
               <button 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-colors"
+                className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-3 px-4 rounded-xl font-medium hover:from-red-600 hover:to-pink-600 transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 duration-200"
                 onClick={() => setIsCategoriesOpen(false)}
               >
-                View All Services
+                🔥 Explore All Hot Deals
               </button>
             </div>
           </div>

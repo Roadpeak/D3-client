@@ -14,8 +14,26 @@ const ChevronRight = ({ className }) => (
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-64">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gradient-to-r from-pink-500 to-purple-500"></div>
   </div>
+);
+
+const StarIcon = ({ className }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+  </svg>
+);
+
+const FireIcon = ({ className }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+  </svg>
+);
+
+const TimerIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
 );
 
 export default function Hero() {
@@ -63,13 +81,29 @@ export default function Hero() {
         setHeroOffers([
           {
             id: 1,
-            title: "Get 50% off",
-            description: "On your first deal purchase",
-            image: "/images/3.jpg",
-            discountPercentage: 50,
-            originalPrice: 99.99,
-            discountedPrice: 49.99,
-            timeLeft: "7 days left"
+            title: "PrP Treatment",
+            description: "Get 70% off ",
+            image: "/images/cl.jpeg",
+            discountPercentage: 70,
+            originalPrice: 199.99,
+            discountedPrice: 59.99,
+            timeLeft: "2 days left",
+            store: "Amazon",
+            rating: 4.8,
+            totalDeals: 1250
+          },
+          {
+            id: 2,
+            title: "Hair Styling",
+            description: "Get 30% OFF",
+            image: "/images/sl2.webp",
+            discountPercentage: 30,
+            originalPrice: 149.99,
+            discountedPrice: 59.99,
+            timeLeft: "6 hours left",
+            store: "H&M",
+            rating: 4.6,
+            totalDeals: 890
           }
         ]);
         setSideOffers([
@@ -80,7 +114,9 @@ export default function Hero() {
             originalPrice: 79.99,
             discountedPrice: 29.99,
             discountPercentage: 62,
-            timeLeft: "2 days left"
+            timeLeft: "2 days left",
+            store: "SpaWorld",
+            isHot: true
           },
           {
             id: 5,
@@ -89,7 +125,9 @@ export default function Hero() {
             originalPrice: 89.00,
             discountedPrice: 45.00,
             discountPercentage: 49,
-            timeLeft: "Limited spots"
+            timeLeft: "Limited spots",
+            store: "AdventureHub",
+            isNew: true
           }
         ]);
       } finally {
@@ -106,7 +144,7 @@ export default function Hero() {
 
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroOffers.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [heroOffers.length]);
@@ -125,9 +163,7 @@ export default function Hero() {
 
   const handleOfferClick = async (offerId) => {
     try {
-      // Track offer click or handle offer selection
       console.log('Offer clicked:', offerId);
-      // You can add analytics tracking or navigation logic here
     } catch (err) {
       console.error('Error handling offer click:', err);
     }
@@ -144,11 +180,12 @@ export default function Hero() {
   if (error && heroOffers.length === 0) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <p className="text-red-600 mb-4">{error}</p>
+        <div className="text-center py-12 bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl border border-red-100">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <p className="text-red-600 mb-4 text-lg font-medium">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
           >
             Try Again
           </button>
@@ -159,14 +196,17 @@ export default function Hero() {
 
   return (
     <section className="container mx-auto px-4 py-8">
-      <div className="grid lg:grid-cols-3 gap-6">
+      {/* Header Section */}
+
+
+      <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Hero Banner with Carousel */}
-        <div className="lg:col-span-2 relative bg-gradient-to-r from-gray-800 to-gray-600 rounded-lg overflow-hidden h-96">
+        <div className="lg:col-span-2 relative bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 rounded-2xl overflow-hidden shadow-2xl">
           {heroOffers.length > 0 && (
             <>
               {/* Carousel Container */}
               <div
-                className="flex transition-transform duration-500 ease-in-out h-full"
+                className="flex transition-transform duration-700 ease-in-out h-[500px]"
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
               >
                 {heroOffers.map((offer, index) => (
@@ -179,31 +219,79 @@ export default function Hero() {
                         e.target.src = '/images/default.jpg';
                       }}
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-40"></div>
-                    <div className="absolute bottom-6 left-6 text-white">
-                      <h2 className="text-3xl font-bold mb-2">{offer.title}</h2>
-                      <p className="text-lg mb-2">{offer.description}</p>
-                      {offer.discountPercentage && (
-                        <p className="text-xl font-bold text-yellow-400 mb-2">
-                          {offer.discountPercentage}% OFF
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
+                    
+                    {/* Content */}
+                    <div className="absolute inset-0 flex flex-col justify-center px-8 lg:px-12">
+                      <div className="max-w-lg">
+                        {/* Store Badge */}
+                        {offer.store && (
+                          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm font-semibold mb-4">
+                            <StarIcon className="w-4 h-4 text-yellow-400" />
+                            {offer.store}
+                          </div>
+                        )}
+                        
+                        {/* Title */}
+                        <h2 className="text-4xl lg:text-6xl font-black text-white mb-4 leading-tight">
+                          {offer.title}
+                        </h2>
+                        
+                        {/* Description */}
+                        <p className="text-xl text-gray-200 mb-6 leading-relaxed">
+                          {offer.description}
                         </p>
-                      )}
-                      {offer.timeLeft && (
-                        <p className="text-sm text-gray-300 mb-4">{offer.timeLeft}</p>
-                      )}
-                      <button
-                        onClick={() => handleOfferClick(offer.id)}
-                        className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors"
-                      >
-                        Grab Offer
-                      </button>
-                    </div>
-                    {/* Store Badge */}
-                    {offer.store && (
-                      <div className="absolute top-4 right-4 bg-white bg-opacity-90 px-3 py-1 rounded-full text-xs font-semibold text-gray-800">
-                        {offer.store}
+                        
+                        {/* Discount Badge */}
+                        {offer.discountPercentage && (
+                          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-3 rounded-full text-2xl font-black mb-6 shadow-lg">
+                            <FireIcon className="w-6 h-6" />
+                            {offer.discountPercentage}% OFF
+                          </div>
+                        )}
+                        
+                        {/* Price Section */}
+                        <div className="flex items-center gap-4 mb-6">
+                          <span className="text-3xl font-bold text-white">
+                            ${offer.discountedPrice?.toFixed(2)}
+                          </span>
+                          {offer.originalPrice && (
+                            <span className="text-xl text-gray-400 line-through">
+                              ${offer.originalPrice.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Time Left */}
+                        {offer.timeLeft && (
+                          <div className="flex items-center gap-2 text-yellow-400 mb-8">
+                            <TimerIcon className="w-5 h-5" />
+                            <span className="text-lg font-semibold">{offer.timeLeft}</span>
+                          </div>
+                        )}
+                        
+                        {/* CTA Button */}
+                        <button
+                          onClick={() => handleOfferClick(offer.id)}
+                          className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-xl text-lg font-bold hover:shadow-2xl transform hover:scale-105 transition-all duration-300 hover:from-pink-600 hover:to-red-600"
+                        >
+                          Grab This Deal Now! 
+                        </button>
+                        
+                        {/* Rating & Deals Count */}
+                        {offer.rating && (
+                          <div className="flex items-center gap-4 mt-4 text-gray-300">
+                            <div className="flex items-center gap-1">
+                              <StarIcon className="w-4 h-4 text-yellow-400" />
+                              <span className="text-sm">{offer.rating}</span>
+                            </div>
+                            {offer.totalDeals && (
+                              <span className="text-sm">{offer.totalDeals}+ deals claimed</span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -213,13 +301,13 @@ export default function Hero() {
                 <>
                   <button
                     onClick={prevSlide}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"
+                    className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200 hover:scale-110"
                   >
                     <ChevronLeft className="w-6 h-6" />
                   </button>
                   <button
                     onClick={nextSlide}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-all"
+                    className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200 hover:scale-110"
                   >
                     <ChevronRight className="w-6 h-6" />
                   </button>
@@ -228,15 +316,16 @@ export default function Hero() {
 
               {/* Dots Indicator */}
               {heroOffers.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3">
                   {heroOffers.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all ${index === currentSlide
-                          ? 'bg-white'
-                          : 'bg-white bg-opacity-50 hover:bg-opacity-75'
-                        }`}
+                      className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                        index === currentSlide
+                          ? 'bg-white scale-125'
+                          : 'bg-white/50 hover:bg-white/75'
+                      }`}
                     />
                   ))}
                 </div>
@@ -246,48 +335,87 @@ export default function Hero() {
         </div>
 
         {/* Side Deals */}
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* <div className="text-center lg:text-left">
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">⚡ Quick Picks</h3>
+            <p className="text-gray-600">Don't miss these limited-time offers</p>
+          </div> */}
+          
           {sideOffers.map((offer) => (
-            <div key={offer.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-              <img
-                src={offer.image}
-                alt={offer.title}
-                className="w-full h-32 object-cover"
-                onError={(e) => {
-                  e.target.src = '/images/default.jpg';
-                }}
-              />
-              <div className="p-4">
-                <h3 className="font-semibold mb-1">{offer.title}</h3>
-                <div className="flex items-center space-x-2 mb-2">
-                  <p className="text-red-600 font-bold text-lg">
+            <div key={offer.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100">
+              <div className="relative">
+                <img
+                  src={offer.image}
+                  alt={offer.title}
+                  className="w-full h-36 object-cover"
+                  onError={(e) => {
+                    e.target.src = '/images/default.jpg';
+                  }}
+                />
+                
+                {/* Badges */}
+                <div className="absolute top-3 left-3 flex gap-2">
+                  {offer.isHot && (
+                    <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                      <FireIcon className="w-3 h-3" />
+                      HOT
+                    </span>
+                  )}
+                  {offer.isNew && (
+                    <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                      NEW
+                    </span>
+                  )}
+                </div>
+                
+                {/* Discount Badge */}
+                <div className="absolute top-3 right-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-sm font-bold">
+                  {offer.discountPercentage}% OFF
+                </div>
+              </div>
+              
+              <div className="p-5">
+                <h4 className="font-bold text-lg mb-2 text-gray-800">{offer.title}</h4>
+                
+                {/* Store */}
+                {offer.store && (
+                  <p className="text-sm text-gray-500 mb-3">at {offer.store}</p>
+                )}
+                
+                {/* Price */}
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-2xl font-bold text-green-600">
                     ${offer.discountedPrice?.toFixed(2)}
-                  </p>
+                  </span>
                   {offer.originalPrice && (
                     <span className="text-gray-400 line-through text-sm">
                       ${offer.originalPrice.toFixed(2)}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-600 mb-2">
-                  {offer.discountPercentage}% OFF • {offer.timeLeft}
-                </p>
-                {offer.store && (
-                  <p className="text-xs text-gray-500 mb-2">at {offer.store}</p>
-                )}
+                
+                {/* Time Left */}
+                <div className="flex items-center gap-2 text-orange-600 mb-4">
+                  <TimerIcon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{offer.timeLeft}</span>
+                </div>
+                
+                {/* CTA Button */}
                 <button
                   onClick={() => handleOfferClick(offer.id)}
-                  className="w-full bg-blue-600 text-white py-2 rounded text-sm font-semibold hover:bg-blue-700 transition-colors"
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-bold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                 >
-                  Get Deal
+                  Get Deal 
                 </button>
               </div>
             </div>
           ))}
 
           {sideOffers.length === 0 && !loading && (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center text-gray-500">
-              <p>No side offers available at the moment</p>
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8 text-center border border-gray-200">
+              <div className="text-gray-400 text-4xl mb-4">🔍</div>
+              <p className="text-gray-600 font-medium">No side offers available</p>
+              <p className="text-gray-500 text-sm mt-2">Check back soon for more deals!</p>
             </div>
           )}
         </div>

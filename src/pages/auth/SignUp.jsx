@@ -7,10 +7,10 @@ import GoogleSignInButton from './GoogleSignInButton';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+    firstName: '',
+    lastName: '',
     email: '',
-    phone: '',
+    phoneNumber: '',
     password: '',
     password_confirmation: '',
   });
@@ -27,27 +27,87 @@ const SignUp = () => {
     }));
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid';
+    }
+
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = 'Phone number is required';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters long';
+    }
+
+    if (formData.password !== formData.password_confirmation) {
+      newErrors.password_confirmation = 'Passwords do not match';
+    }
+
+    return newErrors;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Client-side validation
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setLoading(true);
+    setErrors({});
+
     try {
-      const endpoint = 'http://localhost:4000/api/v1/user/register';
-      const response = await axios.post(endpoint, formData);
+      const endpoint = 'http://localhost:4000/api/v1/users/register';
+      // Send only the fields the backend expects
+      const requestData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        password: formData.password,
+      };
+
+      const response = await axios.post(endpoint, requestData);
       const token = response.data.access_token;
+
       if (window.location.hostname === 'localhost') {
         document.cookie = `access_token=${token}; path=/`;
       } else {
         document.cookie = `access_token=${token}; path=/; domain=.discoun3ree.com; secure; SameSite=None`;
       }
-      setErrors({});
+
       setLoading(false);
-      navigate('/accounts/verify-otp', { state: { phone: formData.phone } });
+      navigate('/accounts/verify-otp', { state: { phone: formData.phoneNumber } });
     } catch (error) {
       setLoading(false);
       if (axios.isAxiosError(error) && error.response) {
-        setErrors(error.response.data);
+        // Handle the backend error format
+        const errorData = error.response.data;
+        if (errorData.message) {
+          setErrors({ general: errorData.message });
+        } else {
+          setErrors({ general: 'An error occurred during registration' });
+        }
       } else {
-        setErrors({ general: ['An error occurred'] });
+        setErrors({ general: 'Network error. Please try again.' });
       }
     }
   };
@@ -58,7 +118,6 @@ const SignUp = () => {
 
   return (
     <main className="h-screen bg-gray-50 flex items-center overflow-y-auto justify-center p-4">
-
       <div className="w-full max-w-lg">
         {/* Main Card */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
@@ -92,9 +151,9 @@ const SignUp = () => {
               {Object.keys(errors).length > 0 && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-1">
                   {Object.keys(errors).map((key) => (
-                    errors[key].map((message) => (
-                      <p key={message} className="text-sm text-red-600">{message}</p>
-                    ))
+                    <p key={key} className="text-sm text-red-600">
+                      {errors[key]}
+                    </p>
                   ))}
                 </div>
               )}
@@ -102,17 +161,17 @@ const SignUp = () => {
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label htmlFor="first_name" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
                     First Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
-                      id="first_name"
-                      name="first_name"
+                      id="firstName"
+                      name="firstName"
                       placeholder="Enter first name"
-                      value={formData.first_name}
+                      value={formData.firstName}
                       onChange={handleChange}
                       className="w-full pl-10 text-xs pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                       required
@@ -120,17 +179,17 @@ const SignUp = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="last_name" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
                     Last Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
-                      id="last_name"
-                      name="last_name"
+                      id="lastName"
+                      name="lastName"
                       placeholder="Enter last name"
-                      value={formData.last_name}
+                      value={formData.lastName}
                       onChange={handleChange}
                       className="w-full pl-10 text-xs pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                       required
@@ -161,17 +220,17 @@ const SignUp = () => {
 
               {/* Phone Field */}
               <div className="space-y-1">
-                <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
                   Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <input
                     type="tel"
-                    id="phone"
-                    name="phone"
+                    id="phoneNumber"
+                    name="phoneNumber"
                     placeholder="Enter your phone number"
-                    value={formData.phone}
+                    value={formData.phoneNumber}
                     onChange={handleChange}
                     className="w-full pl-10 text-xs pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
                     required
@@ -279,16 +338,6 @@ const SignUp = () => {
                   'Create Account'
                 )}
               </button>
-
-              {/* Divider */}
-              {/* <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500 font-medium">or continue with</span>
-                </div>
-              </div> */}
 
               <GoogleSignInButton />
             </form>

@@ -4,8 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { FiEye, FiEyeOff, FiMail, FiLock, FiTag, FiPercent } from 'react-icons/fi';
 import GoogleSignInButton from './GoogleSignInButton';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -19,7 +18,7 @@ const Login = () => {
     event.preventDefault();
     setLoading(true);
     try {
-      const endpoint = 'http://localhost:4000/api/v1/user/login';
+      const endpoint = 'http://localhost:4000/api/v1/users/login';
       const response = await axios.post(endpoint, { email, password });
       const token = response.data.access_token;
       if (window.location.hostname === 'localhost') {
