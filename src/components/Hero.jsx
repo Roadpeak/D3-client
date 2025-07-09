@@ -384,7 +384,7 @@ export default function Hero() {
                 
                 {/* Price */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl font-bold text-green-600">
+                  <span className="text-2xl font-bold text-black-600">
                     ${offer.discountedPrice?.toFixed(2)}
                   </span>
                   {offer.originalPrice && (
@@ -403,7 +403,7 @@ export default function Hero() {
                 {/* CTA Button */}
                 <button
                   onClick={() => handleOfferClick(offer.id)}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-bold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-bold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                 >
                   Get Deal 
                 </button>
