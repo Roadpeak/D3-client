@@ -18,6 +18,7 @@ import SearchResults from './pages/SearchResults'
 import Footer from './components/Footer'
 import Requestservice from './pages/Requestservice'
 import Hotdeals from './pages/Hotdeals'
+import VerifyOTP from './pages/auth/VerifyOTP'
 const AppRoutes = () => {
   return (
     <div>
@@ -26,6 +27,7 @@ const AppRoutes = () => {
 
         <Route path='/accounts/sign-up' element={<SignUp />} />
         <Route path='/accounts/sign-in' element={<Login />} />
+        <Route path='/accounts/verify-otp' element={<VerifyOTP />} />
         <Route path='/profile' element={<Profile />} />
         <Route path='/components/Footer' element={<Footer/>} />
 

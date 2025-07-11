@@ -1,41 +1,89 @@
-import axios from 'axios';
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { FiEye, FiEyeOff, FiMail, FiLock, FiTag, FiPercent } from 'react-icons/fi';
 import GoogleSignInButton from './GoogleSignInButton';
-
+import authService from '../../services/authService';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get redirect path from location state (for protected routes)
+  const from = location.state?.from?.pathname || '/';
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+    
+    // Clear specific field error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+
+    return newErrors;
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    
+    // Client-side validation
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setLoading(true);
+    setErrors({});
+
     try {
-      const endpoint = 'http://localhost:4000/api/v1/users/login';
-      const response = await axios.post(endpoint, { email, password });
-      const token = response.data.access_token;
-      if (window.location.hostname === 'localhost') {
-        document.cookie = `access_token=${token}; path=/`;
+      const result = await authService.loginUser(formData.email, formData.password);
+
+      if (result.success) {
+        // Login successful - redirect to intended page or home
+        navigate(from, { replace: true });
+        
+        // Optional: Show success message or refresh page if needed
+        // window.location.reload();
       } else {
-        document.cookie = `access_token=${token}; path=/; domain=.discoun3ree.com; secure; SameSite=None`;
+        // Handle login errors
+        if (result.errors && typeof result.errors === 'object') {
+          setErrors(result.errors);
+        } else {
+          setErrors({ general: result.message });
+        }
       }
-      setError('');
-      navigate('/');
-      window.location.reload();
     } catch (error) {
-      setLoading(false);
-      if (axios.isAxiosError(error) && error.response) {
-        setError(error.response.data.error);
-      } else {
-        setError('An error occurred');
-      }
+      console.error('Login error:', error);
+      setErrors({ general: 'An unexpected error occurred. Please try again.' });
     } finally {
       setLoading(false);
     }
@@ -81,6 +129,7 @@ const Login = () => {
             <Link
               to='https://merchants.discoun3ree.com/accounts/login'
               target='_blank'
+              rel="noopener noreferrer"
               className="px-6 py-2 bg-white text-gray-600 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
             >
               Merchant
@@ -90,9 +139,24 @@ const Login = () => {
           {/* Form */}
           <div className="p-8">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                  {error}
+              {/* Error Messages */}
+              {(errors.general || Object.keys(errors).length > 0) && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-1">
+                  {errors.general && (
+                    <p className="text-sm text-red-600 font-medium">{errors.general}</p>
+                  )}
+                  {Object.keys(errors).filter(key => key !== 'general').map((key) => (
+                    <p key={key} className="text-sm text-red-600">
+                      {Array.isArray(errors[key]) ? errors[key][0] : errors[key]}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {/* Success Message (if redirected from registration) */}
+              {location.state?.message && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-sm text-green-600 font-medium">{location.state.message}</p>
                 </div>
               )}
 
@@ -108,9 +172,11 @@ const Login = () => {
                     id="email"
                     name="email"
                     placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full text-xs pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full text-xs pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
+                      errors.email ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                    }`}
                     required
                   />
                 </div>
@@ -136,9 +202,11 @@ const Login = () => {
                     id="password"
                     name="password"
                     placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full text-xs pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`w-full text-xs pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
+                      errors.password ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                    }`}
                     required
                   />
                   <button

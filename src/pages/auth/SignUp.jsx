@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
-import { FiEye, FiEyeOff, FiMail, FiLock, FiUser, FiPhone, FiTag, FiPercent } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiMail, FiLock, FiUser, FiPhone, FiTag } from 'react-icons/fi';
 import GoogleSignInButton from './GoogleSignInButton';
+import authService from '../../services/authService';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -25,6 +25,14 @@ const SignUp = () => {
       ...prevData,
       [name]: value,
     }));
+    
+    // Clear specific field error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
   };
 
   const validateForm = () => {
@@ -75,40 +83,65 @@ const SignUp = () => {
     setErrors({});
 
     try {
-      const endpoint = 'http://localhost:4000/api/v1/users/register';
-      // Send only the fields the backend expects
-      const requestData = {
+      const result = await authService.registerUser({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
         phoneNumber: formData.phoneNumber,
         password: formData.password,
-      };
+      });
 
-      const response = await axios.post(endpoint, requestData);
-      const token = response.data.access_token;
-
-      if (window.location.hostname === 'localhost') {
-        document.cookie = `access_token=${token}; path=/`;
+      if (result.success) {
+        // Registration successful
+        navigate('/accounts/verify-otp', { 
+          state: { 
+            phone: formData.phoneNumber,
+            message: 'Registration successful! Please verify your phone number.'
+          } 
+        });
       } else {
-        document.cookie = `access_token=${token}; path=/; domain=.discoun3ree.com; secure; SameSite=None`;
-      }
-
-      setLoading(false);
-      navigate('/accounts/verify-otp', { state: { phone: formData.phoneNumber } });
-    } catch (error) {
-      setLoading(false);
-      if (axios.isAxiosError(error) && error.response) {
-        // Handle the backend error format
-        const errorData = error.response.data;
-        if (errorData.message) {
-          setErrors({ general: errorData.message });
+        // Handle registration errors
+        if (result.errors && typeof result.errors === 'object') {
+          // Map backend field names to frontend field names
+          const mappedErrors = {};
+          
+          Object.keys(result.errors).forEach(key => {
+            let frontendField = key;
+            
+            // Map backend field names to frontend field names
+            switch (key) {
+              case 'first_name':
+                frontendField = 'firstName';
+                break;
+              case 'last_name':
+                frontendField = 'lastName';
+                break;
+              case 'phone':
+                frontendField = 'phoneNumber';
+                break;
+              default:
+                frontendField = key;
+            }
+            
+            // Handle array or string error messages
+            const errorMessage = Array.isArray(result.errors[key]) 
+              ? result.errors[key][0] 
+              : result.errors[key];
+            
+            mappedErrors[frontendField] = errorMessage;
+          });
+          
+          setErrors(mappedErrors);
         } else {
-          setErrors({ general: 'An error occurred during registration' });
+          // General error message
+          setErrors({ general: result.message });
         }
-      } else {
-        setErrors({ general: 'Network error. Please try again.' });
       }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setErrors({ general: 'An unexpected error occurred. Please try again.' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -148,9 +181,12 @@ const SignUp = () => {
           <div className="p-8">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               {/* Error Messages */}
-              {Object.keys(errors).length > 0 && (
+              {(errors.general || Object.keys(errors).length > 0) && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-1">
-                  {Object.keys(errors).map((key) => (
+                  {errors.general && (
+                    <p className="text-sm text-red-600 font-medium">{errors.general}</p>
+                  )}
+                  {Object.keys(errors).filter(key => key !== 'general').map((key) => (
                     <p key={key} className="text-sm text-red-600">
                       {errors[key]}
                     </p>
@@ -173,7 +209,9 @@ const SignUp = () => {
                       placeholder="Enter first name"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="w-full pl-10 text-xs pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
+                        errors.firstName ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      }`}
                       required
                     />
                   </div>
@@ -191,7 +229,9 @@ const SignUp = () => {
                       placeholder="Enter last name"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="w-full pl-10 text-xs pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
+                        errors.lastName ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      }`}
                       required
                     />
                   </div>
@@ -212,7 +252,9 @@ const SignUp = () => {
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-10 text-xs pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
+                      errors.email ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                    }`}
                     required
                   />
                 </div>
@@ -232,7 +274,9 @@ const SignUp = () => {
                     placeholder="Enter your phone number"
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    className="w-full pl-10 text-xs pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
+                      errors.phoneNumber ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                    }`}
                     required
                   />
                 </div>
@@ -253,7 +297,9 @@ const SignUp = () => {
                       placeholder="Create password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full pl-10 text-xs pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
+                        errors.password ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      }`}
                       required
                     />
                     <button
@@ -278,7 +324,9 @@ const SignUp = () => {
                       placeholder="Confirm password"
                       value={formData.password_confirmation}
                       onChange={handleChange}
-                      className="w-full pl-10 text-xs pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white"
+                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
+                        errors.password_confirmation ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      }`}
                       required
                     />
                     <button
@@ -309,6 +357,7 @@ const SignUp = () => {
                   <a
                     href="https://discoun3ree.com/terms-and-conditions"
                     target='_blank'
+                    rel="noopener noreferrer"
                     className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
                   >
                     Terms & Conditions
@@ -317,6 +366,7 @@ const SignUp = () => {
                   <a
                     href="https://discoun3ree.com/privacy-policy"
                     target='_blank'
+                    rel="noopener noreferrer"
                     className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
                   >
                     Privacy Policy
