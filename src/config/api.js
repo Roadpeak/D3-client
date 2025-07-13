@@ -1,4 +1,4 @@
-// src/config/api.js
+// src/config/api.js - Updated with proper API key handling
 import axios from 'axios';
 
 // API Configuration
@@ -7,16 +7,39 @@ export const API_CONFIG = {
   timeout: 10000,
 };
 
+console.log('🌐 API Base URL:', API_CONFIG.baseURL);
+
 // Create axios instance
 const api = axios.create(API_CONFIG);
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token AND API key
 api.interceptors.request.use(
   (config) => {
+    // Add authentication token
     const token = getTokenFromCookie();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // FIXED: Proper API key handling with environment variable priority
+    const apiKey = process.env.REACT_APP_API_KEY;
+    
+    if (!apiKey) {
+      console.warn('⚠️ REACT_APP_API_KEY not found in environment variables');
+      // Use fallback only if environment variable is not set
+      config.headers['api-key'] = 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
+      console.log('🔑 Using fallback API key');
+    } else {
+      config.headers['api-key'] = apiKey.trim(); // Trim whitespace
+      console.log('🔑 Using environment API key');
+    }
+    
+    console.log('🔑 Request headers:', {
+      authorization: config.headers.Authorization ? 'Present' : 'Missing',
+      apiKey: config.headers['api-key'] ? 'Present' : 'Missing',
+      url: config.url
+    });
+    
     return config;
   },
   (error) => {
@@ -37,7 +60,7 @@ api.interceptors.response.use(
   }
 );
 
-// Cookie management functions
+// Cookie management functions (unchanged)
 export const getTokenFromCookie = () => {
   const cookies = document.cookie.split(';');
   const tokenCookie = cookies.find(cookie => 
@@ -73,6 +96,8 @@ export const API_ENDPOINTS = {
     profile: '/users/profile',
     verifyOtp: '/users/verify-otp',
     resendOtp: '/users/resend-otp',
+    requestPasswordReset: '/users/request-password-reset',
+    resetPassword: '/users/reset-password',
   },
   // Merchant endpoints
   merchant: {

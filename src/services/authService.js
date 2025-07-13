@@ -104,23 +104,46 @@ class AuthService {
     }
   }
 
-  // Get Current User Profile
-  async getCurrentUser() {
-    try {
-      const token = getTokenFromCookie();
-      if (!token) {
-        return { success: false, message: 'No authentication token found' };
-      }
-
-      const response = await api.get(API_ENDPOINTS.user.profile);
-      return {
-        success: true,
-        data: response.data,
-      };
-    } catch (error) {
-      return this.handleAuthError(error);
+  // Updated getCurrentUser function in authService.js
+async getCurrentUser() {
+  try {
+    const token = getTokenFromCookie();
+    console.log('🎫 Token from cookie:', token ? `Exists (${token.substring(0, 20)}...)` : 'No token');
+    console.log('🎫 Token length:', token?.length);
+    
+    if (!token) {
+      return { success: false, message: 'No authentication token found' };
     }
+
+    // Try to decode token to see what's in it (for debugging)
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        console.log('🔍 Token payload:', payload);
+      }
+    } catch (e) {
+      console.log('❌ Could not decode token for inspection');
+    }
+
+    console.log('📡 API Endpoint:', API_ENDPOINTS.user.profile);
+    console.log('📡 Expected result: http://localhost:4000/api/v1/users/profile');
+    
+    const response = await api.get(API_ENDPOINTS.user.profile);
+    console.log('✅ Profile request successful');
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    console.error('❌ getCurrentUser error:');
+    console.error('   - Status:', error.response?.status);
+    console.error('   - Data:', error.response?.data);
+    console.error('   - Headers sent:', error.config?.headers);
+    console.error('   - URL:', error.config?.url);
+    return this.handleAuthError(error);
   }
+}
 
   // Logout
   logout() {
