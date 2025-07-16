@@ -25,7 +25,9 @@ import {
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import StoreService from '../services/storeService'; 
+import StoreService from '../services/storeService';
+import chatService from '../services/chatService'; // Add chat service import
+import authService from '../services/authService'; // Add auth service import
 
 const StoreViewPage = () => {
   const location = useLocation();
@@ -44,6 +46,7 @@ const StoreViewPage = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
+  const [startingChat, setStartingChat] = useState(false); // Add chat loading state
 
   // Get current user from localStorage/context (adjust based on your auth implementation)
   const getCurrentUser = () => {
@@ -85,6 +88,128 @@ const StoreViewPage = () => {
       setLoading(false);
     }
   };
+
+ // Updated handleChatClick function for StoreViewPage
+const handleChatClick = async () => {
+  try {
+    console.log('=== CHAT BUTTON CLICKED ===');
+    
+    // Debug: Check authentication state
+    console.log('🔍 Checking authentication...');
+    const token = localStorage.getItem('access_token') || 
+                 localStorage.getItem('authToken') ||
+                 getCookieValue('authToken');
+    
+    console.log('🎫 Token found:', token ? `Yes (${token.substring(0, 20)}...)` : 'No');
+    
+    if (!token) {
+      console.log('❌ No token found, redirecting to login');
+      navigate('/accounts/sign-in', { 
+        state: { from: { pathname: location.pathname } }
+      });
+      return;
+    }
+
+    setStartingChat(true);
+    setError(null);
+
+    // Test the auth first
+    console.log('🔍 Testing authentication with profile endpoint...');
+    const profileTest = await fetch('http://localhost:4000/api/v1/users/profile', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      credentials: 'include'
+    });
+
+    console.log('📡 Profile test response:', profileTest.status);
+    
+    if (!profileTest.ok) {
+      throw new Error('Authentication failed. Please log in again.');
+    }
+
+    // Now test chat service
+    console.log('🔍 Testing chat service...');
+    const conversationsResponse = await chatService.getConversations('customer');
+    
+    console.log('📡 Chat service response:', conversationsResponse);
+    
+    if (conversationsResponse.success) {
+      console.log('✅ Chat service working! Found conversations:', conversationsResponse.data.length);
+      
+      // Look for existing conversation with this store
+      const existingConversation = conversationsResponse.data.find(
+        conv => conv.store && conv.store.id === parseInt(id)
+      );
+
+      if (existingConversation) {
+        console.log('✅ Found existing conversation:', existingConversation.id);
+        // Navigate to existing conversation
+        navigate('/chat', { 
+          state: { 
+            selectedConversation: existingConversation,
+            storeData: storeData
+          }
+        });
+      } else {
+        console.log('🆕 No existing conversation, starting new one...');
+        // Start new conversation
+        const newConversationResponse = await chatService.startConversation(
+          parseInt(id),
+          `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`
+        );
+
+        if (newConversationResponse.success) {
+          console.log('✅ New conversation started:', newConversationResponse.data.conversationId);
+          // Navigate to chat with new conversation
+          navigate('/chat', { 
+            state: { 
+              newConversationId: newConversationResponse.data.conversationId,
+              storeData: storeData
+            }
+          });
+        } else {
+          throw new Error('Failed to start conversation: ' + newConversationResponse.message);
+        }
+      }
+    } else {
+      throw new Error('Failed to load conversations: ' + conversationsResponse.message);
+    }
+
+  } catch (error) {
+    console.error('❌ Chat error:', error);
+    
+    // More specific error handling
+    if (error.message.includes('Authentication required')) {
+      setError('Please log in to start chatting.');
+      // Clear invalid tokens
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('authToken');
+      navigate('/accounts/login', { 
+        state: { from: { pathname: location.pathname } }
+      });
+    } else if (error.message.includes('CORS')) {
+      setError('Connection error. Please refresh the page and try again.');
+    } else {
+      setError(`Failed to start chat: ${error.message}`);
+    }
+  } finally {
+    setStartingChat(false);
+  }
+};
+
+// Helper function to get cookie value
+const getCookieValue = (name) => {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [key, value] = cookie.trim().split('=');
+    if (key === name) return decodeURIComponent(value);
+  }
+  return '';
+};
 
   // Toggle follow status
   const toggleFollow = async () => {
@@ -569,9 +694,17 @@ const StoreViewPage = () => {
                 )}
                 {isFollowing ? 'Following' : 'Follow'}
               </button>
-              <button className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                <MessageCircle className="w-4 h-4" />
-                Chat
+              <button 
+                onClick={handleChatClick}
+                disabled={startingChat}
+                className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                {startingChat ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <MessageCircle className="w-4 h-4" />
+                )}
+                {startingChat ? 'Starting Chat...' : 'Chat'}
               </button>
             </div>
           </div>
@@ -626,7 +759,6 @@ const StoreViewPage = () => {
               <span className="text-gray-500">({storeData.totalReviews || 0} reviews)</span>
             </div>
           </div>
-
           {/* Add Review Form */}
           <div className="mb-8 p-6 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between mb-4">

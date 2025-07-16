@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Search, Phone, Video, MoreVertical, ArrowLeft, Store, Clock, Check, CheckCheck, Users, AlertCircle } from 'lucide-react';
-import io from 'socket.io-client';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Search, Phone, Video, MoreVertical, ArrowLeft, Store, Clock, Check, CheckCheck, Users, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import chatService from '../services/chatService';
+import useSocket from '../hooks/useSocket';
+import authService from '../services/authService'; // Now correctly importing
 
 const StoreChatInterface = () => {
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -14,184 +16,162 @@ const StoreChatInterface = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-  const [socket, setSocket] = useState(null);
-  const [onlineUsers, setOnlineUsers] = useState(new Set());
-  const [typing, setTyping] = useState(new Map());
   const messagesEndRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
 
-  // API base URL - adjust according to your backend
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
-  const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:4000';
-
-  // Get auth token from localStorage
-  const getAuthToken = () => {
-    return localStorage.getItem('authToken');
-  };
-
-  // API headers with authentication
-  const getHeaders = () => ({
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${getAuthToken()}`
-  });
-
-  // Initialize user and socket connection
+  // Initialize user (now using your actual authService)
   useEffect(() => {
-    const initializeApp = async () => {
+    const initializeUser = async () => {
+      console.log('🔍 Starting user initialization with authService...');
+      
       try {
-        // Get user info from token or API
-        const token = getAuthToken();
-        if (!token) {
+        // Check if user is authenticated using your authService
+        if (!authService.isAuthenticated()) {
+          console.log('❌ User not authenticated');
           setError('Please log in to access chat');
           setLoading(false);
           return;
         }
 
-        // Mock user data - replace with actual user fetch
-        const userData = {
-          id: 'user123',
-          name: 'John Doe',
-          role: 'customer',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face'
-        };
-        setUser(userData);
+        console.log('✅ User is authenticated, fetching user data...');
 
-        // Initialize socket connection
-        const socketInstance = io(SOCKET_URL, {
-          auth: { token }
-        });
+        // Get current user data from your authService
+        const userResponse = await authService.getCurrentUser();
+        console.log('User response:', userResponse);
 
-        socketInstance.on('connect', () => {
-          console.log('Connected to socket server');
-          socketInstance.emit('user_join', userData);
-        });
-
-        socketInstance.on('disconnect', () => {
-          console.log('Disconnected from socket server');
-        });
-
-        socketInstance.on('new_message', (messageData) => {
-          handleNewMessage(messageData);
-        });
-
-        socketInstance.on('user_online', (userId) => {
-          setOnlineUsers(prev => new Set([...prev, userId]));
-        });
-
-        socketInstance.on('user_offline', (userId) => {
-          setOnlineUsers(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(userId);
-            return newSet;
-          });
-        });
-
-        socketInstance.on('typing_start', ({ userId, conversationId }) => {
-          setTyping(prev => new Map(prev.set(`${conversationId}-${userId}`, true)));
-        });
-
-        socketInstance.on('typing_stop', ({ userId, conversationId }) => {
-          setTyping(prev => {
-            const newMap = new Map(prev);
-            newMap.delete(`${conversationId}-${userId}`);
-            return newMap;
-          });
-        });
-
-        socketInstance.on('message_status_update', ({ messageId, status }) => {
-          updateMessageStatus(messageId, status);
-        });
-
-        setSocket(socketInstance);
-
-        // Load conversations
-        await loadConversations();
-
+        if (userResponse.success && userResponse.data) {
+          const userData = userResponse.data.user || userResponse.data;
+          
+          const chatUser = {
+            id: userData.id,
+            name: userData.name || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'User',
+            role: userData.userType || userData.role || 'customer',
+            email: userData.email || 'user@example.com',
+            avatar: userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.firstName || 'User')}&background=random`
+          };
+          
+          console.log('🎉 User data prepared for chat:', chatUser);
+          setUser(chatUser);
+        } else {
+          console.log('❌ Failed to get user data:', userResponse);
+          setError(userResponse.message || 'Failed to load user data');
+        }
+        
       } catch (error) {
-        console.error('Initialization error:', error);
-        setError('Failed to initialize chat');
+        console.error('💥 User initialization error:', error);
+        setError('Failed to initialize user. Please log in again.');
       } finally {
         setLoading(false);
       }
     };
 
-    initializeApp();
+    initializeUser();
+  }, []);
+
+  // Initialize socket
+  const {
+    socket,
+    isConnected,
+    joinConversation,
+    leaveConversation,
+    handleTyping,
+    on,
+    off,
+    isUserOnline,
+    getTypingUsers
+  } = useSocket(user);
+
+  // Socket event handlers
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (messageData) => {
+      setMessages(prev => [...prev, messageData]);
+      
+      // Update conversation list
+      setConversations(prev => prev.map(conv => {
+        if (conv.id === messageData.conversationId) {
+          return {
+            ...conv,
+            lastMessage: messageData.text,
+            lastMessageTime: messageData.timestamp,
+            unreadCount: messageData.sender === 'store' ? conv.unreadCount + 1 : conv.unreadCount
+          };
+        }
+        return conv;
+      }));
+
+      scrollToBottom();
+    };
+
+    const handleMessageStatusUpdate = ({ messageId, status }) => {
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, status } : msg
+      ));
+    };
+
+    const handleMessagesRead = ({ readBy }) => {
+      setMessages(prev => prev.map(msg => 
+        msg.sender === 'customer' ? { ...msg, status: 'read' } : msg
+      ));
+    };
+
+    const handleNewConversation = ({ conversationId, store, message }) => {
+      // Reload conversations to show new one
+      loadConversations();
+    };
+
+    on('new_message', handleNewMessage);
+    on('message_status_update', handleMessageStatusUpdate);
+    on('messages_read', handleMessagesRead);
+    on('new_conversation', handleNewConversation);
 
     return () => {
-      if (socket) {
-        socket.disconnect();
-      }
+      off('new_message', handleNewMessage);
+      off('message_status_update', handleMessageStatusUpdate);
+      off('messages_read', handleMessagesRead);
+      off('new_conversation', handleNewConversation);
     };
-  }, []);
+  }, [socket, on, off]);
+
+  // Load conversations when user is available
+  useEffect(() => {
+    if (user) {
+      loadConversations();
+    }
+  }, [user]);
 
   // Load conversations from API
   const loadConversations = async () => {
     try {
-      const response = await fetch(`${API_BASE}/chat/conversations`, {
-        headers: getHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load conversations');
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setConversations(data.data);
+      setLoading(true);
+      setError(null);
+      
+      const response = await chatService.getConversations('customer');
+      if (response.success) {
+        setConversations(response.data);
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
       setError('Failed to load conversations');
+    } finally {
+      setLoading(false);
     }
   };
 
   // Load messages for selected conversation
   const loadMessages = async (conversationId) => {
     try {
-      const response = await fetch(`${API_BASE}/chat/conversations/${conversationId}/messages`, {
-        headers: getHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load messages');
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setMessages(data.data);
+      setError(null);
+      const response = await chatService.getMessages(conversationId);
+      
+      if (response.success) {
+        setMessages(response.data);
         scrollToBottom();
       }
     } catch (error) {
       console.error('Error loading messages:', error);
       setError('Failed to load messages');
     }
-  };
-
-  // Handle new message from socket
-  const handleNewMessage = useCallback((messageData) => {
-    setMessages(prev => [...prev, messageData]);
-    
-    // Update conversation list
-    setConversations(prev => prev.map(conv => {
-      if (conv.id === messageData.conversationId) {
-        return {
-          ...conv,
-          lastMessage: messageData.text,
-          lastMessageTime: messageData.timestamp,
-          unreadCount: messageData.sender === 'store' ? conv.unreadCount + 1 : conv.unreadCount
-        };
-      }
-      return conv;
-    }));
-
-    scrollToBottom();
-  }, []);
-
-  // Update message status
-  const updateMessageStatus = (messageId, status) => {
-    setMessages(prev => prev.map(msg => 
-      msg.id === messageId ? { ...msg, status } : msg
-    ));
   };
 
   // Send message
@@ -202,33 +182,29 @@ const StoreChatInterface = () => {
     const messageText = message.trim();
     setMessage('');
 
-    // Stop typing indicator
-    if (socket) {
-      socket.emit('typing_stop', {
-        conversationId: selectedConversation.id,
-        userId: user.id
-      });
-    }
-
     try {
-      const response = await fetch(`${API_BASE}/chat/messages`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({
-          conversationId: selectedConversation.id,
-          content: messageText,
-          messageType: 'text'
-        })
-      });
+      setError(null);
+      
+      const response = await chatService.sendMessage(
+        selectedConversation.id,
+        messageText,
+        'text'
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      const data = await response.json();
-      if (data.success) {
+      if (response.success) {
         // Message will be added via socket event
         console.log('Message sent successfully');
+        
+        // Update conversation list
+        setConversations(prev => prev.map(conv =>
+          conv.id === selectedConversation.id
+            ? {
+              ...conv,
+              lastMessage: messageText,
+              lastMessageTime: 'now'
+            }
+            : conv
+        ));
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -239,50 +215,18 @@ const StoreChatInterface = () => {
     }
   };
 
-  // Handle typing indicator
-  const handleTyping = () => {
-    if (!socket || !selectedConversation) return;
-
-    socket.emit('typing_start', {
-      conversationId: selectedConversation.id,
-      userId: user.id
-    });
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Set new timeout to stop typing
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('typing_stop', {
-        conversationId: selectedConversation.id,
-        userId: user.id
-      });
-    }, 2000);
-  };
-
   // Start new conversation
   const startConversation = async (storeId, initialMessage = '') => {
     try {
-      const response = await fetch(`${API_BASE}/chat/conversations`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({
-          storeId,
-          initialMessage
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to start conversation');
-      }
-
-      const data = await response.json();
-      if (data.success) {
+      setError(null);
+      
+      const response = await chatService.startConversation(storeId, initialMessage);
+      
+      if (response.success) {
         await loadConversations();
+        
         // Select the new conversation
-        const newConv = conversations.find(c => c.id === data.data.conversationId);
+        const newConv = conversations.find(c => c.id === response.data.conversationId);
         if (newConv) {
           handleConversationSelect(newConv);
         }
@@ -295,24 +239,42 @@ const StoreChatInterface = () => {
 
   // Handle conversation selection
   const handleConversationSelect = (conversation) => {
+    // Leave previous conversation room
+    if (selectedConversation) {
+      leaveConversation(selectedConversation.id);
+    }
+
     setSelectedConversation(conversation);
     
-    if (socket) {
-      // Leave previous conversation room
-      if (selectedConversation) {
-        socket.emit('leave_conversation', selectedConversation.id);
-      }
-      // Join new conversation room
-      socket.emit('join_conversation', conversation.id);
-    }
+    // Join new conversation room
+    joinConversation(conversation.id);
 
     // Load messages
     loadMessages(conversation.id);
+
+    // Mark messages as read
+    markAsRead(conversation.id);
+  };
+
+  // Mark messages as read
+  const markAsRead = async (conversationId) => {
+    try {
+      await chatService.markMessagesAsRead(conversationId);
+      
+      // Reset unread count in UI
+      setConversations(prev => prev.map(conv =>
+        conv.id === conversationId
+          ? { ...conv, unreadCount: 0 }
+          : conv
+      ));
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
   };
 
   const handleBackToSidebar = () => {
-    if (socket && selectedConversation) {
-      socket.emit('leave_conversation', selectedConversation.id);
+    if (selectedConversation) {
+      leaveConversation(selectedConversation.id);
     }
     setSelectedConversation(null);
   };
@@ -327,36 +289,34 @@ const StoreChatInterface = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    } else {
-      handleTyping();
+    }
+  };
+
+  const handleMessageChange = (e) => {
+    setMessage(e.target.value);
+    
+    // Handle typing indicators
+    if (selectedConversation) {
+      handleTyping(selectedConversation.id);
     }
   };
 
   const filteredConversations = conversations.filter(conv =>
-    conv.store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conv.store.category.toLowerCase().includes(searchTerm.toLowerCase())
+    conv.store?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.store?.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const isStoreOnline = (storeId) => {
-    return onlineUsers.has(storeId);
-  };
+  // Get typing users for current conversation
+  const typingUsers = selectedConversation ? getTypingUsers(selectedConversation.id) : [];
 
-  const getTypingUsers = () => {
-    if (!selectedConversation) return [];
-    const typingKey = `${selectedConversation.id}-`;
-    return Array.from(typing.keys())
-      .filter(key => key.startsWith(typingKey) && !key.endsWith(user.id))
-      .map(key => key.replace(typingKey, ''));
-  };
-
-  if (loading) {
+  if (loading && !user) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading chat...</p>
+            <Loader2 className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-4" />
+            <p className="text-gray-600">Loading chat...</p>
           </div>
         </div>
         <Footer />
@@ -374,7 +334,7 @@ const StoreChatInterface = () => {
             <p className="text-red-600 mb-4">{error}</p>
             <button 
               onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
               Retry
             </button>
@@ -392,10 +352,23 @@ const StoreChatInterface = () => {
       <div className="flex-1">
         <div className="container mx-auto px-4 py-6 max-w-7xl">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Store Chat</h1>
-            <p className="text-gray-600">Connect and chat with your favorite stores</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Store Chat</h1>
+                <p className="text-gray-600">
+                  Connect and chat with your favorite stores
+                  {isConnected && <span className="ml-2 text-green-600">● Connected</span>}
+                </p>
+              </div>
+              <button
+                onClick={loadConversations}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
             {error && (
-              <div className="mt-2 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                 {error}
               </div>
             )}
@@ -425,7 +398,11 @@ const StoreChatInterface = () => {
 
                 {/* Conversation List */}
                 <div className="flex-1 overflow-y-auto">
-                  {filteredConversations.length === 0 ? (
+                  {loading ? (
+                    <div className="flex items-center justify-center h-32">
+                      <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                    </div>
+                  ) : filteredConversations.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">
                       <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                       <p>No conversations yet</p>
@@ -442,21 +419,21 @@ const StoreChatInterface = () => {
                       >
                         <div className="relative">
                           <img
-                            src={conversation.store.avatar}
-                            alt={conversation.store.name}
+                            src={conversation.store?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.store?.name || 'Store')}&background=random`}
+                            alt={conversation.store?.name || 'Store'}
                             className="w-12 h-12 rounded-full object-cover"
                           />
-                          {isStoreOnline(conversation.store.id) && (
+                          {isUserOnline(conversation.store?.id) && (
                             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                           )}
                         </div>
                         <div className="ml-3 flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-gray-900 truncate">{conversation.store.name}</h3>
+                            <h3 className="font-semibold text-gray-900 truncate">{conversation.store?.name || 'Store'}</h3>
                             <span className="text-xs text-gray-500">{conversation.lastMessageTime}</span>
                           </div>
                           <div className="flex items-center justify-between mt-1">
-                            <p className="text-sm text-gray-600 truncate">{conversation.lastMessage}</p>
+                            <p className="text-sm text-gray-600 truncate">{conversation.lastMessage || 'No messages'}</p>
                             {conversation.unreadCount > 0 && (
                               <span className="ml-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                 {conversation.unreadCount}
@@ -465,7 +442,7 @@ const StoreChatInterface = () => {
                           </div>
                           <div className="flex items-center mt-1">
                             <Store className="w-3 h-3 text-gray-400 mr-1" />
-                            <span className="text-xs text-gray-400">{conversation.store.category}</span>
+                            <span className="text-xs text-gray-400">{conversation.store?.category || 'General'}</span>
                           </div>
                         </div>
                       </div>
@@ -492,14 +469,14 @@ const StoreChatInterface = () => {
                           <ArrowLeft className="w-5 h-5 text-gray-600" />
                         </button>
                         <img
-                          src={selectedConversation.store.avatar}
-                          alt={selectedConversation.store.name}
+                          src={selectedConversation.store?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedConversation.store?.name || 'Store')}&background=random`}
+                          alt={selectedConversation.store?.name || 'Store'}
                           className="w-10 h-10 rounded-full object-cover"
                         />
                         <div className="ml-3">
-                          <h2 className="font-semibold text-gray-900">{selectedConversation.store.name}</h2>
+                          <h2 className="font-semibold text-gray-900">{selectedConversation.store?.name || 'Store'}</h2>
                           <p className="text-sm text-gray-500">
-                            {isStoreOnline(selectedConversation.store.id) ? 'Online' : 'Last seen recently'}
+                            {isUserOnline(selectedConversation.store?.id) ? 'Online' : 'Last seen recently'}
                           </p>
                         </div>
                       </div>
@@ -553,7 +530,7 @@ const StoreChatInterface = () => {
                       ))}
 
                       {/* Typing Indicator */}
-                      {getTypingUsers().length > 0 && (
+                      {typingUsers.length > 0 && (
                         <div className="flex justify-start">
                           <div className="bg-gray-200 rounded-lg px-4 py-2">
                             <div className="flex space-x-1">
@@ -574,7 +551,7 @@ const StoreChatInterface = () => {
                         <div className="flex-1 relative">
                           <textarea
                             value={message}
-                            onChange={(e) => setMessage(e.target.value)}
+                            onChange={handleMessageChange}
                             onKeyPress={handleKeyPress}
                             placeholder="Type a message..."
                             rows={1}
@@ -588,7 +565,7 @@ const StoreChatInterface = () => {
                           className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                         >
                           {sending ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <Loader2 className="w-5 h-5 animate-spin" />
                           ) : (
                             <Send className="w-5 h-5" />
                           )}
