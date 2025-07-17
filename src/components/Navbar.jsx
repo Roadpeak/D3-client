@@ -1047,7 +1047,7 @@ const Navbar = () => {
               >
                 🔥 Explore All Hot Deals
               </button>
-            </div>
+            </div> 
           </div>
         </div>
       )}
