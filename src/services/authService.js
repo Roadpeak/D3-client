@@ -53,6 +53,8 @@ class AuthService {
     }
   }
 
+  
+
   // Merchant Registration
   async registerMerchant(merchantData) {
     try {
