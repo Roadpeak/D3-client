@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
-import { Share2, Copy, Facebook, Twitter, Instagram, Linkedin, Star, Clock, MapPin, Tag, Users, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Share2, Copy, Facebook, Twitter, Instagram, Linkedin, Star, Clock, MapPin, Tag, Users, Calendar, Loader2, AlertCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { offerAPI } from '../services/offerService';
 
 const OffersPage = () => {
+  const { id } = useParams();
   const [showShareModal, setShowShareModal] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [offerData, setOfferData] = useState(null);
+  const [relatedOffers, setRelatedOffers] = useState([]);
+  
   const [newReview, setNewReview] = useState({
     name: '',
     rating: 0,
@@ -16,28 +23,7 @@ const OffersPage = () => {
   });
   const [userReviews, setUserReviews] = useState([]);
 
-  // Mock data
-  const offerData = {
-    title: "Wyndham Garden at Palmas del Mar - Puerto Rico",
-    location: "Puerto Rico",
-    platform: "Ebay",
-    region: "California",
-    purchases: "75 Bought",
-    originalPrice: "$200.00",
-    offerPrice: "$60.00",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Velit harum quidem eaque amet pariatur aspernatur mollitia ratione maxime.",
-    urgencyText: "HURRY UP ONLY A FEW DEALS LEFT",
-    expiryText: "This offer has expired!",
-    offerDuration: "Valid until June 15, 2025",
-    images: [
-      "/api/placeholder/600/400",
-      "/api/placeholder/600/400", 
-      "/api/placeholder/600/400",
-      "/api/placeholder/600/400",
-      "/api/placeholder/600/400"
-    ]
-  };
-
+  // Mock reviews data
   const reviews = [
     { id: 1, name: "John Doe", rating: 5, comment: "Amazing experience! Great value for money.", date: "2 days ago" },
     { id: 2, name: "Sarah Smith", rating: 4, comment: "Good service, would recommend to others.", date: "1 week ago" },
@@ -45,16 +31,80 @@ const OffersPage = () => {
     { id: 4, name: "Emma Wilson", rating: 4, comment: "Nice location and great amenities.", date: "3 weeks ago" }
   ];
 
-  const relatedOffers = [
-    { id: 1, title: "Luxury Resort in Bahamas", price: "$89.00", originalPrice: "$250.00", image: "/api/placeholder/300/200", rating: 4.5 },
-    { id: 2, title: "Beachfront Hotel Miami", price: "$120.00", originalPrice: "$300.00", image: "/api/placeholder/300/200", rating: 4.2 },
-    { id: 3, title: "Mountain Lodge Colorado", price: "$75.00", originalPrice: "$180.00", image: "/api/placeholder/300/200", rating: 4.7 },
-    { id: 4, title: "City Center Hotel NYC", price: "$95.00", originalPrice: "$220.00", image: "/api/placeholder/300/200", rating: 4.1 }
-  ];
+  useEffect(() => {
+    if (id) {
+      fetchOfferData();
+      fetchRelatedOffers();
+    }
+  }, [id]);
+
+  const fetchOfferData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await offerAPI.getOfferById(id);
+      
+      if (response.offer) {
+        // Transform the API response to match the component's expected format
+        const transformedOffer = {
+          title: response.offer.title || response.offer.service?.name || "Special Offer",
+          location: response.offer.store?.location || "Location not specified",
+          platform: response.offer.store?.name || "Store",
+          region: "Nairobi", // Default region
+          purchases: "75 Bought", // Mock data - you might want to track this in your API
+          originalPrice: response.offer.service?.price ? `$${response.offer.service.price}` : "$200.00",
+          offerPrice: response.offer.service?.price && response.offer.discount 
+            ? `$${(response.offer.service.price * (1 - response.offer.discount / 100)).toFixed(2)}`
+            : "$60.00",
+          discount: response.offer.discount,
+          description: response.offer.description || response.offer.service?.description || "Get exclusive offers with these amazing deals",
+          urgencyText: "HURRY UP ONLY A FEW DEALS LEFT",
+          expiryText: new Date(response.offer.expiration_date) < new Date() ? "This offer has expired!" : "Limited time offer!",
+          offerDuration: `Valid until ${new Date(response.offer.expiration_date).toLocaleDateString()}`,
+          status: response.offer.status,
+          featured: response.offer.featured,
+          images: response.offer.service?.image_url 
+            ? [response.offer.service.image_url, response.offer.service.image_url, response.offer.service.image_url, response.offer.service.image_url, response.offer.service.image_url]
+            : ["/api/placeholder/600/400", "/api/placeholder/600/400", "/api/placeholder/600/400", "/api/placeholder/600/400", "/api/placeholder/600/400"]
+        };
+        
+        setOfferData(transformedOffer);
+      }
+    } catch (err) {
+      console.error('Error fetching offer:', err);
+      setError('Failed to load offer details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRelatedOffers = async () => {
+    try {
+      const response = await offerAPI.getRandomOffers(4);
+      
+      if (response.offers) {
+        const transformedOffers = response.offers.map(offer => ({
+          id: offer.id,
+          title: offer.title || offer.service?.name || "Special Offer",
+          price: offer.service?.price && offer.discount 
+            ? `$${(offer.service.price * (1 - offer.discount / 100)).toFixed(2)}`
+            : "$89.00",
+          originalPrice: offer.service?.price ? `$${offer.service.price}` : "$250.00",
+          image: offer.service?.image_url || "/api/placeholder/300/200",
+          rating: 4.5 // Mock rating - you might want to implement this in your API
+        }));
+        
+        setRelatedOffers(transformedOffers);
+      }
+    } catch (err) {
+      console.error('Error fetching related offers:', err);
+    }
+  };
 
   const handleShare = (platform) => {
     const url = window.location.href;
-    const text = `Check out this amazing offer: ${offerData.title}`;
+    const text = `Check out this amazing offer: ${offerData?.title}`;
     
     const shareUrls = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
@@ -113,6 +163,67 @@ const OffersPage = () => {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="animate-spin" size={24} />
+            <span>Loading offer details...</span>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Oops! Something went wrong</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={fetchOfferData}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // No offer found
+  if (!offerData) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Offer not found</h2>
+            <p className="text-gray-600 mb-4">The offer you're looking for doesn't exist or has been removed.</p>
+            <Link 
+              to="/hotdeals" 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+              Browse All Offers
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -125,14 +236,24 @@ const OffersPage = () => {
               <div className="relative">
                 <img 
                   src={offerData.images[selectedImage]} 
-                  alt="Main offer "
+                  alt="Main offer"
                   className="w-full h-96 object-cover"
+                  onError={(e) => {
+                    e.target.src = '/api/placeholder/600/400';
+                  }}
                 />
                 <div className="absolute top-4 left-4">
                   <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
-                    {Math.round(((parseFloat(offerData.originalPrice.replace('$', '')) - parseFloat(offerData.offerPrice.replace('$', ''))) / parseFloat(offerData.originalPrice.replace('$', ''))) * 100)}% OFF
+                    {offerData.discount}% OFF
                   </span>
                 </div>
+                {offerData.featured && (
+                  <div className="absolute top-4 right-4">
+                    <span className="bg-yellow-500 text-white px-2 py-1 rounded text-sm font-medium">
+                      FEATURED
+                    </span>
+                  </div>
+                )}
               </div>
               
               {/* Thumbnail Images */}
@@ -146,7 +267,14 @@ const OffersPage = () => {
                         selectedImage === index ? 'border-blue-500' : 'border-gray-200'
                       }`}
                     >
-                      <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                      <img 
+                        src={image} 
+                        alt={`Thumbnail ${index + 1}`} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = '/api/placeholder/80/80';
+                        }}
+                      />
                     </button>
                   ))}
                 </div>
@@ -218,13 +346,30 @@ const OffersPage = () => {
                 </div>
               </div>
 
-              <Link 
-             to="/Booking" 
-             className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 mb-4 inline-block text-center no-underline"
-              >
-             GET OFFER
-             </Link>
+              {/* Status indicator */}
+              {offerData.status !== 'active' && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-yellow-800 text-sm font-medium">
+                    This offer is currently {offerData.status}
+                  </p>
+                </div>
+              )}
 
+              <Link 
+                to="/Booking" 
+                className={`w-full font-semibold py-3 px-6 rounded-lg transition duration-200 mb-4 inline-block text-center no-underline ${
+                  offerData.status === 'active'
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                }`}
+                onClick={(e) => {
+                  if (offerData.status !== 'active') {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                {offerData.status === 'active' ? 'GET OFFER' : 'OFFER UNAVAILABLE'}
+              </Link>
 
               {/* Urgency Message */}
               <div className="text-center mb-4">
@@ -413,30 +558,42 @@ const OffersPage = () => {
         </div>
 
         {/* Related Offers Section */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Offers</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {relatedOffers.map((offer) => (
-              <div key={offer.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition duration-200">
-                <img src={offer.image} alt={offer.title} className="w-full h-48 object-cover" />
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{offer.title}</h3>
-                  <div className="flex items-center mb-2">
-                    {renderStars(Math.floor(offer.rating))}
-                    <span className="text-sm text-gray-500 ml-2">({offer.rating})</span>
+        {relatedOffers.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Offers</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedOffers.map((offer) => (
+                <div key={offer.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition duration-200">
+                  <img 
+                    src={offer.image} 
+                    alt={offer.title} 
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      e.target.src = '/api/placeholder/300/200';
+                    }}
+                  />
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{offer.title}</h3>
+                    <div className="flex items-center mb-2">
+                      {renderStars(Math.floor(offer.rating))}
+                      <span className="text-sm text-gray-500 ml-2">({offer.rating})</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-bold text-green-500">{offer.price}</span>
+                      <span className="text-sm text-gray-500 line-through">{offer.originalPrice}</span>
+                    </div>
+                    <Link 
+                      to={`/offer/${offer.id}`}
+                      className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition duration-200 inline-block text-center no-underline"
+                    >
+                      View Offer
+                    </Link>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg font-bold text-green-500">{offer.price}</span>
-                    <span className="text-sm text-gray-500 line-through">{offer.originalPrice}</span>
-                  </div>
-                  <button className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition duration-200">
-                    View Offer
-                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Share Modal */}
