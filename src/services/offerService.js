@@ -1,13 +1,14 @@
 // services/api.js
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/V1';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
 const api = axios.create({
     baseURL: BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 10000, // 10 second timeout
 });
 
 // Request interceptor to add auth token if available
@@ -17,112 +18,175 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+        
+        // Log requests in development
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`🔄 ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data);
+        }
+        
         return config;
     },
     (error) => {
+        console.error('Request interceptor error:', error);
         return Promise.reject(error);
     }
 );
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Log successful responses in development
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+        }
+        return response;
+    },
     (error) => {
+        // Log errors in development
+        if (process.env.NODE_ENV === 'development') {
+            console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                message: error.message
+            });
+        }
+        
+        // Handle specific error cases
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
-            window.location.href = '/login';
+            // Only redirect if not already on login page
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
         }
+        
         return Promise.reject(error);
     }
 );
+
+// Helper function to handle API calls with consistent error handling
+const handleApiCall = async (apiCall) => {
+    try {
+        const response = await apiCall();
+        return response.data;
+    } catch (error) {
+        // Re-throw with more context
+        const enhancedError = new Error(error.response?.data?.message || error.message || 'API call failed');
+        enhancedError.response = error.response;
+        enhancedError.request = error.request;
+        enhancedError.status = error.response?.status;
+        throw enhancedError;
+    }
+};
 
 // Offer API endpoints
 export const offerAPI = {
     // Get all offers with pagination and filters
     getOffers: async (params = {}) => {
-        const response = await api.get('/offers', { params });
-        return response.data;
+        return handleApiCall(() => api.get('/offers', { params }));
     },
 
     // Get random offers
     getRandomOffers: async (limit = 12) => {
-        const response = await api.get('/offers/random', { params: { limit } });
-        return response.data;
+        return handleApiCall(() => api.get('/offers/random', { params: { limit } }));
     },
 
     // Get offers by store
     getOffersByStore: async (storeId, params = {}) => {
-        const response = await api.get(`/offers/store/${storeId}`, { params });
-        return response.data;
+        if (!storeId) {
+            throw new Error('Store ID is required');
+        }
+        return handleApiCall(() => api.get(`/offers/store/${storeId}`, { params }));
     },
 
     // Get single offer by ID
     getOfferById: async (id) => {
-        const response = await api.get(`/offers/${id}`);
-        return response.data;
+        if (!id) {
+            throw new Error('Offer ID is required');
+        }
+        return handleApiCall(() => api.get(`/offers/${id}`));
     },
 
     // Create new offer
     createOffer: async (offerData) => {
-        const response = await api.post('/offers', offerData);
-        return response.data;
+        if (!offerData) {
+            throw new Error('Offer data is required');
+        }
+        return handleApiCall(() => api.post('/offers', offerData));
     },
 
     // Update offer
     updateOffer: async (id, offerData) => {
-        const response = await api.put(`/offers/${id}`, offerData);
-        return response.data;
+        if (!id) {
+            throw new Error('Offer ID is required');
+        }
+        if (!offerData) {
+            throw new Error('Offer data is required');
+        }
+        return handleApiCall(() => api.put(`/offers/${id}`, offerData));
     },
 
     // Delete offer
     deleteOffer: async (id) => {
-        const response = await api.delete(`/offers/${id}`);
-        return response.data;
+        if (!id) {
+            throw new Error('Offer ID is required');
+        }
+        return handleApiCall(() => api.delete(`/offers/${id}`));
     },
 
     // Get categories with counts
     getCategories: async () => {
-        const response = await api.get('/offers/categories');
-        return response.data;
+        return handleApiCall(() => api.get('/offers/categories'));
     },
 
     // Get top deals
     getTopDeals: async (limit = 3) => {
-        const response = await api.get('/offers/top-deals', { params: { limit } });
-        return response.data;
+        return handleApiCall(() => api.get('/offers/top-deals', { params: { limit } }));
     },
 
     // Get featured offers
     getFeaturedOffers: async (limit = 6) => {
-        const response = await api.get('/offers/featured', { params: { limit } });
-        return response.data;
+        return handleApiCall(() => api.get('/offers/featured', { params: { limit } }));
     },
 };
 
 // Store API endpoints
 export const storeAPI = {
     getStores: async (params = {}) => {
-        const response = await api.get('/stores', { params });
-        return response.data;
+        return handleApiCall(() => api.get('/stores', { params }));
     },
 
     getStoreById: async (id) => {
-        const response = await api.get(`/stores/${id}`);
-        return response.data;
+        if (!id) {
+            throw new Error('Store ID is required');
+        }
+        return handleApiCall(() => api.get(`/stores/${id}`));
     },
 };
 
 // Service API endpoints
 export const serviceAPI = {
     getServices: async (params = {}) => {
-        const response = await api.get('/services', { params });
-        return response.data;
+        return handleApiCall(() => api.get('/services', { params }));
     },
 
     getServiceById: async (id) => {
-        const response = await api.get(`/services/${id}`);
-        return response.data;
+        if (!id) {
+            throw new Error('Service ID is required');
+        }
+        return handleApiCall(() => api.get(`/services/${id}`));
     },
+};
+
+// Health check endpoint
+export const healthCheck = async () => {
+    try {
+        const response = await api.get('/health');
+        return response.data;
+    } catch (error) {
+        throw new Error('API is not available');
+    }
 };
 
 export default api;

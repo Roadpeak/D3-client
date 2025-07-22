@@ -15,7 +15,7 @@ const OffersPage = () => {
   const [error, setError] = useState(null);
   const [offerData, setOfferData] = useState(null);
   const [relatedOffers, setRelatedOffers] = useState([]);
-  
+
   const [newReview, setNewReview] = useState({
     name: '',
     rating: 0,
@@ -42,19 +42,33 @@ const OffersPage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
+      console.log('Fetching offer with ID:', id); // Debug log
+
       const response = await offerAPI.getOfferById(id);
-      
+
+      console.log('API Response:', response); // Debug log
+
+      // Check if response has the expected structure
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch offer');
+      }
+
       if (response.offer) {
         // Transform the API response to match the component's expected format
         const transformedOffer = {
+          id: response.offer.id, // Make sure to include the id
           title: response.offer.title || response.offer.service?.name || "Special Offer",
           location: response.offer.store?.location || "Location not specified",
           platform: response.offer.store?.name || "Store",
           region: "Nairobi", // Default region
           purchases: "75 Bought", // Mock data - you might want to track this in your API
           originalPrice: response.offer.service?.price ? `$${response.offer.service.price}` : "$200.00",
-          offerPrice: response.offer.service?.price && response.offer.discount 
+          offerPrice: response.offer.service?.price && response.offer.discount
             ? `$${(response.offer.service.price * (1 - response.offer.discount / 100)).toFixed(2)}`
             : "$60.00",
           discount: response.offer.discount,
@@ -64,16 +78,54 @@ const OffersPage = () => {
           offerDuration: `Valid until ${new Date(response.offer.expiration_date).toLocaleDateString()}`,
           status: response.offer.status,
           featured: response.offer.featured,
-          images: response.offer.service?.image_url 
+          images: response.offer.service?.image_url
             ? [response.offer.service.image_url, response.offer.service.image_url, response.offer.service.image_url, response.offer.service.image_url, response.offer.service.image_url]
             : ["/api/placeholder/600/400", "/api/placeholder/600/400", "/api/placeholder/600/400", "/api/placeholder/600/400", "/api/placeholder/600/400"]
         };
-        
+
         setOfferData(transformedOffer);
+      } else {
+        throw new Error('Offer data not found in response');
       }
     } catch (err) {
       console.error('Error fetching offer:', err);
-      setError('Failed to load offer details. Please try again.');
+
+      // More specific error messages based on error type
+      let errorMessage = 'Failed to load offer details. Please try again.';
+
+      if (err.response) {
+        // Server responded with error status
+        const status = err.response.status;
+        const serverMessage = err.response.data?.message;
+
+        switch (status) {
+          case 400:
+            errorMessage = serverMessage || 'Invalid offer ID provided.';
+            break;
+          case 401:
+            errorMessage = 'You need to be logged in to view this offer.';
+            break;
+          case 403:
+            errorMessage = 'You don\'t have permission to view this offer.';
+            break;
+          case 404:
+            errorMessage = 'This offer could not be found. It may have been removed or expired.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = serverMessage || `Error ${status}: ${err.response.statusText}`;
+        }
+      } else if (err.request) {
+        // Network error
+        errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+      } else {
+        // Other error
+        errorMessage = err.message || 'An unexpected error occurred.';
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -82,19 +134,19 @@ const OffersPage = () => {
   const fetchRelatedOffers = async () => {
     try {
       const response = await offerAPI.getRandomOffers(4);
-      
+
       if (response.offers) {
         const transformedOffers = response.offers.map(offer => ({
           id: offer.id,
           title: offer.title || offer.service?.name || "Special Offer",
-          price: offer.service?.price && offer.discount 
+          price: offer.service?.price && offer.discount
             ? `$${(offer.service.price * (1 - offer.discount / 100)).toFixed(2)}`
             : "$89.00",
           originalPrice: offer.service?.price ? `$${offer.service.price}` : "$250.00",
           image: offer.service?.image_url || "/api/placeholder/300/200",
           rating: 4.5 // Mock rating - you might want to implement this in your API
         }));
-        
+
         setRelatedOffers(transformedOffers);
       }
     } catch (err) {
@@ -105,7 +157,7 @@ const OffersPage = () => {
   const handleShare = (platform) => {
     const url = window.location.href;
     const text = `Check out this amazing offer: ${offerData?.title}`;
-    
+
     const shareUrls = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
       twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
@@ -189,7 +241,7 @@ const OffersPage = () => {
             <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Oops! Something went wrong</h2>
             <p className="text-gray-600 mb-4">{error}</p>
-            <button 
+            <button
               onClick={fetchOfferData}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
             >
@@ -211,8 +263,8 @@ const OffersPage = () => {
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Offer not found</h2>
             <p className="text-gray-600 mb-4">The offer you're looking for doesn't exist or has been removed.</p>
-            <Link 
-              to="/hotdeals" 
+            <Link
+              to="/hotdeals"
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
             >
               Browse All Offers
@@ -224,18 +276,21 @@ const OffersPage = () => {
     );
   }
 
+  // Check if offer is active
+  const isOfferActive = offerData.status === 'active';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Images */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="relative">
-                <img 
-                  src={offerData.images[selectedImage]} 
+                <img
+                  src={offerData.images[selectedImage]}
                   alt="Main offer"
                   className="w-full h-96 object-cover"
                   onError={(e) => {
@@ -255,7 +310,7 @@ const OffersPage = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Thumbnail Images */}
               <div className="p-4">
                 <div className="flex space-x-2 overflow-x-auto">
@@ -263,13 +318,12 @@ const OffersPage = () => {
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                        selectedImage === index ? 'border-blue-500' : 'border-gray-200'
-                      }`}
+                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${selectedImage === index ? 'border-blue-500' : 'border-gray-200'
+                        }`}
                     >
-                      <img 
-                        src={image} 
-                        alt={`Thumbnail ${index + 1}`} 
+                      <img
+                        src={image}
+                        alt={`Thumbnail ${index + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.src = '/api/placeholder/80/80';
@@ -285,7 +339,7 @@ const OffersPage = () => {
             <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
               <h3 className="text-xl font-semibold mb-4">Description</h3>
               <p className="text-gray-600 leading-relaxed">{offerData.description}</p>
-              
+
               <div className="mt-6 pt-6 border-t">
                 <h4 className="font-semibold mb-3">Offer Details</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -314,7 +368,7 @@ const OffersPage = () => {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">{offerData.title}</h1>
-              
+
               <div className="flex items-center space-x-4 text-sm text-gray-500 mb-4">
                 <span className="flex items-center">
                   <MapPin className="w-4 h-4 mr-1" />
@@ -355,20 +409,16 @@ const OffersPage = () => {
                 </div>
               )}
 
-              <Link 
-                to="/Booking" 
-                className={`w-full font-semibold py-3 px-6 rounded-lg transition duration-200 mb-4 inline-block text-center no-underline ${
-                  offerData.status === 'active'
+              {/* Get Offer Button */}
+              <Link
+                to={`/booking/${offerData.id}`}
+                className={`w-full font-semibold py-3 px-6 rounded-lg transition duration-200 mb-4 inline-block text-center no-underline ${isOfferActive
                     ? 'bg-green-500 hover:bg-green-600 text-white'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                }`}
-                onClick={(e) => {
-                  if (offerData.status !== 'active') {
-                    e.preventDefault();
-                  }
-                }}
+                    : 'bg-gray-400 text-gray-600 cursor-not-allowed pointer-events-none'
+                  }`}
+                aria-disabled={!isOfferActive}
               >
-                {offerData.status === 'active' ? 'GET OFFER' : 'OFFER UNAVAILABLE'}
+                {isOfferActive ? 'GET OFFER' : 'OFFER UNAVAILABLE'}
               </Link>
 
               {/* Urgency Message */}
@@ -392,7 +442,7 @@ const OffersPage = () => {
                     Share
                   </button>
                 </div>
-                
+
                 <div className="flex items-center justify-center space-x-3 mt-3">
                   <button
                     onClick={() => handleShare('facebook')}
@@ -425,7 +475,7 @@ const OffersPage = () => {
                     <Copy className="w-5 h-5" />
                   </button>
                 </div>
-                
+
                 {copySuccess && (
                   <p className="text-green-600 text-sm text-center mt-2">Link copied to clipboard!</p>
                 )}
@@ -466,41 +516,41 @@ const OffersPage = () => {
                   <input
                     type="text"
                     value={newReview.name}
-                    onChange={(e) => setNewReview({...newReview, name: e.target.value})}
+                    onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter your name"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Rating
                   </label>
                   <div className="flex items-center space-x-1">
-                    {renderInteractiveStars(newReview.rating, (rating) => 
-                      setNewReview({...newReview, rating})
+                    {renderInteractiveStars(newReview.rating, (rating) =>
+                      setNewReview({ ...newReview, rating })
                     )}
                     <span className="ml-2 text-sm text-gray-600">
                       {newReview.rating > 0 ? `${newReview.rating} star${newReview.rating !== 1 ? 's' : ''}` : 'Select rating'}
                     </span>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Your Review
                   </label>
                   <textarea
                     value={newReview.comment}
-                    onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
+                    onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Share your experience..."
                     required
                   />
                 </div>
-                
+
                 <div className="flex space-x-3">
                   <button
                     type="submit"
@@ -522,7 +572,7 @@ const OffersPage = () => {
               </form>
             </div>
           )}
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Display user reviews first */}
             {userReviews.map((review) => (
@@ -540,7 +590,7 @@ const OffersPage = () => {
                 <p className="text-gray-600 text-sm">{review.comment}</p>
               </div>
             ))}
-            
+
             {/* Display existing reviews */}
             {reviews.map((review) => (
               <div key={review.id} className="border border-gray-200 rounded-lg p-4">
@@ -564,9 +614,9 @@ const OffersPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedOffers.map((offer) => (
                 <div key={offer.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition duration-200">
-                  <img 
-                    src={offer.image} 
-                    alt={offer.title} 
+                  <img
+                    src={offer.image}
+                    alt={offer.title}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
                       e.target.src = '/api/placeholder/300/200';
@@ -582,7 +632,7 @@ const OffersPage = () => {
                       <span className="text-lg font-bold text-green-500">{offer.price}</span>
                       <span className="text-sm text-gray-500 line-through">{offer.originalPrice}</span>
                     </div>
-                    <Link 
+                    <Link
                       to={`/offer/${offer.id}`}
                       className="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition duration-200 inline-block text-center no-underline"
                     >

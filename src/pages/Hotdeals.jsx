@@ -488,7 +488,7 @@ export default function Hotdeals() {
                     {/* Price display */}
                     {offer.originalPrice > 0 && (
                       <div className="flex items-center space-x-2 mb-3">
-                        <span className="text-lg font-bold text-green-600">
+                        <span className="text-lg font-bold text-black-600">
                           ${offer.discountedPrice}
                         </span>
                         <span className="text-sm text-gray-500 line-through">
