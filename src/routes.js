@@ -1,4 +1,4 @@
-// src/routes/index.js - Clean version without unused components
+// src/routes/index.js - Updated version with service routes
 import React from 'react'
 import { Route, Routes, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
@@ -18,6 +18,9 @@ import Requestservice from './pages/Requestservice'
 import Hotdeals from './pages/Hotdeals'
 import VerifyOTP from './pages/auth/VerifyOTP'
 import EnhancedBookingPage from './pages/Booking'
+
+// Service Components (ViewService only - no services listing page needed)
+import ViewService from './pages/ViewService' // View individual service
 
 // 404 Not Found Component
 const NotFound = () => (
@@ -77,12 +80,24 @@ const AppRoutes = () => {
         <Route path='/offer' element={<ViewOffer />} />
         <Route path='/offer/:id' element={<ViewOffer />} />
         <Route path='/offers/:id' element={<ViewOffer />} />
+        <Route path='store/offers/:id' element={<ViewOffer />} />
         
         {/* Store Routes */}
         <Route path='/stores' element={<Stores />} />
         <Route path='/Stores' element={<Navigate to="/stores" replace />} />
         <Route path='/store/:id' element={<ViewStore />} />
         <Route path='/ViewStore/:id' element={<ViewStore />} />
+        
+        {/* ==================== SERVICE ROUTES ==================== */}
+        
+        {/* Individual Service Routes */}
+        <Route path='/service/:id' element={<ViewService />} />
+        <Route path='/services/:id' element={<ViewService />} />
+        <Route path='/ViewService/:id' element={<ViewService />} />
+        
+        {/* Service booking routes */}
+        <Route path='/service/:id/book' element={<Navigate to={`/booking/service/${window.location.pathname.split('/')[2]}`} replace />} />
+        <Route path='/services/:id/book' element={<Navigate to={`/booking/service/${window.location.pathname.split('/')[2]}`} replace />} />
         
         {/* Search */}
         <Route path="/search" element={<SearchResults />} />
@@ -100,8 +115,9 @@ const AppRoutes = () => {
 
         {/* ==================== BOOKING ROUTES ==================== */}
         
-        {/* Main Booking Route - Component handles its own auth */}
+        {/* Main Booking Routes - Component handles its own auth */}
         <Route path="/booking/:offerId" element={<EnhancedBookingPage />} />
+        <Route path="/booking/service/:serviceId" element={<EnhancedBookingPage />} />
         
         {/* Alternative booking routes for flexibility */}
         <Route path="/book/:offerId" element={<Navigate to={`/booking/${window.location.pathname.split('/')[2]}`} replace />} />
