@@ -1,14 +1,26 @@
-// services/chatService.js - FIXED VERSION
+// services/chatService.js
 class ChatService {
   constructor() {
-    this.API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
-    this.SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:4000';
+    // Use window.location for dynamic API URLs in browser
+    const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    
+    // For development, you can also hardcode these or use different logic
+    this.API_BASE = process.env.NODE_ENV === 'production' 
+      ? `${protocol}//${hostname}/api/v1`
+      : 'http://localhost:4000/api/v1';
+      
+    this.SOCKET_URL = process.env.NODE_ENV === 'production'
+      ? `${protocol}//${hostname}`
+      : 'http://localhost:4000';
   }
 
-  // Get auth token from multiple sources
+  // Get auth token from cookies (matching your authService pattern)
   getAuthToken() {
-    // Function to get token from cookies
+    // Function to get token from cookies - matching your authService
     const getTokenFromCookie = () => {
+      if (typeof document === 'undefined') return '';
+      
       const name = 'authToken=';
       const decodedCookie = decodeURIComponent(document.cookie);
       const ca = decodedCookie.split(';');
@@ -25,114 +37,71 @@ class ChatService {
       return '';
     };
 
-    // Try multiple token sources
-    const token = getTokenFromCookie() || 
-                 localStorage.getItem('authToken') || 
-                 localStorage.getItem('access_token') ||
-                 sessionStorage.getItem('authToken') ||
-                 sessionStorage.getItem('access_token');
+    // Enhanced token retrieval - check all possible locations
+    const tokenSources = {
+      localStorage_access_token: typeof window !== 'undefined' ? localStorage.getItem('access_token') : '',
+      localStorage_authToken: typeof window !== 'undefined' ? localStorage.getItem('authToken') : '',
+      localStorage_token: typeof window !== 'undefined' ? localStorage.getItem('token') : '',
+      cookie_authToken: getTokenFromCookie(),
+      cookie_access_token: this.getCookieValue('access_token'),
+      cookie_token: this.getCookieValue('token')
+    };
 
-    console.log('🎫 ChatService getting token:', token ? `Found (${token.substring(0, 20)}...)` : 'Not found');
-    console.log('🎫 Token sources check:');
-    console.log('  - Cookie:', getTokenFromCookie() ? 'Present' : 'Missing');
-    console.log('  - localStorage.authToken:', localStorage.getItem('authToken') ? 'Present' : 'Missing');
-    console.log('  - localStorage.access_token:', localStorage.getItem('access_token') ? 'Present' : 'Missing');
-    
+    const token = tokenSources.localStorage_access_token || 
+                  tokenSources.localStorage_authToken || 
+                  tokenSources.localStorage_token ||
+                  tokenSources.cookie_authToken ||
+                  tokenSources.cookie_access_token ||
+                  tokenSources.cookie_token;
+
+    console.log('🔍 ChatService token check:', token ? `Found (${token.substring(0, 20)}...)` : 'Not found');
+    console.log('📍 Token sources:', Object.keys(tokenSources).filter(key => tokenSources[key]));
+
     return token;
   }
 
-  // API headers with authentication - FIXED
+  // Helper method to get cookie value
+  getCookieValue(name) {
+    if (typeof document === 'undefined') return '';
+    
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [key, value] = cookie.trim().split('=');
+      if (key === name) return decodeURIComponent(value);
+    }
+    return '';
+  }
+
+  // API headers with authentication
   getHeaders() {
     const token = this.getAuthToken();
-    const headers = {
+    return {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : '',
     };
-
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-      console.log('✅ ChatService: Authorization header added');
-    } else {
-      console.error('❌ ChatService: No token found - requests will fail!');
-    }
-
-    console.log('📋 ChatService headers:', headers);
-    return headers;
   }
 
-  // Handle API responses with better error handling
+  // Handle API responses
   async handleResponse(response) {
-    console.log(`📡 ChatService response: ${response.status} ${response.statusText}`);
-    
-    // Handle different response types
-    const contentType = response.headers.get('content-type');
-    
     if (!response.ok) {
-      let errorData = {};
-      
-      if (contentType && contentType.includes('application/json')) {
-        try {
-          errorData = await response.json();
-        } catch (e) {
-          errorData = { message: `HTTP ${response.status} - ${response.statusText}` };
-        }
-      } else {
-        errorData = { message: `HTTP ${response.status} - ${response.statusText}` };
-      }
-      
-      console.error('❌ ChatService API error:', errorData);
-      
-      // Handle specific error codes
-      if (response.status === 401) {
-        // Token expired or invalid
-        this.clearAuthToken();
-        throw new Error('Authentication required. Please log in again.');
-      } else if (response.status === 403) {
-        throw new Error('Access denied. Please check your permissions.');
-      } else if (response.status === 404) {
-        throw new Error('Resource not found.');
-      } else if (response.status === 500) {
-        throw new Error('Server error. Please try again later.');
-      }
-      
-      throw new Error(errorData.message || `Request failed with status ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
-
-    if (contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-      console.log('✅ ChatService response data:', data);
-      return data;
-    } else {
-      return response.text();
-    }
+    return response.json();
   }
 
-  // Clear auth token on logout/error
-  clearAuthToken() {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('access_token');
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('access_token');
-    
-    // Clear cookie
-    document.cookie = 'authToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-  }
-
-  // Get current user profile with better error handling
+  // Get current user profile  
   async getCurrentUser() {
     const endpoints = [
       `${this.API_BASE}/users/profile`,
-      `${this.API_BASE}/users/me`,
-      `${this.API_BASE}/auth/me`
+      `${this.API_BASE}/users/me`
     ];
 
     for (const endpoint of endpoints) {
       try {
-        console.log(`🔍 ChatService: Trying to get user from ${endpoint}`);
         const response = await fetch(endpoint, {
-          method: 'GET',
           headers: this.getHeaders(),
-          credentials: 'include'
+          credentials: 'include' // Important for cookie-based auth
         });
         
         if (response.ok) {
@@ -144,201 +113,220 @@ class ChatService {
       }
     }
     
-    throw new Error('Unable to fetch user profile');
+    // If all endpoints fail, throw error
+    throw new Error('Unable to fetch user profile from any endpoint');
   }
 
-  // Get conversations with better error handling - FIXED
+  // Get chats for current user
   async getConversations(userRole = 'customer') {
     const endpoint = userRole === 'merchant' 
       ? `${this.API_BASE}/chat/merchant/conversations`
       : `${this.API_BASE}/chat/conversations`;
 
-    try {
-      console.log(`🔍 ChatService: Fetching conversations from: ${endpoint}`);
-      
-      const headers = this.getHeaders();
-      console.log(`📋 ChatService: Request headers:`, headers);
-      
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: headers, // Use the headers correctly
-        credentials: 'include'
-      });
+    const response = await fetch(endpoint, {
+      headers: this.getHeaders(),
+      credentials: 'include'
+    });
 
-      console.log(`📡 ChatService: Response status: ${response.status}`);
-      
-      return await this.handleResponse(response);
-      
-    } catch (error) {
-      console.error('❌ ChatService: Error fetching conversations:', error);
-      throw error;
-    }
+    return this.handleResponse(response);
   }
 
-  // Get messages with better error handling - FIXED
-  async getMessages(conversationId, page = 1, limit = 50) {
-    if (!conversationId) {
-      throw new Error('Conversation ID is required');
-    }
-
-    const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/messages?page=${page}&limit=${limit}`;
-    
-    try {
-      console.log(`🔍 ChatService: Fetching messages from: ${endpoint}`);
-      
-      const response = await fetch(endpoint, {
-        method: 'GET',
+  // Get messages for a chat
+  async getMessages(chatId, page = 1, limit = 50) {
+    const response = await fetch(
+      `${this.API_BASE}/chat/conversations/${chatId}/messages?page=${page}&limit=${limit}`,
+      {
         headers: this.getHeaders(),
         credentials: 'include'
-      });
+      }
+    );
 
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('❌ ChatService: Error fetching messages:', error);
-      throw error;
-    }
+    return this.handleResponse(response);
   }
 
-  // Send message with better error handling - FIXED
-  async sendMessage(conversationId, content, messageType = 'text') {
-    if (!conversationId || !content) {
-      throw new Error('Conversation ID and content are required');
-    }
+  // Send a message
+  async sendMessage(chatId, content, messageType = 'text') {
+    const response = await fetch(`${this.API_BASE}/chat/messages`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({
+        conversationId: chatId, // Keep this name for backward compatibility
+        content,
+        messageType
+      })
+    });
 
-    const endpoint = `${this.API_BASE}/chat/messages`;
-    
-    try {
-      console.log(`🔍 ChatService: Sending message to: ${endpoint}`);
-      
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({
-          conversationId,
-          content,
-          messageType
-        })
-      });
-
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('❌ ChatService: Error sending message:', error);
-      throw error;
-    }
+    return this.handleResponse(response);
   }
 
-  // Start conversation with better error handling - FIXED
+  // Start a new chat (customer to store)
   async startConversation(storeId, initialMessage = '') {
-    if (!storeId) {
-      throw new Error('Store ID is required');
-    }
+    const response = await fetch(`${this.API_BASE}/chat/conversations`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({
+        storeId,
+        initialMessage
+      })
+    });
 
-    const endpoint = `${this.API_BASE}/chat/conversations`;
-    
-    try {
-      console.log(`🔍 ChatService: Starting conversation at: ${endpoint}`);
-      
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({
-          storeId,
-          initialMessage
-        })
-      });
-
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('❌ ChatService: Error starting conversation:', error);
-      throw error;
-    }
+    return this.handleResponse(response);
   }
 
-  // Mark messages as read - FIXED
-  async markMessagesAsRead(conversationId) {
-    if (!conversationId) {
-      throw new Error('Conversation ID is required');
-    }
-
-    const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/read`;
-    
-    try {
-      const response = await fetch(endpoint, {
+  // Mark messages as read
+  async markMessagesAsRead(chatId) {
+    const response = await fetch(
+      `${this.API_BASE}/chat/conversations/${chatId}/read`,
+      {
         method: 'POST',
         headers: this.getHeaders(),
         credentials: 'include'
-      });
+      }
+    );
 
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('❌ ChatService: Error marking messages as read:', error);
-      throw error;
-    }
+    return this.handleResponse(response);
   }
 
-  // Update message status - FIXED
+  // Update message status
   async updateMessageStatus(messageId, status) {
-    if (!messageId || !status) {
-      throw new Error('Message ID and status are required');
-    }
-
-    const endpoint = `${this.API_BASE}/chat/messages/${messageId}/status`;
-    
-    try {
-      const response = await fetch(endpoint, {
+    const response = await fetch(
+      `${this.API_BASE}/chat/messages/${messageId}/status`,
+      {
         method: 'PUT',
         headers: this.getHeaders(),
         credentials: 'include',
         body: JSON.stringify({ status })
-      });
+      }
+    );
 
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('❌ ChatService: Error updating message status:', error);
-      throw error;
-    }
+    return this.handleResponse(response);
   }
 
-  // Search conversations - FIXED
+  // Search chats
   async searchConversations(query, type = 'all') {
-    if (!query || query.length < 2) {
-      throw new Error('Search query must be at least 2 characters long');
-    }
-
-    const endpoint = `${this.API_BASE}/chat/search?query=${encodeURIComponent(query)}&type=${type}`;
-    
-    try {
-      const response = await fetch(endpoint, {
-        method: 'GET',
+    const response = await fetch(
+      `${this.API_BASE}/chat/search?query=${encodeURIComponent(query)}&type=${type}`,
+      {
         headers: this.getHeaders(),
         credentials: 'include'
-      });
+      }
+    );
 
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('❌ ChatService: Error searching conversations:', error);
-      throw error;
-    }
+    return this.handleResponse(response);
   }
 
-  // Get conversation analytics - FIXED
+  // Get chat analytics (for merchants)
   async getConversationAnalytics(period = '7d') {
-    const endpoint = `${this.API_BASE}/chat/analytics?period=${period}`;
-    
-    try {
-      const response = await fetch(endpoint, {
-        method: 'GET',
+    const response = await fetch(
+      `${this.API_BASE}/chat/analytics?period=${period}`,
+      {
         headers: this.getHeaders(),
         credentials: 'include'
-      });
+      }
+    );
 
-      return this.handleResponse(response);
-    } catch (error) {
-      console.error('❌ ChatService: Error fetching analytics:', error);
-      throw error;
+    return this.handleResponse(response);
+  }
+
+  // Get chat participants
+  async getChatParticipants(chatId) {
+    const response = await fetch(
+      `${this.API_BASE}/chat/conversations/${chatId}/participants`,
+      {
+        headers: this.getHeaders(),
+        credentials: 'include'
+      }
+    );
+
+    return this.handleResponse(response);
+  }
+
+  // Update chat settings (merchants only)
+  async updateChatSettings(chatId, settings) {
+    const response = await fetch(
+      `${this.API_BASE}/chat/conversations/${chatId}/settings`,
+      {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        credentials: 'include',
+        body: JSON.stringify(settings)
+      }
+    );
+
+    return this.handleResponse(response);
+  }
+
+  // Archive chat
+  async archiveChat(chatId) {
+    const response = await fetch(
+      `${this.API_BASE}/chat/conversations/${chatId}/archive`,
+      {
+        method: 'POST',
+        headers: this.getHeaders(),
+        credentials: 'include'
+      }
+    );
+
+    return this.handleResponse(response);
+  }
+
+  // Block chat
+  async blockChat(chatId) {
+    const response = await fetch(
+      `${this.API_BASE}/chat/conversations/${chatId}/block`,
+      {
+        method: 'POST',
+        headers: this.getHeaders(),
+        credentials: 'include'
+      }
+    );
+
+    return this.handleResponse(response);
+  }
+
+  // Get message history with pagination
+  async getMessageHistory(chatId, page = 1, limit = 50, before = null) {
+    let url = `${this.API_BASE}/chat/conversations/${chatId}/messages/history?page=${page}&limit=${limit}`;
+    if (before) {
+      url += `&before=${encodeURIComponent(before)}`;
     }
+
+    const response = await fetch(url, {
+      headers: this.getHeaders(),
+      credentials: 'include'
+    });
+
+    return this.handleResponse(response);
+  }
+
+  // Get online status of users
+  async getOnlineStatus(userIds) {
+    const response = await fetch(
+      `${this.API_BASE}/chat/users/online?userIds=${userIds.join(',')}`,
+      {
+        headers: this.getHeaders(),
+        credentials: 'include'
+      }
+    );
+
+    return this.handleResponse(response);
+  }
+
+  // Send typing indicator
+  async sendTyping(chatId, action = 'start') {
+    const response = await fetch(
+      `${this.API_BASE}/chat/conversations/${chatId}/typing`,
+      {
+        method: 'POST',
+        headers: this.getHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({ action })
+      }
+    );
+
+    return this.handleResponse(response);
   }
 
   // Check authentication status
@@ -355,80 +343,106 @@ class ChatService {
         user: userResponse.user || userResponse 
       };
     } catch (error) {
-      console.error('❌ ChatService: Auth check failed:', error);
+      console.error('Auth check failed:', error);
       return { isAuthenticated: false, user: null };
     }
   }
 
-  // Simplified method to check if user is authenticated
-  isAuthenticated() {
-    const token = this.getAuthToken();
-    console.log(`🔍 ChatService: isAuthenticated check - ${token ? 'Yes' : 'No'}`);
-    return !!token;
-  }
-
-  // Test connection
-  async testConnection() {
+  // Health check
+  async healthCheck() {
     try {
-      const response = await fetch(`${this.API_BASE.replace('/api/v1', '')}/health`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+      const response = await fetch(`${this.API_BASE}/chat/health`, {
+        headers: this.getHeaders(),
+        credentials: 'include'
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ ChatService: API connection test successful:', data);
-        return true;
-      } else {
-        console.error('❌ ChatService: API connection test failed:', response.status, response.statusText);
-        return false;
-      }
+      return this.handleResponse(response);
     } catch (error) {
-      console.error('❌ ChatService: API connection test error:', error);
-      return false;
+      console.error('Health check failed:', error);
+      return { success: false, error: error.message };
     }
   }
 
-  // Debug method to test auth headers
-  async debugAuth() {
-    console.log('=== ChatService Debug Auth ===');
-    const token = this.getAuthToken();
-    const headers = this.getHeaders();
-    
-    console.log('Token found:', token ? 'Yes' : 'No');
-    console.log('Headers:', headers);
-    
-    if (token) {
-      try {
-        // Test with a simple authenticated endpoint
-        const response = await fetch(`${this.API_BASE}/users/profile`, {
-          method: 'GET',
-          headers: headers,
-          credentials: 'include'
+  // Utility methods
+  formatTime(timestamp) {
+    try {
+      const now = new Date();
+      const messageTime = new Date(timestamp);
+      const diffInHours = (now - messageTime) / (1000 * 60 * 60);
+
+      if (diffInHours < 1) {
+        const diffInMinutes = Math.floor((now - messageTime) / (1000 * 60));
+        return diffInMinutes <= 0 ? 'now' : `${diffInMinutes} min ago`;
+      } else if (diffInHours < 24) {
+        return messageTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit'
         });
-        
-        console.log('Test auth response:', response.status, response.statusText);
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Auth test successful:', data);
-          return { success: true, data };
-        } else {
-          const errorData = await response.json();
-          console.log('Auth test failed:', errorData);
-          return { success: false, error: errorData };
-        }
-      } catch (error) {
-        console.log('Auth test error:', error);
-        return { success: false, error: error.message };
+      } else {
+        return messageTime.toLocaleDateString('en-US');
       }
-    } else {
-      return { success: false, error: 'No token found' };
+    } catch (error) {
+      return 'unknown time';
+    }
+  }
+
+  // Validate chat content
+  validateMessage(content) {
+    if (!content || typeof content !== 'string') {
+      return { valid: false, error: 'Message content is required' };
+    }
+
+    if (content.trim().length === 0) {
+      return { valid: false, error: 'Message cannot be empty' };
+    }
+
+    if (content.length > 2000) {
+      return { valid: false, error: 'Message too long (max 2000 characters)' };
+    }
+
+    return { valid: true };
+  }
+
+  // Get chat status display
+  getChatStatusDisplay(status) {
+    const statusMap = {
+      'active': 'Active',
+      'archived': 'Archived',
+      'blocked': 'Blocked'
+    };
+    return statusMap[status] || 'Unknown';
+  }
+
+  // Get message status display
+  getMessageStatusDisplay(status) {
+    const statusMap = {
+      'sent': 'Sent',
+      'delivered': 'Delivered',
+      'read': 'Read'
+    };
+    return statusMap[status] || 'Unknown';
+  }
+
+  // Clean up old data (for maintenance)
+  async cleanupOldMessages(daysOld = 90) {
+    try {
+      const response = await fetch(
+        `${this.API_BASE}/chat/cleanup?daysOld=${daysOld}`,
+        {
+          method: 'POST',
+          headers: this.getHeaders(),
+          credentials: 'include'
+        }
+      );
+
+      return this.handleResponse(response);
+    } catch (error) {
+      console.error('Cleanup failed:', error);
+      return { success: false, error: error.message };
     }
   }
 }
 
-export default new ChatService();
+// Create and export instance
+const chatService = new ChatService();
+export default chatService;

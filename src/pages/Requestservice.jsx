@@ -108,14 +108,14 @@ const api = {
       headers['Authorization'] = `Bearer ${getAuthToken()}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}/service-requests?${queryParams}`, { headers });
+    const response = await fetch(`${API_BASE_URL}/request-service?${queryParams}`, { headers });
     if (!response.ok) throw new Error('Failed to fetch service requests');
     return response.json();
   },
 
   // Get service categories (PUBLIC)
   getServiceCategories: async () => {
-    const response = await fetch(`${API_BASE_URL}/service-requests/categories`);
+    const response = await fetch(`${API_BASE_URL}/request-service/categories`);
     if (!response.ok) throw new Error('Failed to fetch categories');
     return response.json();
   },
@@ -124,7 +124,7 @@ const api = {
   createServiceRequest: async (requestData) => {
     if (!isAuthenticated()) throw new Error('Please login to post a service request');
 
-    const response = await fetch(`${API_BASE_URL}/service-requests`, {
+    const response = await fetch(`${API_BASE_URL}/request-service`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${getAuthToken()}`,
@@ -144,7 +144,7 @@ const api = {
   getUserOffers: async (page = 1, limit = 10) => {
     if (!isAuthenticated()) throw new Error('Please login to view your offers');
 
-    const response = await fetch(`${API_BASE_URL}/service-requests/offers?page=${page}&limit=${limit}`, {
+    const response = await fetch(`${API_BASE_URL}/request-service/offers?page=${page}&limit=${limit}`, {
       headers: {
         'Authorization': `Bearer ${getAuthToken()}`,
         'Content-Type': 'application/json'

@@ -63,22 +63,22 @@ const serviceAPI = {
       } else {
         url = 'http://localhost:4000/api/v1/services';
       }
-      
+
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       return response.json();
     } catch (error) {
       console.warn('Services API error:', error);
-      
+
       // If store-specific endpoint fails, try general endpoint with filter
       if (params.storeId) {
         try {
@@ -88,7 +88,7 @@ const serviceAPI = {
               'Accept': 'application/json'
             }
           });
-          
+
           if (response.ok) {
             return response.json();
           }
@@ -96,7 +96,7 @@ const serviceAPI = {
           console.warn('Fallback services API also failed:', fallbackError);
         }
       }
-      
+
       return { services: [] };
     }
   }
@@ -113,12 +113,12 @@ const branchAPI = {
           'Accept': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         return data;
       }
-      
+
       // If public endpoint doesn't exist, try the protected one without auth
       const protectedResponse = await fetch(`http://localhost:4000/api/v1/branches/store/${storeId}`, {
         headers: {
@@ -126,11 +126,11 @@ const branchAPI = {
           'Accept': 'application/json'
         }
       });
-      
+
       if (protectedResponse.ok) {
         return protectedResponse.json();
       }
-      
+
       throw new Error('No branch endpoints available');
     } catch (error) {
       console.warn('Branch API error:', error);
@@ -164,20 +164,94 @@ const StoreViewPage = () => {
   const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
 
-  // Get current user
+  const getAuthenticationStatus = () => {
+    try {
+      // Check multiple token sources (matching your chatService approach)
+      const tokenSources = {
+        localStorage_access_token: localStorage.getItem('access_token'),
+        localStorage_authToken: localStorage.getItem('authToken'),
+        localStorage_token: localStorage.getItem('token'),
+        cookie_authToken: getCookieValue('authToken'),
+        cookie_access_token: getCookieValue('access_token'),
+        cookie_token: getCookieValue('token')
+      };
+
+      const token = tokenSources.localStorage_access_token ||
+        tokenSources.localStorage_authToken ||
+        tokenSources.localStorage_token ||
+        tokenSources.cookie_authToken ||
+        tokenSources.cookie_access_token ||
+        tokenSources.cookie_token;
+
+      console.log('🔍 Token sources check:', Object.keys(tokenSources).filter(key => tokenSources[key]));
+      console.log('🔍 Selected token:', token ? `Found (${token.substring(0, 20)}...)` : 'Not found');
+
+      // Check user info in localStorage
+      let userInfo = null;
+      const possibleKeys = ['userInfo', 'user', 'userData', 'currentUser'];
+
+      for (const key of possibleKeys) {
+        try {
+          const stored = localStorage.getItem(key);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && (parsed.id || parsed.userId)) {
+              userInfo = parsed;
+              console.log(`✅ User info found in localStorage.${key}`);
+              break;
+            }
+          }
+        } catch (e) {
+          console.log(`⚠️ Failed to parse ${key}:`, e.message);
+        }
+      }
+
+      return {
+        isAuthenticated: !!(token && userInfo),
+        token,
+        userInfo,
+        tokenSources
+      };
+    } catch (error) {
+      console.error('Authentication check error:', error);
+      return {
+        isAuthenticated: false,
+        token: null,
+        userInfo: null,
+        error: error.message
+      };
+    }
+  };
+
+  // Enhanced getCurrentUser function
   const getCurrentUser = () => {
-    const token = StoreService.getAuthToken();
-    if (!token) return { isLoggedIn: false };
+    const authStatus = getAuthenticationStatus();
+
+    if (!authStatus.isAuthenticated) {
+      return {
+        isLoggedIn: false,
+        error: 'Not authenticated',
+        debug: authStatus
+      };
+    }
 
     try {
-      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const userInfo = authStatus.userInfo;
       return {
         isLoggedIn: true,
-        name: `${userInfo.first_name || 'User'} ${userInfo.last_name?.charAt(0) || 'U'}.`,
-        id: userInfo.id
+        id: userInfo.id || userInfo.userId,
+        name: `${userInfo.firstName || userInfo.first_name || 'User'} ${(userInfo.lastName || userInfo.last_name || 'U').charAt(0)}.`,
+        email: userInfo.email,
+        userType: userInfo.userType || userInfo.role || 'customer',
+        rawUserInfo: userInfo
       };
-    } catch {
-      return { isLoggedIn: false };
+    } catch (error) {
+      console.error('Error getting current user:', error);
+      return {
+        isLoggedIn: false,
+        error: 'Failed to parse user info',
+        debug: authStatus
+      };
     }
   };
 
@@ -241,10 +315,10 @@ const StoreViewPage = () => {
     try {
       setBranchesLoading(true);
       console.log('🏢 Fetching branches for store:', id);
-      
+
       const data = await branchAPI.getBranchesByStore(id);
       console.log('✅ Branches response:', data);
-      
+
       if (data.success && data.branches && data.branches.length > 0) {
         setBranches(data.branches);
       } else if (data.branches && data.branches.length > 0) {
@@ -302,86 +376,216 @@ const StoreViewPage = () => {
     }
   };
 
-  // Chat functionality
   const handleChatClick = async () => {
     try {
       console.log('=== CHAT BUTTON CLICKED ===');
-      
-      const token = localStorage.getItem('access_token') || 
-                   localStorage.getItem('authToken') ||
-                   getCookieValue('authToken');
-      
-      if (!token) {
-        navigate('/accounts/sign-in', { 
+  
+      // Use enhanced authentication check
+      const authStatus = getAuthenticationStatus();
+      const currentUser = getCurrentUser();
+  
+      console.log('🔐 Auth Status:', authStatus);
+      console.log('👤 Current User:', currentUser);
+  
+      if (!authStatus.isAuthenticated || !currentUser.isLoggedIn) {
+        console.log('❌ Authentication failed, redirecting to login');
+        setError(`Please log in to chat with ${storeData.name}`);
+        navigate('/accounts/sign-in', {
           state: { from: { pathname: location.pathname } }
         });
         return;
       }
-
+  
       setStartingChat(true);
       setError(null);
-
-      const conversationsResponse = await chatService.getConversations('customer');
-      
-      if (conversationsResponse.success) {
-        const existingConversation = conversationsResponse.data.find(
-          conv => conv.store && conv.store.id === parseInt(id)
-        );
-
-        if (existingConversation) {
-          navigate('/chat', { 
-            state: { 
-              selectedConversation: existingConversation,
-              storeData: storeData
-            }
-          });
-        } else {
-          const newConversationResponse = await chatService.startConversation(
-            parseInt(id),
-            `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`
+  
+      try {
+        console.log('🚀 Starting chat process...');
+        console.log('Store ID:', id, 'Store Name:', storeData.name);
+        console.log('User:', currentUser.name, 'ID:', currentUser.id, 'Type:', currentUser.userType);
+  
+        // First, check if chatService has valid auth
+        const chatToken = chatService.getAuthToken();
+        console.log('💬 Chat service token:', chatToken ? `Found (${chatToken.substring(0, 20)}...)` : 'Not found');
+  
+        if (!chatToken) {
+          console.log('⚠️ Chat service has no token, this might cause issues');
+        }
+  
+        // Get existing conversations
+        console.log('📋 Fetching existing conversations...');
+        const conversationsResponse = await chatService.getConversations('customer');
+        console.log('📋 Conversations response:', conversationsResponse);
+  
+        if (conversationsResponse.success) {
+          // Look for existing conversation with this store
+          const existingConversation = conversationsResponse.data.find(
+            conv => conv.store && (conv.store.id === id || conv.store.id === parseInt(id))
           );
-
-          if (newConversationResponse.success) {
-            navigate('/chat', { 
-              state: { 
-                newConversationId: newConversationResponse.data.conversationId,
-                storeData: storeData
+  
+          console.log('🔍 Existing conversation found:', !!existingConversation);
+  
+          if (existingConversation) {
+            console.log('✅ Using existing conversation:', existingConversation.id);
+  
+            // Navigate to CUSTOMER chat page with existing conversation
+            navigate('/chat', {
+              state: {
+                selectedConversation: existingConversation,
+                storeData: storeData,
+                user: currentUser,
+                userType: 'customer' // Explicitly set as customer
               }
             });
           } else {
-            throw new Error('Failed to start conversation: ' + newConversationResponse.message);
+            console.log('🆕 Creating new conversation...');
+  
+            // Start new conversation with a friendly initial message
+            const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
+  
+            const newConversationResponse = await chatService.startConversation(
+              parseInt(id),
+              initialMessage
+            );
+  
+            console.log('🆕 New conversation response:', newConversationResponse);
+  
+            if (newConversationResponse.success) {
+              console.log('✅ New conversation created:', newConversationResponse.data.conversationId);
+  
+              // Create a conversation object for navigation
+              const newConversation = {
+                id: newConversationResponse.data.conversationId,
+                store: {
+                  id: parseInt(id),
+                  name: storeData.name,
+                  avatar: storeData.logo || storeData.logo_url,
+                  category: storeData.category,
+                  online: true
+                },
+                lastMessage: initialMessage,
+                lastMessageTime: 'now',
+                unreadCount: 0
+              };
+  
+              // Navigate to CUSTOMER chat page with new conversation
+              navigate('/chat', {
+                state: {
+                  selectedConversation: newConversation,
+                  newConversationId: newConversationResponse.data.conversationId,
+                  storeData: storeData,
+                  user: currentUser,
+                  userType: 'customer' // Explicitly set as customer
+                }
+              });
+  
+              // Show success message
+              console.log('🎉 Chat started successfully! Customer will see messages in customer interface.');
+            } else {
+              throw new Error(newConversationResponse.message || 'Failed to start conversation');
+            }
           }
+        } else {
+          throw new Error(conversationsResponse.message || 'Failed to load conversations');
         }
-      } else {
-        throw new Error('Failed to load conversations: ' + conversationsResponse.message);
+  
+      } catch (apiError) {
+        console.error('❌ Chat API Error:', apiError);
+  
+        // Handle specific error cases
+        if (apiError.message.includes('Authentication') ||
+          apiError.message.includes('401') ||
+          apiError.message.includes('403') ||
+          apiError.message.includes('token')) {
+          
+          setError('Your session has expired. Please log in again to chat.');
+  
+          // Clear tokens and redirect
+          ['access_token', 'authToken', 'token', 'userInfo', 'user', 'userData'].forEach(key => {
+            localStorage.removeItem(key);
+          });
+  
+          navigate('/accounts/sign-in', {
+            state: {
+              from: { pathname: location.pathname },
+              message: 'Please log in to chat with stores'
+            }
+          });
+        } else {
+          setError(`Unable to start chat: ${apiError.message}`);
+        }
       }
-
+  
     } catch (error) {
-      console.error('❌ Chat error:', error);
-      
-      if (error.message.includes('Authentication required')) {
-        setError('Please log in to start chatting.');
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('authToken');
-        navigate('/accounts/login', { 
-          state: { from: { pathname: location.pathname } }
-        });
-      } else {
-        setError(`Failed to start chat: ${error.message}`);
-      }
+      console.error('❌ General Chat error:', error);
+      setError(`Failed to start chat: ${error.message}`);
     } finally {
       setStartingChat(false);
     }
   };
-
+  // Enhanced getCookieValue function with better error handling
   const getCookieValue = (name) => {
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      const [key, value] = cookie.trim().split('=');
-      if (key === name) return decodeURIComponent(value);
+    try {
+      if (typeof document === 'undefined') return '';
+
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [key, value] = cookie.trim().split('=');
+        if (key === name) return decodeURIComponent(value);
+      }
+      return '';
+    } catch (error) {
+      console.error('Error reading cookie:', error);
+      return '';
     }
-    return '';
   };
+
+  // Enhanced Chat Button component with better disabled states
+  const ChatButton = ({ className = "", size = "default" }) => {
+    const buttonSizes = {
+      small: "p-2",
+      default: "px-6 py-2",
+      large: "px-8 py-3"
+    };
+
+    const iconSizes = {
+      small: "w-4 h-4",
+      default: "w-4 h-4",
+      large: "w-5 h-5"
+    };
+
+    const currentUser = getCurrentUser();
+    const isDisabled = startingChat || !currentUser.isLoggedIn;
+
+    return (
+      <button
+        onClick={handleChatClick}
+        disabled={isDisabled}
+        className={`flex items-center gap-2 rounded-lg transition-colors ${isDisabled
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          } ${buttonSizes[size]} ${className}`}
+        title={!currentUser.isLoggedIn ? 'Please log in to chat' : ''}
+      >
+        {startingChat ? (
+          <Loader2 className={`${iconSizes[size]} animate-spin`} />
+        ) : (
+          <MessageCircle className={iconSizes[size]} />
+        )}
+        {size !== "small" && (
+          <span>
+            {startingChat
+              ? 'Starting Chat...'
+              : !currentUser.isLoggedIn
+                ? 'Login to Chat'
+                : 'Chat'
+            }
+          </span>
+        )}
+      </button>
+    );
+  };
+
 
   // Toggle follow status
   const toggleFollow = async () => {
@@ -392,7 +596,7 @@ const StoreViewPage = () => {
 
     try {
       setToggleFollowLoading(true);
-      
+
       const response = await fetch(`http://localhost:4000/api/v1/stores/${id}/toggle-follow`, {
         method: 'POST',
         headers: StoreService.getHeaders()
@@ -517,11 +721,10 @@ const StoreViewPage = () => {
     return [...Array(5)].map((_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${interactive ? 'cursor-pointer' : ''} transition-colors ${
-          i < (interactive ? (hoverRating || rating) : Math.floor(rating))
+        className={`w-4 h-4 ${interactive ? 'cursor-pointer' : ''} transition-colors ${i < (interactive ? (hoverRating || rating) : Math.floor(rating))
             ? 'fill-yellow-400 text-yellow-400'
             : interactive ? 'text-gray-300 hover:text-yellow-400' : 'text-gray-300'
-        }`}
+          }`}
         onClick={interactive ? () => onRate(i + 1) : undefined}
         onMouseEnter={interactive ? () => onHover(i + 1) : undefined}
         onMouseLeave={interactive ? () => onHover(0) : undefined}
@@ -534,26 +737,25 @@ const StoreViewPage = () => {
     // Calculate prices if available
     const originalPrice = offer.service?.price || offer.original_price || 0;
     const discountValue = offer.discount_value || offer.discount || 0;
-    const discountedPrice = originalPrice > 0 && discountValue > 0 
+    const discountedPrice = originalPrice > 0 && discountValue > 0
       ? (originalPrice * (1 - discountValue / 100)).toFixed(2)
       : 0;
 
     return (
       <div className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group ${isListView ? 'flex flex-col sm:flex-row' : ''}`}>
         <div className={`relative ${isListView ? 'sm:w-1/3' : ''}`}>
-          <img 
-            src={offer.image_url || offer.service?.image_url || '/api/placeholder/300/200'} 
+          <img
+            src={offer.image_url || offer.service?.image_url || '/api/placeholder/300/200'}
             alt={offer.title || offer.description}
-            className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${
-              isListView ? 'h-48 sm:h-full' : 'h-48'
-            }`}
+            className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${isListView ? 'h-48 sm:h-full' : 'h-48'
+              }`}
             onError={(e) => {
               e.target.src = '/api/placeholder/300/200';
             }}
           />
-          
+
           {/* Favorite Button */}
-          <button 
+          <button
             className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
             onClick={(e) => {
               e.stopPropagation();
@@ -584,8 +786,8 @@ const StoreViewPage = () => {
           {/* Store Info */}
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
-              <img 
-                src={storeData?.logo || storeData?.logo_url || '/api/placeholder/20/20'} 
+              <img
+                src={storeData?.logo || storeData?.logo_url || '/api/placeholder/20/20'}
                 alt="Store logo"
                 className="w-5 h-5 rounded-full object-cover"
                 onError={(e) => {
@@ -593,23 +795,23 @@ const StoreViewPage = () => {
                 }}
               />
             </div>
-            
+
             {/* Store Pill */}
             <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
               <span>{storeData?.name || 'Store'}</span>
             </div>
           </div>
-          
+
           {/* Offer Title */}
           <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">
             {offer.title || offer.service?.name || offer.description || 'Special Offer'}
           </h3>
-          
+
           {/* Offer Description */}
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">
             {offer.description || offer.service?.description || 'Get exclusive offers with this amazing deal'}
           </p>
-          
+
           {/* Price Display */}
           {originalPrice > 0 && discountedPrice > 0 && (
             <div className="flex items-center space-x-2 mb-3">
@@ -621,14 +823,14 @@ const StoreViewPage = () => {
               </span>
             </div>
           )}
-          
+
           {/* Action Row */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
               {offer.discount_value || offer.discount || '20'}% OFF
             </span>
-            
-            <button 
+
+            <button
               className="px-6 py-2 rounded text-sm font-medium transition-colors bg-red-500 hover:bg-red-600 text-white"
               onClick={(e) => {
                 e.stopPropagation();
@@ -666,7 +868,7 @@ const StoreViewPage = () => {
             }}
           />
         ) : null}
-        
+
         {/* Fallback gradient background */}
         <div className={`absolute inset-0 flex items-center justify-center ${service.image_url ? 'hidden' : 'flex'}`}>
           <div className="text-center text-white">
@@ -677,11 +879,10 @@ const StoreViewPage = () => {
 
         {/* Service Type Badge */}
         <div className="absolute top-3 right-3">
-          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-            service.type === 'fixed' 
-              ? 'bg-green-100 text-green-800' 
+          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${service.type === 'fixed'
+              ? 'bg-green-100 text-green-800'
               : 'bg-blue-100 text-blue-800'
-          }`}>
+            }`}>
             {service.type === 'fixed' ? 'Fixed Price' : 'Dynamic Price'}
           </span>
         </div>
@@ -692,7 +893,7 @@ const StoreViewPage = () => {
         <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1">
           {service.name}
         </h3>
-        
+
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">
           {service.description || 'No description available'}
         </p>
@@ -718,7 +919,7 @@ const StoreViewPage = () => {
           </div>
         )}
 
-        <button 
+        <button
           className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
           onClick={() => navigate(`/service/${service.id}`)}
         >
@@ -749,14 +950,14 @@ const StoreViewPage = () => {
             <MapPin className="w-4 h-4 mt-0.5 text-gray-400 flex-shrink-0" />
             <span className="text-gray-700 text-sm">{branch.address}</span>
           </div>
-          
+
           {branch.phone && (
             <div className="flex items-center gap-3">
               <Phone className="w-4 h-4 text-gray-400" />
               <span className="text-gray-700 text-sm">{branch.phone}</span>
             </div>
           )}
-          
+
           {branch.openingTime && branch.closingTime && (
             <div className="flex items-center gap-3">
               <Clock className="w-4 h-4 text-gray-400" />
@@ -812,7 +1013,7 @@ const StoreViewPage = () => {
       // For demo purposes, we'll show a placeholder
       // In production, add your Google Maps API key
       setMapError('Google Maps API key required');
-      
+
       // Uncomment below and add your API key to enable Google Maps
       /*
       const script = document.createElement('script');
@@ -869,7 +1070,7 @@ const StoreViewPage = () => {
             <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <p className="text-lg font-medium mb-2">Interactive Map</p>
             <p className="text-sm">
-              {branches.length > 0 
+              {branches.length > 0
                 ? `Showing ${branches.length} ${branches.length === 1 ? 'location' : 'locations'}`
                 : 'Locations will appear here'
               }
@@ -982,7 +1183,7 @@ const StoreViewPage = () => {
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {branch.phone && (
-                      <button 
+                      <button
                         className="text-blue-500 hover:text-blue-600 transition-colors p-1"
                         onClick={() => window.open(`tel:${branch.phone}`)}
                         title="Call this location"
@@ -990,7 +1191,7 @@ const StoreViewPage = () => {
                         <Phone className="w-4 h-4" />
                       </button>
                     )}
-                    <button 
+                    <button
                       className="text-green-500 hover:text-green-600 transition-colors p-1"
                       onClick={() => {
                         // Try to open in maps app
@@ -1074,7 +1275,7 @@ const StoreViewPage = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Our Services</h2>
             </div>
-            
+
             {servicesLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
@@ -1105,7 +1306,7 @@ const StoreViewPage = () => {
                 {branches.length} {branches.length === 1 ? 'outlet' : 'outlets'}
               </span>
             </div>
-            
+
             {branchesLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
@@ -1122,13 +1323,13 @@ const StoreViewPage = () => {
                 <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No outlets available</h3>
                 <p className="text-gray-600">
-                  {storeData?.location 
+                  {storeData?.location
                     ? `This store is located at ${storeData.location}`
                     : 'Outlet information will be displayed here when available.'
                   }
                 </p>
                 {storeData?.location && (
-                  <button 
+                  <button
                     className="mt-4 bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors"
                     onClick={() => {
                       const query = encodeURIComponent(storeData.location);
@@ -1303,8 +1504,8 @@ const StoreViewPage = () => {
                 onClick={toggleFollow}
                 disabled={toggleFollowLoading}
                 className={`flex items-center gap-2 px-6 py-2 rounded-lg border transition-colors disabled:opacity-50 ${isFollowing
-                    ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
-                    : 'bg-white text-red-500 border-red-500 hover:bg-red-50'
+                  ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
+                  : 'bg-white text-red-500 border-red-500 hover:bg-red-50'
                   }`}
               >
                 {toggleFollowLoading ? (
@@ -1314,7 +1515,7 @@ const StoreViewPage = () => {
                 )}
                 {isFollowing ? 'Following' : 'Follow'}
               </button>
-              <button 
+              <button
                 onClick={handleChatClick}
                 disabled={startingChat}
                 className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
@@ -1399,7 +1600,7 @@ const StoreViewPage = () => {
               <span className="text-gray-500">({storeData.totalReviews || 0} reviews)</span>
             </div>
           </div>
-          
+
           {/* Add Review Form */}
           <div className="mb-8 p-6 bg-gray-50 rounded-xl">
             <div className="flex items-center justify-between mb-4">
@@ -1512,12 +1713,12 @@ const StoreViewPage = () => {
       </div>
 
       {/* Fixed Chat Button */}
-      <button 
-        onClick={handleChatClick}
-        className="fixed bottom-6 right-6 bg-red-500 text-white p-4 rounded-full shadow-lg hover:bg-red-600 transition-colors z-50"
-      >
-        <MessageCircle className="w-6 h-6" />
-      </button>
+      <div className="fixed bottom-6 right-6 z-50">
+        <ChatButton
+          size="large"
+          className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:bg-red-600"
+        />
+      </div>
 
       <Footer />
     </div>
