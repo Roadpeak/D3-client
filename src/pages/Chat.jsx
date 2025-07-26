@@ -1,4 +1,4 @@
-// pages/ChatPage.jsx
+// pages/ChatPage.jsx - Your original layout structure with fixes
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Send, Search, Phone, Video, MoreVertical, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle } from 'lucide-react';
@@ -725,16 +725,18 @@ const ChatPage = () => {
                       <div
                         key={msg.id}
                         className={`flex ${
+                          // FIXED: Proper message alignment logic
                           (userType === 'merchant' && msg.sender === 'merchant') || 
-                          (userType === 'customer' && msg.sender === 'user')
+                          (userType === 'customer' && (msg.sender === 'user' || msg.sender === 'customer'))
                             ? 'justify-end' 
                             : 'justify-start'
                         }`}
                       >
                         <div
                           className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-lg ${
+                            // FIXED: Proper message styling logic
                             (userType === 'merchant' && msg.sender === 'merchant') || 
-                            (userType === 'customer' && msg.sender === 'user')
+                            (userType === 'customer' && (msg.sender === 'user' || msg.sender === 'customer'))
                               ? 'bg-blue-500 text-white rounded-br-sm'
                               : 'bg-white text-gray-900 rounded-bl-sm border'
                             }`}
@@ -742,14 +744,14 @@ const ChatPage = () => {
                           <p className="text-sm">{msg.text}</p>
                           <div className={`flex items-center justify-end mt-1 space-x-1 ${
                             (userType === 'merchant' && msg.sender === 'merchant') || 
-                            (userType === 'customer' && msg.sender === 'user')
+                            (userType === 'customer' && (msg.sender === 'user' || msg.sender === 'customer'))
                               ? 'text-blue-100' 
                               : 'text-gray-500'
                             }`}>
                             <Clock className="w-3 h-3" />
                             <span className="text-xs">{msg.timestamp}</span>
                             {((userType === 'merchant' && msg.sender === 'merchant') || 
-                              (userType === 'customer' && msg.sender === 'user')) && (
+                              (userType === 'customer' && (msg.sender === 'user' || msg.sender === 'customer'))) && (
                               <div className="ml-1">
                                 {msg.status === 'read' ? (
                                   <CheckCheck className="w-3 h-3 text-blue-200" />
