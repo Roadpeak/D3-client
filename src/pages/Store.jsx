@@ -166,7 +166,6 @@ const StoreViewPage = () => {
 
   const getAuthenticationStatus = () => {
     try {
-      // Check multiple token sources (matching your chatService approach)
       const tokenSources = {
         localStorage_access_token: localStorage.getItem('access_token'),
         localStorage_authToken: localStorage.getItem('authToken'),
@@ -184,7 +183,7 @@ const StoreViewPage = () => {
         tokenSources.cookie_token;
 
       console.log('🔍 Token sources check:', Object.keys(tokenSources).filter(key => tokenSources[key]));
-      console.log('🔍 Selected token:', token ? `Found (${token.substring(0, 20)}...)` : 'Not found');
+
 
       // Check user info in localStorage
       let userInfo = null;
@@ -222,7 +221,6 @@ const StoreViewPage = () => {
       };
     }
   };
-
   // Enhanced getCurrentUser function
   const getCurrentUser = () => {
     const authStatus = getAuthenticationStatus();
@@ -242,7 +240,8 @@ const StoreViewPage = () => {
         id: userInfo.id || userInfo.userId,
         name: `${userInfo.firstName || userInfo.first_name || 'User'} ${(userInfo.lastName || userInfo.last_name || 'U').charAt(0)}.`,
         email: userInfo.email,
-        userType: userInfo.userType || userInfo.role || 'customer',
+        userType: 'customer', // FIXED: Force customer type for store page chat
+        role: 'customer',
         rawUserInfo: userInfo
       };
     } catch (error) {
@@ -378,14 +377,13 @@ const StoreViewPage = () => {
 
   const handleChatClick = async () => {
     try {
-      console.log('=== CHAT BUTTON CLICKED ===');
+      console.log('=== FIXED CHAT BUTTON CLICKED ===');
   
-      // Use enhanced authentication check
       const authStatus = getAuthenticationStatus();
       const currentUser = getCurrentUser();
   
       console.log('🔐 Auth Status:', authStatus);
-      console.log('👤 Current User:', currentUser);
+      console.log('👤 Current User (FORCED CUSTOMER):', currentUser);
   
       if (!authStatus.isAuthenticated || !currentUser.isLoggedIn) {
         console.log('❌ Authentication failed, redirecting to login');
@@ -400,11 +398,10 @@ const StoreViewPage = () => {
       setError(null);
   
       try {
-        console.log('🚀 Starting chat process...');
+        console.log('🚀 Starting CUSTOMER chat process...');
         console.log('Store ID:', id, 'Store Name:', storeData.name);
         console.log('User:', currentUser.name, 'ID:', currentUser.id, 'Type:', currentUser.userType);
   
-        // First, check if chatService has valid auth
         const chatToken = chatService.getAuthToken();
         console.log('💬 Chat service token:', chatToken ? `Found (${chatToken.substring(0, 20)}...)` : 'Not found');
   
@@ -412,10 +409,10 @@ const StoreViewPage = () => {
           console.log('⚠️ Chat service has no token, this might cause issues');
         }
   
-        // Get existing conversations
-        console.log('📋 Fetching existing conversations...');
+        // FIXED: Always get customer conversations
+        console.log('📋 Fetching CUSTOMER conversations...');
         const conversationsResponse = await chatService.getConversations('customer');
-        console.log('📋 Conversations response:', conversationsResponse);
+        console.log('📋 Customer conversations response:', conversationsResponse);
   
         if (conversationsResponse.success) {
           // Look for existing conversation with this store
@@ -428,19 +425,22 @@ const StoreViewPage = () => {
           if (existingConversation) {
             console.log('✅ Using existing conversation:', existingConversation.id);
   
-            // Navigate to CUSTOMER chat page with existing conversation
+            // FIXED: Navigate to CUSTOMER chat page with proper user type
             navigate('/chat', {
               state: {
                 selectedConversation: existingConversation,
                 storeData: storeData,
-                user: currentUser,
+                user: {
+                  ...currentUser,
+                  userType: 'customer', // FORCE customer type
+                  role: 'customer'
+                },
                 userType: 'customer' // Explicitly set as customer
               }
             });
           } else {
-            console.log('🆕 Creating new conversation...');
+            console.log('🆕 Creating new conversation as CUSTOMER...');
   
-            // Start new conversation with a friendly initial message
             const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
   
             const newConversationResponse = await chatService.startConversation(
@@ -468,19 +468,22 @@ const StoreViewPage = () => {
                 unreadCount: 0
               };
   
-              // Navigate to CUSTOMER chat page with new conversation
+              // FIXED: Navigate to CUSTOMER chat page with proper user type
               navigate('/chat', {
                 state: {
                   selectedConversation: newConversation,
                   newConversationId: newConversationResponse.data.conversationId,
                   storeData: storeData,
-                  user: currentUser,
+                  user: {
+                    ...currentUser,
+                    userType: 'customer', // FORCE customer type
+                    role: 'customer'
+                  },
                   userType: 'customer' // Explicitly set as customer
                 }
               });
   
-              // Show success message
-              console.log('🎉 Chat started successfully! Customer will see messages in customer interface.');
+              console.log('🎉 Chat started successfully! Customer will see messages in CUSTOMER interface.');
             } else {
               throw new Error(newConversationResponse.message || 'Failed to start conversation');
             }
@@ -492,7 +495,6 @@ const StoreViewPage = () => {
       } catch (apiError) {
         console.error('❌ Chat API Error:', apiError);
   
-        // Handle specific error cases
         if (apiError.message.includes('Authentication') ||
           apiError.message.includes('401') ||
           apiError.message.includes('403') ||
@@ -500,7 +502,6 @@ const StoreViewPage = () => {
           
           setError('Your session has expired. Please log in again to chat.');
   
-          // Clear tokens and redirect
           ['access_token', 'authToken', 'token', 'userInfo', 'user', 'userData'].forEach(key => {
             localStorage.removeItem(key);
           });
@@ -523,7 +524,8 @@ const StoreViewPage = () => {
       setStartingChat(false);
     }
   };
-  // Enhanced getCookieValue function with better error handling
+
+  // Enhanced getCookieValue function
   const getCookieValue = (name) => {
     try {
       if (typeof document === 'undefined') return '';
@@ -539,6 +541,7 @@ const StoreViewPage = () => {
       return '';
     }
   };
+
 
   // Enhanced Chat Button component with better disabled states
   const ChatButton = ({ className = "", size = "default" }) => {
@@ -565,7 +568,7 @@ const StoreViewPage = () => {
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           } ${buttonSizes[size]} ${className}`}
-        title={!currentUser.isLoggedIn ? 'Please log in to chat' : ''}
+        title={!currentUser.isLoggedIn ? 'Please log in to chat' : `Chat with ${storeData?.name || 'store'} as customer`}
       >
         {startingChat ? (
           <Loader2 className={`${iconSizes[size]} animate-spin`} />
@@ -1714,12 +1717,11 @@ const StoreViewPage = () => {
 
       {/* Fixed Chat Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <ChatButton
-          size="large"
-          className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:bg-red-600"
-        />
-      </div>
-
+          <ChatButton
+            size="large"
+            className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:bg-red-600"
+          />
+        </div>
       <Footer />
     </div>
   );

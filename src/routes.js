@@ -8,7 +8,7 @@ import ViewOffer from './pages/ViewOffer'
 import Offers from './pages/Offers'
 import Stores from './pages/Stores'
 import Checkout from './pages/Checkout'
-import ViewStore from './pages/ViewStore'
+import Store from './pages/Store'
 import MyVouchers from './pages/MyVouchers'
 import Chat from './pages/Chat'
 import Profile from './pages/Profile'
@@ -85,8 +85,8 @@ const AppRoutes = () => {
         {/* Store Routes */}
         <Route path='/stores' element={<Stores />} />
         <Route path='/Stores' element={<Navigate to="/stores" replace />} />
-        <Route path='/store/:id' element={<ViewStore />} />
-        <Route path='/ViewStore/:id' element={<ViewStore />} />
+        <Route path='/store/:id' element={<Store />} />
+        <Route path='/Store/:id' element={<Store />} />
         
         {/* ==================== SERVICE ROUTES ==================== */}
         
@@ -141,6 +141,7 @@ const AppRoutes = () => {
         
         {/* Chat */}
         <Route path='/chat' element={<Chat />} />
+        <Route path='/chat/Store/:id' element={<Chat />} />
         
         {/* Checkout */}
         <Route path='/checkout' element={<Checkout />} />

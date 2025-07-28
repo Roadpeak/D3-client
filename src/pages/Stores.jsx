@@ -13,7 +13,7 @@ const Stores = () => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
-  
+
   // API state
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState(['All']);
@@ -34,7 +34,7 @@ const Stores = () => {
           ApiService.getCategories(),
           ApiService.getLocations()
         ]);
-        
+
         setCategories(categoriesData.categories || ['All']);
         setLocations(locationsData.locations || ['All Locations']);
       } catch (err) {
@@ -78,12 +78,12 @@ const Stores = () => {
   }, [selectedCategory, selectedLocation, sortBy, currentPage]);
 
   const handleStoreClick = (store) => {
-    navigate(`/ViewStore/${store.id}`)
+    navigate(`/Store/${store.id}`)
   };
 
   const handleFilterChange = (filterType, value) => {
     setCurrentPage(1); // Reset to first page when filter changes
-    
+
     switch (filterType) {
       case 'category':
         setSelectedCategory(value);
@@ -109,10 +109,9 @@ const Stores = () => {
   };
 
   const StoreCard = ({ store, isListView = false }) => (
-    <div 
-      className={`bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group ${
-        isListView ? 'p-4' : 'p-4 md:p-6'
-      }`}
+    <div
+      className={`bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group ${isListView ? 'p-4' : 'p-4 md:p-6'
+        }`}
       onClick={() => handleStoreClick(store)}
     >
       {isListView ? (
@@ -120,8 +119,8 @@ const Stores = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <img 
-                src={store.logo || store.logo_url || '/images/default-store.png'} 
+              <img
+                src={store.logo || store.logo_url || '/images/default-store.png'}
                 alt={`${store.name} logo`}
                 className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
                 onError={(e) => {
@@ -151,8 +150,8 @@ const Stores = () => {
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <div className="relative flex-shrink-0">
-                <img 
-                  src={store.logo || store.logo_url || '/images/default-store.png'} 
+                <img
+                  src={store.logo || store.logo_url || '/images/default-store.png'}
                   alt={`${store.name} logo`}
                   className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
                   onError={(e) => {
@@ -169,7 +168,7 @@ const Stores = () => {
               <div className="text-gray-500 text-xs md:text-sm font-medium">Cashback</div>
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between mt-auto">
             <div className="flex items-center space-x-1">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -200,12 +199,12 @@ const Stores = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">All stores</h1>
-          
+
           {/* Sort and Location Filters */}
           <div className="flex items-center space-x-4">
             {/* Mobile View Toggle */}
@@ -235,7 +234,7 @@ const Stores = () => {
                 <span className="text-gray-700 sm:hidden">Location</span>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
-              
+
               {showLocationDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                   {locations.map((location) => (
@@ -261,7 +260,7 @@ const Stores = () => {
                 <span className="text-gray-700 sm:hidden">Sort</span>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
-              
+
               {showSortDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
                   {sortOptions.map((option) => (
@@ -285,11 +284,10 @@ const Stores = () => {
             <button
               key={category}
               onClick={() => handleFilterChange('category', category)}
-              className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-300 ${
-                selectedCategory === category
+              className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-300 ${selectedCategory === category
                   ? 'bg-red-500 text-white shadow-lg'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:shadow-md'
-              }`}
+                }`}
             >
               {category}
             </button>
@@ -338,11 +336,11 @@ const Stores = () => {
                 >
                   Previous
                 </button>
-                
+
                 <span className="px-4 py-2 text-gray-700">
                   Page {pagination.currentPage} of {pagination.totalPages}
                 </span>
-                
+
                 <button
                   onClick={() => setCurrentPage(prev => prev + 1)}
                   disabled={!pagination.hasNextPage}
