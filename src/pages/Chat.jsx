@@ -1,7 +1,7 @@
-// pages/ChatPage.jsx - FIXED: Customer Interface Only
+// pages/ChatPage.jsx - FIXED: Customer↔Store Communication Interface
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Send, Search, Phone, Video, MoreVertical, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle } from 'lucide-react';
+import { Send, Search, Phone, Video, MoreVertical, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle, Store } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import chatService from '../services/chatService';
@@ -33,25 +33,23 @@ const ChatPage = () => {
     return '';
   };
 
-  // Initialize user from location state, localStorage, cookies, or API
+  // Initialize customer user
   useEffect(() => {
     const initializeUser = async () => {
       try {
-        console.log('🚀 Initializing CUSTOMER user for chat...');
+        console.log('🚀 Initializing CUSTOMER for store chat...');
         
-        // First try to get user from location state
         if (location.state?.user) {
-          console.log('✅ User found in location state:', location.state.user);
+          console.log('✅ Customer found in location state');
           const userData = {
             ...location.state.user,
-            userType: 'customer', // Force customer type for this interface
+            userType: 'customer',
             role: 'customer'
           };
           setUser(userData);
           return;
         }
 
-        // Check for tokens in multiple locations
         const tokenSources = {
           localStorage_access_token: localStorage.getItem('access_token'),
           localStorage_authToken: localStorage.getItem('authToken'),
@@ -61,8 +59,6 @@ const ChatPage = () => {
           cookie_token: getCookieValue('token')
         };
 
-        console.log('🔍 Token sources check:', tokenSources);
-
         const userToken = tokenSources.localStorage_access_token || 
                           tokenSources.localStorage_authToken || 
                           tokenSources.localStorage_token ||
@@ -70,10 +66,8 @@ const ChatPage = () => {
                           tokenSources.cookie_access_token ||
                           tokenSources.cookie_token;
         
-        console.log('🔍 Token check:', userToken ? `Found (${userToken.substring(0, 20)}...)` : 'Not found');
-        
         if (!userToken) {
-          console.log('❌ No token found anywhere, redirecting to login');
+          console.log('❌ No token found, redirecting to login');
           navigate('/accounts/sign-in', { 
             state: { from: { pathname: location.pathname } }
           });
@@ -91,7 +85,7 @@ const ChatPage = () => {
               const parsed = JSON.parse(stored);
               if (parsed && (parsed.id || parsed.userId)) {
                 userInfo = parsed;
-                console.log(`✅ User info found in localStorage.${key}:`, userInfo);
+                console.log(`✅ Customer info found in localStorage.${key}`);
                 break;
               }
             }
@@ -100,25 +94,22 @@ const ChatPage = () => {
           }
         }
 
-        // If we have valid user info in localStorage, use it
         if (userInfo && (userInfo.id || userInfo.userId)) {
           const userData = {
             id: userInfo.id || userInfo.userId,
-            name: `${userInfo.firstName || userInfo.first_name || 'User'} ${userInfo.lastName || userInfo.last_name || ''}`.trim(),
+            name: `${userInfo.firstName || userInfo.first_name || 'Customer'} ${userInfo.lastName || userInfo.last_name || ''}`.trim(),
             email: userInfo.email,
             avatar: userInfo.avatar,
-            userType: 'customer', // FIXED: Force customer type for this interface
+            userType: 'customer',
             role: 'customer'
           };
           
-          console.log('✅ Setting CUSTOMER user from localStorage:', userData);
+          console.log('✅ Customer user set from localStorage:', userData);
           setUser(userData);
           return;
         }
 
-        // If no valid user info in localStorage, try to fetch from API
-        console.log('🌐 Fetching user info from API with token...');
-        
+        // Fetch from API as fallback
         try {
           const response = await fetch('http://localhost:4000/api/v1/users/profile', {
             headers: {
@@ -128,25 +119,21 @@ const ChatPage = () => {
             credentials: 'include'
           });
 
-          console.log('📡 API Response status:', response.status, response.statusText);
-
           if (response.ok) {
             const apiResult = await response.json();
-            console.log('✅ API response:', apiResult);
-            
             const apiUserData = apiResult.user || apiResult.data || apiResult;
             
             if (apiUserData && (apiUserData.id || apiUserData.userId)) {
               const userData = {
                 id: apiUserData.id || apiUserData.userId,
-                name: `${apiUserData.firstName || apiUserData.first_name || 'User'} ${apiUserData.lastName || apiUserData.last_name || ''}`.trim(),
+                name: `${apiUserData.firstName || apiUserData.first_name || 'Customer'} ${apiUserData.lastName || apiUserData.last_name || ''}`.trim(),
                 email: apiUserData.email,
                 avatar: apiUserData.avatar,
-                userType: 'customer', // FIXED: Force customer type
+                userType: 'customer',
                 role: 'customer'
               };
               
-              console.log('✅ Setting CUSTOMER user from API:', userData);
+              console.log('✅ Customer user set from API:', userData);
               localStorage.setItem('userInfo', JSON.stringify(apiUserData));
               setUser(userData);
               return;
@@ -156,13 +143,13 @@ const ChatPage = () => {
           console.error('🌐 API fetch error:', apiError);
         }
 
-        console.log('❌ Could not get valid user data, redirecting to login');
+        console.log('❌ Could not get valid customer data, redirecting to login');
         navigate('/accounts/sign-in', { 
           state: { from: { pathname: location.pathname } }
         });
 
       } catch (error) {
-        console.error('💥 Error initializing user:', error);
+        console.error('💥 Error initializing customer:', error);
         navigate('/accounts/sign-in', {
           state: { from: { pathname: location.pathname } }
         });
@@ -172,7 +159,7 @@ const ChatPage = () => {
     initializeUser();
   }, [location, navigate]);
 
-  // Initialize socket
+  // Initialize socket for customer
   const {
     socket,
     isConnected,
@@ -185,26 +172,24 @@ const ChatPage = () => {
     getTypingUsers
   } = useSocket(user);
 
-  // FIXED: Socket event handlers - Only handle messages FROM merchants TO customers
+  // FIXED: Socket event handlers for customer↔store communication
   useEffect(() => {
     if (!socket || !user) return;
 
-    console.log('🔌 Setting up CUSTOMER socket handlers for user:', user.id);
+    console.log('🔌 Setting up CUSTOMER socket handlers for store communication');
 
-    // FIXED: Only handle merchant messages (messages TO this customer)
-    const handleMerchantMessage = (messageData) => {
-      console.log('📨 Customer received merchant message:', messageData);
+    // FIXED: Handle store messages (messages FROM stores TO this customer)
+    const handleStoreToCustomerMessage = (messageData) => {
+      console.log('📨 Customer received store message:', messageData);
       
-      // Only add message if it's FROM a merchant AND for the current conversation
-      if (messageData.sender === 'merchant' && 
+      // Only add message if it's FROM a store AND for the current conversation
+      if ((messageData.sender === 'store' || messageData.sender_type === 'store') && 
           selectedChat && 
           messageData.conversationId === selectedChat.id) {
         
-        console.log('✅ Adding merchant message to customer chat');
+        console.log('✅ Adding store message to customer chat');
         setMessages(prev => [...prev, messageData]);
         scrollToBottom();
-      } else {
-        console.log('⚠️ Merchant message not for current chat or not from merchant');
       }
       
       // Update chat list with new message info
@@ -212,7 +197,7 @@ const ChatPage = () => {
         if (chat.id === messageData.conversationId) {
           return {
             ...chat,
-            lastMessage: messageData.text,
+            lastMessage: messageData.text || messageData.content,
             lastMessageTime: 'now',
             unreadCount: (chat.unreadCount || 0) + 1
           };
@@ -221,14 +206,16 @@ const ChatPage = () => {
       }));
     };
 
-    // FIXED: Handle general new messages but filter properly
+    // FIXED: Handle general new messages but filter for store messages
     const handleNewMessage = (messageData) => {
       console.log('📨 Customer received general message:', messageData);
       
-      // CRITICAL FIX: Only handle messages FROM merchants (not from this customer)
-      if (messageData.sender === 'merchant' || messageData.sender_type === 'merchant') {
+      // Only handle messages FROM stores TO this customer
+      if ((messageData.sender === 'store' || messageData.sender_type === 'store') &&
+          (messageData.recipient_type === 'customer' || messageData.type === 'store_to_customer')) {
+        
         if (selectedChat && messageData.conversationId === selectedChat.id) {
-          console.log('✅ Adding general merchant message to customer chat');
+          console.log('✅ Adding store message to customer chat');
           setMessages(prev => [...prev, messageData]);
           scrollToBottom();
         }
@@ -246,7 +233,7 @@ const ChatPage = () => {
           return chat;
         }));
       } else {
-        console.log('⚠️ Ignoring message from customer (this should appear in merchant interface)');
+        console.log('⚠️ Ignoring message not from store to customer');
       }
     };
 
@@ -258,16 +245,16 @@ const ChatPage = () => {
     };
 
     const handleMessagesRead = ({ readBy }) => {
-      console.log('📖 Messages read by merchant:', readBy);
+      console.log('📖 Messages read by store:', readBy);
       // Update status for messages sent by this customer
       setMessages(prev => prev.map(msg => 
         msg.sender === 'user' || msg.sender === 'customer' ? { ...msg, status: 'read' } : msg
       ));
     };
 
-    // Subscribe to events
+    // Subscribe to customer↔store events
     const unsubscribers = [
-      on('new_merchant_message', handleMerchantMessage),
+      on('new_store_to_customer_message', handleStoreToCustomerMessage),
       on('new_message', handleNewMessage),
       on('message_status_update', handleMessageStatusUpdate),
       on('messages_read', handleMessagesRead)
@@ -279,24 +266,22 @@ const ChatPage = () => {
     };
   }, [socket, on, off, selectedChat, user]);
 
-  // Load chats on mount
+  // Load customer↔store chats
   useEffect(() => {
     if (user) {
       loadChats();
       
-      // Handle initial chat selection from location state
       if (location.state?.selectedConversation) {
         setSelectedChat(location.state.selectedConversation);
         loadMessages(location.state.selectedConversation.id);
       } else if (location.state?.newConversationId) {
-        // Handle new conversation
         const newChatId = location.state.newConversationId;
         loadMessages(newChatId);
       }
     }
   }, [user, location.state]);
 
-  // FIXED: Load customer chats only
+  // Load customer's chats with stores
   const loadChats = async () => {
     try {
       setLoading(true);
@@ -311,16 +296,15 @@ const ChatPage = () => {
         return;
       }
       
-      // FIXED: Always get customer conversations
-      console.log('📋 Loading CUSTOMER conversations...');
+      console.log('📋 Loading CUSTOMER↔STORE conversations...');
       const response = await chatService.getConversations('customer');
         
-      console.log('📡 Customer chat API response:', response);
+      console.log('📡 Customer↔store chat API response:', response);
         
       if (response.success) {
         setChats(response.data);
         
-        // Auto-select the first chat if none selected and we have a new conversation ID
+        // Auto-select chat if specified
         if (!selectedChat && location.state?.newConversationId) {
           const newChat = response.data.find(chat => chat.id === location.state.newConversationId);
           if (newChat) {
@@ -336,22 +320,22 @@ const ChatPage = () => {
         setError(response.message || 'Failed to load chats');
       }
     } catch (error) {
-      console.error('Failed to load customer chats:', error);
+      console.error('Failed to load customer↔store chats:', error);
       setError('Failed to load chats: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load messages for selected chat
+  // Load messages for selected customer↔store chat
   const loadMessages = async (chatId) => {
     try {
       setError(null);
-      console.log('📨 Loading messages for customer chat:', chatId);
+      console.log('📨 Loading customer↔store messages for chat:', chatId);
       const response = await chatService.getMessages(chatId);
       
       if (response.success) {
-        console.log('✅ Loaded customer messages:', response.data.length);
+        console.log('✅ Loaded customer↔store messages:', response.data.length);
         setMessages(response.data);
         scrollToBottom();
       }
@@ -363,9 +347,8 @@ const ChatPage = () => {
 
   // Handle chat selection
   const handleChatSelect = (chat) => {
-    console.log('👆 Customer selecting chat:', chat.id);
+    console.log('👆 Customer selecting store chat:', chat.id);
     
-    // Leave previous conversation
     if (selectedChat) {
       leaveConversation(selectedChat.id);
     }
@@ -376,12 +359,11 @@ const ChatPage = () => {
     markAsRead(chat.id);
   };
 
-  // Mark messages as read
+  // Mark store messages as read
   const markAsRead = async (chatId) => {
     try {
       await chatService.markMessagesAsRead(chatId);
       
-      // Reset unread count in UI
       setChats(prev => prev.map(chat =>
         chat.id === chatId
           ? { ...chat, unreadCount: 0 }
@@ -392,7 +374,7 @@ const ChatPage = () => {
     }
   };
 
-  // FIXED: Send message as customer
+  // FIXED: Send message to store
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedChat || sendingMessage) return;
 
@@ -403,10 +385,11 @@ const ChatPage = () => {
       setError(null);
       setMessage('');
 
-      console.log('📤 Customer sending message:', {
+      console.log('📤 Customer sending message to store:', {
         chatId: selectedChat.id,
+        storeName: selectedChat.store?.name,
         content: messageText,
-        userType: 'customer'
+        messageType: 'customer_to_store'
       });
 
       const response = await chatService.sendMessage(
@@ -416,9 +399,9 @@ const ChatPage = () => {
       );
 
       if (response.success) {
-        console.log('✅ Customer message sent successfully');
+        console.log('✅ Customer message to store sent successfully');
         
-        // FIXED: Add the message to the customer's view immediately
+        // Add the message to the customer's view immediately
         const newMessage = {
           id: response.data.id || `temp-${Date.now()}`,
           text: messageText,
@@ -450,19 +433,17 @@ const ChatPage = () => {
         throw new Error(response.message || 'Failed to send message');
       }
     } catch (error) {
-      console.error('❌ Failed to send customer message:', error);
+      console.error('❌ Failed to send customer message to store:', error);
       setError('Failed to send message');
-      setMessage(messageText); // Restore message on error
+      setMessage(messageText);
     } finally {
       setSendingMessage(false);
     }
   };
 
-  // Handle message input changes
   const handleMessageChange = (e) => {
     setMessage(e.target.value);
 
-    // Handle typing indicators
     if (selectedChat) {
       handleTyping(selectedChat.id);
     }
@@ -488,7 +469,7 @@ const ChatPage = () => {
     }
   };
 
-  // Customer quick responses
+  // Customer quick responses for stores
   const quickResponses = [
     "Thank you!",
     "That sounds great!",
@@ -497,6 +478,8 @@ const ChatPage = () => {
     "Do you have this item in stock?",
     "What's the price for this service?",
     "Is this available today?",
+    "Can I visit your store?",
+    "Do you offer delivery?",
     "Thank you for your help!"
   ];
 
@@ -510,10 +493,7 @@ const ChatPage = () => {
     }, 100);
   };
 
-  // Calculate total unread messages
   const totalUnreadCount = chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0);
-
-  // Get typing users for current chat
   const typingUsers = selectedChat ? getTypingUsers(selectedChat.id) : [];
 
   // Loading state
@@ -524,7 +504,7 @@ const ChatPage = () => {
         <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 200px)' }}>
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
-            <p className="text-gray-600">Loading your chats...</p>
+            <p className="text-gray-600">Loading your store conversations...</p>
           </div>
         </div>
         <Footer />
@@ -532,14 +512,13 @@ const ChatPage = () => {
     );
   }
 
-  // No user data
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 200px)' }}>
           <div className="text-center">
-            <p className="text-gray-600">Loading user data...</p>
+            <p className="text-gray-600">Loading customer data...</p>
           </div>
         </div>
         <Footer />
@@ -564,9 +543,9 @@ const ChatPage = () => {
                   <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Your Messages</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">Store Messages</h2>
                   <p className="text-sm text-gray-500">
-                    Chat with stores
+                    Chat with your favorite stores
                     {isConnected && <span className="ml-2 text-green-600">● Connected</span>}
                   </p>
                 </div>
@@ -576,7 +555,7 @@ const ChatPage = () => {
                   <div className="flex items-center space-x-2">
                     <AlertCircle className="w-4 h-4 text-orange-500" />
                     <span className="text-sm font-medium text-gray-700">
-                      {totalUnreadCount} unread message{totalUnreadCount > 1 ? 's' : ''}
+                      {totalUnreadCount} unread from stores
                     </span>
                   </div>
                 )}
@@ -602,7 +581,7 @@ const ChatPage = () => {
           </div>
 
           <div className="flex" style={{ height: 'calc(100vh - 280px)' }}>
-            {/* Chat List Sidebar */}
+            {/* Store Chat List Sidebar */}
             <div className={`${selectedChat
                 ? 'hidden lg:flex'
                 : 'flex'
@@ -622,13 +601,13 @@ const ChatPage = () => {
                 </div>
               </div>
 
-              {/* Chat List */}
+              {/* Store Chat List */}
               <div className="flex-1 overflow-y-auto">
                 {filteredChats.length === 0 ? (
                   <div className="flex items-center justify-center h-32 text-gray-500">
                     <div className="text-center">
-                      <MessageCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="font-medium">No conversations found</p>
+                      <Store className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="font-medium">No store conversations found</p>
                       <p className="text-sm">Start chatting with stores!</p>
                     </div>
                   </div>
@@ -647,17 +626,20 @@ const ChatPage = () => {
                       >
                         <div className="relative">
                           <img
-                            src={storeAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(storeName)}&background=random`}
+                            src={storeAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(storeName)}&background=2563eb&color=ffffff`}
                             alt={storeName}
                             className="w-12 h-12 rounded-full object-cover"
                           />
-                          {isUserOnline(store?.id) && (
+                          {isUserOnline(store?.merchant_id) && (
                             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                           )}
                         </div>
                         <div className="ml-3 flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold text-gray-900 truncate">{storeName}</h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-gray-900 truncate">{storeName}</h3>
+                              <Store className="w-3 h-3 text-blue-500" />
+                            </div>
                             <div className="flex items-center space-x-1">
                               <span className="text-xs text-gray-500">{chat.lastMessageTime}</span>
                               {chat.unreadCount > 0 && (
@@ -671,7 +653,7 @@ const ChatPage = () => {
                           <div className="flex items-center justify-between text-xs text-gray-400">
                             <div className="flex items-center space-x-3">
                               <span>{store?.category || 'Store'}</span>
-                              {store?.online && <span className="text-green-500">● Online</span>}
+                              {isUserOnline(store?.merchant_id) && <span className="text-green-500">● Store Online</span>}
                             </div>
                           </div>
                         </div>
@@ -689,7 +671,7 @@ const ChatPage = () => {
               } flex-col`}>
               {selectedChat ? (
                 <>
-                  {/* Chat Header */}
+                  {/* Store Chat Header */}
                   <div className="bg-white p-4 border-b border-gray-200 flex items-center justify-between">
                     <div className="flex items-center">
                       <button
@@ -700,17 +682,21 @@ const ChatPage = () => {
                       </button>
                       <div className="relative">
                         <img
-                          src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=random`}
+                          src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
                           alt={selectedChat.store?.name || 'Store'}
                           className="w-10 h-10 rounded-full object-cover"
                         />
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white">
+                          <Store className="w-2 h-2 text-white" />
+                        </div>
                       </div>
                       <div className="ml-3">
                         <div className="flex items-center space-x-2">
                           <h2 className="font-semibold text-gray-900">{selectedChat.store?.name || 'Store'}</h2>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">Store</span>
                         </div>
                         <p className="text-sm text-gray-500">
-                          {isUserOnline(selectedChat.store?.id) ? 'Online' : 'Last seen recently'}
+                          {isUserOnline(selectedChat.store?.merchant_id) ? 'Store is Online' : 'Store will respond soon'}
                           {selectedChat.store?.category && (
                             <span> • {selectedChat.store.category}</span>
                           )}
@@ -735,9 +721,9 @@ const ChatPage = () => {
                     {messages.length === 0 ? (
                       <div className="flex items-center justify-center h-full text-gray-500">
                         <div className="text-center">
-                          <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                          <p className="text-lg font-medium mb-2">Start the conversation</p>
-                          <p className="text-sm">Send a message to {selectedChat.store?.name || 'this store'}</p>
+                          <Store className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                          <p className="text-lg font-medium mb-2">Start chatting with {selectedChat.store?.name || 'this store'}</p>
+                          <p className="text-sm">Ask about products, services, store hours, or anything else!</p>
                         </div>
                       </div>
                     ) : (
@@ -745,51 +731,86 @@ const ChatPage = () => {
                         <div
                           key={msg.id}
                           className={`flex ${
-                            // FIXED: Customer messages align right, merchant messages align left
+                            // FIXED: Customer messages align right, store messages align left
                             msg.sender === 'user' || msg.sender === 'customer'
                               ? 'justify-end' 
                               : 'justify-start'
                           }`}
                         >
-                          <div
-                            className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-lg ${
-                              // FIXED: Customer messages blue, merchant messages white
-                              msg.sender === 'user' || msg.sender === 'customer'
-                                ? 'bg-blue-500 text-white rounded-br-sm'
-                                : 'bg-white text-gray-900 rounded-bl-sm border'
-                              }`}
-                          >
-                            <p className="text-sm">{msg.text}</p>
-                            <div className={`flex items-center justify-end mt-1 space-x-1 ${
-                              msg.sender === 'user' || msg.sender === 'customer'
-                                ? 'text-blue-100' 
-                                : 'text-gray-500'
-                              }`}>
-                              <Clock className="w-3 h-3" />
-                              <span className="text-xs">{msg.timestamp}</span>
-                              {(msg.sender === 'user' || msg.sender === 'customer') && (
-                                <div className="ml-1">
-                                  {msg.status === 'read' ? (
-                                    <CheckCheck className="w-3 h-3 text-blue-200" />
-                                  ) : (
-                                    <Check className="w-3 h-3" />
-                                  )}
+                          <div className="flex items-end space-x-2 max-w-xs md:max-w-md lg:max-w-lg">
+                            {/* Store avatar for store messages */}
+                            {(msg.sender === 'store') && (
+                              <img
+                                src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
+                                alt="Store"
+                                className="w-6 h-6 rounded-full object-cover"
+                              />
+                            )}
+                            
+                            <div
+                              className={`px-4 py-2 rounded-lg ${
+                                // FIXED: Customer messages blue, store messages white with store branding
+                                msg.sender === 'user' || msg.sender === 'customer'
+                                  ? 'bg-blue-500 text-white rounded-br-sm'
+                                  : 'bg-white text-gray-900 rounded-bl-sm border border-blue-200 shadow-sm'
+                                }`}
+                            >
+                              {/* Store name for store messages */}
+                              {msg.sender === 'store' && (
+                                <div className="flex items-center gap-1 mb-1">
+                                  <Store className="w-3 h-3 text-blue-500" />
+                                  <span className="text-xs font-medium text-blue-600">{selectedChat.store?.name || 'Store'}</span>
                                 </div>
                               )}
+                              
+                              <p className="text-sm">{msg.text}</p>
+                              <div className={`flex items-center justify-end mt-1 space-x-1 ${
+                                msg.sender === 'user' || msg.sender === 'customer'
+                                  ? 'text-blue-100' 
+                                  : 'text-gray-500'
+                                }`}>
+                                <Clock className="w-3 h-3" />
+                                <span className="text-xs">{msg.timestamp}</span>
+                                {(msg.sender === 'user' || msg.sender === 'customer') && (
+                                  <div className="ml-1">
+                                    {msg.status === 'read' ? (
+                                      <CheckCheck className="w-3 h-3 text-blue-200" />
+                                    ) : (
+                                      <Check className="w-3 h-3" />
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
+
+                            {/* Customer avatar for customer messages */}
+                            {(msg.sender === 'user' || msg.sender === 'customer') && (
+                              <img
+                                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                                alt="You"
+                                className="w-6 h-6 rounded-full object-cover"
+                              />
+                            )}
                           </div>
                         </div>
                       ))
                     )}
 
-                    {/* Typing indicator */}
+                    {/* Typing indicator for store */}
                     {typingUsers.length > 0 && (
                       <div className="flex justify-start">
-                        <div className="bg-gray-200 px-4 py-2 rounded-lg">
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
+                            alt="Store"
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                          <div className="bg-gray-200 px-4 py-2 rounded-lg">
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -798,7 +819,7 @@ const ChatPage = () => {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Quick Responses */}
+                  {/* Quick Responses for customers */}
                   <div className="bg-white p-3 border-t border-gray-100">
                     <div className="flex space-x-2 overflow-x-auto pb-2">
                       {quickResponses.map((response, index) => (
@@ -821,7 +842,7 @@ const ChatPage = () => {
                           value={message}
                           onChange={handleMessageChange}
                           onKeyPress={handleKeyPress}
-                          placeholder="Type a message..."
+                          placeholder={`Message ${selectedChat.store?.name || 'store'}...`}
                           rows={1}
                           disabled={sendingMessage || !isConnected}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none max-h-32 disabled:bg-gray-100"
@@ -831,6 +852,7 @@ const ChatPage = () => {
                         onClick={handleSendMessage}
                         disabled={!message.trim() || sendingMessage || !isConnected}
                         className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center"
+                        title={!isConnected ? 'Connecting...' : 'Send to store'}
                       >
                         {sendingMessage ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -839,18 +861,21 @@ const ChatPage = () => {
                         )}
                       </button>
                     </div>
+                    {!isConnected && (
+                      <p className="text-xs text-orange-500 mt-1">Connecting to chat server...</p>
+                    )}
                   </div>
                 </>
               ) : (
-                /* Welcome Screen - Only visible on desktop when no chat selected */
+                /* Welcome Screen */
                 <div className="flex-1 flex items-center justify-center bg-gray-50">
                   <div className="text-center">
                     <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <MessageCircle className="w-12 h-12 text-blue-500" />
+                      <Store className="w-12 h-12 text-blue-500" />
                     </div>
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your Messages</h2>
-                    <p className="text-gray-600 max-w-md">
-                      Select a conversation from the sidebar to start chatting with stores. Get instant support and updates on your orders.
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your Store Messages</h2>
+                    <p className="text-gray-600 max-w-md mb-6">
+                      Select a store conversation from the sidebar to start chatting. Get instant support, ask questions, and stay updated on your orders.
                     </p>
                     <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-500">
                       <div className="flex items-center justify-center space-x-2">
@@ -858,10 +883,21 @@ const ChatPage = () => {
                         <span>{totalUnreadCount} unread</span>
                       </div>
                       <div className="flex items-center justify-center space-x-2">
-                        <MessageCircle className="w-4 h-4 text-blue-500" />
-                        <span>{chats.length} {chats.length === 1 ? 'chat' : 'chats'}</span>
+                        <Store className="w-4 h-4 text-blue-500" />
+                        <span>{chats.length} store{chats.length === 1 ? '' : 's'}</span>
                       </div>
                     </div>
+                    
+                    {chats.length === 0 && (
+                      <div className="mt-6">
+                        <button
+                          onClick={() => navigate('/stores')}
+                          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          Browse Stores
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

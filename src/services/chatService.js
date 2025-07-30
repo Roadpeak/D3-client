@@ -1,7 +1,6 @@
-// services/chatService.js - Updated to perfectly match your controller
+// services/chatService.js - FIXED: Customer↔Store Communication Model
 class ChatService {
   constructor() {
-    // Use window.location for dynamic API URLs in browser
     const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
     const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
     
@@ -14,7 +13,7 @@ class ChatService {
       : 'http://localhost:4000';
   }
 
-  // Enhanced token retrieval matching your useSocket implementation
+  // Enhanced token retrieval
   getAuthToken() {
     const getTokenFromCookie = () => {
       if (typeof document === 'undefined') return '';
@@ -70,7 +69,6 @@ class ChatService {
     return '';
   }
 
-  // API headers with authentication
   getHeaders() {
     const token = this.getAuthToken();
     return {
@@ -79,7 +77,6 @@ class ChatService {
     };
   }
 
-  // Enhanced response handler
   async handleResponse(response) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -93,12 +90,12 @@ class ChatService {
     return response.json();
   }
 
-  // ✅ MATCHES YOUR CONTROLLER: Get current user profile  
+  // Get current user profile  
   async getCurrentUser() {
     const endpoints = [
       `${this.API_BASE}/users/profile`,
       `${this.API_BASE}/users/me`,
-      `${this.API_BASE}/auth/profile` // Additional fallback
+      `${this.API_BASE}/auth/profile`
     ];
 
     for (const endpoint of endpoints) {
@@ -123,14 +120,21 @@ class ChatService {
     throw new Error('Unable to fetch user profile from any endpoint');
   }
 
-  // ✅ MATCHES YOUR CONTROLLER: Get conversations (both user and merchant)
+  // FIXED: Get conversations with proper customer/merchant distinction
   async getConversations(userRole = 'customer') {
-    // Match your controller's exact endpoint paths
-    const endpoint = userRole === 'merchant' 
-      ? `${this.API_BASE}/chat/merchant/conversations`  // getMerchantConversations
-      : `${this.API_BASE}/chat/user/conversations`;     // getUserConversations
+    let endpoint;
+    
+    if (userRole === 'merchant') {
+      // Merchant getting customer↔store conversations for their stores
+      endpoint = `${this.API_BASE}/chat/merchant/conversations`;
+      console.log('🏪 Fetching merchant store conversations (customer↔store chats)');
+    } else {
+      // Customer getting their conversations with stores
+      endpoint = `${this.API_BASE}/chat/user/conversations`;
+      console.log('👤 Fetching customer store conversations (customer↔store chats)');
+    }
 
-    console.log(`📋 Fetching ${userRole} conversations from:`, endpoint);
+    console.log(`📋 Using endpoint: ${endpoint}`);
 
     try {
       const response = await fetch(endpoint, {
@@ -138,19 +142,27 @@ class ChatService {
         credentials: 'include'
       });
 
-      return this.handleResponse(response);
+      const result = await this.handleResponse(response);
+      
+      if (userRole === 'merchant') {
+        console.log(`✅ Loaded ${result.data?.length || 0} customer↔store conversations for merchant`);
+      } else {
+        console.log(`✅ Loaded ${result.data?.length || 0} customer↔store conversations`);
+      }
+      
+      return result;
     } catch (error) {
       console.error(`Error fetching ${userRole} conversations:`, error);
       throw error;
     }
   }
 
-  // ✅ MATCHES YOUR CONTROLLER: Get messages for a conversation
+  // Get messages for a customer↔store conversation
   async getMessages(conversationId, page = 1, limit = 50) {
     const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/messages`;
     const url = `${endpoint}?page=${page}&limit=${limit}`;
     
-    console.log('📨 Fetching messages from:', url);
+    console.log('📨 Fetching customer↔store messages from:', url);
 
     try {
       const response = await fetch(url, {
@@ -165,18 +177,27 @@ class ChatService {
     }
   }
 
-  // ✅ MATCHES YOUR CONTROLLER: Send a message (exact body structure)
+  // FIXED: Send message in customer↔store conversation
   async sendMessage(conversationId, content, messageType = 'text') {
     const endpoint = `${this.API_BASE}/chat/messages`;
     
-    // Match your controller's expected body structure exactly
+    // Validate content
+    const validation = this.validateMessage(content);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+    
     const body = {
-      conversationId,  // ✅ matches controller parameter
-      content,         // ✅ matches controller parameter  
-      messageType      // ✅ matches controller parameter
+      conversationId,
+      content: content.trim(),
+      messageType
     };
 
-    console.log('📤 Sending message:', { endpoint, body });
+    console.log('📤 Sending customer↔store message:', { 
+      endpoint, 
+      conversationId, 
+      contentLength: content.length 
+    });
 
     try {
       const response = await fetch(endpoint, {
@@ -186,23 +207,28 @@ class ChatService {
         body: JSON.stringify(body)
       });
 
-      return this.handleResponse(response);
+      const result = await this.handleResponse(response);
+      console.log('✅ Customer↔store message sent successfully');
+      return result;
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending customer↔store message:', error);
       throw error;
     }
   }
 
-  // ✅ MATCHES YOUR CONTROLLER: Start a new conversation
+  // FIXED: Start a new customer↔store conversation
   async startConversation(storeId, initialMessage = '') {
     const endpoint = `${this.API_BASE}/chat/conversations`;
     
     const body = {
-      storeId,         // ✅ matches controller parameter
-      initialMessage   // ✅ matches controller parameter
+      storeId: parseInt(storeId), // Ensure it's a number
+      initialMessage: initialMessage.trim()
     };
 
-    console.log('🆕 Starting conversation:', { endpoint, body });
+    console.log('🆕 Starting customer↔store conversation:', { 
+      storeId, 
+      hasInitialMessage: !!initialMessage.trim() 
+    });
 
     try {
       const response = await fetch(endpoint, {
@@ -212,21 +238,20 @@ class ChatService {
         body: JSON.stringify(body)
       });
 
-      return this.handleResponse(response);
+      const result = await this.handleResponse(response);
+      console.log('✅ Customer↔store conversation started:', result.data?.conversationId);
+      return result;
     } catch (error) {
-      console.error('Error starting conversation:', error);
+      console.error('Error starting customer↔store conversation:', error);
       throw error;
     }
   }
 
-  // ✅ ENHANCED: Mark messages as read (using controller's internal method)
+  // Mark messages as read in customer↔store conversation
   async markMessagesAsRead(conversationId) {
-    // Your controller doesn't have a specific endpoint for this, 
-    // it's handled internally in the getMessages method
-    // But we can create a simple endpoint that calls the internal method
     const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/read`;
     
-    console.log('📖 Marking messages as read:', endpoint);
+    console.log('📖 Marking customer↔store messages as read:', conversationId);
 
     try {
       const response = await fetch(endpoint, {
@@ -235,7 +260,6 @@ class ChatService {
         credentials: 'include'
       });
 
-      // If endpoint doesn't exist, just return success
       if (response.status === 404) {
         console.log('⚠️ Read endpoint not implemented, skipping');
         return { success: true, message: 'Read status updated via other means' };
@@ -244,12 +268,11 @@ class ChatService {
       return this.handleResponse(response);
     } catch (error) {
       console.error('Error marking messages as read:', error);
-      // Don't throw error for read status - it's not critical
       return { success: false, error: error.message };
     }
   }
 
-  // ✅ MATCHES YOUR CONTROLLER: Update message status
+  // Update message status
   async updateMessageStatus(messageId, status) {
     const endpoint = `${this.API_BASE}/chat/messages/${messageId}/status`;
     
@@ -270,12 +293,12 @@ class ChatService {
     }
   }
 
-  // ✅ MATCHES YOUR CONTROLLER: Search conversations
+  // Search customer↔store conversations
   async searchConversations(query, type = 'all') {
     const endpoint = `${this.API_BASE}/chat/search`;
     const url = `${endpoint}?query=${encodeURIComponent(query)}&type=${type}`;
     
-    console.log('🔍 Searching conversations:', url);
+    console.log('🔍 Searching customer↔store conversations:', url);
 
     try {
       const response = await fetch(url, {
@@ -290,12 +313,12 @@ class ChatService {
     }
   }
 
-  // ✅ MATCHES YOUR CONTROLLER: Get analytics (merchants only)
+  // Get analytics for merchant (customer↔store conversations)
   async getConversationAnalytics(period = '7d') {
     const endpoint = `${this.API_BASE}/chat/analytics`;
     const url = `${endpoint}?period=${period}`;
     
-    console.log('📊 Fetching conversation analytics:', url);
+    console.log('📊 Fetching customer↔store analytics:', url);
 
     try {
       const response = await fetch(url, {
@@ -310,7 +333,7 @@ class ChatService {
     }
   }
 
-  // 🔧 UTILITY METHODS (not in controller but useful for frontend)
+  // UTILITY METHODS
 
   // Check authentication status
   async checkAuth() {
@@ -334,7 +357,6 @@ class ChatService {
   // Health check
   async healthCheck() {
     try {
-      // Try to fetch user profile as a health check
       const response = await fetch(`${this.API_BASE}/chat/health`, {
         headers: this.getHeaders(),
         credentials: 'include'
@@ -351,7 +373,7 @@ class ChatService {
     }
   }
 
-  // Format time helper (matches your controller's formatTime)
+  // Format time helper
   formatTime(timestamp) {
     try {
       const now = new Date();
@@ -411,6 +433,16 @@ class ChatService {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=random`;
   }
 
+  // Get store avatar URL
+  getStoreAvatarUrl(store, size = 40) {
+    if (store?.avatar || store?.logo_url) {
+      return store.avatar || store.logo_url;
+    }
+    
+    const name = store?.name || 'Store';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=random&color=ffffff&background=2563eb`;
+  }
+
   // Handle network errors gracefully
   async retryRequest(requestFn, maxRetries = 3, delay = 1000) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -423,7 +455,6 @@ class ChatService {
           throw error;
         }
         
-        // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, delay * attempt));
       }
     }
@@ -450,7 +481,7 @@ class ChatService {
     for (const endpoint of endpoints) {
       try {
         const response = await fetch(endpoint, {
-          method: 'HEAD', // Just check if endpoint exists
+          method: 'HEAD',
           headers: this.getHeaders(),
           credentials: 'include'
         });
@@ -460,6 +491,74 @@ class ChatService {
         console.log(`❌ ${endpoint}: ${error.message}`);
       }
     }
+  }
+
+  // Get conversation type for UI display
+  getConversationType(conversation, userType) {
+    if (userType === 'customer') {
+      return {
+        type: 'customer_to_store',
+        title: conversation.store?.name || 'Store',
+        subtitle: conversation.store?.category || 'Store',
+        avatar: this.getStoreAvatarUrl(conversation.store)
+      };
+    } else if (userType === 'merchant') {
+      return {
+        type: 'store_to_customer',
+        title: conversation.customer?.name || 'Customer',
+        subtitle: `Customer since ${conversation.customer?.customerSince || 'Unknown'}`,
+        avatar: this.getAvatarUrl(conversation.customer),
+        priority: conversation.customer?.priority || 'regular'
+      };
+    }
+    
+    return {
+      type: 'unknown',
+      title: 'Unknown',
+      subtitle: '',
+      avatar: '/default-avatar.png'
+    };
+  }
+
+  // Format conversation for display
+  formatConversation(conversation, userType) {
+    const baseInfo = this.getConversationType(conversation, userType);
+    
+    return {
+      ...conversation,
+      displayInfo: baseInfo,
+      formattedTime: this.formatTime(conversation.lastMessageTime),
+      hasUnread: (conversation.unreadCount || 0) > 0
+    };
+  }
+
+  // Get quick responses based on user type
+  getQuickResponses(userType) {
+    if (userType === 'customer') {
+      return [
+        "Thank you!",
+        "That sounds great!",
+        "Can you tell me more about this?",
+        "What are your store hours?",
+        "Do you have this item in stock?",
+        "What's the price for this service?",
+        "Is this available today?",
+        "Thank you for your help!"
+      ];
+    } else if (userType === 'merchant') {
+      return [
+        "Thank you for your message! I'll help you right away.",
+        "Your order is being processed and will be ready soon.",
+        "We have that item in stock. Would you like me to reserve it for you?",
+        "I'll check on that for you and get back to you shortly.",
+        "Is there anything else I can help you with today?",
+        "Our store hours are Monday to Friday, 9 AM to 6 PM.",
+        "You can track your order using the link I'll send you.",
+        "We offer free delivery for orders over KES 2,000."
+      ];
+    }
+    
+    return [];
   }
 }
 
