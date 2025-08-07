@@ -1,4 +1,4 @@
-// services/storeService.js - Complete fixed version
+// services/storeService.js - FIXED version with proper authentication
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 const API_KEY = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
 
@@ -10,28 +10,55 @@ class StoreService {
     console.log('🔑 API Key configured:', API_KEY ? 'Yes' : 'No');
   }
 
+  // FIXED: Get auth token using the same method as your auth service
   getAuthToken() {
-    // Check multiple possible token storage locations
-    return localStorage.getItem('authToken') || 
-           localStorage.getItem('access_token') ||
-           this.getCookieToken();
+    // Priority order matching your auth service
+    const tokenSources = [
+      localStorage.getItem('access_token'),
+      localStorage.getItem('authToken'), 
+      localStorage.getItem('token'),
+      this.getCookieToken('access_token'),
+      this.getCookieToken('authToken'),
+      this.getCookieToken('token')
+    ];
+
+    const token = tokenSources.find(t => t && t.trim());
+    
+    if (token) {
+      console.log('🔐 Auth token found:', token.substring(0, 20) + '...');
+    } else {
+      console.log('⚠️ No auth token found in any location');
+    }
+    
+    return token;
   }
 
-  getCookieToken() {
-    // Get token from cookie (matching your main auth system)
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => 
-      cookie.trim().startsWith('access_token=')
-    );
-    return tokenCookie ? tokenCookie.split('=')[1] : null;
+  // FIXED: Get token from cookie (matching your auth system)
+  getCookieToken(name = 'access_token') {
+    try {
+      if (typeof document === 'undefined') return null;
+      
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [key, value] = cookie.trim().split('=');
+        if (key === name && value) {
+          return decodeURIComponent(value);
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error reading cookie:', error);
+      return null;
+    }
   }
 
+  // FIXED: Get headers with proper auth token inclusion
   getHeaders() {
     const headers = {
       'Content-Type': 'application/json',
     };
 
-    // Always include API key
+    // Always include API key if available
     if (API_KEY) {
       headers['api-key'] = API_KEY;
       console.log('✅ API key added to store service request');
@@ -45,8 +72,14 @@ class StoreService {
       headers['Authorization'] = `Bearer ${token}`;
       console.log('🔐 Auth token added to request');
     } else {
-      console.log('ℹ️ No auth token found');
+      console.log('ℹ️ No auth token found for request');
     }
+
+    console.log('📋 Final headers:', {
+      'Content-Type': headers['Content-Type'],
+      'Authorization': headers['Authorization'] ? 'Bearer [TOKEN]' : 'Not set',
+      'api-key': headers['api-key'] ? '[API_KEY]' : 'Not set'
+    });
 
     return headers;
   }
@@ -92,7 +125,9 @@ class StoreService {
       console.log('✅ Response data received successfully');
       console.log('📊 Data summary:', {
         success: data.success,
+        hasStore: !!data.store,
         hasStores: !!data.stores,
+        socialLinksCount: data.store?.socialLinksRaw?.length || 0,
         storesCount: data.stores?.length,
         hasPagination: !!data.pagination
       });
@@ -114,6 +149,33 @@ class StoreService {
     }
   }
 
+  // FIXED: Enhanced getStoreById with social links debugging
+  async getStoreById(id) {
+    if (!id) {
+      throw new Error('Store ID is required');
+    }
+    
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      throw new Error('Invalid store ID format');
+    }
+
+    console.log(`🏪 Fetching store with ID: ${id}`);
+    const data = await this.fetchData(`/stores/${id}`);
+    
+    // Debug social links in response
+    console.log('🔍 Store data social links debug:', {
+      hasSocialLinksRaw: !!(data.store?.socialLinksRaw),
+      socialLinksRawCount: data.store?.socialLinksRaw?.length || 0,
+      hasSocialLinks: !!(data.store?.socialLinks),
+      socialLinksKeys: data.store?.socialLinks ? Object.keys(data.store.socialLinks).filter(key => data.store.socialLinks[key]) : [],
+      firstSocialLink: data.store?.socialLinksRaw?.[0] || 'None'
+    });
+    
+    return data;
+  }
+
+  // Your existing methods remain the same...
   async getStores(filters = {}) {
     console.log('🏪 StoreService.getStores called with filters:', filters);
     
@@ -130,20 +192,6 @@ class StoreService {
     console.log('📍 Final endpoint:', endpoint);
     
     return this.fetchData(endpoint);
-  }
-
-  async getStoreById(id) {
-    if (!id) {
-      throw new Error('Store ID is required');
-    }
-    
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(id)) {
-      throw new Error('Invalid store ID format');
-    }
-
-    console.log(`🏪 Fetching store with ID: ${id}`);
-    return this.fetchData(`/stores/${id}`);
   }
 
   async getRandomStores(limit = 21) {
@@ -262,6 +310,38 @@ class StoreService {
       console.error('🐛 Debug connectivity failed:', error);
     }
   }
+
+  // FIXED: Add method to test authentication
+  async testAuthentication() {
+    try {
+      console.log('🔐 Testing authentication...');
+      
+      const token = this.getAuthToken();
+      console.log('🎫 Token available:', !!token);
+      
+      if (!token) {
+        return { authenticated: false, reason: 'No token found' };
+      }
+
+      // Test with a simple authenticated endpoint
+      const response = await fetch(`${this.baseURL}/stores/categories`, {
+        headers: this.getHeaders()
+      });
+
+      console.log('🔐 Auth test response:', response.status);
+      
+      return {
+        authenticated: response.ok,
+        status: response.status,
+        reason: response.ok ? 'Valid token' : 'Invalid token'
+      };
+    } catch (error) {
+      console.error('🔐 Auth test failed:', error);
+      return { authenticated: false, reason: error.message };
+    }
+  }
 }
 
-export default new StoreService();
+// Create instance and export
+const storeServiceInstance = new StoreService();
+export default storeServiceInstance;

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import userServiceRequestService from '../services/userServiceRequestService';
+import authService from '../services/authService';
 
-// Custom SVG Icons
+// SVG Icons
 const Search = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -69,10 +71,23 @@ const Filter = ({ className }) => (
   </svg>
 );
 
-const Briefcase = ({ className }) => (
+const CheckCircle = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const XCircle = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const AlertCircle = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="12" y1="8" x2="12" y2="12"></line>
+    <line x1="12" y1="16" x2="12.01" y2="16"></line>
   </svg>
 );
 
@@ -82,151 +97,31 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
-
-// Auth helper functions
-const getAuthToken = () => localStorage.getItem('authToken');
-const isAuthenticated = () => !!getAuthToken();
-const getCurrentUser = () => {
-  const userStr = localStorage.getItem('currentUser');
-  return userStr ? JSON.parse(userStr) : null;
-};
-
-const api = {
-  // Get all service requests (PUBLIC - no auth required)
-  getServiceRequests: async (filters = {}) => {
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== 'all') {
-        queryParams.append(key, value);
-      }
-    });
-
-    const headers = { 'Content-Type': 'application/json' };
-    if (isAuthenticated()) {
-      headers['Authorization'] = `Bearer ${getAuthToken()}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/request-service?${queryParams}`, { headers });
-    if (!response.ok) throw new Error('Failed to fetch service requests');
-    return response.json();
-  },
-
-  // Get service categories (PUBLIC)
-  getServiceCategories: async () => {
-    const response = await fetch(`${API_BASE_URL}/request-service/categories`);
-    if (!response.ok) throw new Error('Failed to fetch categories');
-    return response.json();
-  },
-
-  // Create new service request (PRIVATE)
-  createServiceRequest: async (requestData) => {
-    if (!isAuthenticated()) throw new Error('Please login to post a service request');
-
-    const response = await fetch(`${API_BASE_URL}/request-service`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestData)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create service request');
-    }
-    return response.json();
-  },
-
-  // Get user offers (PRIVATE)
-  getUserOffers: async (page = 1, limit = 10) => {
-    if (!isAuthenticated()) throw new Error('Please login to view your offers');
-
-    const response = await fetch(`${API_BASE_URL}/request-service/offers?page=${page}&limit=${limit}`, {
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) throw new Error('Failed to fetch offers');
-    return response.json();
-  },
-
-  // Get user's past requests (PRIVATE)
-  getUserPastRequests: async (page = 1, limit = 10) => {
-    if (!isAuthenticated()) throw new Error('Please login to view your past requests');
-
-    const response = await fetch(`${API_BASE_URL}/service-requests/my-requests?page=${page}&limit=${limit}`, {
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) throw new Error('Failed to fetch past requests');
-    return response.json();
-  },
-
-  // Create offer for a request (PRIVATE)
-  createOffer: async (requestId, offerData) => {
-    if (!isAuthenticated()) throw new Error('Please login to make an offer');
-
-    const response = await fetch(`${API_BASE_URL}/service-requests/${requestId}/offers`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(offerData)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create offer');
-    }
-    return response.json();
-  },
-
-  // Accept offer (PRIVATE)
-  acceptOffer: async (offerId) => {
-    if (!isAuthenticated()) throw new Error('Please login to accept offers');
-
-    const response = await fetch(`${API_BASE_URL}/offers/${offerId}/accept`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${getAuthToken()}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to accept offer');
-    }
-    return response.json();
-  },
-
-  // Get platform statistics (PUBLIC)
-  getStatistics: async () => {
-    const response = await fetch(`${API_BASE_URL}/service-requests/statistics`);
-    if (!response.ok) throw new Error('Failed to fetch statistics');
-    return response.json();
+// Error handler with fallback data
+const withFallback = async (apiCall, fallbackData = null) => {
+  try {
+    return await apiCall();
+  } catch (error) {
+    console.warn('API call failed, using fallback:', error.message);
+    return {
+      success: true,
+      data: fallbackData,
+      isFallback: true
+    };
   }
 };
 
-export default function ServiceRequestPage() {
+export default function UserServiceRequestPage() {
+  // State management
   const [activeTab, setActiveTab] = useState('all');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  // Authentication state
-  const [user, setUser] = useState(getCurrentUser());
-  const [authenticated, setAuthenticated] = useState(isAuthenticated());
+  // User authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Data states
   const [serviceCategories, setServiceCategories] = useState([]);
@@ -234,6 +129,10 @@ export default function ServiceRequestPage() {
   const [userOffers, setUserOffers] = useState([]);
   const [userPastRequests, setUserPastRequests] = useState([]);
   const [statistics, setStatistics] = useState({});
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmMessage, setConfirmMessage] = useState('');
+
 
   // Loading and error states
   const [loading, setLoading] = useState(true);
@@ -272,16 +171,48 @@ export default function ServiceRequestPage() {
     availability: ''
   });
 
-  // Load initial data function
+  // Check authentication state
+  const checkAuthState = useCallback(async () => {
+    try {
+      setIsAuthenticated(userServiceRequestService.isAuthenticated());
+
+      if (userServiceRequestService.isAuthenticated()) {
+        const result = await authService.getCurrentUser();
+        if (result.success) {
+          setCurrentUser(result.data);
+          // Store user data for quick access
+          localStorage.setItem('currentUser', JSON.stringify(result.data));
+          localStorage.setItem('userType', 'user');
+        } else {
+          console.warn('Failed to get current user:', result.message);
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    } catch (error) {
+      console.error('Error checking auth state:', error);
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+    }
+  }, []);
+
+  // Initialize authentication state
+  useEffect(() => {
+    checkAuthState();
+  }, [checkAuthState]);
+
+  // Load initial data
   const loadInitialData = async () => {
     try {
       setLoading(true);
       setError(null);
 
       const [categoriesRes, statsRes] = await Promise.all([
-        api.getServiceCategories().catch(() => ({
-          success: true,
-          data: [
+        withFallback(
+          () => userServiceRequestService.getServiceCategories(),
+          [
             { name: 'Home Services', icon: '🏠', count: 45, color: 'bg-blue-100 text-blue-800' },
             { name: 'Auto Services', icon: '🚗', count: 32, color: 'bg-green-100 text-green-800' },
             { name: 'Beauty & Wellness', icon: '💄', count: 28, color: 'bg-pink-100 text-pink-800' },
@@ -291,11 +222,11 @@ export default function ServiceRequestPage() {
             { name: 'Fitness', icon: '💪', count: 12, color: 'bg-orange-100 text-orange-800' },
             { name: 'Photography', icon: '📸', count: 9, color: 'bg-teal-100 text-teal-800' }
           ]
-        })),
-        api.getStatistics().catch(() => ({
-          success: true,
-          data: { totalProviders: 2500, completedRequests: 15000, averageRating: 4.8, activeRequests: 500 }
-        }))
+        ),
+        withFallback(
+          () => userServiceRequestService.getPlatformStatistics(),
+          { totalProviders: 2500, completedRequests: 15000, averageRating: 4.8, activeRequests: 500 }
+        )
       ]);
 
       setServiceCategories(categoriesRes.data || []);
@@ -308,13 +239,13 @@ export default function ServiceRequestPage() {
     }
   };
 
-  // Load service requests function
+  // Load service requests
   const loadServiceRequests = async () => {
     try {
       setError(null);
-      const response = await api.getServiceRequests(filters).catch(() => ({
-        success: true,
-        data: {
+      const response = await withFallback(
+        () => userServiceRequestService.getPublicServiceRequests(filters),
+        {
           requests: [
             {
               id: 'demo-1',
@@ -335,7 +266,7 @@ export default function ServiceRequestPage() {
           ],
           pagination: { currentPage: 1, totalPages: 1, totalCount: 1, hasNext: false, hasPrev: false }
         }
-      }));
+      );
 
       setServiceRequests(response.data.requests || []);
       setPagination(response.data.pagination || {});
@@ -344,13 +275,14 @@ export default function ServiceRequestPage() {
     }
   };
 
+  // Load user offers
   const loadUserOffers = async () => {
-    if (!authenticated) return;
+    if (!isAuthenticated) return;
 
     try {
-      const response = await api.getUserOffers(filters.page, filters.limit).catch(() => ({
-        success: true,
-        data: {
+      const response = await withFallback(
+        () => userServiceRequestService.getUserOffers(filters),
+        {
           offers: [
             {
               id: 'offer-1',
@@ -371,7 +303,7 @@ export default function ServiceRequestPage() {
           ],
           pagination: { currentPage: 1, totalPages: 1, totalCount: 1, hasNext: false, hasPrev: false }
         }
-      }));
+      );
       setUserOffers(response.data.offers || []);
       setPagination(response.data.pagination || {});
     } catch (err) {
@@ -379,13 +311,14 @@ export default function ServiceRequestPage() {
     }
   };
 
+  // Load user past requests
   const loadUserPastRequests = async () => {
-    if (!authenticated) return;
+    if (!isAuthenticated) return;
 
     try {
-      const response = await api.getUserPastRequests(filters.page, filters.limit).catch(() => ({
-        success: true,
-        data: {
+      const response = await withFallback(
+        () => userServiceRequestService.getUserPastRequests(filters),
+        {
           requests: [
             {
               id: 'past-1',
@@ -407,7 +340,7 @@ export default function ServiceRequestPage() {
           ],
           pagination: { currentPage: 1, totalPages: 1, totalCount: 1, hasNext: false, hasPrev: false }
         }
-      }));
+      );
       setUserPastRequests(response.data.requests || []);
       setPagination(response.data.pagination || {});
     } catch (err) {
@@ -420,19 +353,20 @@ export default function ServiceRequestPage() {
     loadInitialData();
   }, []);
 
-  // Load data when filters change
+  // Load data when filters or tab changes
   useEffect(() => {
     if (activeTab === 'all') {
       loadServiceRequests();
-    } else if (activeTab === 'offers' && authenticated) {
+    } else if (activeTab === 'offers' && isAuthenticated) {
       loadUserOffers();
-    } else if (activeTab === 'past' && authenticated) {
+    } else if (activeTab === 'past' && isAuthenticated) {
       loadUserPastRequests();
     }
-  }, [filters, activeTab, authenticated]);
+  }, [filters, activeTab, isAuthenticated]);
 
+  // Event handlers
   const handleTabChange = (tab) => {
-    if ((tab === 'offers' || tab === 'past') && !authenticated) {
+    if ((tab === 'offers' || tab === 'past') && !isAuthenticated) {
       setShowLoginPrompt(true);
       return;
     }
@@ -440,7 +374,7 @@ export default function ServiceRequestPage() {
   };
 
   const handleRequestFormShow = () => {
-    if (!authenticated) {
+    if (!isAuthenticated) {
       setShowLoginPrompt(true);
       return;
     }
@@ -448,7 +382,7 @@ export default function ServiceRequestPage() {
   };
 
   const handleOfferFormShow = (requestId) => {
-    if (!authenticated) {
+    if (!isAuthenticated) {
       setShowLoginPrompt(true);
       return;
     }
@@ -462,18 +396,29 @@ export default function ServiceRequestPage() {
 
   const handleRequestFormSubmit = async (e) => {
     e.preventDefault();
+
     try {
       setSubmitting(true);
-      await api.createServiceRequest(requestForm);
+
+      // Validate form data
+      const validationErrors = userServiceRequestService.validateServiceRequestData(requestForm);
+      if (validationErrors.length > 0) {
+        alert(`Please fix the following errors:\n${validationErrors.join('\n')}`);
+        return;
+      }
+
+      await userServiceRequestService.createServiceRequest(requestForm);
+
       setShowRequestForm(false);
       setRequestForm({
         title: '', category: '', description: '', budgetMin: '', budgetMax: '',
         timeline: '', location: '', requirements: [], priority: 'normal'
       });
+
       await loadServiceRequests();
       alert('Service request posted successfully!');
     } catch (err) {
-      alert(err.message);
+      alert(`Error: ${err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -481,28 +426,57 @@ export default function ServiceRequestPage() {
 
   const handleOfferFormSubmit = async (e) => {
     e.preventDefault();
+
     try {
       setSubmitting(true);
-      await api.createOffer(selectedRequestId, offerForm);
+
+      // Validate form data
+      const validationErrors = userServiceRequestService.validateOfferData(offerForm);
+      if (validationErrors.length > 0) {
+        alert(`Please fix the following errors:\n${validationErrors.join('\n')}`);
+        return;
+      }
+
+      await userServiceRequestService.createIndividualOffer(selectedRequestId, offerForm);
+
       setShowOfferForm(false);
       setOfferForm({ quotedPrice: '', message: '', availability: '' });
       setSelectedRequestId(null);
+
       alert('Offer submitted successfully!');
     } catch (err) {
-      alert(err.message);
+      alert(`Error: ${err.message}`);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleAcceptOffer = async (offerId) => {
+    setConfirmMessage('Are you sure you want to accept this offer? This action cannot be undone.');
+    setConfirmAction(() => async () => {
+      try {
+        setSubmitting(true);
+        await userServiceRequestService.acceptOffer(offerId);
+        await loadUserOffers();
+        alert('Offer accepted successfully!');
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      } finally {
+        setSubmitting(false);
+        setShowConfirmModal(false);
+      }
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleRejectOffer = async (offerId, reason = '') => {
     try {
       setSubmitting(true);
-      await api.acceptOffer(offerId);
+      await userServiceRequestService.rejectOffer(offerId, reason);
       await loadUserOffers();
-      alert('Offer accepted successfully!');
+      alert('Offer rejected successfully!');
     } catch (err) {
-      alert(err.message);
+      alert(`Error: ${err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -523,6 +497,28 @@ export default function ServiceRequestPage() {
       'thismonth': 'This Month', 'flexible': 'Flexible'
     };
     return timelineMap[timeline] || timeline;
+  };
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      'pending': { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle },
+      'accepted': { color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      'rejected': { color: 'bg-red-100 text-red-800', icon: XCircle }
+    };
+
+    const config = statusConfig[status] || statusConfig['pending'];
+    const Icon = config.icon;
+
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+        <Icon className="w-3 h-3 mr-1" />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const handleLogin = () => {
+    window.location.href = '/accounts/sign-in';
   };
 
   if (loading) {
@@ -571,6 +567,13 @@ export default function ServiceRequestPage() {
             <Plus className="w-5 h-5" />
             <span>Post Service Request</span>
           </button>
+
+          {/* Auth status for development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 text-sm opacity-75">
+              User Auth: {isAuthenticated ? `Logged in (${currentUser?.firstName || 'Unknown'})` : 'Not logged in'}
+            </div>
+          )}
         </div>
       </section>
 
@@ -623,6 +626,18 @@ export default function ServiceRequestPage() {
               <option value="300-500">$300 - $500</option>
               <option value="500+">$500+</option>
             </select>
+            <select
+              value={filters.timeline}
+              onChange={(e) => handleFilterChange('timeline', e.target.value)}
+              className="border border-gray-200 rounded px-3 py-1 text-sm"
+            >
+              <option value="all">All Timelines</option>
+              <option value="urgent">ASAP/Urgent</option>
+              <option value="thisweek">This Week</option>
+              <option value="nextweek">Next Week</option>
+              <option value="thismonth">This Month</option>
+              <option value="flexible">Flexible</option>
+            </select>
           </div>
           <div className="text-sm text-gray-600">
             <span className="font-semibold">{pagination.totalCount || 0}</span> active requests
@@ -641,7 +656,7 @@ export default function ServiceRequestPage() {
             >
               All Requests
             </button>
-            {authenticated && (
+            {isAuthenticated && (
               <>
                 <button
                   onClick={() => handleTabChange('offers')}
@@ -660,7 +675,7 @@ export default function ServiceRequestPage() {
           </div>
         </div>
 
-        {/* All Requests Tab (PUBLIC) */}
+        {/* All Requests Tab */}
         {activeTab === 'all' && (
           <div className="space-y-6">
             {serviceRequests.length === 0 ? (
@@ -799,13 +814,13 @@ export default function ServiceRequestPage() {
           </div>
         )}
 
-        {/* My Offers Tab (PRIVATE) */}
-        {activeTab === 'offers' && authenticated && (
+        {/* My Offers Tab */}
+        {activeTab === 'offers' && isAuthenticated && (
           <div className="space-y-6">
             {userOffers.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-xl mb-4">No offers yet</div>
-                <p className="text-gray-600 mb-6">Start making offers on service requests to see them here!</p>
+                <p className="text-gray-600 mb-6">Offers from service providers will appear here when they respond to your requests.</p>
                 <button onClick={() => handleTabChange('all')} className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 font-medium">
                   Browse Requests
                 </button>
@@ -817,7 +832,7 @@ export default function ServiceRequestPage() {
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                          <Briefcase className="w-6 h-6 text-gray-600" />
+                          <MessageSquare className="w-6 h-6 text-gray-600" />
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
@@ -825,11 +840,7 @@ export default function ServiceRequestPage() {
                             {offer.verified && (
                               <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Verified</span>
                             )}
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${offer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                offer.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                              }`}>
-                              {offer.status.toUpperCase()}
-                            </span>
+                            {getStatusBadge(offer.status)}
                           </div>
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <div className="flex items-center">
@@ -863,53 +874,39 @@ export default function ServiceRequestPage() {
                       </div>
                       <div className="flex space-x-2">
                         <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
-                          View Store
+                          View Details
                         </button>
                         {offer.status === 'pending' && (
-                          <button
-                            onClick={() => handleAcceptOffer(offer.id)}
-                            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium"
-                            disabled={submitting}
-                          >
-                            {submitting ? 'Accepting...' : 'Accept Offer'}
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleRejectOffer(offer.id)}
+                              className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 font-medium"
+                              disabled={submitting}
+                            >
+                              Reject
+                            </button>
+                            <button
+                              onClick={() => handleAcceptOffer(offer.id)}
+                              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium"
+                              disabled={submitting}
+                            >
+                              {submitting ? 'Accepting...' : 'Accept Offer'}
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
               ))
-            )}
 
-            {/* Pagination for offers */}
-            {pagination.totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-4 mt-8">
-                <button
-                  onClick={() => handleFilterChange('page', Math.max(1, filters.page - 1))}
-                  disabled={!pagination.hasPrev}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-
-                <span className="text-sm text-gray-600">
-                  Page {pagination.currentPage} of {pagination.totalPages}
-                </span>
-
-                <button
-                  onClick={() => handleFilterChange('page', Math.min(pagination.totalPages, filters.page + 1))}
-                  disabled={!pagination.hasNext}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
+              
             )}
           </div>
         )}
 
-        {/* Past Requests Tab (PRIVATE) */}
-        {activeTab === 'past' && authenticated && (
+        {/* Past Requests Tab */}
+        {activeTab === 'past' && isAuthenticated && (
           <div className="space-y-6">
             {userPastRequests.length === 0 ? (
               <div className="text-center py-12">
@@ -988,31 +985,6 @@ export default function ServiceRequestPage() {
                 </div>
               ))
             )}
-
-            {/* Pagination for past requests */}
-            {pagination.totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-4 mt-8">
-                <button
-                  onClick={() => handleFilterChange('page', Math.max(1, filters.page - 1))}
-                  disabled={!pagination.hasPrev}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-
-                <span className="text-sm text-gray-600">
-                  Page {pagination.currentPage} of {pagination.totalPages}
-                </span>
-
-                <button
-                  onClick={() => handleFilterChange('page', Math.min(pagination.totalPages, filters.page + 1))}
-                  disabled={!pagination.hasNext}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            )}
           </div>
         )}
       </section>
@@ -1058,7 +1030,7 @@ export default function ServiceRequestPage() {
 
       <Footer />
 
-      {/* Modals */}
+      {/* Request Form Modal */}
       {showRequestForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1116,6 +1088,7 @@ export default function ServiceRequestPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Min Budget *</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={requestForm.budgetMin}
                     onChange={(e) => setRequestForm(prev => ({ ...prev, budgetMin: e.target.value }))}
                     placeholder="Minimum budget"
@@ -1128,6 +1101,7 @@ export default function ServiceRequestPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Max Budget *</label>
                   <input
                     type="number"
+                    step="0.01"
                     value={requestForm.budgetMax}
                     onChange={(e) => setRequestForm(prev => ({ ...prev, budgetMax: e.target.value }))}
                     placeholder="Maximum budget"
@@ -1164,6 +1138,20 @@ export default function ServiceRequestPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                <select
+                  value={requestForm.priority}
+                  onChange={(e) => setRequestForm(prev => ({ ...prev, priority: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                >
+                  <option value="low">Low Priority</option>
+                  <option value="normal">Normal Priority</option>
+                  <option value="high">High Priority</option>
+                  <option value="urgent">Urgent</option>
+                </select>
               </div>
 
               <div>
@@ -1205,6 +1193,7 @@ export default function ServiceRequestPage() {
         </div>
       )}
 
+      {/* Offer Form Modal (for individual service providers) */}
       {showOfferForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-lg">
@@ -1215,6 +1204,7 @@ export default function ServiceRequestPage() {
                   ×
                 </button>
               </div>
+              <p className="text-gray-600 text-sm mt-1">You're making an individual offer as a service provider</p>
             </div>
 
             <form onSubmit={handleOfferFormSubmit} className="p-6 space-y-6">
@@ -1222,6 +1212,7 @@ export default function ServiceRequestPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Quoted Price *</label>
                 <input
                   type="number"
+                  step="0.01"
                   value={offerForm.quotedPrice}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, quotedPrice: e.target.value }))}
                   placeholder="Enter your price quote"
@@ -1236,7 +1227,7 @@ export default function ServiceRequestPage() {
                   rows="4"
                   value={offerForm.message}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, message: e.target.value }))}
-                  placeholder="Describe your offer and experience..."
+                  placeholder="Describe your offer, experience, and why you're the best choice..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
                   required
                 />
@@ -1248,7 +1239,7 @@ export default function ServiceRequestPage() {
                   type="text"
                   value={offerForm.availability}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, availability: e.target.value }))}
-                  placeholder="When can you start?"
+                  placeholder="When can you start? (e.g., Tomorrow, This weekend, Next week)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
                   required
                 />
@@ -1276,6 +1267,7 @@ export default function ServiceRequestPage() {
         </div>
       )}
 
+      {/* Login Prompt Modal */}
       {showLoginPrompt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-md">
@@ -1292,10 +1284,7 @@ export default function ServiceRequestPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    setShowLoginPrompt(false);
-                    window.location.href = '/accounts/sign-in';
-                  }}
+                  onClick={handleLogin}
                   className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
                 >
                   Login

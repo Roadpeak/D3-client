@@ -24,12 +24,16 @@ import {
   Tag,
   Camera,
   ExternalLink,
-  Navigation
+  Navigation,
+  Linkedin,
+  Youtube
 } from 'lucide-react';
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ServiceCard from '../components/ServiceCard';
 import StoreService from '../services/storeService';
+import serviceAPI from '../services/serviceService';
 import chatService from '../services/chatService';
 import authService from '../services/authService';
 
@@ -48,56 +52,6 @@ const offerAPI = {
     } catch (error) {
       console.warn('Offers API error:', error);
       return { offers: [] };
-    }
-  }
-};
-
-const serviceAPI = {
-  getServices: async (params = {}) => {
-    try {
-      // Try multiple endpoints for services
-      let url;
-      if (params.storeId) {
-        // First try the store-specific endpoint
-        url = `http://localhost:4000/api/v1/services/store/${params.storeId}`;
-      } else {
-        url = 'http://localhost:4000/api/v1/services';
-      }
-
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      return response.json();
-    } catch (error) {
-      console.warn('Services API error:', error);
-
-      // If store-specific endpoint fails, try general endpoint with filter
-      if (params.storeId) {
-        try {
-          const response = await fetch(`http://localhost:4000/api/v1/services?storeId=${params.storeId}`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
-
-          if (response.ok) {
-            return response.json();
-          }
-        } catch (fallbackError) {
-          console.warn('Fallback services API also failed:', fallbackError);
-        }
-      }
-
-      return { services: [] };
     }
   }
 };
@@ -163,6 +117,7 @@ const StoreViewPage = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
+  const [success, setSuccess] = useState(null);
 
   const getAuthenticationStatus = () => {
     try {
@@ -221,26 +176,55 @@ const StoreViewPage = () => {
       };
     }
   };
+
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   // Enhanced getCurrentUser function
   const getCurrentUser = () => {
-    const authStatus = getAuthenticationStatus();
-
-    if (!authStatus.isAuthenticated) {
+    // Use your existing auth service to check authentication
+    const isAuthenticated = authService.isAuthenticated();
+    
+    if (!isAuthenticated) {
       return {
         isLoggedIn: false,
-        error: 'Not authenticated',
-        debug: authStatus
+        error: 'Not authenticated'
       };
     }
 
     try {
-      const userInfo = authStatus.userInfo;
+      // Get user info from localStorage (set during login)
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      
+      // Fallback to other possible keys if userInfo is empty
+      if (!userInfo.id && !userInfo.userId) {
+        const possibleKeys = ['user', 'userData', 'currentUser'];
+        for (const key of possibleKeys) {
+          try {
+            const stored = localStorage.getItem(key);
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (parsed && (parsed.id || parsed.userId)) {
+                Object.assign(userInfo, parsed);
+                break;
+              }
+            }
+          } catch (e) {
+            console.log(`Failed to parse ${key}:`, e.message);
+          }
+        }
+      }
+
       return {
         isLoggedIn: true,
         id: userInfo.id || userInfo.userId,
         name: `${userInfo.firstName || userInfo.first_name || 'User'} ${(userInfo.lastName || userInfo.last_name || 'U').charAt(0)}.`,
         email: userInfo.email,
-        userType: 'customer', // FIXED: Force customer type for store page chat
+        userType: 'customer', // Always customer for store page
         role: 'customer',
         rawUserInfo: userInfo
       };
@@ -248,8 +232,7 @@ const StoreViewPage = () => {
       console.error('Error getting current user:', error);
       return {
         isLoggedIn: false,
-        error: 'Failed to parse user info',
-        debug: authStatus
+        error: 'Failed to parse user info'
       };
     }
   };
@@ -377,154 +360,119 @@ const StoreViewPage = () => {
 
   const handleChatClick = async () => {
     try {
-      console.log('=== FIXED CHAT BUTTON CLICKED ===');
-  
-      const authStatus = getAuthenticationStatus();
-      const currentUser = getCurrentUser();
-  
-      console.log('🔐 Auth Status:', authStatus);
-      console.log('👤 Current User (FORCED CUSTOMER):', currentUser);
-  
-      if (!authStatus.isAuthenticated || !currentUser.isLoggedIn) {
-        console.log('❌ Authentication failed, redirecting to login');
+      console.log('=== CHAT BUTTON CLICKED ===');
+
+      if (!storeData || !id) {
+        setError('Store information not available. Please refresh the page.');
+        return;
+      }
+
+      // Use auth service to check authentication
+      if (!authService.isAuthenticated()) {
+        console.log('❌ Not authenticated, redirecting to login');
         setError(`Please log in to chat with ${storeData.name}`);
         navigate('/accounts/sign-in', {
           state: { from: { pathname: location.pathname } }
         });
         return;
       }
-  
+
+      const currentUser = getCurrentUser();
+      if (!currentUser.isLoggedIn) {
+        navigate('/accounts/sign-in', {
+          state: { from: { pathname: location.pathname } }
+        });
+        return;
+      }
+
       setStartingChat(true);
       setError(null);
-  
-      try {
-        console.log('🚀 Starting CUSTOMER chat process...');
-        console.log('Store ID:', id, 'Store Name:', storeData.name);
-        console.log('User:', currentUser.name, 'ID:', currentUser.id, 'Type:', currentUser.userType);
-  
-        const chatToken = chatService.getAuthToken();
-        console.log('💬 Chat service token:', chatToken ? `Found (${chatToken.substring(0, 20)}...)` : 'Not found');
-  
-        if (!chatToken) {
-          console.log('⚠️ Chat service has no token, this might cause issues');
-        }
-  
-        // FIXED: Always get customer conversations
-        console.log('📋 Fetching CUSTOMER conversations...');
-        const conversationsResponse = await chatService.getConversations('customer');
-        console.log('📋 Customer conversations response:', conversationsResponse);
-  
-        if (conversationsResponse.success) {
-          // Look for existing conversation with this store
-          const existingConversation = conversationsResponse.data.find(
-            conv => conv.store && (conv.store.id === id || conv.store.id === parseInt(id))
-          );
-  
-          console.log('🔍 Existing conversation found:', !!existingConversation);
-  
-          if (existingConversation) {
-            console.log('✅ Using existing conversation:', existingConversation.id);
-  
-            // FIXED: Navigate to CUSTOMER chat page with proper user type
+
+      // Get auth token using your auth service method
+      const token = authService.getTokenFromCookie ? 
+        authService.getTokenFromCookie() : 
+        localStorage.getItem('access_token');
+
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      console.log('🚀 Starting chat with proper auth...');
+      
+      // Your existing chat logic here...
+      const storeId = parseInt(id);
+      if (isNaN(storeId)) {
+        throw new Error('Invalid store ID');
+      }
+
+      const conversationsResponse = await chatService.getConversations('customer');
+      
+      if (conversationsResponse.success) {
+        const existingConversation = conversationsResponse.data.find(
+          conv => conv.store && (conv.store.id === storeId || conv.store.id === id)
+        );
+
+        if (existingConversation) {
+          navigate('/chat', {
+            state: {
+              selectedConversation: existingConversation,
+              storeData: storeData,
+              user: { ...currentUser, userType: 'customer', role: 'customer' },
+              userType: 'customer'
+            }
+          });
+        } else {
+          const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
+          const newConversationResponse = await chatService.startConversation(storeId, initialMessage);
+
+          if (newConversationResponse.success) {
+            const newConversation = {
+              id: newConversationResponse.data.conversationId,
+              store: {
+                id: storeId,
+                name: storeData.name,
+                avatar: storeData.logo || storeData.logo_url,
+                category: storeData.category,
+                online: true
+              },
+              lastMessage: initialMessage,
+              lastMessageTime: 'now',
+              unreadCount: 0
+            };
+
             navigate('/chat', {
               state: {
-                selectedConversation: existingConversation,
+                selectedConversation: newConversation,
+                newConversationId: newConversationResponse.data.conversationId,
                 storeData: storeData,
-                user: {
-                  ...currentUser,
-                  userType: 'customer', // FORCE customer type
-                  role: 'customer'
-                },
-                userType: 'customer' // Explicitly set as customer
+                user: { ...currentUser, userType: 'customer', role: 'customer' },
+                userType: 'customer'
               }
             });
           } else {
-            console.log('🆕 Creating new conversation as CUSTOMER...');
-  
-            const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
-  
-            const newConversationResponse = await chatService.startConversation(
-              parseInt(id),
-              initialMessage
-            );
-  
-            console.log('🆕 New conversation response:', newConversationResponse);
-  
-            if (newConversationResponse.success) {
-              console.log('✅ New conversation created:', newConversationResponse.data.conversationId);
-  
-              // Create a conversation object for navigation
-              const newConversation = {
-                id: newConversationResponse.data.conversationId,
-                store: {
-                  id: parseInt(id),
-                  name: storeData.name,
-                  avatar: storeData.logo || storeData.logo_url,
-                  category: storeData.category,
-                  online: true
-                },
-                lastMessage: initialMessage,
-                lastMessageTime: 'now',
-                unreadCount: 0
-              };
-  
-              // FIXED: Navigate to CUSTOMER chat page with proper user type
-              navigate('/chat', {
-                state: {
-                  selectedConversation: newConversation,
-                  newConversationId: newConversationResponse.data.conversationId,
-                  storeData: storeData,
-                  user: {
-                    ...currentUser,
-                    userType: 'customer', // FORCE customer type
-                    role: 'customer'
-                  },
-                  userType: 'customer' // Explicitly set as customer
-                }
-              });
-  
-              console.log('🎉 Chat started successfully! Customer will see messages in CUSTOMER interface.');
-            } else {
-              throw new Error(newConversationResponse.message || 'Failed to start conversation');
-            }
+            throw new Error(newConversationResponse.message || 'Failed to start conversation');
           }
-        } else {
-          throw new Error(conversationsResponse.message || 'Failed to load conversations');
         }
-  
-      } catch (apiError) {
-        console.error('❌ Chat API Error:', apiError);
-  
-        if (apiError.message.includes('Authentication') ||
-          apiError.message.includes('401') ||
-          apiError.message.includes('403') ||
-          apiError.message.includes('token')) {
-          
-          setError('Your session has expired. Please log in again to chat.');
-  
-          ['access_token', 'authToken', 'token', 'userInfo', 'user', 'userData'].forEach(key => {
-            localStorage.removeItem(key);
-          });
-  
-          navigate('/accounts/sign-in', {
-            state: {
-              from: { pathname: location.pathname },
-              message: 'Please log in to chat with stores'
-            }
-          });
-        } else {
-          setError(`Unable to start chat: ${apiError.message}`);
-        }
+      } else {
+        throw new Error(conversationsResponse.message || 'Failed to load conversations');
       }
-  
+
     } catch (error) {
-      console.error('❌ General Chat error:', error);
-      setError(`Failed to start chat: ${error.message}`);
+      console.error('❌ Chat error:', error);
+      if (error.message.includes('Authentication') || 
+          error.message.includes('401') || 
+          error.message.includes('token')) {
+        setError('Your session has expired. Please log in again to chat.');
+        navigate('/accounts/sign-in', {
+          state: { from: { pathname: location.pathname } }
+        });
+      } else {
+        setError(`Unable to start chat: ${error.message}`);
+      }
     } finally {
       setStartingChat(false);
     }
   };
-
   // Enhanced getCookieValue function
   const getCookieValue = (name) => {
     try {
@@ -541,7 +489,6 @@ const StoreViewPage = () => {
       return '';
     }
   };
-
 
   // Enhanced Chat Button component with better disabled states
   const ChatButton = ({ className = "", size = "default" }) => {
@@ -565,8 +512,8 @@ const StoreViewPage = () => {
         onClick={handleChatClick}
         disabled={isDisabled}
         className={`flex items-center gap-2 rounded-lg transition-colors ${isDisabled
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           } ${buttonSizes[size]} ${className}`}
         title={!currentUser.isLoggedIn ? 'Please log in to chat' : `Chat with ${storeData?.name || 'store'} as customer`}
       >
@@ -589,11 +536,13 @@ const StoreViewPage = () => {
     );
   };
 
-
   // Toggle follow status
   const toggleFollow = async () => {
-    if (!currentUser.isLoggedIn) {
-      alert('Please log in to follow stores.');
+    if (!authService.isAuthenticated()) {
+      setError('Please log in to follow stores.');
+      navigate('/accounts/sign-in', {
+        state: { from: { pathname: location.pathname } }
+      });
       return;
     }
 
@@ -602,10 +551,17 @@ const StoreViewPage = () => {
 
       const response = await fetch(`http://localhost:4000/api/v1/stores/${id}/toggle-follow`, {
         method: 'POST',
-        headers: StoreService.getHeaders()
+        headers: StoreService.getHeaders() // This should include proper auth headers
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setError('Your session has expired. Please log in again.');
+          navigate('/accounts/sign-in', {
+            state: { from: { pathname: location.pathname } }
+          });
+          return;
+        }
         throw new Error('Failed to toggle follow status');
       }
 
@@ -617,7 +573,7 @@ const StoreViewPage = () => {
       }));
     } catch (err) {
       console.error('Error toggling follow:', err);
-      alert('Failed to update follow status. Please try again.');
+      setError('Failed to update follow status. Please try again.');
     } finally {
       setToggleFollowLoading(false);
     }
@@ -625,35 +581,53 @@ const StoreViewPage = () => {
 
   // Submit review
   const handleReviewSubmit = async () => {
+    if (!authService.isAuthenticated()) {
+      setError('Please log in to submit a review.');
+      navigate('/accounts/sign-in', {
+        state: { from: { pathname: location.pathname } }
+      });
+      return;
+    }
+  
+    const currentUser = getCurrentUser();
     if (!currentUser.isLoggedIn) {
-      alert('Please log in to submit a review.');
+      setError('Please log in to submit a review.');
       return;
     }
-
+  
     if (!newReview.rating || !newReview.comment.trim()) {
-      alert('Please provide both a rating and a comment.');
+      setError('Please provide both a rating and a comment.');
       return;
     }
-
+  
     try {
       setSubmittingReview(true);
-
+      setError(null); // Clear any existing errors
+  
       const response = await fetch(`http://localhost:4000/api/v1/stores/${id}/reviews`, {
         method: 'POST',
-        headers: StoreService.getHeaders(),
+        headers: StoreService.getHeaders(), // Uses proper auth headers
         body: JSON.stringify({
           rating: newReview.rating,
           comment: newReview.comment.trim()
         })
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
+        if (response.status === 401) {
+          setError('Your session has expired. Please log in again.');
+          navigate('/accounts/sign-in', {
+            state: { from: { pathname: location.pathname } }
+          });
+          return;
+        }
         throw new Error(errorData.message || 'Failed to submit review');
       }
-
+  
       const data = await response.json();
-
+  
+      // Update store data with new review
       setStoreData(prev => ({
         ...prev,
         rating: data.storeRating,
@@ -666,18 +640,21 @@ const StoreViewPage = () => {
           ...prev.reviews
         ]
       }));
-
+  
+      // Reset form
       setNewReview({ rating: 0, comment: '' });
       setHoverRating(0);
-      alert('Thank you for your review!');
+      
+      // Show success message
+      setSuccess('Thank you for your review! Your feedback has been submitted successfully.');
+      
     } catch (err) {
       console.error('Error submitting review:', err);
-      alert(err.message);
+      setError(err.message);
     } finally {
       setSubmittingReview(false);
     }
   };
-
   // Copy promo code
   const handleCopyCode = (code) => {
     navigator.clipboard.writeText(code);
@@ -725,8 +702,8 @@ const StoreViewPage = () => {
       <Star
         key={i}
         className={`w-4 h-4 ${interactive ? 'cursor-pointer' : ''} transition-colors ${i < (interactive ? (hoverRating || rating) : Math.floor(rating))
-            ? 'fill-yellow-400 text-yellow-400'
-            : interactive ? 'text-gray-300 hover:text-yellow-400' : 'text-gray-300'
+          ? 'fill-yellow-400 text-yellow-400'
+          : interactive ? 'text-gray-300 hover:text-yellow-400' : 'text-gray-300'
           }`}
         onClick={interactive ? () => onRate(i + 1) : undefined}
         onMouseEnter={interactive ? () => onHover(i + 1) : undefined}
@@ -855,83 +832,88 @@ const StoreViewPage = () => {
     );
   };
 
-  // Enhanced Service Card Component
-  const ServiceCard = ({ service }) => (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group">
-      {/* Service Image */}
-      <div className="relative h-48 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
-        {service.image_url ? (
-          <img
-            src={service.image_url}
-            alt={service.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-        ) : null}
-
-        {/* Fallback gradient background */}
-        <div className={`absolute inset-0 flex items-center justify-center ${service.image_url ? 'hidden' : 'flex'}`}>
-          <div className="text-center text-white">
-            <Camera className="w-12 h-12 mx-auto mb-2 opacity-80" />
-            <div className="text-lg font-semibold opacity-90">{service.name}</div>
+  const getSocialIcon = (platform) => {
+    const iconProps = { className: "w-5 h-5" };
+  
+    switch (platform.toLowerCase()) {
+      case 'facebook':
+        return <Facebook {...iconProps} className="w-5 h-5 text-blue-600" />;
+      case 'instagram':
+        return <Instagram {...iconProps} className="w-5 h-5 text-pink-600" />;
+      case 'twitter':
+      case 'x':
+        return <Twitter {...iconProps} className="w-5 h-5 text-blue-400" />;
+      case 'linkedin':
+        return <Linkedin {...iconProps} className="w-5 h-5 text-blue-700" />;
+      case 'youtube':
+        return <Youtube {...iconProps} className="w-5 h-5 text-red-600" />;
+      case 'website':
+        return <Globe {...iconProps} className="w-5 h-5 text-gray-600" />;
+      case 'tiktok':
+        return (
+          <div className="w-5 h-5 bg-black rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">T</span>
           </div>
-        </div>
-
-        {/* Service Type Badge */}
-        <div className="absolute top-3 right-3">
-          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${service.type === 'fixed'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-blue-100 text-blue-800'
-            }`}>
-            {service.type === 'fixed' ? 'Fixed Price' : 'Dynamic Price'}
-          </span>
-        </div>
-      </div>
-
-      {/* Service Content */}
-      <div className="p-6">
-        <h3 className="font-bold text-gray-900 text-lg mb-2 line-clamp-1">
-          {service.name}
-        </h3>
-
-        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-          {service.description || 'No description available'}
-        </p>
-
-        {service.type === 'fixed' && (
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex items-center text-green-600 font-semibold">
-              <DollarSign className="w-4 h-4 mr-1" />
-              <span>KES {service.price}</span>
-            </div>
-            <div className="flex items-center text-gray-500">
-              <Clock className="w-4 h-4 mr-1" />
-              <span className="text-sm">{service.duration} mins</span>
-            </div>
+        );
+      case 'whatsapp':
+        return (
+          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">W</span>
           </div>
-        )}
-
-        {service.category && (
-          <div className="mb-4">
-            <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-              {service.category}
-            </span>
+        );
+      case 'discord':
+        return (
+          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">D</span>
           </div>
-        )}
-
-        <button
-          className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
-          onClick={() => navigate(`/service/${service.id}`)}
-        >
-          <Calendar className="w-4 h-4" />
-          Book Service
-        </button>
-      </div>
-    </div>
-  );
+        );
+      case 'pinterest':
+        return (
+          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">P</span>
+          </div>
+        );
+      case 'snapchat':
+        return (
+          <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">S</span>
+          </div>
+        );
+      case 'tumblr':
+        return (
+          <div className="w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">T</span>
+          </div>
+        );
+      case 'reddit':
+        return (
+          <div className="w-5 h-5 bg-orange-600 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">R</span>
+          </div>
+        );
+      case 'vimeo':
+        return (
+          <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">V</span>
+          </div>
+        );
+      case 'github':
+        return (
+          <div className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">G</span>
+          </div>
+        );
+      case 'flickr':
+        return (
+          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xs font-bold">F</span>
+          </div>
+        );
+      default:
+        return <Globe {...iconProps} className="w-5 h-5 text-gray-600" />;
+    }
+  };
+  
 
   // Enhanced Outlet Card Component
   const OutletCard = ({ branch }) => (
@@ -1287,7 +1269,7 @@ const StoreViewPage = () => {
             ) : services.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {services.map((service) => (
-                  <ServiceCard key={service.id} service={service} />
+                  <ServiceCard key={service.id} service={service} storeId={id} />
                 ))}
               </div>
             ) : (
@@ -1475,28 +1457,87 @@ const StoreViewPage = () => {
                   <p className="text-gray-600 mb-4">{storeData.description}</p>
                 )}
 
-                {/* Social Links */}
+                {/* Social Links - UPDATED SECTION */}
                 <div className="flex items-center gap-3 mb-4">
-                  {storeData.socialLinks?.facebook && (
-                    <a href={storeData.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700">
-                      <Facebook className="w-5 h-5" />
-                    </a>
+                  {console.log('🔍 Store social links debug:', {
+                    socialLinksRaw: storeData.socialLinksRaw,
+                    socialLinks: storeData.socialLinks,
+                    hasSocialLinksRaw: !!(storeData.socialLinksRaw && storeData.socialLinksRaw.length > 0),
+                    hasSocialLinks: !!(storeData.socialLinks && Object.keys(storeData.socialLinks).some(key => storeData.socialLinks[key]))
+                  })}
+
+                  {/* Display social links from database */}
+                  {storeData.socialLinksRaw && storeData.socialLinksRaw.length > 0 ? (
+                    <>
+                      {storeData.socialLinksRaw.map((social) => (
+                        <a
+                          key={social.id}
+                          href={social.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors group hover:scale-110 transform duration-200"
+                          title={`Visit our ${social.platform} page`}
+                        >
+                          {getSocialIcon(social.platform)}
+                        </a>
+                      ))}
+
+                      {/* Website link if available */}
+                      {storeData.website_url && (
+                        <a
+                          href={storeData.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors group hover:scale-110 transform duration-200"
+                          title="Visit our website"
+                        >
+                          <Globe className="w-5 h-5 text-gray-600" />
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    /* Fallback to legacy social links if no database links exist */
+                    <>
+                      {storeData.socialLinks?.facebook && (
+                        <a href={storeData.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200">
+                          <Facebook className="w-5 h-5 text-blue-600" />
+                        </a>
+                      )}
+                      {storeData.socialLinks?.twitter && (
+                        <a href={storeData.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200">
+                          <Twitter className="w-5 h-5 text-sky-500" />
+                        </a>
+                      )}
+                      {storeData.socialLinks?.instagram && (
+                        <a href={storeData.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200">
+                          <Instagram className="w-5 h-5 text-pink-600" />
+                        </a>
+                      )}
+                      {storeData.socialLinks?.linkedin && (
+                        <a href={storeData.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200">
+                          <Linkedin className="w-5 h-5 text-blue-700" />
+                        </a>
+                      )}
+                      {storeData.socialLinks?.youtube && (
+                        <a href={storeData.socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200">
+                          <Youtube className="w-5 h-5 text-red-600" />
+                        </a>
+                      )}
+                      {storeData.socialLinks?.website && (
+                        <a href={storeData.socialLinks.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200">
+                          <Globe className="w-5 h-5 text-gray-600" />
+                        </a>
+                      )}
+                    </>
                   )}
-                  {storeData.socialLinks?.twitter && (
-                    <a href={storeData.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-sky-500 hover:text-sky-600">
-                      <Twitter className="w-5 h-5" />
-                    </a>
-                  )}
-                  {storeData.socialLinks?.instagram && (
-                    <a href={storeData.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:text-pink-700">
-                      <Instagram className="w-5 h-5" />
-                    </a>
-                  )}
-                  {storeData.socialLinks?.website && (
-                    <a href={storeData.socialLinks.website} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-700">
-                      <Globe className="w-5 h-5" />
-                    </a>
-                  )}
+
+                  {/* Show message if no social links */}
+                  {(!storeData.socialLinksRaw || storeData.socialLinksRaw.length === 0) &&
+                    (!storeData.socialLinks?.facebook && !storeData.socialLinks?.twitter &&
+                      !storeData.socialLinks?.instagram && !storeData.socialLinks?.linkedin &&
+                      !storeData.socialLinks?.youtube && !storeData.socialLinks?.website) && (
+                      <span className="text-sm text-gray-500 italic">No social media links available</span>
+                    )}
                 </div>
               </div>
             </div>
@@ -1717,11 +1758,11 @@ const StoreViewPage = () => {
 
       {/* Fixed Chat Button */}
       <div className="fixed bottom-6 right-6 z-50">
-          <ChatButton
-            size="large"
-            className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:bg-red-600"
-          />
-        </div>
+        <ChatButton
+          size="large"
+          className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:bg-red-600"
+        />
+      </div>
       <Footer />
     </div>
   );

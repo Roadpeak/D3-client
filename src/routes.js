@@ -18,6 +18,7 @@ import Requestservice from './pages/Requestservice'
 import Hotdeals from './pages/Hotdeals'
 import VerifyOTP from './pages/auth/VerifyOTP'
 import EnhancedBookingPage from './pages/Booking'
+import ServiceDetailPage from './pages/ServiceDetailPage'; 
 
 // Service Components (ViewService only - no services listing page needed)
 import ViewService from './pages/ViewService' // View individual service
@@ -81,6 +82,7 @@ const AppRoutes = () => {
         <Route path='/offer/:id' element={<ViewOffer />} />
         <Route path='/offers/:id' element={<ViewOffer />} />
         <Route path='store/offers/:id' element={<ViewOffer />} />
+        <Route path="/store/:storeId/offers/:offerId" element={<ViewOffer />} />
         
         {/* Store Routes */}
         <Route path='/stores' element={<Stores />} />
@@ -94,6 +96,7 @@ const AppRoutes = () => {
         <Route path='/service/:id' element={<ViewService />} />
         <Route path='/services/:id' element={<ViewService />} />
         <Route path='/ViewService/:id' element={<ViewService />} />
+        <Route path="/store/:storeId/services/:serviceId" element={<ServiceDetailPage />} />
         
         {/* Service booking routes */}
         <Route path='/service/:id/book' element={<Navigate to={`/booking/service/${window.location.pathname.split('/')[2]}`} replace />} />

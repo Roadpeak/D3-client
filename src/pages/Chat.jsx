@@ -1,4 +1,4 @@
-// pages/ChatPage.jsx - FIXED: Customer↔Store Communication Interface
+// pages/ChatPage.jsx - FIXED: Desktop Layout & Customer↔Store Communication
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Send, Search, Phone, Video, MoreVertical, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle, Store } from 'lucide-react';
@@ -499,9 +499,9 @@ const ChatPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
-        <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 200px)' }}>
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
             <p className="text-gray-600">Loading your store conversations...</p>
@@ -514,9 +514,9 @@ const ChatPage = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
-        <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 200px)' }}>
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-gray-600">Loading customer data...</p>
           </div>
@@ -527,14 +527,15 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white shadow-sm border border-gray-200 overflow-hidden rounded-lg" style={{ height: 'calc(100vh - 200px)' }}>
-          {/* Header */}
-          <div className="bg-white p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
+      {/* Main Chat Container - FIXED: Better desktop layout */}
+      <div className="flex-1 max-w-full mx-auto">
+        <div className="h-full bg-white shadow-sm border-b border-gray-200">
+          {/* FIXED: Header with better spacing and alignment */}
+          <div className="bg-white px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between max-w-7xl mx-auto">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => navigate(-1)}
@@ -543,36 +544,37 @@ const ChatPage = () => {
                   <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Store Messages</h2>
-                  <p className="text-sm text-gray-500">
+                  <h1 className="text-xl font-semibold text-gray-900">Store Messages</h1>
+                  <p className="text-sm text-gray-500 flex items-center gap-2">
                     Chat with your favorite stores
-                    {isConnected && <span className="ml-2 text-green-600">● Connected</span>}
+                    {isConnected && <span className="text-green-600 flex items-center gap-1">● Connected</span>}
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
                 {totalUnreadCount > 0 && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 bg-orange-50 px-3 py-1 rounded-full">
                     <AlertCircle className="w-4 h-4 text-orange-500" />
-                    <span className="text-sm font-medium text-gray-700">
-                      {totalUnreadCount} unread from stores
+                    <span className="text-sm font-medium text-orange-700">
+                      {totalUnreadCount} unread
                     </span>
                   </div>
                 )}
                 <button
                   onClick={loadChats}
-                  className="px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
                 >
+                  <MessageCircle className="w-4 h-4" />
                   Refresh
                 </button>
               </div>
             </div>
             {error && (
-              <div className="mt-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm">
-                {error}
+              <div className="max-w-7xl mx-auto mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center justify-between">
+                <span>{error}</span>
                 <button 
                   onClick={() => setError(null)}
-                  className="ml-2 text-red-800 hover:text-red-900"
+                  className="ml-2 text-red-800 hover:text-red-900 font-bold text-lg leading-none"
                 >
                   ×
                 </button>
@@ -580,12 +582,13 @@ const ChatPage = () => {
             )}
           </div>
 
-          <div className="flex" style={{ height: 'calc(100vh - 280px)' }}>
-            {/* Store Chat List Sidebar */}
+          {/* FIXED: Main chat layout with proper desktop sizing */}
+          <div className="flex max-w-7xl mx-auto" style={{ height: 'calc(100vh - 200px)' }}>
+            {/* FIXED: Store Chat List Sidebar - Better responsive behavior */}
             <div className={`${selectedChat
-                ? 'hidden lg:flex'
+                ? 'hidden xl:flex'
                 : 'flex'
-              } w-full lg:w-80 flex-col bg-gray-50 border-r border-gray-200`}>
+              } w-full xl:w-96 flex-col bg-gray-50 border-r border-gray-200`}>
               
               {/* Search */}
               <div className="p-4 bg-white border-b border-gray-200">
@@ -601,104 +604,130 @@ const ChatPage = () => {
                 </div>
               </div>
 
-              {/* Store Chat List */}
+              {/* Store Chat List - FIXED: Better scrolling */}
               <div className="flex-1 overflow-y-auto">
                 {filteredChats.length === 0 ? (
-                  <div className="flex items-center justify-center h-32 text-gray-500">
-                    <div className="text-center">
-                      <Store className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                      <p className="font-medium">No store conversations found</p>
+                  <div className="flex items-center justify-center h-48 text-gray-500">
+                    <div className="text-center px-4">
+                      <Store className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                      <p className="font-medium mb-1">No store conversations found</p>
                       <p className="text-sm">Start chatting with stores!</p>
+                      <button
+                        onClick={() => navigate('/stores')}
+                        className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                      >
+                        Browse Stores
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  filteredChats.map((chat) => {
-                    const store = chat.store;
-                    const storeName = store?.name || 'Unknown Store';
-                    const storeAvatar = store?.avatar || store?.logo_url;
-                    
-                    return (
-                      <div
-                        key={chat.id}
-                        onClick={() => handleChatSelect(chat)}
-                        className={`flex items-start p-4 hover:bg-white cursor-pointer transition-colors border-b border-gray-100 ${selectedChat?.id === chat.id ? 'bg-white border-r-2 border-blue-500' : ''
+                  <div className="divide-y divide-gray-100">
+                    {filteredChats.map((chat) => {
+                      const store = chat.store;
+                      const storeName = store?.name || 'Unknown Store';
+                      const storeAvatar = store?.avatar || store?.logo_url;
+                      
+                      return (
+                        <div
+                          key={chat.id}
+                          onClick={() => handleChatSelect(chat)}
+                          className={`flex items-start p-4 hover:bg-white cursor-pointer transition-all duration-200 ${
+                            selectedChat?.id === chat.id 
+                              ? 'bg-white border-r-4 border-blue-500 shadow-sm' 
+                              : 'hover:shadow-sm'
                           }`}
-                      >
-                        <div className="relative">
-                          <img
-                            src={storeAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(storeName)}&background=2563eb&color=ffffff`}
-                            alt={storeName}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                          {isUserOnline(store?.merchant_id) && (
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                          )}
-                        </div>
-                        <div className="ml-3 flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-gray-900 truncate">{storeName}</h3>
-                              <Store className="w-3 h-3 text-blue-500" />
+                        >
+                          <div className="relative flex-shrink-0">
+                            <img
+                              src={storeAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(storeName)}&background=2563eb&color=ffffff`}
+                              alt={storeName}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
+                              <Store className="w-2 h-2 text-white" />
                             </div>
-                            <div className="flex items-center space-x-1">
-                              <span className="text-xs text-gray-500">{chat.lastMessageTime}</span>
-                              {chat.unreadCount > 0 && (
-                                <span className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                  {chat.unreadCount}
+                            {isUserOnline(store?.merchant_id) && (
+                              <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                            )}
+                          </div>
+                          
+                          <div className="ml-3 flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <h3 className="font-semibold text-gray-900 truncate text-sm">{storeName}</h3>
+                                {chat.unreadCount > 0 && (
+                                  <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0">
+                                    {chat.unreadCount}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs text-gray-500 flex-shrink-0">{chat.lastMessageTime}</span>
+                            </div>
+                            
+                            <p className="text-sm text-gray-600 truncate mb-2 leading-tight">{chat.lastMessage}</p>
+                            
+                            <div className="flex items-center justify-between text-xs text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <span>{store?.category || 'Store'}</span>
+                              </span>
+                              {isUserOnline(store?.merchant_id) && (
+                                <span className="text-green-500 flex items-center gap-1">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                  Online
                                 </span>
                               )}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600 truncate mb-2">{chat.lastMessage}</p>
-                          <div className="flex items-center justify-between text-xs text-gray-400">
-                            <div className="flex items-center space-x-3">
-                              <span>{store?.category || 'Store'}</span>
-                              {isUserOnline(store?.merchant_id) && <span className="text-green-500">● Store Online</span>}
-                            </div>
-                          </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Chat Area */}
+            {/* FIXED: Chat Area - Better desktop layout */}
             <div className={`${selectedChat
-                ? 'flex w-full'
-                : 'hidden lg:flex lg:flex-1'
-              } flex-col`}>
+                ? 'flex'
+                : 'hidden xl:flex'
+              } flex-1 flex-col bg-white`}>
               {selectedChat ? (
                 <>
-                  {/* Store Chat Header */}
-                  <div className="bg-white p-4 border-b border-gray-200 flex items-center justify-between">
+                  {/* FIXED: Store Chat Header - Better desktop styling */}
+                  <div className="bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center">
                       <button
                         onClick={handleBackToSidebar}
-                        className="lg:hidden mr-3 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="xl:hidden mr-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       >
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                       </button>
-                      <div className="relative">
+                      <div className="relative flex-shrink-0">
                         <img
                           src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
                           alt={selectedChat.store?.name || 'Store'}
-                          className="w-10 h-10 rounded-full object-cover"
+                          className="w-12 h-12 rounded-full object-cover"
                         />
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-blue-500 rounded-full border-2 border-white">
-                          <Store className="w-2 h-2 text-white" />
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
+                          <Store className="w-2.5 h-2.5 text-white" />
                         </div>
                       </div>
-                      <div className="ml-3">
-                        <div className="flex items-center space-x-2">
-                          <h2 className="font-semibold text-gray-900">{selectedChat.store?.name || 'Store'}</h2>
+                      <div className="ml-4">
+                        <div className="flex items-center space-x-3">
+                          <h2 className="text-lg font-semibold text-gray-900">{selectedChat.store?.name || 'Store'}</h2>
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">Store</span>
                         </div>
-                        <p className="text-sm text-gray-500">
-                          {isUserOnline(selectedChat.store?.merchant_id) ? 'Store is Online' : 'Store will respond soon'}
+                        <p className="text-sm text-gray-500 flex items-center gap-2">
+                          {isUserOnline(selectedChat.store?.merchant_id) ? (
+                            <span className="text-green-600 flex items-center gap-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              Store is Online
+                            </span>
+                          ) : (
+                            'Store will respond soon'
+                          )}
                           {selectedChat.store?.category && (
-                            <span> • {selectedChat.store.category}</span>
+                            <span className="text-gray-400">• {selectedChat.store.category}</span>
                           )}
                         </p>
                       </div>
@@ -716,117 +745,136 @@ const ChatPage = () => {
                     </div>
                   </div>
 
-                  {/* Messages Area */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                  {/* FIXED: Messages Area - Better desktop scrolling and spacing */}
+                  <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gray-50">
                     {messages.length === 0 ? (
                       <div className="flex items-center justify-center h-full text-gray-500">
-                        <div className="text-center">
-                          <Store className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                          <p className="text-lg font-medium mb-2">Start chatting with {selectedChat.store?.name || 'this store'}</p>
-                          <p className="text-sm">Ask about products, services, store hours, or anything else!</p>
+                        <div className="text-center max-w-md">
+                          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Store className="w-8 h-8 text-blue-500" />
+                          </div>
+                          <h3 className="text-lg font-medium mb-2 text-gray-900">Start chatting with {selectedChat.store?.name || 'this store'}</h3>
+                          <p className="text-sm text-gray-600 mb-4">Ask about products, services, store hours, or anything else!</p>
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            {quickResponses.slice(0, 3).map((response, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleQuickResponse(response)}
+                                className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs rounded-full transition-colors"
+                              >
+                                {response}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      messages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${
-                            // FIXED: Customer messages align right, store messages align left
-                            msg.sender === 'user' || msg.sender === 'customer'
-                              ? 'justify-end' 
-                              : 'justify-start'
-                          }`}
-                        >
-                          <div className="flex items-end space-x-2 max-w-xs md:max-w-md lg:max-w-lg">
-                            {/* Store avatar for store messages */}
-                            {(msg.sender === 'store') && (
-                              <img
-                                src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
-                                alt="Store"
-                                className="w-6 h-6 rounded-full object-cover"
-                              />
-                            )}
-                            
-                            <div
-                              className={`px-4 py-2 rounded-lg ${
-                                // FIXED: Customer messages blue, store messages white with store branding
-                                msg.sender === 'user' || msg.sender === 'customer'
-                                  ? 'bg-blue-500 text-white rounded-br-sm'
-                                  : 'bg-white text-gray-900 rounded-bl-sm border border-blue-200 shadow-sm'
-                                }`}
-                            >
-                              {/* Store name for store messages */}
-                              {msg.sender === 'store' && (
-                                <div className="flex items-center gap-1 mb-1">
-                                  <Store className="w-3 h-3 text-blue-500" />
-                                  <span className="text-xs font-medium text-blue-600">{selectedChat.store?.name || 'Store'}</span>
+                      <>
+                        {messages.map((msg, index) => (
+                          <div
+                            key={msg.id}
+                            className={`flex ${
+                              // FIXED: Customer messages align right, store messages align left
+                              msg.sender === 'user' || msg.sender === 'customer'
+                                ? 'justify-end' 
+                                : 'justify-start'
+                            }`}
+                          >
+                            <div className="flex items-end space-x-3 max-w-md lg:max-w-lg xl:max-w-xl">
+                              {/* Store avatar for store messages */}
+                              {(msg.sender === 'store') && (
+                                <div className="flex-shrink-0">
+                                  <img
+                                    src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
+                                    alt="Store"
+                                    className="w-8 h-8 rounded-full object-cover"
+                                  />
                                 </div>
                               )}
                               
-                              <p className="text-sm">{msg.text}</p>
-                              <div className={`flex items-center justify-end mt-1 space-x-1 ${
-                                msg.sender === 'user' || msg.sender === 'customer'
-                                  ? 'text-blue-100' 
-                                  : 'text-gray-500'
-                                }`}>
-                                <Clock className="w-3 h-3" />
-                                <span className="text-xs">{msg.timestamp}</span>
-                                {(msg.sender === 'user' || msg.sender === 'customer') && (
-                                  <div className="ml-1">
-                                    {msg.status === 'read' ? (
-                                      <CheckCheck className="w-3 h-3 text-blue-200" />
-                                    ) : (
-                                      <Check className="w-3 h-3" />
-                                    )}
+                              <div
+                                className={`px-4 py-3 rounded-2xl max-w-full ${
+                                  // FIXED: Better message styling for desktop
+                                  msg.sender === 'user' || msg.sender === 'customer'
+                                    ? 'bg-blue-500 text-white rounded-br-md'
+                                    : 'bg-white text-gray-900 rounded-bl-md border border-gray-200 shadow-sm'
+                                }`}
+                              >
+                                {/* Store name for store messages */}
+                                {msg.sender === 'store' && (
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Store className="w-3 h-3 text-blue-500" />
+                                    <span className="text-xs font-medium text-blue-600">{selectedChat.store?.name || 'Store'}</span>
                                   </div>
                                 )}
+                                
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
+                                
+                                <div className={`flex items-center justify-end mt-2 space-x-1 ${
+                                  msg.sender === 'user' || msg.sender === 'customer'
+                                    ? 'text-blue-100' 
+                                    : 'text-gray-500'
+                                }`}>
+                                  <Clock className="w-3 h-3" />
+                                  <span className="text-xs">{msg.timestamp}</span>
+                                  {(msg.sender === 'user' || msg.sender === 'customer') && (
+                                    <div className="ml-1">
+                                      {msg.status === 'read' ? (
+                                        <CheckCheck className="w-3 h-3 text-blue-200" />
+                                      ) : (
+                                        <Check className="w-3 h-3" />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Customer avatar for customer messages */}
+                              {(msg.sender === 'user' || msg.sender === 'customer') && (
+                                <div className="flex-shrink-0">
+                                  <img
+                                    src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                                    alt="You"
+                                    className="w-8 h-8 rounded-full object-cover"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Typing indicator for store */}
+                        {typingUsers.length > 0 && (
+                          <div className="flex justify-start">
+                            <div className="flex items-end space-x-3">
+                              <img
+                                src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
+                                alt="Store"
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                              <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm">
+                                <div className="flex space-x-1">
+                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                </div>
                               </div>
                             </div>
-
-                            {/* Customer avatar for customer messages */}
-                            {(msg.sender === 'user' || msg.sender === 'customer') && (
-                              <img
-                                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
-                                alt="You"
-                                className="w-6 h-6 rounded-full object-cover"
-                              />
-                            )}
                           </div>
-                        </div>
-                      ))
+                        )}
+                      </>
                     )}
-
-                    {/* Typing indicator for store */}
-                    {typingUsers.length > 0 && (
-                      <div className="flex justify-start">
-                        <div className="flex items-center space-x-2">
-                          <img
-                            src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
-                            alt="Store"
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                          <div className="bg-gray-200 px-4 py-2 rounded-lg">
-                            <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Quick Responses for customers */}
-                  <div className="bg-white p-3 border-t border-gray-100">
-                    <div className="flex space-x-2 overflow-x-auto pb-2">
+                  {/* FIXED: Quick Responses - Better desktop layout */}
+                  <div className="bg-white px-6 py-3 border-t border-gray-100">
+                    <div className="flex flex-wrap gap-2 mb-3">
                       {quickResponses.map((response, index) => (
                         <button
                           key={index}
                           onClick={() => handleQuickResponse(response)}
-                          className="flex-shrink-0 px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-full transition-colors whitespace-nowrap"
+                          className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-full transition-colors whitespace-nowrap"
                         >
                           {response}
                         </button>
@@ -834,9 +882,9 @@ const ChatPage = () => {
                     </div>
                   </div>
 
-                  {/* Message Input */}
-                  <div className="bg-white p-4 border-t border-gray-200">
-                    <div className="flex items-end space-x-2">
+                  {/* FIXED: Message Input - Better desktop styling */}
+                  <div className="bg-white px-6 py-4 border-t border-gray-200 flex-shrink-0">
+                    <div className="flex items-end space-x-3">
                       <div className="flex-1 relative">
                         <textarea
                           value={message}
@@ -845,14 +893,16 @@ const ChatPage = () => {
                           placeholder={`Message ${selectedChat.store?.name || 'store'}...`}
                           rows={1}
                           disabled={sendingMessage || !isConnected}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none max-h-32 disabled:bg-gray-100"
+                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none max-h-32 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
+                          style={{ minHeight: '44px' }}
                         />
                       </div>
                       <button
                         onClick={handleSendMessage}
                         disabled={!message.trim() || sendingMessage || !isConnected}
-                        className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center"
+                        className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
                         title={!isConnected ? 'Connecting...' : 'Send to store'}
+                        style={{ minHeight: '44px', minWidth: '44px' }}
                       >
                         {sendingMessage ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -862,41 +912,53 @@ const ChatPage = () => {
                       </button>
                     </div>
                     {!isConnected && (
-                      <p className="text-xs text-orange-500 mt-1">Connecting to chat server...</p>
+                      <p className="text-xs text-orange-500 mt-2 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Connecting to chat server...
+                      </p>
                     )}
                   </div>
                 </>
               ) : (
-                /* Welcome Screen */
+                /* FIXED: Welcome Screen - Better desktop centering and spacing */
                 <div className="flex-1 flex items-center justify-center bg-gray-50">
-                  <div className="text-center">
-                    <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="text-center max-w-lg px-8">
+                    <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
                       <Store className="w-12 h-12 text-blue-500" />
                     </div>
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your Store Messages</h2>
-                    <p className="text-gray-600 max-w-md mb-6">
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-3">Your Store Messages</h2>
+                    <p className="text-gray-600 mb-8 leading-relaxed">
                       Select a store conversation from the sidebar to start chatting. Get instant support, ask questions, and stay updated on your orders.
                     </p>
-                    <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-500">
-                      <div className="flex items-center justify-center space-x-2">
-                        <AlertCircle className="w-4 h-4 text-orange-500" />
-                        <span>{totalUnreadCount} unread</span>
+                    
+                    <div className="grid grid-cols-2 gap-6 mb-8">
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                          <AlertCircle className="w-6 h-6 text-orange-500" />
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-semibold text-gray-900">{totalUnreadCount}</div>
+                          <div className="text-sm text-gray-500">Unread Messages</div>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-center space-x-2">
-                        <Store className="w-4 h-4 text-blue-500" />
-                        <span>{chats.length} store{chats.length === 1 ? '' : 's'}</span>
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Store className="w-6 h-6 text-blue-500" />
+                        </div>
+                        <div className="text-center">
+                          <div className="text-lg font-semibold text-gray-900">{chats.length}</div>
+                          <div className="text-sm text-gray-500">Store Conversations</div>
+                        </div>
                       </div>
                     </div>
                     
                     {chats.length === 0 && (
-                      <div className="mt-6">
-                        <button
-                          onClick={() => navigate('/stores')}
-                          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                          Browse Stores
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => navigate('/stores')}
+                        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                      >
+                        Browse Stores
+                      </button>
                     )}
                   </div>
                 </div>
