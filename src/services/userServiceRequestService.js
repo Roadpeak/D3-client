@@ -1,36 +1,91 @@
 // services/userServiceRequestService.js - User-specific service request API
 import authService from './authService'; // Your existing auth service
+import { getTokenFromCookie } from '../config/api'; // ✅ Import the actual token function
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
+// ✅ Fixed function to get auth token using the same method as authService
+const getAuthToken = () => {
+  // Try multiple sources for the token
+  let token = null;
+  
+  // 1. Use the same getTokenFromCookie that authService uses
+  token = getTokenFromCookie();
+  
+  // 2. Fallback to manual cookie parsing if needed
+  if (!token) {
+    const cookies = document.cookie.split(';');
+    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('authToken='));
+    if (tokenCookie) {
+      token = tokenCookie.split('=')[1];
+    }
+  }
+  
+  // 3. Try localStorage as backup
+  if (!token) {
+    token = localStorage.getItem('authToken') || localStorage.getItem('token');
+  }
+  
+  // 4. Try sessionStorage as final backup
+  if (!token) {
+    token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token');
+  }
+  
+  console.log('🔑 Token lookup:', {
+    found: !!token,
+    source: token ? 'Found from available sources' : 'Not found',
+    length: token ? token.length : 0,
+    preview: token ? `${token.substring(0, 20)}...` : 'N/A'
+  });
+  
+  return token;
+};
+
 // Helper function to check if user is authenticated
 const ensureUserAuthenticated = () => {
-  if (!authService.isAuthenticated()) {
+  const token = getAuthToken();
+  if (!token) {
     throw new Error('Please log in to access this feature.');
+  }
+  
+  if (!authService.isAuthenticated()) {
+    throw new Error('Your session has expired. Please log in again.');
   }
 };
 
-// Helper function to get auth headers
+// ✅ Enhanced function to get auth headers
 const getAuthHeaders = () => {
-  const token = authService.getTokenFromCookie?.() || localStorage.getItem('authToken');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': token ? `Bearer ${token}` : undefined
+  const token = getAuthToken();
+  const headers = {
+    'Content-Type': 'application/json'
   };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+    console.log('🔐 Auth header added:', `Bearer ${token.substring(0, 20)}...`);
+  } else {
+    console.warn('⚠️ No auth token available for request');
+  }
+  
+  return headers;
 };
 
-// Enhanced API request function for users
+// ✅ Enhanced API request function for users
 const makeUserAPIRequest = async (url, options = {}) => {
   try {
-    const headers = {
+    const isAuthRequired = options.requireAuth !== false; // Default to requiring auth
+    
+    let headers = {
       'Content-Type': 'application/json',
       ...options.headers
     };
 
-    // Add auth headers if user is authenticated
+    // ✅ Always try to add auth headers if user is authenticated
     if (authService.isAuthenticated()) {
       const authHeaders = getAuthHeaders();
-      Object.assign(headers, authHeaders);
+      headers = { ...headers, ...authHeaders };
+    } else if (isAuthRequired) {
+      throw new Error('Authentication required but user is not logged in');
     }
 
     const config = {
@@ -41,7 +96,8 @@ const makeUserAPIRequest = async (url, options = {}) => {
     console.log('🌐 User API Request:', { 
       url: url.replace(API_BASE_URL, ''), 
       method: config.method || 'GET',
-      authenticated: !!headers.Authorization 
+      authenticated: !!headers.Authorization,
+      requireAuth: isAuthRequired
     });
     
     const response = await fetch(url, config);
@@ -67,11 +123,18 @@ const makeUserAPIRequest = async (url, options = {}) => {
       // Handle authentication errors
       if (response.status === 401) {
         console.warn('🔒 User authentication failed (401)');
+        console.warn('🔒 Response data:', data);
+        
         // Clear user auth data
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
         localStorage.removeItem('userType');
-        authService.logout?.();
+        
+        // Try to logout via authService
+        if (authService.logout) {
+          authService.logout();
+        }
+        
         throw new Error(data.message || 'Your session has expired. Please log in again.');
       }
       
@@ -123,7 +186,7 @@ class UserServiceRequestService {
       });
 
       const url = `${API_BASE_URL}/request-service?${queryParams}`;
-      return await makeUserAPIRequest(url);
+      return await makeUserAPIRequest(url, { requireAuth: false }); // ✅ Don't require auth for public requests
     } catch (error) {
       console.error('Error fetching public service requests:', error);
       throw error;
@@ -134,7 +197,7 @@ class UserServiceRequestService {
   async getServiceCategories() {
     try {
       const url = `${API_BASE_URL}/request-service/categories`;
-      return await makeUserAPIRequest(url);
+      return await makeUserAPIRequest(url, { requireAuth: false }); // ✅ Don't require auth
     } catch (error) {
       console.error('Error fetching service categories:', error);
       throw error;
@@ -145,17 +208,17 @@ class UserServiceRequestService {
   async getPlatformStatistics() {
     try {
       const url = `${API_BASE_URL}/request-service/statistics`;
-      return await makeUserAPIRequest(url);
+      return await makeUserAPIRequest(url, { requireAuth: false }); // ✅ Don't require auth
     } catch (error) {
       console.error('Error fetching platform statistics:', error);
       throw error;
     }
   }
 
-  // Create new service request (user auth required)
+  // ✅ Create new service request (user auth required)
   async createServiceRequest(requestData) {
     try {
-      ensureUserAuthenticated();
+      ensureUserAuthenticated(); // ✅ Check auth before making request
 
       // Validate required fields
       const requiredFields = ['title', 'category', 'description', 'budgetMin', 'budgetMax', 'timeline', 'location'];
@@ -176,9 +239,17 @@ class UserServiceRequestService {
       }
 
       const url = `${API_BASE_URL}/request-service`;
+      
+      console.log('🚀 Creating service request with data:', {
+        title: requestData.title,
+        category: requestData.category,
+        hasAuth: !!getAuthToken()
+      });
+      
       return await makeUserAPIRequest(url, {
         method: 'POST',
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(requestData),
+        requireAuth: true // ✅ Explicitly require auth
       });
     } catch (error) {
       console.error('Error creating service request:', error);
@@ -199,7 +270,7 @@ class UserServiceRequestService {
       }
 
       const url = `${API_BASE_URL}/request-service/offers?${queryParams}`;
-      return await makeUserAPIRequest(url);
+      return await makeUserAPIRequest(url, { requireAuth: true });
     } catch (error) {
       console.error('Error fetching user offers:', error);
       throw error;
@@ -219,7 +290,7 @@ class UserServiceRequestService {
       }
 
       const url = `${API_BASE_URL}/service-requests/my-requests?${queryParams}`;
-      return await makeUserAPIRequest(url);
+      return await makeUserAPIRequest(url, { requireAuth: true });
     } catch (error) {
       console.error('Error fetching user past requests:', error);
       throw error;
@@ -237,7 +308,8 @@ class UserServiceRequestService {
 
       const url = `${API_BASE_URL}/offers/${offerId}/accept`;
       return await makeUserAPIRequest(url, {
-        method: 'PUT'
+        method: 'PUT',
+        requireAuth: true
       });
     } catch (error) {
       console.error('Error accepting offer:', error);
@@ -257,7 +329,8 @@ class UserServiceRequestService {
       const url = `${API_BASE_URL}/offers/${offerId}/reject`;
       return await makeUserAPIRequest(url, {
         method: 'PUT',
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason }),
+        requireAuth: true
       });
     } catch (error) {
       console.error('Error rejecting offer:', error);
@@ -265,7 +338,7 @@ class UserServiceRequestService {
     }
   }
 
-  // Create individual offer (for users who are also service providers)
+  // ✅ Create individual offer (for users who are also service providers)
   async createIndividualOffer(requestId, offerData) {
     try {
       ensureUserAuthenticated();
@@ -292,14 +365,22 @@ class UserServiceRequestService {
         throw new Error('Message must be at least 10 characters long');
       }
 
-      const url = `${API_BASE_URL}/service-requests/${requestId}/offers`;
+      const url = `${API_BASE_URL}/request-service/${requestId}/offers`;
+      
+      console.log('🚀 Creating individual offer with data:', {
+        requestId,
+        quotedPrice: offerData.quotedPrice,
+        hasAuth: !!getAuthToken()
+      });
+      
       return await makeUserAPIRequest(url, {
         method: 'POST',
         body: JSON.stringify({
           quotedPrice: parseFloat(offerData.quotedPrice),
           message: offerData.message,
           availability: offerData.availability
-        })
+        }),
+        requireAuth: true
       });
     } catch (error) {
       console.error('Error creating individual offer:', error);
@@ -316,10 +397,11 @@ class UserServiceRequestService {
         throw new Error('Request ID is required');
       }
 
-      const url = `${API_BASE_URL}/service-requests/${requestId}`;
+      const url = `${API_BASE_URL}/request-service/${requestId}`;
       return await makeUserAPIRequest(url, {
         method: 'PUT',
-        body: JSON.stringify(updates)
+        body: JSON.stringify(updates),
+        requireAuth: true
       });
     } catch (error) {
       console.error('Error updating service request:', error);
@@ -336,10 +418,11 @@ class UserServiceRequestService {
         throw new Error('Request ID is required');
       }
 
-      const url = `${API_BASE_URL}/service-requests/${requestId}/cancel`;
+      const url = `${API_BASE_URL}/request-service/${requestId}/cancel`;
       return await makeUserAPIRequest(url, {
         method: 'PUT',
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason }),
+        requireAuth: true
       });
     } catch (error) {
       console.error('Error cancelling service request:', error);
@@ -355,7 +438,7 @@ class UserServiceRequestService {
       }
 
       const url = `${API_BASE_URL}/request-service/${requestId}`;
-      return await makeUserAPIRequest(url);
+      return await makeUserAPIRequest(url, { requireAuth: false });
     } catch (error) {
       console.error('Error fetching service request details:', error);
       throw error;
@@ -375,13 +458,14 @@ class UserServiceRequestService {
         throw new Error('Rating must be between 1 and 5');
       }
 
-      const url = `${API_BASE_URL}/service-requests/${requestId}/review`;
+      const url = `${API_BASE_URL}/request-service/${requestId}/review`;
       return await makeUserAPIRequest(url, {
         method: 'POST',
         body: JSON.stringify({
           rating: parseInt(rating),
           review: review || ''
-        })
+        }),
+        requireAuth: true
       });
     } catch (error) {
       console.error('Error rating and reviewing service:', error);
@@ -401,7 +485,7 @@ class UserServiceRequestService {
       });
 
       const url = `${API_BASE_URL}/request-service/search?${queryParams}`;
-      return await makeUserAPIRequest(url);
+      return await makeUserAPIRequest(url, { requireAuth: false });
     } catch (error) {
       console.error('Error searching service requests:', error);
       throw error;
@@ -414,7 +498,7 @@ class UserServiceRequestService {
       ensureUserAuthenticated();
 
       const url = `${API_BASE_URL}/users/service-statistics`;
-      return await makeUserAPIRequest(url);
+      return await makeUserAPIRequest(url, { requireAuth: true });
     } catch (error) {
       console.error('Error fetching user statistics:', error);
       throw error;
@@ -434,6 +518,40 @@ class UserServiceRequestService {
       console.error('Error getting current user:', error);
       return null;
     }
+  }
+
+  // ✅ Enhanced debug method to check authentication state
+  debugAuth() {
+    const token = getAuthToken();
+    const cookieToken = getTokenFromCookie(); // Direct check
+    const isAuth = authService.isAuthenticated();
+    const user = this.getCurrentUser();
+    
+    console.log('🔍 Auth Debug:', {
+      hasToken: !!token,
+      tokenLength: token ? token.length : 0,
+      cookieToken: !!cookieToken,
+      cookieTokenLength: cookieToken ? cookieToken.length : 0,
+      tokensMatch: token === cookieToken,
+      isAuthenticated: isAuth,
+      hasUser: !!user,
+      userEmail: user?.email,
+      allCookies: document.cookie
+    });
+    
+    return {
+      hasToken: !!token,
+      cookieToken: !!cookieToken,
+      tokensMatch: token === cookieToken,
+      isAuthenticated: isAuth,
+      hasUser: !!user,
+      user
+    };
+  }
+
+  // ✅ Add method to expose getTokenFromCookie for external debugging
+  getTokenFromCookie() {
+    return getTokenFromCookie();
   }
 
   // Validate form data before submission

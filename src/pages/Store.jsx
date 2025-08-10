@@ -32,6 +32,7 @@ import {
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ServiceCard from '../components/ServiceCard';
+import ReviewSection from '../components/ReviewSection';
 import StoreService from '../services/storeService';
 import serviceAPI from '../services/serviceService';
 import chatService from '../services/chatService';
@@ -99,7 +100,7 @@ const StoreViewPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // State management
+  // State management (simplified - review state moved to ReviewSection)
   const [storeData, setStoreData] = useState(null);
   const [offers, setOffers] = useState([]);
   const [services, setServices] = useState([]);
@@ -113,77 +114,8 @@ const StoreViewPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [copiedCode, setCopiedCode] = useState('');
   const [activeSection, setActiveSection] = useState('offers');
-  const [newReview, setNewReview] = useState({ rating: 0, comment: '' });
-  const [hoverRating, setHoverRating] = useState(0);
-  const [submittingReview, setSubmittingReview] = useState(false);
   const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
-  const [success, setSuccess] = useState(null);
-
-  const getAuthenticationStatus = () => {
-    try {
-      const tokenSources = {
-        localStorage_access_token: localStorage.getItem('access_token'),
-        localStorage_authToken: localStorage.getItem('authToken'),
-        localStorage_token: localStorage.getItem('token'),
-        cookie_authToken: getCookieValue('authToken'),
-        cookie_access_token: getCookieValue('access_token'),
-        cookie_token: getCookieValue('token')
-      };
-
-      const token = tokenSources.localStorage_access_token ||
-        tokenSources.localStorage_authToken ||
-        tokenSources.localStorage_token ||
-        tokenSources.cookie_authToken ||
-        tokenSources.cookie_access_token ||
-        tokenSources.cookie_token;
-
-      console.log('🔍 Token sources check:', Object.keys(tokenSources).filter(key => tokenSources[key]));
-
-
-      // Check user info in localStorage
-      let userInfo = null;
-      const possibleKeys = ['userInfo', 'user', 'userData', 'currentUser'];
-
-      for (const key of possibleKeys) {
-        try {
-          const stored = localStorage.getItem(key);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed && (parsed.id || parsed.userId)) {
-              userInfo = parsed;
-              console.log(`✅ User info found in localStorage.${key}`);
-              break;
-            }
-          }
-        } catch (e) {
-          console.log(`⚠️ Failed to parse ${key}:`, e.message);
-        }
-      }
-
-      return {
-        isAuthenticated: !!(token && userInfo),
-        token,
-        userInfo,
-        tokenSources
-      };
-    } catch (error) {
-      console.error('Authentication check error:', error);
-      return {
-        isAuthenticated: false,
-        token: null,
-        userInfo: null,
-        error: error.message
-      };
-    }
-  };
-
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => setSuccess(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
 
   // Enhanced getCurrentUser function
   const getCurrentUser = () => {
@@ -288,14 +220,6 @@ const StoreViewPage = () => {
       if (data.success && data.store) {
         setStoreData(data.store);
         setIsFollowing(data.store.following || false);
-
-        // FIXED: If no reviews in the initial response, fetch them separately
-        if (!data.store.reviews || data.store.reviews.length === 0) {
-          console.log('📝 No reviews in store data, fetching separately...');
-          await fetchStoreReviewsSeparately(id);
-        } else {
-          console.log('📝 Reviews found in store data:', data.store.reviews.length);
-        }
       } else {
         throw new Error(data.message || 'Failed to fetch store data');
       }
@@ -310,49 +234,6 @@ const StoreViewPage = () => {
       setLoading(false);
     }
   };
-
-  const fetchStoreReviewsSeparately = async (storeId) => {
-    try {
-      console.log('📝 Fetching store reviews separately for:', storeId);
-
-      const response = await fetch(`http://localhost:4000/api/v1/stores/${storeId}/reviews`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
-
-      console.log('📡 Separate reviews response status:', response.status);
-
-      if (response.status === 404) {
-        console.log('📭 No reviews found for store');
-        return;
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Separate reviews data:', data);
-
-        if (data.success && data.reviews) {
-          // Update store data with the fetched reviews
-          setStoreData(prev => ({
-            ...prev,
-            reviews: data.reviews,
-            totalReviews: data.stats?.totalReviews || data.reviews.length,
-            rating: data.stats?.averageRating || prev.rating
-          }));
-
-          console.log('✅ Store reviews updated separately');
-        }
-      } else {
-        console.error('❌ Failed to fetch reviews separately:', response.status);
-      }
-    } catch (error) {
-      console.error('💥 Error fetching reviews separately:', error);
-    }
-  };
-
 
   // Fetch offers for the store
   const fetchOffers = async () => {
@@ -481,8 +362,6 @@ const StoreViewPage = () => {
       // Get auth token using your auth service method
       const token = getTokenFromCookie() || localStorage.getItem('access_token');
 
-
-
       if (!token) {
         throw new Error('Authentication token not found');
       }
@@ -563,6 +442,7 @@ const StoreViewPage = () => {
       setStartingChat(false);
     }
   };
+
   // Enhanced getCookieValue function
   const getCookieValue = (name) => {
     try {
@@ -669,126 +549,6 @@ const StoreViewPage = () => {
     }
   };
 
-  // Submit review
-  const handleReviewSubmit = async () => {
-    if (!authService.isAuthenticated()) {
-      setError('Please log in to submit a review.');
-      navigate('/accounts/sign-in', {
-        state: { from: { pathname: location.pathname } }
-      });
-      return;
-    }
-
-    const currentUser = getCurrentUser();
-    if (!currentUser.isLoggedIn) {
-      setError('Please log in to submit a review.');
-      return;
-    }
-
-    if (!newReview.rating || !newReview.comment.trim()) {
-      setError('Please provide both a rating and a comment.');
-      return;
-    }
-
-    try {
-      setSubmittingReview(true);
-      setError(null);
-
-      console.log('📝 Submitting review:', {
-        store_id: id,
-        rating: newReview.rating,
-        comment: newReview.comment.trim(),
-        user: currentUser.name
-      });
-
-      // FIXED: Use the correct review endpoint
-      const response = await fetch(`http://localhost:4000/api/v1/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getTokenFromCookie()}`, 
-          // Add API key if available
-          ...(process.env.REACT_APP_API_KEY && { 'api-key': process.env.REACT_APP_API_KEY })
-        },
-        body: JSON.stringify({
-          store_id: id,
-          rating: newReview.rating,
-          text: newReview.comment.trim(), // Use 'text' field as per your model
-          comment: newReview.comment.trim() // Also send as 'comment' for compatibility
-        })
-      });
-
-      console.log('📡 Review submission response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ Review submission failed:', errorData);
-
-        if (response.status === 401) {
-          setError('Your session has expired. Please log in again.');
-          navigate('/accounts/sign-in', {
-            state: { from: { pathname: location.pathname } }
-          });
-          return;
-        } else if (response.status === 400 && errorData.message?.includes('already reviewed')) {
-          setError('You have already reviewed this store. Each customer can only submit one review per store.');
-          return;
-        }
-
-        throw new Error(errorData.message || 'Failed to submit review');
-      }
-
-      const data = await response.json();
-      console.log('✅ Review submitted successfully:', data);
-
-      if (data.success) {
-        // FIXED: Update store data immediately with the new review
-        const newReviewData = {
-          id: data.review.id,
-          name: currentUser.name,
-          customerName: currentUser.name,
-          rating: data.review.rating,
-          comment: data.review.text || data.review.comment,
-          text: data.review.text || data.review.comment,
-          date: new Date().toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-          }),
-          createdAt: new Date().toISOString(),
-          created_at: new Date().toISOString()
-        };
-
-        // Update store data with new review and updated stats
-        setStoreData(prev => ({
-          ...prev,
-          rating: data.storeRating || prev.rating,
-          totalReviews: data.totalReviews || (prev.totalReviews + 1),
-          reviews: [newReviewData, ...(prev.reviews || [])]
-        }));
-
-        // Reset form
-        setNewReview({ rating: 0, comment: '' });
-        setHoverRating(0);
-
-        // Show success message
-        setSuccess('Thank you for your review! Your feedback has been submitted successfully.');
-
-        // OPTIONAL: Refresh store data to get latest from server
-        setTimeout(() => {
-          fetchStoreData();
-        }, 1000);
-      } else {
-        throw new Error(data.message || 'Failed to submit review');
-      }
-
-    } catch (err) {
-      console.error('Error submitting review:', err);
-      setError(err.message);
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
   // Copy promo code
   const handleCopyCode = (code) => {
     navigator.clipboard.writeText(code);
@@ -829,240 +589,6 @@ const StoreViewPage = () => {
         break;
     }
   }, [activeSection]);
-
-  // Refresh reviews after submission
-  useEffect(() => {
-    if (success && success.includes('review')) {
-      setTimeout(() => {
-        console.log('🔄 Refreshing store data after review submission...');
-        fetchStoreData();
-      }, 1500);
-    }
-  }, [success]);
-
-  // Handle review data consistency
-  useEffect(() => {
-    if (storeData) {
-      const hasRatingData = storeData.rating > 0 || storeData.totalReviews > 0;
-      const hasReviewsArray = storeData.reviews && storeData.reviews.length > 0;
-
-      if (hasRatingData && !hasReviewsArray) {
-        console.log('⚠️ Inconsistent review data detected, fetching reviews separately...');
-        fetchStoreReviewsSeparately(storeData.id);
-      }
-    }
-  }, [storeData]);
-
-  const ReviewsSection = () => {
-    const currentUser = getCurrentUser();
-    
-    return (
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Customer Reviews</h2>
-          <div className="flex items-center gap-2">
-            <div className="flex">{renderStars(storeData.rating || 0)}</div>
-            <span className="font-medium">{storeData.rating || 0} out of 5</span>
-            <span className="text-gray-500">
-              ({(storeData.totalReviews || storeData.reviews?.length || 0).toLocaleString()} reviews)
-            </span>
-          </div>
-        </div>
-  
-        {/* Add Review Form */}
-        <div className="mb-8 p-6 bg-gray-50 rounded-xl">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Write a Review</h3>
-            {currentUser.isLoggedIn && (
-              <div className="text-sm text-gray-600">
-                Reviewing as <span className="font-medium text-gray-900">{currentUser.name}</span>
-              </div>
-            )}
-          </div>
-  
-          {!currentUser.isLoggedIn ? (
-            <div className="text-center py-8 text-gray-500">
-              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p className="text-lg font-medium mb-2">Please log in to write a review</p>
-              <button
-                onClick={() => navigate('/accounts/sign-in', {
-                  state: { from: { pathname: location.pathname } }
-                })}
-                className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
-              >
-                Log In
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Rating <span className="text-red-500">*</span>
-                </label>
-                <div className="flex items-center gap-1">
-                  {renderStars(
-                    newReview.rating,
-                    true,
-                    (rating) => setNewReview({ ...newReview, rating }),
-                    setHoverRating
-                  )}
-                  <span className="ml-2 text-sm text-gray-600">
-                    {newReview.rating > 0 && `${newReview.rating} out of 5`}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Your Review <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  value={newReview.comment}
-                  onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                  rows="4"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  placeholder="Share your experience with this store..."
-                  required
-                  maxLength={500}
-                />
-                <div className="text-xs text-gray-500 mt-1">
-                  {newReview.comment.length}/500 characters
-                </div>
-              </div>
-              
-              {/* Show any submission errors */}
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-800">{error}</p>
-                </div>
-              )}
-  
-              <button
-                onClick={handleReviewSubmit}
-                disabled={submittingReview || !newReview.rating || !newReview.comment.trim()}
-                className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submittingReview ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Submit Review
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-        </div>
-  
-        {/* Reviews List */}
-        <div className="space-y-6">
-          {console.log('🐛 DEBUG Reviews display:', {
-            hasStoreData: !!storeData,
-            hasReviews: !!(storeData?.reviews),
-            reviewsLength: storeData?.reviews?.length || 0,
-            reviewsArray: storeData?.reviews,
-            totalReviews: storeData?.totalReviews,
-            storeRating: storeData?.rating
-          })}
-          
-          {storeData?.reviews && storeData.reviews.length > 0 ? (
-            storeData.reviews.map((review) => (
-              <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start gap-3">
-                    {/* Customer Avatar */}
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {(review.name || review.customerName || 'A').charAt(0).toUpperCase()}
-                    </div>
-                    
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {review.name || review.customerName || 'Anonymous Customer'}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex">{renderStars(review.rating)}</div>
-                        <span className="text-sm text-gray-500">
-                          {review.date || new Date(review.createdAt || review.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="ml-13">
-                  <p className="text-gray-700 leading-relaxed">
-                    {review.comment || review.text || 'No comment provided.'}
-                  </p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <h3 className="text-lg font-medium mb-2">No reviews yet</h3>
-              <p className="text-sm">Be the first to share your experience!</p>
-            </div>
-          )}
-        </div>
-  
-        {/* Load More Reviews Button */}
-        {storeData?.reviews && storeData.reviews.length > 0 && storeData.totalReviews > storeData.reviews.length && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <button 
-              onClick={async () => {
-                try {
-                  const response = await fetch(`http://localhost:4000/api/v1/stores/${id}/reviews?page=2&limit=10`, {
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Accept': 'application/json'
-                    }
-                  });
-                  
-                  if (response.ok) {
-                    const data = await response.json();
-                    if (data.success && data.reviews) {
-                      setStoreData(prev => ({
-                        ...prev,
-                        reviews: [...prev.reviews, ...data.reviews]
-                      }));
-                    }
-                  }
-                } catch (error) {
-                  console.error('Error loading more reviews:', error);
-                }
-              }}
-              className="w-full sm:w-auto bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
-            >
-              View All Reviews ({storeData.totalReviews || 0})
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-
-  // Stars component
-  const renderStars = (rating, interactive = false, onRate = null, onHover = null) => {
-    return [...Array(5)].map((_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${interactive ? 'cursor-pointer' : ''} transition-colors ${i < (interactive ? (hoverRating || rating) : Math.floor(rating))
-          ? 'fill-yellow-400 text-yellow-400'
-          : interactive ? 'text-gray-300 hover:text-yellow-400' : 'text-gray-300'
-          }`}
-        onClick={interactive ? () => onRate(i + 1) : undefined}
-        onMouseEnter={interactive ? () => onHover(i + 1) : undefined}
-        onMouseLeave={interactive ? () => onHover(0) : undefined}
-      />
-    ));
-  };
 
   const fetchSocialLinksForStore = async (storeId) => {
     try {
@@ -1118,6 +644,18 @@ const StoreViewPage = () => {
     }
   }, [storeData]);
 
+  // Stars component
+  const renderStars = (rating, interactive = false, onRate = null, onHover = null) => {
+    return [...Array(5)].map((_, i) => (
+      <Star
+        key={i}
+        className={`w-4 h-4 ${interactive ? 'cursor-pointer' : ''} transition-colors ${i < Math.floor(rating)
+          ? 'fill-yellow-400 text-yellow-400'
+          : 'text-gray-300'
+          }`}
+      />
+    ));
+  };
 
   // Enhanced Offer Card Component (matching deals page design)
   const OfferCard = ({ offer, isListView = false }) => {
@@ -1864,16 +1402,8 @@ const StoreViewPage = () => {
                   <p className="text-gray-600 mb-4">{storeData.description}</p>
                 )}
 
-                {/* Social Links - UPDATED SECTION */}
+                {/* Social Links */}
                 <div className="flex items-center gap-3 mb-4">
-                  {console.log('🔍 Store social links debug:', {
-                    socialLinksRaw: storeData.socialLinksRaw,
-                    socialLinks: storeData.socialLinks,
-                    hasSocialLinksRaw: !!(storeData.socialLinksRaw && storeData.socialLinksRaw.length > 0),
-                    hasSocialLinks: !!(storeData.socialLinks && Object.keys(storeData.socialLinks).some(key => storeData.socialLinks[key]))
-                  })}
-
-                  {/* Display social links from database */}
                   {storeData.socialLinksRaw && storeData.socialLinksRaw.length > 0 ? (
                     <>
                       {storeData.socialLinksRaw.map((social) => (
@@ -2041,8 +1571,20 @@ const StoreViewPage = () => {
         {/* Dynamic Content Based on Active Section */}
         {renderActiveSection()}
 
-        {/* Reviews Section */}
-        <ReviewsSection />
+        {/* Reviews Section - SIMPLIFIED: Now self-contained */}
+        <ReviewSection
+          storeData={storeData}
+          storeId={id}
+          onNavigate={navigate}
+          location={location}
+          onRefreshStore={(newReviews) => {
+            // Optional: Update store data with new reviews
+            setStoreData(prev => ({
+              ...prev,
+              reviews: newReviews
+            }));
+          }}
+        />
       </div>
 
       {/* Fixed Chat Button */}
