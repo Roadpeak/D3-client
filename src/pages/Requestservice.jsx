@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import userServiceRequestService from '../services/userServiceRequestService';
 import authService from '../services/authService';
 
-// SVG Icons
+// SVG Icons (keeping the same as before)
 const Search = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -91,33 +92,29 @@ const AlertCircle = ({ className }) => (
   </svg>
 );
 
+const ExternalLink = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+  </svg>
+);
+
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-8">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
   </div>
 );
 
-// Error handler with fallback data
-const withFallback = async (apiCall, fallbackData = null) => {
-  try {
-    return await apiCall();
-  } catch (error) {
-    console.warn('API call failed, using fallback:', error.message);
-    return {
-      success: true,
-      data: fallbackData,
-      isFallback: true
-    };
-  }
-};
-
 export default function UserServiceRequestPage() {
+  const navigate = useNavigate();
+
   // State management
   const [activeTab, setActiveTab] = useState('all');
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedRequestDetails, setSelectedRequestDetails] = useState(null);
 
   // User authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -133,11 +130,12 @@ export default function UserServiceRequestPage() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmMessage, setConfirmMessage] = useState('');
 
-
   // Loading and error states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingOffers, setLoadingOffers] = useState(false);
+  const [loadingRequests, setLoadingRequests] = useState(false);
 
   // Filter states
   const [filters, setFilters] = useState({
@@ -146,7 +144,7 @@ export default function UserServiceRequestPage() {
     timeline: 'all',
     location: '',
     page: 1,
-    limit: 10
+    limit: 6 // Changed to 6 items per page
   });
 
   // Pagination state
@@ -180,7 +178,6 @@ export default function UserServiceRequestPage() {
         const result = await authService.getCurrentUser();
         if (result.success) {
           setCurrentUser(result.data);
-          // Store user data for quick access
           localStorage.setItem('currentUser', JSON.stringify(result.data));
           localStorage.setItem('userType', 'user');
         } else {
@@ -203,148 +200,114 @@ export default function UserServiceRequestPage() {
     checkAuthState();
   }, [checkAuthState]);
 
-  // Load initial data
+  // ✅ Load initial data (NO DUMMY DATA FALLBACKS)
   const loadInitialData = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      console.log('🔄 Loading initial data...');
+
       const [categoriesRes, statsRes] = await Promise.all([
-        withFallback(
-          () => userServiceRequestService.getServiceCategories(),
-          [
-            { name: 'Home Services', icon: '🏠', count: 45, color: 'bg-blue-100 text-blue-800' },
-            { name: 'Auto Services', icon: '🚗', count: 32, color: 'bg-green-100 text-green-800' },
-            { name: 'Beauty & Wellness', icon: '💄', count: 28, color: 'bg-pink-100 text-pink-800' },
-            { name: 'Tech Support', icon: '💻', count: 15, color: 'bg-purple-100 text-purple-800' },
-            { name: 'Event Services', icon: '🎉', count: 22, color: 'bg-yellow-100 text-yellow-800' },
-            { name: 'Tutoring', icon: '📚', count: 18, color: 'bg-indigo-100 text-indigo-800' },
-            { name: 'Fitness', icon: '💪', count: 12, color: 'bg-orange-100 text-orange-800' },
-            { name: 'Photography', icon: '📸', count: 9, color: 'bg-teal-100 text-teal-800' }
-          ]
-        ),
-        withFallback(
-          () => userServiceRequestService.getPlatformStatistics(),
-          { totalProviders: 2500, completedRequests: 15000, averageRating: 4.8, activeRequests: 500 }
-        )
+        userServiceRequestService.getServiceCategories(),
+        userServiceRequestService.getPlatformStatistics()
       ]);
+
+      console.log('✅ Initial data loaded:', {
+        categories: categoriesRes.data?.length || 0,
+        stats: !!statsRes.data
+      });
 
       setServiceCategories(categoriesRes.data || []);
       setStatistics(statsRes.data || {});
       await loadServiceRequests();
     } catch (err) {
+      console.error('❌ Error loading initial data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load service requests
+  // ✅ Load service requests (NO DUMMY DATA FALLBACKS)
   const loadServiceRequests = async () => {
     try {
+      setLoadingRequests(true);
       setError(null);
-      const response = await withFallback(
-        () => userServiceRequestService.getPublicServiceRequests(filters),
-        {
-          requests: [
-            {
-              id: 'demo-1',
-              title: "Need house cleaning service",
-              description: "Looking for a reliable cleaning service for my 3-bedroom house.",
-              category: "Home Services",
-              budget: "$100 - $150",
-              location: "Nairobi, Kenya",
-              timeline: "thisweek",
-              postedBy: "John Doe",
-              postedTime: "2 hours ago",
-              priority: "normal",
-              status: "open",
-              offers: 3,
-              verified: true,
-              requirements: ["Insurance", "References"]
-            }
-          ],
-          pagination: { currentPage: 1, totalPages: 1, totalCount: 1, hasNext: false, hasPrev: false }
-        }
-      );
+      
+      console.log('🔄 Loading service requests with filters:', filters);
+      
+      const response = await userServiceRequestService.getPublicServiceRequests(filters);
+      
+      console.log('✅ Service requests loaded:', {
+        count: response.data?.requests?.length || 0,
+        pagination: response.data?.pagination
+      });
 
-      setServiceRequests(response.data.requests || []);
-      setPagination(response.data.pagination || {});
+      setServiceRequests(response.data?.requests || []);
+      setPagination(response.data?.pagination || {});
     } catch (err) {
+      console.error('❌ Error loading service requests:', err);
       setError(err.message);
+      setServiceRequests([]);
+    } finally {
+      setLoadingRequests(false);
     }
   };
 
-  // Load user offers
+  // ✅ Load user offers 
   const loadUserOffers = async () => {
     if (!isAuthenticated) return;
 
     try {
-      const response = await withFallback(
-        () => userServiceRequestService.getUserOffers(filters),
-        {
-          offers: [
-            {
-              id: 'offer-1',
-              providerId: 'provider-1',
-              requestId: 'demo-1',
-              storeName: 'Mike Johnson Cleaning Services',
-              storeId: 'store-1',
-              rating: 4.8,
-              reviews: 127,
-              price: '$120',
-              message: 'We provide professional cleaning services with all supplies included. Our team has 5+ years of experience.',
-              responseTime: '1 hour ago',
-              verified: true,
-              requestTitle: 'Need house cleaning service',
-              status: 'pending',
-              availability: 'This weekend'
-            }
-          ],
-          pagination: { currentPage: 1, totalPages: 1, totalCount: 1, hasNext: false, hasPrev: false }
-        }
-      );
-      setUserOffers(response.data.offers || []);
-      setPagination(response.data.pagination || {});
+      setLoadingOffers(true);
+      setError(null);
+
+      console.log('🔄 Loading user offers...');
+      
+      const response = await userServiceRequestService.getUserOffers(filters);
+      
+      console.log('✅ User offers loaded:', {
+        count: response.data?.offers?.length || 0,
+        pagination: response.data?.pagination
+      });
+
+      setUserOffers(response.data?.offers || []);
+      setPagination(response.data?.pagination || {});
     } catch (err) {
+      console.error('❌ Error loading user offers:', err);
       setError(err.message);
+      setUserOffers([]);
+    } finally {
+      setLoadingOffers(false);
     }
   };
 
-  // Load user past requests
+  // ✅ Load user past requests 
   const loadUserPastRequests = async () => {
     if (!isAuthenticated) return;
 
     try {
-      const response = await withFallback(
-        () => userServiceRequestService.getUserPastRequests(filters),
-        {
-          requests: [
-            {
-              id: 'past-1',
-              title: "House cleaning completed",
-              description: "Professional cleaning service for 3-bedroom house",
-              category: "Home Services",
-              budget: "$120",
-              location: "Nairobi, Kenya",
-              completedDate: "2025-07-10",
-              acceptedOffer: {
-                storeName: "Mike Johnson Cleaning Services",
-                storeId: "store-1",
-                price: "$120",
-                rating: 5,
-                providerName: "Mike Johnson"
-              },
-              status: "completed"
-            }
-          ],
-          pagination: { currentPage: 1, totalPages: 1, totalCount: 1, hasNext: false, hasPrev: false }
-        }
-      );
-      setUserPastRequests(response.data.requests || []);
-      setPagination(response.data.pagination || {});
+      setLoadingRequests(true);
+      setError(null);
+
+      console.log('🔄 Loading user past requests...');
+      
+      const response = await userServiceRequestService.getUserPastRequests(filters);
+      
+      console.log('✅ User past requests loaded:', {
+        count: response.data?.requests?.length || 0,
+        pagination: response.data?.pagination
+      });
+
+      setUserPastRequests(response.data?.requests || []);
+      setPagination(response.data?.pagination || {});
     } catch (err) {
+      console.error('❌ Error loading user past requests:', err);
       setError(err.message);
+      setUserPastRequests([]);
+    } finally {
+      setLoadingRequests(false);
     }
   };
 
@@ -392,6 +355,12 @@ export default function UserServiceRequestPage() {
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
+  };
+
+  // New function to handle view details
+  const handleViewDetails = (request) => {
+    setSelectedRequestDetails(request);
+    setShowDetailsModal(true);
   };
 
   const handleRequestFormSubmit = async (e) => {
@@ -451,14 +420,15 @@ export default function UserServiceRequestPage() {
     }
   };
 
-  const handleAcceptOffer = async (offerId) => {
-    setConfirmMessage('Are you sure you want to accept this offer? This action cannot be undone.');
+  // ✅ Fixed accept offer with proper request ID
+  const handleAcceptOffer = async (offerId, requestId) => {
+    setConfirmMessage('Are you sure you want to accept this offer? This action cannot be undone and will reject all other offers.');
     setConfirmAction(() => async () => {
       try {
         setSubmitting(true);
-        await userServiceRequestService.acceptOffer(offerId);
+        await userServiceRequestService.acceptOffer(offerId, requestId);
         await loadUserOffers();
-        alert('Offer accepted successfully!');
+        alert('Offer accepted successfully! The service provider has been notified.');
       } catch (err) {
         alert(`Error: ${err.message}`);
       } finally {
@@ -469,10 +439,11 @@ export default function UserServiceRequestPage() {
     setShowConfirmModal(true);
   };
 
-  const handleRejectOffer = async (offerId, reason = '') => {
+  // ✅ Fixed reject offer with proper request ID
+  const handleRejectOffer = async (offerId, requestId, reason = '') => {
     try {
       setSubmitting(true);
-      await userServiceRequestService.rejectOffer(offerId, reason);
+      await userServiceRequestService.rejectOffer(offerId, requestId, reason);
       await loadUserOffers();
       alert('Offer rejected successfully!');
     } catch (err) {
@@ -480,6 +451,17 @@ export default function UserServiceRequestPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // ✅ FIXED: Handle view store functionality with navigation
+  const handleViewStore = (storeDetails) => {
+    if (!storeDetails || !storeDetails.id) {
+      alert('Store information not available');
+      return;
+    }
+
+    // Navigate to store page instead of opening in new tab
+    navigate(`/Store/${storeDetails.id}`);
   };
 
   const handleRequirementChange = (requirement, checked) => {
@@ -558,7 +540,7 @@ export default function UserServiceRequestPage() {
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Need a Service?</h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Post your service request and get competitive quotes from verified professionals in your area
+            Post your service request and get competitive quotes from verified professional service providers in your area
           </p>
           <button
             onClick={handleRequestFormShow}
@@ -577,28 +559,8 @@ export default function UserServiceRequestPage() {
         </div>
       </section>
 
-      {/* Service Categories */}
-      <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">Browse Service Categories</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          {serviceCategories.map((category, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg p-4 text-center hover:shadow-lg transition-shadow cursor-pointer group"
-              onClick={() => handleFilterChange('category', category.name)}
-            >
-              <div className="text-3xl mb-2">{category.icon}</div>
-              <h3 className="font-semibold text-sm mb-1 group-hover:text-red-600">{category.name}</h3>
-              <span className={`text-xs px-2 py-1 rounded-full ${category.color}`}>
-                {category.count} requests
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Filter Bar */}
-      <section className="container mx-auto px-4 py-4">
+      <section className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg p-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -654,7 +616,7 @@ export default function UserServiceRequestPage() {
               onClick={() => handleTabChange('all')}
               className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'all' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
             >
-              All Requests
+              All Requests ({serviceRequests.length})
             </button>
             {isAuthenticated && (
               <>
@@ -662,13 +624,13 @@ export default function UserServiceRequestPage() {
                   onClick={() => handleTabChange('offers')}
                   className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'offers' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                 >
-                  My Offers
+                  My Offers ({userOffers.length})
                 </button>
                 <button
                   onClick={() => handleTabChange('past')}
                   className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'past' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                 >
-                  Past Requests
+                  Past Requests ({userPastRequests.length})
                 </button>
               </>
             )}
@@ -678,7 +640,9 @@ export default function UserServiceRequestPage() {
         {/* All Requests Tab */}
         {activeTab === 'all' && (
           <div className="space-y-6">
-            {serviceRequests.length === 0 ? (
+            {loadingRequests ? (
+              <LoadingSpinner />
+            ) : serviceRequests.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-xl mb-4">No service requests found</div>
                 <p className="text-gray-600 mb-6">Be the first to post a service request!</p>
@@ -743,16 +707,13 @@ export default function UserServiceRequestPage() {
                           </div>
 
                           <div className="flex space-x-2">
-                            <button className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 font-medium">
+                            <button 
+                              onClick={() => handleViewDetails(request)}
+                              className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 font-medium"
+                            >
                               View Details
                             </button>
-                            <button
-                              onClick={() => handleOfferFormShow(request.id)}
-                              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium"
-                              disabled={request.status !== 'open'}
-                            >
-                              Make Offer
-                            </button>
+                            {/* Removed Make Offer button */}
                           </div>
                         </div>
                       </div>
@@ -814,10 +775,12 @@ export default function UserServiceRequestPage() {
           </div>
         )}
 
-        {/* My Offers Tab */}
+        {/* ✅ FIXED: My Offers Tab with View Store functionality */}
         {activeTab === 'offers' && isAuthenticated && (
           <div className="space-y-6">
-            {userOffers.length === 0 ? (
+            {loadingOffers ? (
+              <LoadingSpinner />
+            ) : userOffers.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-xl mb-4">No offers yet</div>
                 <p className="text-gray-600 mb-6">Offers from service providers will appear here when they respond to your requests.</p>
@@ -836,7 +799,7 @@ export default function UserServiceRequestPage() {
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <h3 className="text-lg font-semibold">{offer.storeName}</h3>
+                            <h3 className="text-lg font-semibold">{offer.storeName || offer.providerName}</h3>
                             {offer.verified && (
                               <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Verified</span>
                             )}
@@ -845,9 +808,9 @@ export default function UserServiceRequestPage() {
                           <div className="flex items-center space-x-2 text-sm text-gray-600">
                             <div className="flex items-center">
                               <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                              <span className="font-medium">{offer.rating}</span>
+                              <span className="font-medium">{offer.rating || 0}</span>
                             </div>
-                            <span>({offer.reviews} reviews)</span>
+                            <span>({offer.reviews || 0} reviews)</span>
                             <span className="text-gray-400">•</span>
                             <span>{offer.responseTime}</span>
                           </div>
@@ -866,6 +829,16 @@ export default function UserServiceRequestPage() {
                           <span className="font-medium">Availability:</span> {offer.availability}
                         </div>
                       )}
+                      {offer.estimatedDuration && (
+                        <div className="mt-1 text-sm text-gray-600">
+                          <span className="font-medium">Duration:</span> {offer.estimatedDuration}
+                        </div>
+                      )}
+                      {offer.includesSupplies && (
+                        <div className="mt-1 text-sm text-green-600">
+                          ✓ Includes supplies and materials
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -873,20 +846,35 @@ export default function UserServiceRequestPage() {
                         Offer for: <span className="font-medium text-gray-700">{offer.requestTitle}</span>
                       </div>
                       <div className="flex space-x-2">
-                        <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                        {/* ✅ FIXED: View Store Button with navigation */}
+                        {offer.storeDetails && (
+                          <button
+                            onClick={() => handleViewStore(offer.storeDetails)}
+                            className="px-4 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 font-medium flex items-center space-x-1"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            <span>View Store</span>
+                          </button>
+                        )}
+                        
+                        <button 
+                          onClick={() => handleViewDetails(offer)}
+                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                        >
                           View Details
                         </button>
+                        
                         {offer.status === 'pending' && (
                           <>
                             <button
-                              onClick={() => handleRejectOffer(offer.id)}
+                              onClick={() => handleRejectOffer(offer.id, offer.requestId)}
                               className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 font-medium"
                               disabled={submitting}
                             >
                               Reject
                             </button>
                             <button
-                              onClick={() => handleAcceptOffer(offer.id)}
+                              onClick={() => handleAcceptOffer(offer.id, offer.requestId)}
                               className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium"
                               disabled={submitting}
                             >
@@ -894,21 +882,27 @@ export default function UserServiceRequestPage() {
                             </button>
                           </>
                         )}
+                        
+                        {offer.status === 'accepted' && (
+                          <span className="px-4 py-2 bg-green-100 text-green-800 rounded-lg font-medium">
+                            ✓ Accepted
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               ))
-
-              
             )}
           </div>
         )}
 
-        {/* Past Requests Tab */}
+        {/* ✅ FIXED: Past Requests Tab - NO DUMMY DATA */}
         {activeTab === 'past' && isAuthenticated && (
           <div className="space-y-6">
-            {userPastRequests.length === 0 ? (
+            {loadingRequests ? (
+              <LoadingSpinner />
+            ) : userPastRequests.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-xl mb-4">No past requests</div>
                 <p className="text-gray-600 mb-6">Your completed and cancelled service requests will appear here.</p>
@@ -942,7 +936,7 @@ export default function UserServiceRequestPage() {
                           </div>
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-4 h-4" />
-                            <span>Completed: {request.completedDate}</span>
+                            <span>Completed: {request.completedAt ? new Date(request.completedAt).toLocaleDateString() : 'N/A'}</span>
                           </div>
                         </div>
 
@@ -965,14 +959,22 @@ export default function UserServiceRequestPage() {
                         )}
 
                         <div className="flex items-center justify-between">
-                          <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
-                            {request.category}
-                          </span>
+                          <div className="flex items-center space-x-4">
+                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                              {request.category}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {request.offers} offer{request.offers !== 1 ? 's' : ''} received
+                            </span>
+                          </div>
                           <div className="flex space-x-2">
-                            <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                            <button 
+                              onClick={() => handleViewDetails(request)}
+                              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                            >
                               View Details
                             </button>
-                            {request.status === 'completed' && (
+                            {request.status === 'completed' && !request.finalRating && (
                               <button className="px-4 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 font-medium">
                                 Rate & Review
                               </button>
@@ -1002,25 +1004,25 @@ export default function UserServiceRequestPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="text-4xl font-bold text-red-600 mb-2">
-                {statistics.totalProviders?.toLocaleString() || '2,500+'}
+                {statistics.totalProviders?.toLocaleString() || '0'}
               </div>
               <div className="text-gray-600">Verified Providers</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-red-600 mb-2">
-                {statistics.completedRequests?.toLocaleString() || '15,000+'}
+                {statistics.completedRequests?.toLocaleString() || '0'}
               </div>
               <div className="text-gray-600">Completed Requests</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-red-600 mb-2">
-                {statistics.averageRating?.toFixed(1) || '4.8'}★
+                {statistics.averageRating?.toFixed(1) || '0'}★
               </div>
               <div className="text-gray-600">Average Rating</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-red-600 mb-2">
-                {statistics.activeRequests?.toLocaleString() || '500+'}
+                {statistics.activeRequests?.toLocaleString() || '0'}
               </div>
               <div className="text-gray-600">Active Requests</div>
             </div>
@@ -1029,6 +1031,142 @@ export default function UserServiceRequestPage() {
       </section>
 
       <Footer />
+
+      {/* Details Modal */}
+      {showDetailsModal && selectedRequestDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Request Details</h2>
+                <button 
+                  onClick={() => setShowDetailsModal(false)} 
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div>
+                <div className="flex items-center space-x-3 mb-3">
+                  <h3 className="text-xl font-semibold">{selectedRequestDetails.title}</h3>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    selectedRequestDetails.priority === 'urgent' 
+                      ? 'bg-red-100 text-red-800' 
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {selectedRequestDetails.priority}
+                  </span>
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {selectedRequestDetails.status?.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">Description</h4>
+                <p className="text-gray-600">{selectedRequestDetails.description}</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2">Service Details</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-500">Category:</span>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                        {selectedRequestDetails.category}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-500">Location:</span>
+                      <span>{selectedRequestDetails.location}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-500">Budget:</span>
+                      <span>{selectedRequestDetails.budget}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-500">Timeline:</span>
+                      <span>{getTimelineLabel(selectedRequestDetails.timeline)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2">Request Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-500">Posted by:</span>
+                      <span>{selectedRequestDetails.postedBy}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-500">Posted:</span>
+                      <span>{selectedRequestDetails.postedTime}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MessageSquare className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-500">Offers received:</span>
+                      <span className="font-medium text-red-600">
+                        {selectedRequestDetails.offers || 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {selectedRequestDetails.requirements && selectedRequestDetails.requirements.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2">Requirements</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRequestDetails.requirements.map((req, index) => (
+                      <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                        {req}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedRequestDetails.acceptedOffer && (
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2">Accepted Offer</h4>
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-green-700 font-medium">{selectedRequestDetails.acceptedOffer.storeName}</p>
+                        <p className="text-green-600 text-sm">Final Price: {selectedRequestDetails.acceptedOffer.price}</p>
+                      </div>
+                      {selectedRequestDetails.acceptedOffer.rating && (
+                        <div className="flex items-center">
+                          <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                          <span className="text-sm font-medium">{selectedRequestDetails.acceptedOffer.rating}/5</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t bg-gray-50">
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Request Form Modal */}
       {showRequestForm && (
@@ -1288,6 +1426,33 @@ export default function UserServiceRequestPage() {
                   className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
                 >
                   Login
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="p-6 text-center">
+              <h2 className="text-2xl font-bold mb-4">Confirm Action</h2>
+              <p className="text-gray-600 mb-6">{confirmMessage}</p>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmAction}
+                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                  disabled={submitting}
+                >
+                  {submitting ? 'Processing...' : 'Confirm'}
                 </button>
               </div>
             </div>

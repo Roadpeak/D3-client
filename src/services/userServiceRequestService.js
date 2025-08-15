@@ -1,12 +1,11 @@
-// services/userServiceRequestService.js - User-specific service request API
-import authService from './authService'; // Your existing auth service
-import { getTokenFromCookie } from '../config/api'; // ✅ Import the actual token function
+// services/userServiceRequestService.js - Updated without dummy data fallbacks
+import authService from './authService';
+import { getTokenFromCookie } from '../config/api';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
-// ✅ Fixed function to get auth token using the same method as authService
+// ✅ Enhanced function to get auth token
 const getAuthToken = () => {
-  // Try multiple sources for the token
   let token = null;
   
   // 1. Use the same getTokenFromCookie that authService uses
@@ -30,13 +29,6 @@ const getAuthToken = () => {
   if (!token) {
     token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token');
   }
-  
-  console.log('🔑 Token lookup:', {
-    found: !!token,
-    source: token ? 'Found from available sources' : 'Not found',
-    length: token ? token.length : 0,
-    preview: token ? `${token.substring(0, 20)}...` : 'N/A'
-  });
   
   return token;
 };
@@ -62,9 +54,6 @@ const getAuthHeaders = () => {
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
-    console.log('🔐 Auth header added:', `Bearer ${token.substring(0, 20)}...`);
-  } else {
-    console.warn('⚠️ No auth token available for request');
   }
   
   return headers;
@@ -73,7 +62,7 @@ const getAuthHeaders = () => {
 // ✅ Enhanced API request function for users
 const makeUserAPIRequest = async (url, options = {}) => {
   try {
-    const isAuthRequired = options.requireAuth !== false; // Default to requiring auth
+    const isAuthRequired = options.requireAuth !== false;
     
     let headers = {
       'Content-Type': 'application/json',
@@ -123,7 +112,6 @@ const makeUserAPIRequest = async (url, options = {}) => {
       // Handle authentication errors
       if (response.status === 401) {
         console.warn('🔒 User authentication failed (401)');
-        console.warn('🔒 Response data:', data);
         
         // Clear user auth data
         localStorage.removeItem('authToken');
@@ -174,7 +162,7 @@ const makeUserAPIRequest = async (url, options = {}) => {
 };
 
 class UserServiceRequestService {
-  // Get all public service requests (no auth required)
+  // ✅ Get all public service requests (no dummy data fallback)
   async getPublicServiceRequests(filters = {}) {
     try {
       const queryParams = new URLSearchParams();
@@ -186,29 +174,47 @@ class UserServiceRequestService {
       });
 
       const url = `${API_BASE_URL}/request-service?${queryParams}`;
-      return await makeUserAPIRequest(url, { requireAuth: false }); // ✅ Don't require auth for public requests
+      const response = await makeUserAPIRequest(url, { requireAuth: false });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch service requests');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error fetching public service requests:', error);
       throw error;
     }
   }
 
-  // Get service categories (no auth required)
+  // ✅ Get service categories (no dummy data fallback)
   async getServiceCategories() {
     try {
       const url = `${API_BASE_URL}/request-service/categories`;
-      return await makeUserAPIRequest(url, { requireAuth: false }); // ✅ Don't require auth
+      const response = await makeUserAPIRequest(url, { requireAuth: false });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch service categories');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error fetching service categories:', error);
       throw error;
     }
   }
 
-  // Get platform statistics (no auth required)
+  // ✅ Get platform statistics (no dummy data fallback)
   async getPlatformStatistics() {
     try {
       const url = `${API_BASE_URL}/request-service/statistics`;
-      return await makeUserAPIRequest(url, { requireAuth: false }); // ✅ Don't require auth
+      const response = await makeUserAPIRequest(url, { requireAuth: false });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch platform statistics');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error fetching platform statistics:', error);
       throw error;
@@ -218,7 +224,7 @@ class UserServiceRequestService {
   // ✅ Create new service request (user auth required)
   async createServiceRequest(requestData) {
     try {
-      ensureUserAuthenticated(); // ✅ Check auth before making request
+      ensureUserAuthenticated();
 
       // Validate required fields
       const requiredFields = ['title', 'category', 'description', 'budgetMin', 'budgetMax', 'timeline', 'location'];
@@ -246,18 +252,24 @@ class UserServiceRequestService {
         hasAuth: !!getAuthToken()
       });
       
-      return await makeUserAPIRequest(url, {
+      const response = await makeUserAPIRequest(url, {
         method: 'POST',
         body: JSON.stringify(requestData),
-        requireAuth: true // ✅ Explicitly require auth
+        requireAuth: true
       });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create service request');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error creating service request:', error);
       throw error;
     }
   }
 
-  // Get offers received for user's requests (user auth required)
+  // ✅ Get offers received for user's requests (user auth required) - NO DUMMY DATA
   async getUserOffers(pagination = {}) {
     try {
       ensureUserAuthenticated();
@@ -270,14 +282,20 @@ class UserServiceRequestService {
       }
 
       const url = `${API_BASE_URL}/request-service/offers?${queryParams}`;
-      return await makeUserAPIRequest(url, { requireAuth: true });
+      const response = await makeUserAPIRequest(url, { requireAuth: true });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch user offers');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error fetching user offers:', error);
       throw error;
     }
   }
 
-  // Get user's past requests (user auth required)
+  // ✅ Get user's past requests (user auth required) - NO DUMMY DATA
   async getUserPastRequests(pagination = {}) {
     try {
       ensureUserAuthenticated();
@@ -289,49 +307,67 @@ class UserServiceRequestService {
         queryParams.append('status', status);
       }
 
-      const url = `${API_BASE_URL}/service-requests/my-requests?${queryParams}`;
-      return await makeUserAPIRequest(url, { requireAuth: true });
+      const url = `${API_BASE_URL}/request-service/my-requests?${queryParams}`;
+      const response = await makeUserAPIRequest(url, { requireAuth: true });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch user past requests');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error fetching user past requests:', error);
       throw error;
     }
   }
 
-  // Accept an offer (user auth required)
-  async acceptOffer(offerId) {
+  // ✅ Accept an offer (user auth required)
+  async acceptOffer(offerId, requestId) {
     try {
       ensureUserAuthenticated();
 
-      if (!offerId) {
-        throw new Error('Offer ID is required');
+      if (!offerId || !requestId) {
+        throw new Error('Offer ID and Request ID are required');
       }
 
-      const url = `${API_BASE_URL}/offers/${offerId}/accept`;
-      return await makeUserAPIRequest(url, {
+      const url = `${API_BASE_URL}/request-service/${requestId}/accept-offer/${offerId}`;
+      const response = await makeUserAPIRequest(url, {
         method: 'PUT',
         requireAuth: true
       });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to accept offer');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error accepting offer:', error);
       throw error;
     }
   }
 
-  // Reject an offer (user auth required)
-  async rejectOffer(offerId, reason = '') {
+  // ✅ Reject an offer (user auth required)
+  async rejectOffer(offerId, requestId, reason = '') {
     try {
       ensureUserAuthenticated();
 
-      if (!offerId) {
-        throw new Error('Offer ID is required');
+      if (!offerId || !requestId) {
+        throw new Error('Offer ID and Request ID are required');
       }
 
-      const url = `${API_BASE_URL}/offers/${offerId}/reject`;
-      return await makeUserAPIRequest(url, {
+      const url = `${API_BASE_URL}/request-service/${requestId}/reject-offer/${offerId}`;
+      const response = await makeUserAPIRequest(url, {
         method: 'PUT',
         body: JSON.stringify({ reason }),
         requireAuth: true
       });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to reject offer');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error rejecting offer:', error);
       throw error;
@@ -373,7 +409,7 @@ class UserServiceRequestService {
         hasAuth: !!getAuthToken()
       });
       
-      return await makeUserAPIRequest(url, {
+      const response = await makeUserAPIRequest(url, {
         method: 'POST',
         body: JSON.stringify({
           quotedPrice: parseFloat(offerData.quotedPrice),
@@ -382,55 +418,19 @@ class UserServiceRequestService {
         }),
         requireAuth: true
       });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create individual offer');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error creating individual offer:', error);
       throw error;
     }
   }
 
-  // Update service request (user auth required)
-  async updateServiceRequest(requestId, updates) {
-    try {
-      ensureUserAuthenticated();
-
-      if (!requestId) {
-        throw new Error('Request ID is required');
-      }
-
-      const url = `${API_BASE_URL}/request-service/${requestId}`;
-      return await makeUserAPIRequest(url, {
-        method: 'PUT',
-        body: JSON.stringify(updates),
-        requireAuth: true
-      });
-    } catch (error) {
-      console.error('Error updating service request:', error);
-      throw error;
-    }
-  }
-
-  // Cancel service request (user auth required)
-  async cancelServiceRequest(requestId, reason = '') {
-    try {
-      ensureUserAuthenticated();
-
-      if (!requestId) {
-        throw new Error('Request ID is required');
-      }
-
-      const url = `${API_BASE_URL}/request-service/${requestId}/cancel`;
-      return await makeUserAPIRequest(url, {
-        method: 'PUT',
-        body: JSON.stringify({ reason }),
-        requireAuth: true
-      });
-    } catch (error) {
-      console.error('Error cancelling service request:', error);
-      throw error;
-    }
-  }
-
-  // Get specific service request details (no auth required for public requests)
+  // ✅ Get specific service request details
   async getServiceRequestDetails(requestId) {
     try {
       if (!requestId) {
@@ -438,14 +438,20 @@ class UserServiceRequestService {
       }
 
       const url = `${API_BASE_URL}/request-service/${requestId}`;
-      return await makeUserAPIRequest(url, { requireAuth: false });
+      const response = await makeUserAPIRequest(url, { requireAuth: false });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch service request details');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error fetching service request details:', error);
       throw error;
     }
   }
 
-  // Rate and review completed service (user auth required)
+  // ✅ Rate and review completed service (user auth required)
   async rateAndReviewService(requestId, rating, review) {
     try {
       ensureUserAuthenticated();
@@ -459,7 +465,7 @@ class UserServiceRequestService {
       }
 
       const url = `${API_BASE_URL}/request-service/${requestId}/review`;
-      return await makeUserAPIRequest(url, {
+      const response = await makeUserAPIRequest(url, {
         method: 'POST',
         body: JSON.stringify({
           rating: parseInt(rating),
@@ -467,13 +473,19 @@ class UserServiceRequestService {
         }),
         requireAuth: true
       });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to rate and review service');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error rating and reviewing service:', error);
       throw error;
     }
   }
 
-  // Search service requests with advanced filters
+  // ✅ Search service requests with advanced filters
   async searchServiceRequests(searchParams = {}) {
     try {
       const queryParams = new URLSearchParams();
@@ -485,20 +497,32 @@ class UserServiceRequestService {
       });
 
       const url = `${API_BASE_URL}/request-service/search?${queryParams}`;
-      return await makeUserAPIRequest(url, { requireAuth: false });
+      const response = await makeUserAPIRequest(url, { requireAuth: false });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to search service requests');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error searching service requests:', error);
       throw error;
     }
   }
 
-  // Get user's service request statistics (user auth required)
+  // ✅ Get user's service request statistics (user auth required)
   async getUserStatistics() {
     try {
       ensureUserAuthenticated();
 
       const url = `${API_BASE_URL}/users/service-statistics`;
-      return await makeUserAPIRequest(url, { requireAuth: true });
+      const response = await makeUserAPIRequest(url, { requireAuth: true });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch user statistics');
+      }
+      
+      return response;
     } catch (error) {
       console.error('Error fetching user statistics:', error);
       throw error;
@@ -523,7 +547,7 @@ class UserServiceRequestService {
   // ✅ Enhanced debug method to check authentication state
   debugAuth() {
     const token = getAuthToken();
-    const cookieToken = getTokenFromCookie(); // Direct check
+    const cookieToken = getTokenFromCookie();
     const isAuth = authService.isAuthenticated();
     const user = this.getCurrentUser();
     
