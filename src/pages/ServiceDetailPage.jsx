@@ -1,3 +1,4 @@
+// ServiceDetailPage.js - Fixed version with proper imports and real data fetching
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
@@ -16,7 +17,10 @@ import {
   ChevronRight,
   Globe,
   Heart,
-  Share2
+  Share2,
+  Info,
+  Navigation,
+  Zap
 } from 'lucide-react';
 
 import Navbar from '../components/Navbar';
@@ -25,7 +29,7 @@ import StoreService from '../services/storeService';
 import serviceAPI from '../services/serviceService';
 
 const ServiceDetailPage = () => {
-  const { storeId, serviceId } = useParams();
+  const { storeId, serviceId, id } = useParams();
   const navigate = useNavigate();
 
   // State management
@@ -35,23 +39,26 @@ const ServiceDetailPage = () => {
   const [storeLoading, setStoreLoading] = useState(true);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [bookingData, setBookingData] = useState({
-    date: '',
-    time: '',
-    notes: ''
-  });
-  const [booking, setBooking] = useState(false);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  // Determine the actual service ID (could be from :id or :serviceId param)
+  const actualServiceId = serviceId || id;
 
   // Fetch store data
   const fetchStoreData = async () => {
+    if (!storeId) {
+      setStoreLoading(false);
+      return;
+    }
+
     try {
       setStoreLoading(true);
       const data = await StoreService.getStoreById(storeId);
       setStoreData(data.store);
     } catch (err) {
       console.error('Error fetching store:', err);
-      setError('Store not found');
+      // Don't set error here, as service might still load without store data
     } finally {
       setStoreLoading(false);
     }
@@ -61,7 +68,7 @@ const ServiceDetailPage = () => {
   const fetchServiceData = async () => {
     try {
       setServiceLoading(true);
-      const data = await serviceAPI.getServiceById(serviceId);
+      const data = await serviceAPI.getServiceById(actualServiceId);
       setServiceData(data.service || data);
     } catch (err) {
       console.error('Error fetching service:', err);
@@ -71,71 +78,103 @@ const ServiceDetailPage = () => {
     }
   };
 
-  // Handle booking submission
-  const handleBooking = async () => {
-    if (!bookingData.date || !bookingData.time) {
-      alert('Please select both date and time for your booking.');
-      return;
-    }
-
-    try {
-      setBooking(true);
-      const response = await serviceAPI.bookService(serviceId, {
-        storeId: parseInt(storeId),
-        date: bookingData.date,
-        time: bookingData.time,
-        notes: bookingData.notes
-      });
-
-      setBookingSuccess(true);
-      setBookingData({ date: '', time: '', notes: '' });
-      
-      // Show success message for 3 seconds then reset
-      setTimeout(() => {
-        setBookingSuccess(false);
-      }, 3000);
-
-    } catch (err) {
-      console.error('Booking error:', err);
-      alert('Failed to book service. Please try again.');
-    } finally {
-      setBooking(false);
-    }
-  };
-
-  // Generate time slots
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let hour = 9; hour <= 17; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        slots.push(time);
-      }
-    }
-    return slots;
-  };
-
-  // Get minimum date (today)
-  const getMinDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
-
   useEffect(() => {
-    // Check if we have both storeId and serviceId (nested route)
-    if (storeId && serviceId) {
-      fetchStoreData();
-      fetchServiceData();
-    } 
-    // Handle legacy route /service/:id (serviceId would be in the :id param)
-    else if (serviceId && !storeId) {
+    if (actualServiceId) {
       fetchServiceData();
     }
-  }, [storeId, serviceId]);
+    if (storeId) {
+      fetchStoreData();
+    }
+  }, [storeId, actualServiceId]);
 
   useEffect(() => {
     setLoading(storeLoading || serviceLoading);
   }, [storeLoading, serviceLoading]);
+
+  const goBack = () => {
+    if (storeId) {
+      navigate(`/store/${storeId}`);
+    } else {
+      navigate('/stores');
+    }
+  };
+
+  // Enhanced booking handler for service
+  const handleBookService = async () => {
+    try {
+      setBookingLoading(true);
+      
+      // Check if user is authenticated
+      const user = localStorage.getItem('access_token') || 
+                   localStorage.getItem('authToken') || 
+                   localStorage.getItem('token');
+      
+      if (!user) {
+        // Redirect to login with service booking redirect
+        const redirectUrl = `/booking/service/${actualServiceId}`;
+        navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+        return;
+      }
+
+      // Check if service is bookable
+      if (!serviceData.booking_enabled) {
+        setError('Booking is not enabled for this service.');
+        return;
+      }
+
+      // For dynamic services, show information
+      if (serviceData.type === 'dynamic') {
+        const confirmDynamic = window.confirm(
+          'This is a dynamic pricing service. The exact price will be determined based on your specific requirements. ' +
+          'Would you like to proceed with booking a consultation?'
+        );
+        
+        if (!confirmDynamic) {
+          setBookingLoading(false);
+          return;
+        }
+      }
+
+      // Navigate to the enhanced booking page for services
+      navigate(`/booking/service/${actualServiceId}`, {
+        state: {
+          serviceData: serviceData,
+          storeData: storeData,
+          bookingType: 'service'
+        }
+      });
+      
+    } catch (error) {
+      console.error('Service booking error:', error);
+      setError('Failed to start booking process. Please try again.');
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
+  const handleShare = (platform) => {
+    const url = window.location.href;
+    const text = `Check out this service: ${serviceData?.name}`;
+
+    const shareUrls = {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+    };
+
+    if (shareUrls[platform]) {
+      window.open(shareUrls[platform], '_blank');
+    }
+  };
+
+  const renderStars = (rating) => {
+    return [...Array(5)].map((_, i) => (
+      <Star
+        key={i}
+        className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+      />
+    ));
+  };
 
   // Loading state
   if (loading) {
@@ -154,7 +193,7 @@ const ServiceDetailPage = () => {
   }
 
   // Error state
-  if (error) {
+  if (error && !serviceData) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -164,7 +203,7 @@ const ServiceDetailPage = () => {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Service Not Found</h1>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
-              onClick={() => navigate(storeId ? `/store/${storeId}` : '/stores')}
+              onClick={goBack}
               className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
             >
               {storeId ? 'Back to Store' : 'Back to Stores'}
@@ -202,21 +241,13 @@ const ServiceDetailPage = () => {
           </Link>
           <ChevronRight className="w-4 h-4" />
           
-          {storeData ? (
+          {storeData && (
             <>
-              <Link 
-                to={`/store/${storeId}`} 
-                className="hover:text-gray-900 transition-colors"
-              >
+              <button onClick={goBack} className="hover:text-gray-900 transition-colors">
                 {storeData.name}
-              </Link>
+              </button>
               <ChevronRight className="w-4 h-4" />
               <span className="text-gray-900 font-medium">Services</span>
-              <ChevronRight className="w-4 h-4" />
-            </>
-          ) : (
-            <>
-              <span>Services</span>
               <ChevronRight className="w-4 h-4" />
             </>
           )}
@@ -225,12 +256,22 @@ const ServiceDetailPage = () => {
 
         {/* Back Button */}
         <button
-          onClick={() => navigate(storeId ? `/store/${storeId}` : '/stores')}
+          onClick={goBack}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           {storeId ? 'Back to Store' : 'Back to Stores'}
         </button>
+
+        {/* Error Alert */}
+        {error && serviceData && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+              <p className="text-red-600">{error}</p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Service Details - Left Column */}
@@ -239,20 +280,30 @@ const ServiceDetailPage = () => {
             <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
               {/* Service Image */}
               <div className="relative h-64 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
-                {serviceData.image_url ? (
+                {serviceData.images && serviceData.images.length > 0 ? (
+                  <img
+                    src={serviceData.images[selectedImage]}
+                    alt={serviceData.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentElement.querySelector('.fallback-bg').style.display = 'flex';
+                    }}
+                  />
+                ) : serviceData.image_url ? (
                   <img
                     src={serviceData.image_url}
                     alt={serviceData.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      e.target.parentElement.querySelector('.fallback-bg').style.display = 'flex';
                     }}
                   />
                 ) : null}
 
                 {/* Fallback gradient background */}
-                <div className={`absolute inset-0 flex items-center justify-center ${serviceData.image_url ? 'hidden' : 'flex'}`}>
+                <div className={`fallback-bg absolute inset-0 flex items-center justify-center ${serviceData.images || serviceData.image_url ? 'hidden' : 'flex'}`}>
                   <div className="text-center text-white">
                     <Camera className="w-16 h-16 mx-auto mb-4 opacity-80" />
                     <div className="text-2xl font-bold opacity-90">{serviceData.name}</div>
@@ -275,11 +326,40 @@ const ServiceDetailPage = () => {
                   <button className="bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
                     <Heart className="w-5 h-5 text-gray-600" />
                   </button>
-                  <button className="bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
+                  <button 
+                    onClick={() => handleShare('facebook')}
+                    className="bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+                  >
                     <Share2 className="w-5 h-5 text-gray-600" />
                   </button>
                 </div>
               </div>
+
+              {/* Thumbnail Images */}
+              {serviceData.images && serviceData.images.length > 1 && (
+                <div className="p-4">
+                  <div className="flex space-x-2 overflow-x-auto">
+                    {serviceData.images.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImage(index)}
+                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                          selectedImage === index ? 'border-blue-500' : 'border-gray-200 hover:border-blue-300'
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt={`Thumbnail ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = '/api/placeholder/80/80';
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Service Info */}
               <div className="p-6">
@@ -289,7 +369,7 @@ const ServiceDetailPage = () => {
                       {serviceData.name}
                     </h1>
                     
-                    {/* Store Info (if available) */}
+                    {/* Store Info */}
                     {storeData && (
                       <div className="flex items-center gap-3 mb-4">
                         <img
@@ -297,15 +377,15 @@ const ServiceDetailPage = () => {
                           alt={storeData.name}
                           className="w-8 h-8 rounded-full object-cover border border-gray-200"
                           onError={(e) => {
-                            e.target.src = '/images/store-placeholder.png';
+                            e.target.src = '/api/placeholder/32/32';
                           }}
                         />
-                        <Link 
-                          to={`/store/${storeId}`}
+                        <button 
+                          onClick={goBack}
                           className="text-blue-600 hover:text-blue-700 font-medium"
                         >
                           {storeData.name}
-                        </Link>
+                        </button>
                         {storeData.rating && (
                           <div className="flex items-center gap-1">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -326,19 +406,47 @@ const ServiceDetailPage = () => {
                   </div>
 
                   {/* Price Display */}
-                  {serviceData.type === 'fixed' && serviceData.price && (
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-green-600">
-                        KES {serviceData.price}
-                      </div>
-                      {serviceData.duration && (
-                        <div className="text-sm text-gray-500">
-                          {serviceData.duration} minutes
+                  <div className="text-right">
+                    {serviceData.type === 'fixed' && serviceData.price ? (
+                      <>
+                        <div className="text-3xl font-bold text-green-600">
+                          KES {serviceData.price.toLocaleString()}
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {serviceData.duration && (
+                          <div className="text-sm text-gray-500">
+                            {serviceData.duration} minutes
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600 mb-1">
+                          Custom Quote
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Price varies by requirements
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Dynamic Service Information */}
+                {serviceData.type === 'dynamic' && (
+                  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-semibold mb-2 flex items-center text-blue-800">
+                      <Info className="w-5 h-5 mr-2" />
+                      Dynamic Pricing Service
+                    </h4>
+                    <p className="text-blue-700 text-sm mb-2">
+                      This service offers flexible pricing based on your specific needs and requirements. 
+                      The final price will be determined after consultation with our service provider.
+                    </p>
+                    <p className="text-blue-700 text-sm">
+                      <strong>Consultation Required:</strong> Book a free consultation to discuss your needs and get a custom quote.
+                    </p>
+                  </div>
+                )}
 
                 {/* Service Description */}
                 <div className="mb-6">
@@ -350,12 +458,12 @@ const ServiceDetailPage = () => {
 
                 {/* Service Features */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  {serviceData.type === 'fixed' && (
+                  {serviceData.type === 'fixed' ? (
                     <>
                       <div className="text-center p-4 bg-green-50 rounded-lg">
                         <DollarSign className="w-6 h-6 text-green-600 mx-auto mb-2" />
                         <div className="text-sm font-medium text-gray-900">Fixed Price</div>
-                        <div className="text-xs text-gray-600">KES {serviceData.price}</div>
+                        <div className="text-xs text-gray-600">KES {serviceData.price?.toLocaleString()}</div>
                       </div>
                       {serviceData.duration && (
                         <div className="text-center p-4 bg-blue-50 rounded-lg">
@@ -365,6 +473,12 @@ const ServiceDetailPage = () => {
                         </div>
                       )}
                     </>
+                  ) : (
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <Zap className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                      <div className="text-sm font-medium text-gray-900">Flexible</div>
+                      <div className="text-xs text-gray-600">Custom pricing</div>
+                    </div>
                   )}
                   
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
@@ -380,7 +494,7 @@ const ServiceDetailPage = () => {
                   </div>
                 </div>
 
-                {/* Store Location (if available) */}
+                {/* Store Location */}
                 {storeData?.location && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="font-semibold text-gray-900 mb-2">Service Location</h4>
@@ -407,12 +521,15 @@ const ServiceDetailPage = () => {
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">What's Included</h4>
                   <ul className="text-gray-700 space-y-1">
-                    <li>• Professional service delivery</li>
-                    <li>• Quality assurance guarantee</li>
-                    <li>• Customer support</li>
-                    {serviceData.features && serviceData.features.map((feature, index) => (
+                    {serviceData.features ? serviceData.features.map((feature, index) => (
                       <li key={index}>• {feature}</li>
-                    ))}
+                    )) : (
+                      <>
+                        <li>• Professional service delivery</li>
+                        <li>• Quality assurance guarantee</li>
+                        <li>• Customer support</li>
+                      </>
+                    )}
                   </ul>
                 </div>
 
@@ -433,129 +550,138 @@ const ServiceDetailPage = () => {
             </div>
           </div>
 
-          {/* Booking Form - Right Column */}
+          {/* Booking Widget - Right Column */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm p-6 sticky top-6">
               <h3 className="text-xl font-bold text-gray-900 mb-6">Book This Service</h3>
 
-              {bookingSuccess ? (
-                <div className="text-center py-8">
-                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Booking Confirmed!</h4>
-                  <p className="text-gray-600 mb-4">
-                    Your service booking has been submitted successfully.
-                  </p>
-                  <button
-                    onClick={() => navigate(storeId ? `/store/${storeId}` : '/stores')}
-                    className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Back to Store
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={(e) => { e.preventDefault(); handleBooking(); }} className="space-y-4">
-                  {/* Date Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Date *
-                    </label>
-                    <input
-                      type="date"
-                      value={bookingData.date}
-                      onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
-                      min={getMinDate()}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
+              <div className="space-y-4 mb-6">
+                {/* Service Type Info */}
+                <div className={`p-4 rounded-lg border ${
+                  serviceData.type === 'fixed' 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-blue-50 border-blue-200'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-gray-900">Service Type</span>
+                    <span className={`text-sm px-2 py-1 rounded ${
+                      serviceData.type === 'fixed' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {serviceData.type === 'fixed' ? 'Fixed Price' : 'Dynamic'}
+                    </span>
                   </div>
-
-                  {/* Time Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Select Time *
-                    </label>
-                    <select
-                      value={bookingData.time}
-                      onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    >
-                      <option value="">Choose a time</option>
-                      {generateTimeSlots().map((time) => (
-                        <option key={time} value={time}>
-                          {time}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Additional Notes */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Additional Notes (Optional)
-                    </label>
-                    <textarea
-                      value={bookingData.notes}
-                      onChange={(e) => setBookingData({ ...bookingData, notes: e.target.value })}
-                      rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Any special requests or notes..."
-                    />
-                  </div>
-
-                  {/* Price Summary */}
-                  {serviceData.type === 'fixed' && serviceData.price && (
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-900">Total Price:</span>
-                        <span className="text-xl font-bold text-green-600">
-                          KES {serviceData.price}
-                        </span>
+                  
+                  {serviceData.type === 'fixed' ? (
+                    <div>
+                      <div className="text-2xl font-bold text-green-600 mb-1">
+                        KES {serviceData.price?.toLocaleString()}
                       </div>
                       {serviceData.duration && (
-                        <div className="text-sm text-gray-600 mt-1">
+                        <div className="text-sm text-gray-600">
                           Duration: {serviceData.duration} minutes
                         </div>
                       )}
                     </div>
-                  )}
-
-                  {/* Book Button */}
-                  <button
-                    type="submit"
-                    disabled={booking || !bookingData.date || !bookingData.time}
-                    className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {booking ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Booking...
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="w-5 h-5" />
-                        Book Service
-                      </>
-                    )}
-                  </button>
-
-                  {/* Contact Store */}
-                  {storeData && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <p className="text-sm text-gray-600 mb-2">Need help with booking?</p>
-                      <Link
-                        to={`/store/${storeId}`}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                      >
-                        Contact {storeData.name} →
-                      </Link>
+                  ) : (
+                    <div>
+                      <div className="text-lg font-bold text-blue-600 mb-1">
+                        Custom Quote Required
+                      </div>
+                      <div className="text-sm text-blue-700">
+                        Price determined after consultation
+                      </div>
                     </div>
                   )}
-                </form>
+                </div>
+
+                {/* Booking Information */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Booking Information</h4>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span>Instant booking confirmation</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span>Free cancellation up to 24h before</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span>Professional service guarantee</span>
+                    </div>
+                    {serviceData.type === 'fixed' && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span>Fixed price - no hidden costs</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Book Button */}
+              <button
+                onClick={handleBookService}
+                disabled={bookingLoading || !serviceData.booking_enabled}
+                className={`w-full font-semibold py-4 px-6 rounded-lg transition-all duration-200 mb-4 flex items-center justify-center space-x-2 ${
+                  serviceData.booking_enabled && !bookingLoading
+                    ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                {bookingLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Loading...</span>
+                  </>
+                ) : serviceData.booking_enabled ? (
+                  <>
+                    <Calendar className="w-5 h-5" />
+                    <span>
+                      {serviceData.type === 'dynamic' ? 'BOOK CONSULTATION' : 'BOOK SERVICE'}
+                    </span>
+                  </>
+                ) : (
+                  <span>BOOKING UNAVAILABLE</span>
+                )}
+              </button>
+
+              {/* User Authentication Info */}
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 text-sm">
+                  <strong>Ready to book?</strong> You'll need to sign in or create an account to complete your booking.
+                </p>
+              </div>
+
+              {/* Contact Store */}
+              {storeData && (
+                <div className="pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600 mb-2">Need help with booking?</p>
+                  <button
+                    onClick={goBack}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Contact {storeData.name} →
+                  </button>
+                  {storeData.phone_number && (
+                    <div className="mt-2">
+                      <a
+                        href={`tel:${storeData.phone_number}`}
+                        className="flex items-center gap-2 text-gray-600 hover:text-gray-800 text-sm"
+                      >
+                        <Phone className="w-4 h-4" />
+                        {storeData.phone_number}
+                      </a>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Store Quick Info (if available) */}
+            {/* Store Quick Info */}
             {storeData && (
               <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
                 <h4 className="font-semibold text-gray-900 mb-4">About the Store</h4>
@@ -566,7 +692,7 @@ const ServiceDetailPage = () => {
                     alt={storeData.name}
                     className="w-12 h-12 rounded-lg object-cover border border-gray-200"
                     onError={(e) => {
-                      e.target.src = '/images/store-placeholder.png';
+                      e.target.src = '/api/placeholder/48/48';
                     }}
                   />
                   <div>
@@ -581,17 +707,17 @@ const ServiceDetailPage = () => {
                 </div>
 
                 {storeData.description && (
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  <p className="text-gray-600 text-sm mb-4">
                     {storeData.description}
                   </p>
                 )}
 
-                <Link
-                  to={`/store/${storeId}`}
+                <button
+                  onClick={goBack}
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   View Store Profile →
-                </Link>
+                </button>
               </div>
             )}
           </div>

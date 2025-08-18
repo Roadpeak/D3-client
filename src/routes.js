@@ -1,14 +1,28 @@
-// src/routes/index.js - Updated version with service routes
+// src/routes/index.js - Updated version with enhanced booking system
 import React from 'react'
 import { Route, Routes, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import SignUp from './pages/auth/SignUp'
 import Login from './pages/auth/Login'
-import ViewOffer from './pages/ViewOffer'
+
+// Updated Offer Components
+import OffersPage from './pages/ViewOffer' // Our new enhanced offers page
+import ViewOffer from './pages/ViewOffer' // Keep existing for backward compatibility
 import Offers from './pages/Offers'
+
+// Store Components
 import Stores from './pages/Stores'
-import Checkout from './pages/Checkout'
 import Store from './pages/Store'
+
+// Updated Service Components
+import ServiceDetailPage from './pages/ServiceDetailPage' // Our new enhanced service page
+import ViewService from './pages/ViewService' // Keep existing for backward compatibility
+
+// Booking System
+import EnhancedBookingPage from './pages/Booking'
+
+// Other Pages
+import Checkout from './pages/Checkout'
 import MyVouchers from './pages/MyVouchers'
 import Chat from './pages/Chat'
 import Profile from './pages/Profile'
@@ -17,11 +31,6 @@ import Footer from './components/Footer'
 import Requestservice from './pages/Requestservice'
 import Hotdeals from './pages/Hotdeals'
 import VerifyOTP from './pages/auth/VerifyOTP'
-import EnhancedBookingPage from './pages/Booking'
-import ServiceDetailPage from './pages/ServiceDetailPage'; 
-
-// Service Components (ViewService only - no services listing page needed)
-import ViewService from './pages/ViewService' // View individual service
 
 // 404 Not Found Component
 const NotFound = () => (
@@ -73,18 +82,29 @@ const AppRoutes = () => {
         <Route path='/accounts/sign-in' element={<Login />} />
         <Route path='/accounts/verify-otp' element={<VerifyOTP />} />
         
-        {/* Login redirect route */}
+        {/* Login redirect routes */}
         <Route path='/login' element={<Navigate to="/accounts/sign-in" replace />} />
+        <Route path='/signup' element={<Navigate to="/accounts/sign-up" replace />} />
         
-        {/* Offer Routes */}
+        {/* ==================== OFFER ROUTES ==================== */}
+        
+        {/* Offers listing */}
         <Route path='/offers' element={<Offers />} />
-        <Route path='/offer' element={<ViewOffer />} />
-        <Route path='/offer/:id' element={<ViewOffer />} />
-        <Route path='/offers/:id' element={<ViewOffer />} />
-        <Route path='store/offers/:id' element={<ViewOffer />} />
-        <Route path="/store/:storeId/offers/:offerId" element={<ViewOffer />} />
         
-        {/* Store Routes */}
+        {/* Individual Offer Routes - Use new enhanced OffersPage */}
+        <Route path='/offer/:id' element={<OffersPage />} />
+        <Route path='/offers/:id' element={<OffersPage />} />
+        
+        {/* Legacy offer routes - redirect to new format */}
+        <Route path='/offer' element={<Navigate to="/offers" replace />} />
+        <Route path='store/offers/:id' element={<Navigate to="/offer/$2" replace />} />
+        <Route path="/store/:storeId/offers/:offerId" element={<Navigate to="/offer/$3" replace />} />
+        
+        {/* Backward compatibility - keep ViewOffer for any internal usage */}
+        <Route path='/view-offer/:id' element={<ViewOffer />} />
+        
+        {/* ==================== STORE ROUTES ==================== */}
+        
         <Route path='/stores' element={<Stores />} />
         <Route path='/Stores' element={<Navigate to="/stores" replace />} />
         <Route path='/store/:id' element={<Store />} />
@@ -92,15 +112,43 @@ const AppRoutes = () => {
         
         {/* ==================== SERVICE ROUTES ==================== */}
         
-        {/* Individual Service Routes */}
-        <Route path='/service/:id' element={<ViewService />} />
-        <Route path='/services/:id' element={<ViewService />} />
-        <Route path='/ViewService/:id' element={<ViewService />} />
+        {/* Individual Service Routes - Use new enhanced ServiceDetailPage */}
+        <Route path='/service/:id' element={<ServiceDetailPage />} />
+        <Route path='/services/:id' element={<ServiceDetailPage />} />
+        
+        {/* Store-specific service routes */}
+        <Route path="/store/:storeId/service/:serviceId" element={<ServiceDetailPage />} />
         <Route path="/store/:storeId/services/:serviceId" element={<ServiceDetailPage />} />
         
-        {/* Service booking routes */}
-        <Route path='/service/:id/book' element={<Navigate to={`/booking/service/${window.location.pathname.split('/')[2]}`} replace />} />
-        <Route path='/services/:id/book' element={<Navigate to={`/booking/service/${window.location.pathname.split('/')[2]}`} replace />} />
+        {/* Legacy service routes */}
+        <Route path='/ViewService/:id' element={<Navigate to="/service/$2" replace />} />
+        <Route path='/view-service/:id' element={<ViewService />} /> {/* Keep for backward compatibility */}
+        
+        {/* ==================== ENHANCED BOOKING ROUTES ==================== */}
+        
+        {/* Main Enhanced Booking Routes */}
+        <Route path="/booking/offer/:offerId" element={<EnhancedBookingPage />} />
+        <Route path="/booking/service/:serviceId" element={<EnhancedBookingPage />} />
+        
+        {/* Unified booking route - auto-detects type from ID */}
+        <Route path="/booking/:id" element={<EnhancedBookingPage />} />
+        
+        {/* Legacy booking redirects */}
+        <Route path="/book/:offerId" element={<Navigate to="/booking/offer/$2" replace />} />
+        <Route path="/offers/:offerId/book" element={<Navigate to="/booking/offer/$2" replace />} />
+        <Route path='/service/:id/book' element={<Navigate to="/booking/service/$2" replace />} />
+        <Route path='/services/:id/book' element={<Navigate to="/booking/service/$2" replace />} />
+        
+        {/* Store-specific booking routes */}
+        <Route path="/store/:storeId/service/:serviceId/book" element={<Navigate to="/booking/service/$3" replace />} />
+        <Route path="/store/:storeId/offer/:offerId/book" element={<Navigate to="/booking/offer/$3" replace />} />
+        
+        {/* Booking Success Routes */}
+        <Route path="/booking/success" element={<BookingSuccess />} />
+        <Route path="/booking/confirmed" element={<Navigate to="/booking/success" replace />} />
+        <Route path="/booking/complete" element={<Navigate to="/booking/success" replace />} />
+        
+        {/* ==================== SEARCH AND DISCOVERY ==================== */}
         
         {/* Search */}
         <Route path="/search" element={<SearchResults />} />
@@ -108,48 +156,55 @@ const AppRoutes = () => {
         {/* Hot Deals */}
         <Route path='/hotdeals' element={<Hotdeals />} />
         <Route path='/Hotdeals' element={<Navigate to="/hotdeals" replace />} />
+        <Route path='/hot-deals' element={<Navigate to="/hotdeals" replace />} />
         
         {/* Service Request */}
         <Route path='/request-service' element={<Requestservice />} />
         <Route path='/Requestservice' element={<Navigate to="/request-service" replace />} />
         
-        {/* Footer Component Route (if needed) */}
-        <Route path='/components/Footer' element={<Footer />} />
-
-        {/* ==================== BOOKING ROUTES ==================== */}
-        
-        {/* Main Booking Routes - Component handles its own auth */}
-        <Route path="/booking/:offerId" element={<EnhancedBookingPage />} />
-        <Route path="/booking/service/:serviceId" element={<EnhancedBookingPage />} />
-        
-        {/* Alternative booking routes for flexibility */}
-        <Route path="/book/:offerId" element={<Navigate to={`/booking/${window.location.pathname.split('/')[2]}`} replace />} />
-        <Route path="/offers/:offerId/book" element={<Navigate to={`/booking/${window.location.pathname.split('/')[2]}`} replace />} />
-        
-        {/* Booking Success Route */}
-        <Route path="/booking/success" element={<BookingSuccess />} />
-        <Route path="/booking/confirmed" element={<Navigate to="/booking/success" replace />} />
-
-        {/* ==================== USER ROUTES ==================== */}
+        {/* ==================== USER DASHBOARD ROUTES ==================== */}
         
         {/* User Profile */}
         <Route path='/profile' element={<Profile />} />
+        <Route path='/account' element={<Navigate to="/profile" replace />} />
         
         {/* My Bookings/Vouchers */}
         <Route path='/my-vouchers' element={<MyVouchers />} />
-        
-        {/* Alternative route names */}
         <Route path='/my-bookings' element={<Navigate to="/my-vouchers" replace />} />
         <Route path='/bookings' element={<Navigate to="/my-vouchers" replace />} />
+        <Route path='/vouchers' element={<Navigate to="/my-vouchers" replace />} />
         
         {/* Chat */}
         <Route path='/chat' element={<Chat />} />
         <Route path='/chat/Store/:id' element={<Chat />} />
+        <Route path='/messages' element={<Navigate to="/chat" replace />} />
+        
+        {/* ==================== PAYMENT AND CHECKOUT ==================== */}
         
         {/* Checkout */}
         <Route path='/checkout' element={<Checkout />} />
         <Route path='/Checkout' element={<Navigate to="/checkout" replace />} />
-
+        <Route path='/payment' element={<Navigate to="/checkout" replace />} />
+        
+        {/* ==================== UTILITY ROUTES ==================== */}
+        
+        {/* Footer Component Route (if needed) */}
+        <Route path='/components/Footer' element={<Footer />} />
+        
+        {/* ==================== ADDITIONAL ROUTES FOR COMPATIBILITY ==================== */}
+        
+        {/* Case-sensitive redirects */}
+        <Route path='/OFFERS' element={<Navigate to="/offers" replace />} />
+        <Route path='/STORES' element={<Navigate to="/stores" replace />} />
+        <Route path='/PROFILE' element={<Navigate to="/profile" replace />} />
+        <Route path='/CHAT' element={<Navigate to="/chat" replace />} />
+        
+        {/* Common alternative paths */}
+        <Route path='/deals' element={<Navigate to="/offers" replace />} />
+        <Route path='/services' element={<Navigate to="/stores" replace />} />
+        <Route path='/merchants' element={<Navigate to="/stores" replace />} />
+        <Route path='/providers' element={<Navigate to="/stores" replace />} />
+        
         {/* ==================== ERROR ROUTES ==================== */}
         
         {/* 404 Not Found - This should be the last route */}
