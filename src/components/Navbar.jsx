@@ -97,7 +97,6 @@ const Navbar = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentLocation, setCurrentLocation] = useState('Westlands, Nairobi');
   
@@ -111,7 +110,6 @@ const Navbar = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const profileMenuRef = useRef(null);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -119,18 +117,6 @@ const Navbar = () => {
     loadNotifications();
     loadCategories();
     loadLocations();
-  }, []);
-
-  // Close profile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
-        setIsProfileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const checkAuthStatus = async () => {
@@ -245,7 +231,6 @@ const Navbar = () => {
   const toggleNotifications = () => setIsNotificationOpen(!isNotificationOpen);
   const toggleCategories = () => setIsCategoriesOpen(!isCategoriesOpen);
   const toggleLocation = () => setIsLocationOpen(!isLocationOpen);
-  const toggleProfileMenu = () => setIsProfileMenuOpen(!isProfileMenuOpen);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -263,14 +248,6 @@ const Navbar = () => {
   const handleCategorySelect = (category) => {
     setIsCategoriesOpen(false);
     navigate(`/categories/${category.id}`);
-  };
-
-  const handleLogout = () => {
-    authService.logout();
-    setUser(null);
-    setIsAuthenticated(false);
-    setIsProfileMenuOpen(false);
-    navigate('/');
   };
 
   const markNotificationAsRead = async (notificationId) => {
@@ -402,180 +379,29 @@ const Navbar = () => {
                 <MdCategory className="w-5 h-5 text-red-500" />
               </button>
 
-              {/* Profile/Sign In Button */}
+              {/* Profile Button - Updated to navigate directly */}
               {isAuthenticated && user ? (
-                <div className="relative" ref={profileMenuRef}>
-                  <button 
-                    onClick={toggleProfileMenu}
-                    className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-colors"
-                  >
-                    {user.avatar ? (
-                      <img src={user.avatar} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
-                        <span className="text-white text-xs font-semibold">
-                          {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
-                        </span>
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Profile Dropdown with Mobile Menu Items */}
-                  {isProfileMenuOpen && (
-                    <div className="absolute right-0 top-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
-                      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
-                        <div className="flex items-center space-x-3">
-                          {user.avatar ? (
-                            <img src={user.avatar} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
-                              <span className="text-white text-lg font-semibold">
-                                {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
-                              </span>
-                            </div>
-                          )}
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-800">
-                              {user.firstName} {user.lastName}
-                            </h3>
-                            <p className="text-xs text-gray-600">{user.email}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="py-2">
-                        <Link 
-                          to="/profile" 
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <User className="w-5 h-5" />
-                          <span>My Profile</span>
-                        </Link>
-                        
-                        <Link 
-                          to="/profile?tab=bookings" 
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <StoreIcon className="w-5 h-5" />
-                          <span>My Bookings</span>
-                        </Link>
-                        
-                        <Link 
-                          to="/profile?tab=favorites" 
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <span className="w-5 h-5 text-center">❤️</span>
-                          <span>My Favorites</span>
-                        </Link>
-                        
-                        <Link 
-                          to="/profile?tab=settings" 
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <ServiceIcon className="w-5 h-5" />
-                          <span>Settings</span>
-                        </Link>
-
-                        {/* Mobile Menu Items */}
-                        <hr className="my-2" />
-                        <div className="px-4 py-2">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Quick Menu</p>
-                        </div>
-                        
-                        <button className="flex items-center justify-between text-gray-700 hover:text-red-600 hover:bg-red-50 px-4 py-3 text-left w-full transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <span>🏪</span>
-                            <span>List Your Business</span>
-                          </div>
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Free</span>
-                        </button>
-                        
-                        <button className="flex items-center justify-between text-gray-700 hover:text-red-600 hover:bg-red-50 px-4 py-3 text-left w-full transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <span>🎧</span>
-                            <span>24/7 Support</span>
-                          </div>
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Live</span>
-                        </button>
-                        
-                        <hr className="my-2" />
-                        
-                        <button 
-                          onClick={handleLogout}
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors w-full text-left"
-                        >
-                          <LogoutIcon className="w-5 h-5" />
-                          <span>Sign Out</span>
-                        </button>
-                      </div>
+                <Link 
+                  to="/profile"
+                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-colors"
+                >
+                  {user.avatar ? (
+                    <img src={user.avatar} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
+                      <span className="text-white text-xs font-semibold">
+                        {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                      </span>
                     </div>
                   )}
-                </div>
+                </Link>
               ) : (
-                <div className="relative">
-                  <button 
-                    onClick={toggleProfileMenu}
-                    className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-colors"
-                  >
-                    <User className="w-5 h-5 text-gray-600" />
-                  </button>
-
-                  {/* Sign In Menu with Mobile Menu Items */}
-                  {isProfileMenuOpen && (
-                    <div className="absolute right-0 top-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
-                      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
-                        <h3 className="text-sm font-semibold text-gray-800">Welcome to D3 Deals</h3>
-                        <p className="text-xs text-gray-600 mt-1">Sign in to get personalized deals</p>
-                      </div>
-                      
-                      <div className="py-2">
-                        <Link 
-                          to="/accounts/sign-in"
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <User className="w-5 h-5" />
-                          <span>Sign In</span>
-                        </Link>
-                        
-                        <Link 
-                          to="/accounts/sign-up"
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <span className="w-5 h-5 text-center">✨</span>
-                          <span>Create Account</span>
-                        </Link>
-
-                        {/* Mobile Menu Items */}
-                        <hr className="my-2" />
-                        <div className="px-4 py-2">
-                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Quick Menu</p>
-                        </div>
-                        
-                        <button className="flex items-center justify-between text-gray-700 hover:text-red-600 hover:bg-red-50 px-4 py-3 text-left w-full transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <span>🏪</span>
-                            <span>List Your Business</span>
-                          </div>
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Free</span>
-                        </button>
-                        
-                        <button className="flex items-center justify-between text-gray-700 hover:text-red-600 hover:bg-red-50 px-4 py-3 text-left w-full transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <span>🎧</span>
-                            <span>24/7 Support</span>
-                          </div>
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Live</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <Link 
+                  to="/accounts/sign-in"
+                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 transition-colors"
+                >
+                  <User className="w-5 h-5 text-gray-600" />
+                </Link>
               )}
 
               {/* Notifications */}
@@ -696,7 +522,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Desktop Header - Keep Original */}
+        {/* Desktop Header - Updated Profile Section */}
         <div className="hidden lg:block">
           {/* Top Header */}
           <div className="flex items-center justify-between py-3 border-b border-gray-100">
@@ -771,101 +597,25 @@ const Navbar = () => {
                 <span className="font-medium">24/7 Support</span>
               </button>
               
-              {/* Authentication Section */}
+              {/* Authentication Section - Updated to navigate directly */}
               {isAuthenticated && user ? (
-                <div className="relative" ref={profileMenuRef}>
-                  <button 
-                    onClick={toggleProfileMenu}
-                    className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-2">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
-                          <span className="text-white text-xs font-semibold">
-                            {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      )}
-                      <span className="font-medium">{user.firstName}</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </div>
-                  </button>
-
-                  {/* Profile Dropdown */}
-                  {isProfileMenuOpen && (
-                    <div className="absolute right-0 top-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
-                      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
-                        <div className="flex items-center space-x-3">
-                          {user.avatar ? (
-                            <img src={user.avatar} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
-                              <span className="text-white text-lg font-semibold">
-                                {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
-                              </span>
-                            </div>
-                          )}
-                          <div>
-                            <h3 className="text-sm font-semibold text-gray-800">
-                              {user.firstName} {user.lastName}
-                            </h3>
-                            <p className="text-xs text-gray-600">{user.email}</p>
-                          </div>
-                        </div>
+                <Link 
+                  to="/profile"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg"
+                >
+                  <div className="flex items-center space-x-2">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt="Profile" className="w-6 h-6 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
+                        <span className="text-white text-xs font-semibold">
+                          {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                        </span>
                       </div>
-                      
-                      <div className="py-2">
-                        <Link 
-                          to="/profile" 
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <User className="w-5 h-5" />
-                          <span>My Profile</span>
-                        </Link>
-                        
-                        <Link 
-                          to="/profile?tab=bookings" 
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <StoreIcon className="w-5 h-5" />
-                          <span>My Bookings</span>
-                        </Link>
-                        
-                        <Link 
-                          to="/profile?tab=favorites" 
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <span className="w-5 h-5 text-center">❤️</span>
-                          <span>My Favorites</span>
-                        </Link>
-                        
-                        <Link 
-                          to="/profile?tab=settings" 
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
-                          onClick={() => setIsProfileMenuOpen(false)}
-                        >
-                          <ServiceIcon className="w-5 h-5" />
-                          <span>Settings</span>
-                        </Link>
-                        
-                        <hr className="my-2" />
-                        
-                        <button 
-                          onClick={handleLogout}
-                          className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors w-full text-left"
-                        >
-                          <LogoutIcon className="w-5 h-5" />
-                          <span>Sign Out</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                    <span className="font-medium">{user.firstName}</span>
+                  </div>
+                </Link>
               ) : (
                 <Link to="/accounts/sign-in">
                   <button className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition-colors bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg">

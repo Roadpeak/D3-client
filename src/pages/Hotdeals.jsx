@@ -4,6 +4,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { offerAPI } from '../services/offerService';
+import { useFavorites } from '../hooks/useFavorites';
+import authService from '../services/authService';
 
 export default function Hotdeals() {
   const [viewMode, setViewMode] = useState('grid');
@@ -24,7 +26,25 @@ export default function Hotdeals() {
   const [sortBy, setSortBy] = useState('latest');
   const [limit, setLimit] = useState(12);
 
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   const navigate = useNavigate();
+
+  // Use favorites hook
+  const {
+    favoriteIds,
+    loading: favoritesLoading,
+    error: favoritesError,
+    toggleFavorite,
+    isFavorite,
+    clearError: clearFavoritesError
+  } = useFavorites();
+
+  // Check authentication status
+  useEffect(() => {
+    setIsAuthenticated(authService.isAuthenticated());
+  }, []);
 
   // Fetch data on component mount and when filters change
   useEffect(() => {
@@ -66,7 +86,10 @@ export default function Hotdeals() {
         },
         originalPrice: offer.service?.price || 0,
         discountedPrice: offer.service?.price ? (offer.service.price * (1 - offer.discount / 100)).toFixed(2) : 0,
-        status: offer.status
+        status: offer.status,
+        // Add data needed for favorites
+        service: offer.service,
+        store_info: offer.store
       })) || [];
 
       setOffers(transformedOffers);
@@ -131,6 +154,44 @@ export default function Hotdeals() {
       ]);
     } catch (err) {
       console.error('Error fetching categories and deals:', err);
+    }
+  };
+
+  // Enhanced favorite handling
+  const handleFavoriteClick = async (e, offer) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      // Show login prompt or redirect to login
+      const shouldLogin = window.confirm('Please log in to add favorites. Would you like to log in now?');
+      if (shouldLogin) {
+        navigate('/accounts/sign-in', { 
+          state: { returnUrl: window.location.pathname } 
+        });
+      }
+      return;
+    }
+
+    // Clear any previous favorites error
+    if (favoritesError) {
+      clearFavoritesError();
+    }
+
+    const offerData = {
+      id: offer.id,
+      title: offer.title,
+      description: offer.description,
+      service: offer.service,
+      store: offer.store_info
+    };
+
+    const success = await toggleFavorite(offer.id, offerData);
+    
+    if (success) {
+      // Show success feedback
+      const action = isFavorite(offer.id) ? 'removed from' : 'added to';
+      // You could add a toast notification here
+      console.log(`Offer ${action} favorites successfully`);
     }
   };
 
@@ -223,9 +284,27 @@ export default function Hotdeals() {
         </div>
       )}
 
+      {/* Favorites Error */}
+      {favoritesError && (
+        <div className="container mx-auto px-4 py-2">
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded flex items-center justify-between">
+            <div className="flex items-center">
+              <AlertCircle className="w-4 h-4 mr-2" />
+              <span className="text-sm">{favoritesError}</span>
+            </div>
+            <button 
+              onClick={clearFavoritesError} 
+              className="ml-4 text-yellow-800 hover:text-yellow-900"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
-          {/* Sidebar */}
+          {/* Sidebar - keeping the existing sidebar code */}
           <div className={`${
             isSidebarOpen ? 'block' : 'hidden'
           } md:block w-full md:w-80 flex-shrink-0 ${
@@ -413,7 +492,7 @@ export default function Hotdeals() {
               </div>
             )}
 
-            {/* Deals Grid */}
+            {/* Deals Grid with Enhanced Favorites */}
             <div className={`grid gap-4 sm:gap-6 mb-8 ${
               viewMode === 'grid' 
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
@@ -438,15 +517,34 @@ export default function Hotdeals() {
                         e.target.src = '/api/placeholder/300/200';
                       }}
                     />
+                    
+                    {/* Enhanced Favorite Button */}
                     <button 
-                      className="absolute top-3 right-3 bg-white/80 p-2 rounded-full hover:bg-white transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle favorite logic here
-                      }}
+                      className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 ${
+                        isFavorite(offer.id) 
+                          ? 'bg-red-500 text-white shadow-lg' 
+                          : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+                      } ${favoritesLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+                      onClick={(e) => handleFavoriteClick(e, offer)}
+                      disabled={favoritesLoading}
+                      title={
+                        !isAuthenticated 
+                          ? 'Login to add favorites' 
+                          : isFavorite(offer.id) 
+                            ? 'Remove from favorites' 
+                            : 'Add to favorites'
+                      }
                     >
-                      <Heart size={16} className="text-gray-600" />
+                      {favoritesLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Heart 
+                          size={16} 
+                          className={isFavorite(offer.id) ? 'fill-current' : ''} 
+                        />
+                      )}
                     </button>
+
                     <div className="absolute bottom-3 left-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium text-white ${
                         offer.featured ? 'bg-red-500' : 'bg-blue-500'

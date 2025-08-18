@@ -1,4 +1,4 @@
-// src/routes/index.js - Updated version with enhanced booking system
+// src/routes/index.js - Updated version with enhanced booking system and profile routes
 import React from 'react'
 import { Route, Routes, Navigate } from 'react-router-dom'
 import Home from './pages/Home'
@@ -31,6 +31,13 @@ import Footer from './components/Footer'
 import Requestservice from './pages/Requestservice'
 import Hotdeals from './pages/Hotdeals'
 import VerifyOTP from './pages/auth/VerifyOTP'
+
+// Profile Page Components - Standalone Versions (these have their own Navbar/Footer)
+import MyBookingsStandalone from './components/c2/MyBookings'
+import FavouritesStandalone from './components/c2/Favourites'
+import FollowedStoresStandalone from './components/c2/FollowedStores'
+import EarnStandalone from './components/c2/Earn'
+import ProfileSettingsStandalone from './components/c2/ProfileSettings'
 
 // 404 Not Found Component
 const NotFound = () => (
@@ -164,13 +171,40 @@ const AppRoutes = () => {
         
         {/* ==================== USER DASHBOARD ROUTES ==================== */}
         
-        {/* User Profile */}
+        {/* User Profile - Main Profile Page */}
         <Route path='/profile' element={<Profile />} />
         <Route path='/account' element={<Navigate to="/profile" replace />} />
         
-        {/* My Bookings/Vouchers */}
+        {/* ==================== PROFILE SUB-PAGES ==================== */}
+        
+        {/* Profile Sub-Routes - Direct Standalone Components (no wrapper needed) */}
+        <Route path='/profile/bookings' element={<MyBookingsStandalone />} />
+        <Route path='/profile/my-bookings' element={<Navigate to="/profile/bookings" replace />} />
+        
+        <Route path='/profile/favourites' element={<FavouritesStandalone />} />
+        <Route path='/profile/favorites' element={<Navigate to="/profile/favourites" replace />} />
+        
+        <Route path='/profile/followed-stores' element={<FollowedStoresStandalone />} />
+        <Route path='/profile/stores' element={<Navigate to="/profile/followed-stores" replace />} />
+        
+        <Route path='/profile/earn' element={<EarnStandalone />} />
+        <Route path='/profile/earnings' element={<Navigate to="/profile/earn" replace />} />
+        <Route path='/profile/rewards' element={<Navigate to="/profile/earn" replace />} />
+        
+        <Route path='/profile/settings' element={<ProfileSettingsStandalone />} />
+        <Route path='/profile/edit' element={<Navigate to="/profile/settings" replace />} />
+        <Route path='/settings' element={<Navigate to="/profile/settings" replace />} />
+        
+        {/* Alternative Profile Route Patterns */}
+        <Route path='/my-bookings' element={<Navigate to="/profile/bookings" replace />} />
+        <Route path='/my-favourites' element={<Navigate to="/profile/favourites" replace />} />
+        <Route path='/my-stores' element={<Navigate to="/profile/followed-stores" replace />} />
+        <Route path='/my-earnings' element={<Navigate to="/profile/earn" replace />} />
+        
+        {/* ==================== EXISTING USER DASHBOARD ROUTES ==================== */}
+        
+        {/* My Bookings/Vouchers - Keep existing route but also redirect to profile */}
         <Route path='/my-vouchers' element={<MyVouchers />} />
-        <Route path='/my-bookings' element={<Navigate to="/my-vouchers" replace />} />
         <Route path='/bookings' element={<Navigate to="/my-vouchers" replace />} />
         <Route path='/vouchers' element={<Navigate to="/my-vouchers" replace />} />
         

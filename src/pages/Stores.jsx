@@ -23,7 +23,7 @@ const Stores = () => {
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const sortOptions = ['Popular', 'Highest Cashback', 'Lowest Cashback', 'A-Z', 'Z-A'];
+  const sortOptions = ['Popular', 'Highest Discount', 'Lowest Discount', 'A-Z', 'Z-A'];
 
   // Fetch initial data
   useEffect(() => {
@@ -138,7 +138,7 @@ const Stores = () => {
           </div>
           <div className="text-right">
             <div className="text-red-500 font-bold text-lg">{store.cashback || 'N/A'}</div>
-            <div className="text-gray-500 text-sm font-medium">Cashback</div>
+            <div className="text-gray-500 text-sm font-medium">Discount</div>
             {store.wasRate && (
               <div className="text-gray-400 text-sm mt-1">{store.wasRate}</div>
             )}
@@ -165,7 +165,7 @@ const Stores = () => {
             </div>
             <div className="text-right flex-shrink-0 ml-2">
               <div className="text-red-500 font-bold text-lg md:text-xl">{store.cashback || 'N/A'}</div>
-              <div className="text-gray-500 text-xs md:text-sm font-medium">Cashback</div>
+              <div className="text-gray-500 text-xs md:text-sm font-medium">Discount</div>
             </div>
           </div>
 

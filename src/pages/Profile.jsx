@@ -1,637 +1,529 @@
 import React, { useState, useEffect } from 'react';
-import { User, Tag, Gift, Store, MapPin, Settings, LogOut, Heart, Star, Users, DollarSign, Clock, Copy, Wallet, TrendingUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { User, Gift, Store, MapPin, Settings, LogOut, Heart } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import authService from '../services/authService';
 import api from '../config/api';
+import { useFavorites } from '../hooks/useFavorites';
 
-// Service Requests Component with API integration
-const ServiceRequestsPage = ({ user }) => {
-  const [requests, setRequests] = useState([]);
-  const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchServiceRequests();
-    fetchOffers();
-  }, []);
-
-  const fetchServiceRequests = async () => {
-    try {
-      const response = await api.get('/service-requests');
-      setRequests(response.data.requests || []);
-    } catch (error) {
-      console.error('Error fetching service requests:', error);
-    }
-  };
-
-  const fetchOffers = async () => {
-    try {
-      const response = await api.get('/service-requests/offers');
-      setOffers(response.data.offers || []);
-    } catch (error) {
-      console.error('Error fetching offers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Service Requests</h1>
-        <div className="animate-pulse space-y-4">
-          <div className="bg-gray-200 h-32 rounded-lg"></div>
-          <div className="bg-gray-200 h-32 rounded-lg"></div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Service Requests</h1>
-      
-      {/* My Requests */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">My Requests</h2>
-        {requests.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No service requests yet</p>
-            <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-              Create Request
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {requests.map((request) => (
-              <div key={request.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-gray-900">{request.service}</h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    request.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                  }`}>
-                    {request.status}
-                  </span>
-                </div>
-                <p className="text-gray-600 text-sm mb-2">{request.description}</p>
-                <div className="flex justify-between items-center text-xs text-gray-500">
-                  <span>Posted: {new Date(request.createdAt).toLocaleDateString()}</span>
-                  <span>{request.offers || 0} offers received</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Store Offers */}
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Store Offers</h2>
-        {offers.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No offers available</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {offers.map((offer) => (
-              <div key={offer.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-medium text-gray-900">{offer.store?.name}</h3>
-                    <p className="text-sm text-gray-600">{offer.service?.name}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-green-600">${offer.price}</div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                      {offer.store?.rating || '4.5'}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-600 text-sm mb-3">{offer.description}</p>
-                <div className="flex gap-2">
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-                    Accept Offer
-                  </button>
-                  <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// My Bookings Component with API integration
-const MyBookingsPage = ({ user }) => {
-  const [activeTab, setActiveTab] = useState('All');
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  const fetchBookings = async () => {
-    try {
-      const response = await api.get('/users/bookings');
-      setBookings(response.data.bookings || []);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const tabs = ['All', 'Completed', 'Cancelled'];
-  
-  const filteredBookings = activeTab === 'All' 
-    ? bookings 
-    : bookings.filter(booking => booking.status.toLowerCase() === activeTab.toLowerCase());
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
-        <div className="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-gray-200 h-48 rounded-lg"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
-      
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-lg">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              activeTab === tab
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Bookings Grid */}
-      {filteredBookings.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <p>No bookings found</p>
-          <button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            Browse Services
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBookings.map((booking) => (
-            <div
-              key={booking.id}
-              className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-xl">
-                  {booking.offer?.service?.image || '🎯'}
-                </div>
-                <div className="text-sm text-gray-600 font-medium">
-                  {booking.offer?.service?.store?.name}
-                </div>
-              </div>
-              
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                {booking.offer?.discount}% OFF
-              </h3>
-              
-              <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                {booking.offer?.description}
-              </p>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-blue-500 text-sm font-medium">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                  Expires: {new Date(booking.offer?.expiration_date).toLocaleDateString()}
-                </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                  booking.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-                  'bg-red-100 text-red-700'
-                }`}>
-                  {booking.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Favourites Component with API integration
-const FavouritesPage = ({ user }) => {
-  const [favourites, setFavourites] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchFavourites();
-  }, []);
-
-  const fetchFavourites = async () => {
-    try {
-      const response = await api.get('/users/favorites');
-      setFavourites(response.data.favorites || []);
-    } catch (error) {
-      console.error('Error fetching favourites:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const removeFavourite = async (itemId) => {
-    try {
-      await api.delete(`/services/${itemId}/favorite`);
-      setFavourites(prev => prev.filter(item => item.id !== itemId));
-    } catch (error) {
-      console.error('Error removing favourite:', error);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">My Favourites</h1>
-        <div className="animate-pulse grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-gray-200 h-48 rounded-lg"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">My Favourites</h1>
-        <span className="text-sm text-gray-500">{favourites.length} items</span>
-      </div>
-      
-      {favourites.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <p>No favourites yet</p>
-          <p className="text-sm">Start exploring and add your favorite services!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {favourites.map((item) => (
-            <div key={item.id} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Store className="w-6 h-6 text-blue-600" />
-                </div>
-                <button
-                  onClick={() => removeFavourite(item.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Heart className="w-5 h-5 fill-current" />
-                </button>
-              </div>
-              
-              <h3 className="font-semibold text-gray-900 mb-1">{item.service?.store?.name}</h3>
-              <p className="text-blue-600 font-medium mb-2">{item.service?.name}</p>
-              <p className="text-gray-600 text-sm mb-3">{item.service?.description}</p>
-              
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                  <span className="text-sm text-gray-600">{item.service?.store?.rating || '4.5'}</span>
-                </div>
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                  {item.service?.category}
-                </span>
-              </div>
-              
-              <button className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                View Service
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Profile & Settings Component with API integration
-const ProfileSettingsPage = ({ user, onUserUpdate }) => {
-  const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phoneNumber: user?.phoneNumber || '',
-    location: '',
-    notifications: true,
-    emailUpdates: false,
-    smsAlerts: true
+// Main Profile Page Component - Dashboard Only
+const CouponProfilePage = () => {
+  const [user, setUser] = useState(null);
+  const [userStats, setUserStats] = useState({
+    totalBookings: 0,
+    totalFavorites: 0,
+    followedStores: 0,
+    rewardPoints: 0
   });
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Use favorites hook to get real-time favorites count
+  const { getFavoritesCount, loading: favoritesLoading } = useFavorites();
+
+  // Fetch user profile data
   useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phoneNumber: user.phoneNumber || '',
+    const checkAuth = async () => {
+      try {
+        if (!authService.isAuthenticated()) {
+          navigate('/accounts/sign-in', { 
+            state: { returnUrl: location.pathname } 
+          });
+          return;
+        }
+
+        const result = await authService.getCurrentUser();
+        if (result.success) {
+          setUser(result.data.user);
+        } else {
+          setError('Failed to load user data');
+          setTimeout(() => {
+            navigate('/accounts/sign-in');
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        setError('Authentication error occurred');
+        setTimeout(() => {
+          navigate('/accounts/sign-in');
+        }, 2000);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate, location.pathname]);
+
+  // Fetch user statistics
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      if (!authService.isAuthenticated()) return;
+
+      try {
+        setStatsLoading(true);
+        
+        // Fetch followed stores count
+        const followedStoresResponse = await api.get('/users/followed-stores');
+        const followedStoresCount = followedStoresResponse.data.success ? 
+          (followedStoresResponse.data.followedStores?.length || 0) : 0;
+
+        // Get real-time favorites count from the hook
+        const favoritesCount = getFavoritesCount();
+
+        // You can add more API calls here for other stats
+        // For now, I'll use mock data for other stats since their endpoints aren't implemented
+        const bookingsCount = 0; // await api.get('/users/bookings') when implemented
+        const rewardPoints = 0; // await api.get('/users/rewards') when implemented
+
+        setUserStats({
+          totalBookings: bookingsCount,
+          totalFavorites: favoritesCount,
+          followedStores: followedStoresCount,
+          rewardPoints: rewardPoints
+        });
+
+        console.log('✅ User stats loaded:', {
+          followedStores: followedStoresCount,
+          favorites: favoritesCount
+        });
+
+      } catch (error) {
+        console.error('❌ Error fetching user stats:', error);
+        // Don't show error for stats, just keep default values
+        setUserStats(prevStats => ({
+          ...prevStats,
+          totalBookings: 0,
+          totalFavorites: getFavoritesCount(), // Still use real favorites count
+          followedStores: 0,
+          rewardPoints: 0
+        }));
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    // Only fetch stats after user is loaded and favorites are not loading
+    if (user && !favoritesLoading) {
+      fetchUserStats();
+    }
+  }, [user, favoritesLoading, getFavoritesCount]);
+
+  // Update favorites count when it changes
+  useEffect(() => {
+    if (!favoritesLoading) {
+      setUserStats(prevStats => ({
+        ...prevStats,
+        totalFavorites: getFavoritesCount()
       }));
     }
-  }, [user]);
+  }, [getFavoritesCount, favoritesLoading]);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage({ type: '', text: '' });
-
+  const handleLogout = async () => {
     try {
-      const response = await api.put('/users/profile', {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNumber: formData.phoneNumber,
-      });
-
-      if (response.data.user) {
-        onUserUpdate(response.data.user);
-        setMessage({ type: 'success', text: 'Profile updated successfully!' });
-      }
-    } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: error.response?.data?.message || 'Failed to update profile' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Profile & Settings</h1>
-      
-      {message.text && (
-        <div className={`p-4 rounded-lg ${
-          message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-        }`}>
-          {message.text}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        {/* Profile Information */}
-        <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-          <h2 className="text-lg font-semibold mb-4">Profile Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                readOnly
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 text-gray-500"
-                title="Email cannot be changed"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-              <input
-                type="tel"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <button 
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
-
-// Main Profile Page Component with authentication
-const CouponProfilePage = () => {
-  const [activeMenuItem, setActiveMenuItem] = useState('My Bookings');
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    checkAuthAndFetchUser();
-  }, []);
-
-  const checkAuthAndFetchUser = async () => {
-    try {
-      if (!authService.isAuthenticated()) {
-        navigate('/accounts/sign-in');
-        return;
-      }
-
-      const result = await authService.getCurrentUser();
-      if (result.success) {
-        setUser(result.data.user);
-      } else {
-        navigate('/accounts/sign-in');
-      }
-    } catch (error) {
-      console.error('Error fetching user:', error);
+      await authService.logout();
       navigate('/accounts/sign-in');
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+      authService.clearStorage();
+      navigate('/accounts/sign-in');
     }
   };
 
-  const handleLogout = () => {
-    authService.logout();
-    navigate('/accounts/sign-in');
-  };
-
-  const handleUserUpdate = (updatedUser) => {
-    setUser(updatedUser);
-  };
-
+  // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your profile...</p>
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }
 
-  const menuItems = [
-    { icon: Store, label: 'My Bookings' },
-    { icon: Tag, label: 'Service Requests' },
-    { icon: Heart, label: 'Favourites' },
-    { icon: MapPin, label: 'Followed Stores' },
-    { icon: Gift, label: 'Earn' },
-    { icon: Settings, label: 'Profile & Settings' },
-  ];
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-red-600 text-2xl">⚠️</span>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-  const renderContent = () => {
-    switch (activeMenuItem) {
-      case 'Service Requests':
-        return <ServiceRequestsPage user={user} />;
-      case 'Earn':
-        return <EarnPage />;
-      case 'Favourites':
-        return <FavouritesPage user={user} />;
-      case 'Followed Stores':
-        return <FollowedStoresPage />;
-      case 'My Bookings':
-        return <MyBookingsPage user={user} />;
-      case 'Profile & Settings':
-        return <ProfileSettingsPage user={user} onUserUpdate={handleUserUpdate} />;
-      default:
-        return <MyBookingsPage user={user} />;
+  const getVerificationBadges = () => {
+    const badges = [];
+    if (user?.isEmailVerified) {
+      badges.push({ label: 'Email Verified', color: 'green' });
     }
+    if (user?.isPhoneVerified) {
+      badges.push({ label: 'Phone Verified', color: 'blue' });
+    }
+    if (user?.isKYCVerified) {
+      badges.push({ label: 'ID Verified', color: 'purple' });
+    }
+    return badges;
   };
+
+  // Stats display component with loading state
+  const StatCard = ({ 
+    icon: Icon, 
+    count, 
+    title, 
+    description, 
+    bgGradient, 
+    iconColor, 
+    textColor, 
+    onClick,
+    isLoading = false
+  }) => (
+    <div 
+      onClick={onClick}
+      className={`${bgGradient} rounded-xl p-6 text-white cursor-pointer hover:scale-105 transition-all transform`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <Icon className={`w-8 h-8 ${iconColor}`} />
+        <span className="text-2xl font-bold">
+          {isLoading ? (
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            count
+          )}
+        </span>
+      </div>
+      <h3 className="font-semibold mb-1">{title}</h3>
+      <p className={`${textColor} text-sm`}>{description}</p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar Profile */}
-          <div className="w-full md:w-80">
-            {/* Profile Card */}
-            <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt="Profile" className="w-16 h-16 rounded-full object-cover" />
-                  ) : (
-                    <User className="w-8 h-8 text-blue-600" />
-                  )}
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                  {user?.firstName} {user?.lastName}
-                </h2>
-                <p className="text-gray-600 text-sm mb-1">{user?.email}</p>
-                <p className="text-gray-600 text-sm">{user?.phoneNumber}</p>
-                
-                {/* Verification Status */}
-                <div className="flex justify-center gap-2 mt-3">
-                  {user?.isEmailVerified && (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                      Email Verified
-                    </span>
-                  )}
-                  {user?.isPhoneVerified && (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                      Phone Verified
-                    </span>
-                  )}
-                </div>
+      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+        {/* Profile Header Section */}
+        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
+          {/* Profile Avatar & Info */}
+          <div className="text-center md:text-left">
+            <div className="relative w-24 h-24 mx-auto md:mx-0 mb-4">
+              <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+                {user?.avatar ? (
+                  <img 
+                    src={user.avatar} 
+                    alt="Profile" 
+                    className="w-full h-full rounded-full object-cover" 
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-blue-600" />
+                )}
               </div>
-              
-              <button 
-                onClick={handleLogout}
-                className="w-full bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors mb-4 flex items-center justify-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
-              
-              <button 
-                onClick={() => setActiveMenuItem('Profile & Settings')}
-                className="w-full text-blue-600 py-2 rounded-lg font-medium hover:bg-blue-50 transition-colors"
-              >
-                Edit Profile
-              </button>
+              <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
             </div>
 
-            {/* Menu Items */}
-            <div className="bg-white rounded-2xl shadow-sm p-4">
-              {menuItems.map((item, index) => (
-                <div
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              {user?.firstName || 'User'} {user?.lastName || ''}
+            </h1>
+            <p className="text-gray-600 mb-2">{user?.email}</p>
+            {user?.phoneNumber && (
+              <p className="text-gray-600 text-sm mb-3">{user.phoneNumber}</p>
+            )}
+            
+            {/* Verification Badges */}
+            <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+              {getVerificationBadges().map((badge, index) => (
+                <span 
                   key={index}
-                  onClick={() => setActiveMenuItem(item.label)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
-                    activeMenuItem === item.label 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-600 hover:bg-gray-50'
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    badge.color === 'green' ? 'bg-green-100 text-green-700' :
+                    badge.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                    'bg-purple-100 text-purple-700'
                   }`}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </div>
+                  {badge.label}
+                </span>
               ))}
+              {getVerificationBadges().length === 0 && (
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                  Verify your account
+                </span>
+              )}
+            </div>
+
+            {/* Quick Stats */}
+            <div className="flex justify-center md:justify-start gap-8 text-center">
+              <div>
+                <div className="text-xl font-bold text-gray-900">
+                  {statsLoading ? (
+                    <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                  ) : (
+                    userStats.totalBookings
+                  )}
+                </div>
+                <div className="text-sm text-gray-600">Bookings</div>
+              </div>
+              <div>
+                <div className="text-xl font-bold text-gray-900">
+                  {favoritesLoading ? (
+                    <div className="w-6 h-6 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin mx-auto"></div>
+                  ) : (
+                    userStats.totalFavorites
+                  )}
+                </div>
+                <div className="text-sm text-gray-600">Saved</div>
+              </div>
+              <div>
+                <div className="text-xl font-bold text-gray-900">
+                  {statsLoading ? (
+                    <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                  ) : (
+                    userStats.rewardPoints
+                  )}
+                </div>
+                <div className="text-sm text-gray-600">Points</div>
+              </div>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              {renderContent()}
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3 md:ml-auto">
+            <button 
+              onClick={() => navigate('/profile/settings')}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Edit Profile
+            </button>
+            
+            <button 
+              onClick={handleLogout}
+              className="bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
+          </div>
+        </div>
+
+        {/* Welcome Message */}
+        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Welcome back, {user?.firstName || 'User'}! 👋
+          </h2>
+          <p className="text-gray-600">
+            Manage your account, view your bookings, and discover amazing deals.
+          </p>
+        </div>
+
+        {/* Quick Stats Cards with Real Data */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            icon={Store}
+            count={userStats.totalBookings}
+            title="My Bookings"
+            description="View and manage your bookings"
+            bgGradient="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+            iconColor="text-blue-200"
+            textColor="text-blue-100"
+            onClick={() => navigate('/profile/bookings')}
+            isLoading={statsLoading}
+          />
+
+          <StatCard
+            icon={Heart}
+            count={userStats.totalFavorites}
+            title="Favourites"
+            description="Your saved services and offers"
+            bgGradient="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+            iconColor="text-red-200"
+            textColor="text-red-100"
+            onClick={() => navigate('/profile/favourites')}
+            isLoading={favoritesLoading}
+          />
+
+          <StatCard
+            icon={MapPin}
+            count={userStats.followedStores}
+            title="Followed Stores"
+            description="Stores you follow for updates"
+            bgGradient="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+            iconColor="text-green-200"
+            textColor="text-green-100"
+            onClick={() => navigate('/profile/followed-stores')}
+            isLoading={statsLoading}
+          />
+
+          <StatCard
+            icon={Gift}
+            count={userStats.rewardPoints}
+            title="Reward Points"
+            description="Referrals and reward programs"
+            bgGradient="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+            iconColor="text-purple-200"
+            textColor="text-purple-100"
+            onClick={() => navigate('/profile/earn')}
+            isLoading={statsLoading}
+          />
+        </div>
+
+        {/* Stats Loading Message */}
+        {(statsLoading || favoritesLoading) && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-2 text-blue-700">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm">Loading your statistics...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <button 
+              onClick={() => navigate('/Hotdeals')}
+              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Gift className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">Browse Offers</div>
+                <div className="text-sm text-gray-500">Discover amazing deals</div>
+              </div>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/stores')}
+              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Store className="w-5 h-5 text-green-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">Find Stores</div>
+                <div className="text-sm text-gray-500">Explore new businesses</div>
+              </div>
+            </button>
+            
+            <button 
+              onClick={() => navigate('/my-vouchers')}
+              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Gift className="w-5 h-5 text-orange-600" />
+              </div>
+              <div className="text-left">
+                <div className="font-medium text-gray-900">My Vouchers</div>
+                <div className="text-sm text-gray-500">View your vouchers</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Recent Activity & Recommended Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Activity */}
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+            <div className="space-y-3">
+              {user?.recentActivity?.length > 0 ? (
+                user.recentActivity.slice(0, 3).map((activity, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Store className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm text-gray-900">{activity.title}</p>
+                      <p className="text-xs text-gray-500">{activity.date}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p className="text-sm mb-2">No recent activity</p>
+                  <button 
+                    onClick={() => navigate('/offers')}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    Start exploring offers
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recommended Actions */}
+          <div className="bg-white rounded-2xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recommended for You</h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/Hotdeals')}
+                className="w-full text-left p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Gift className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm text-gray-900">Browse New Offers</p>
+                    <p className="text-xs text-gray-500">Discover amazing deals near you</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => navigate('/profile/earn')}
+                className="w-full text-left p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <Gift className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm text-gray-900">Refer Friends</p>
+                    <p className="text-xs text-gray-500">Earn rewards for every referral</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => navigate('/stores')}
+                className="w-full text-left p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Store className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm text-gray-900">Explore Stores</p>
+                    <p className="text-xs text-gray-500">Find new services and businesses</p>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -640,17 +532,6 @@ const CouponProfilePage = () => {
       <Footer />
     </div>
   );
-};
-
-// Keep the original components that don't need API integration
-const EarnPage = () => {
-  // ... keep your existing EarnPage component code
-  return <div>Earn Page - Original implementation</div>;
-};
-
-const FollowedStoresPage = () => {
-  // ... keep your existing FollowedStoresPage component code  
-  return <div>Followed Stores Page - Original implementation</div>;
 };
 
 export default CouponProfilePage;
