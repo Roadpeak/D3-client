@@ -1,4 +1,4 @@
-// services/api.js - INTEGRATED VERSION WITH FAVORITES
+// services/api.js - FIXED FAVORITES API VERSION
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
@@ -29,11 +29,6 @@ api.interceptors.request.use(
         const apiKey = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
         if (apiKey) {
             config.headers['api-key'] = apiKey;
-        }
-        
-        // Log requests in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`🔄 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
         }
         
         return config;
@@ -143,24 +138,8 @@ export const API_ENDPOINTS = {
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-    (response) => {
-        // Log successful responses in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`✅ ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
-        }
-        return response;
-    },
+    (response) => response,
     (error) => {
-        // Log errors in development
-        if (process.env.NODE_ENV === 'development') {
-            console.error(`❌ ${error.response?.status || 'NETWORK'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data,
-                message: error.message
-            });
-        }
-        
         // Handle specific error cases
         if (error.response?.status === 401) {
             // Clear all possible token storage locations
@@ -196,7 +175,7 @@ const handleApiCall = async (apiCall) => {
     }
 };
 
-// FIXED: Offer API endpoints with correct error handling
+// Offer API endpoints
 export const offerAPI = {
     // Get all offers with pagination and filters
     getOffers: async (params = {}) => {
@@ -216,21 +195,16 @@ export const offerAPI = {
         return handleApiCall(() => api.get(`/offers/store/${storeId}`, { params }));
     },
 
-    // FIXED: Get single offer by ID with better error handling
+    // Get single offer by ID with better error handling
     getOfferById: async (id) => {
         if (!id || id.trim() === '') {
             throw new Error('Offer ID is required');
         }
         
-        console.log('🔍 Fetching offer by ID:', id);
-        
         try {
             const response = await api.get(`/offers/${id}`);
-            console.log('✅ Offer API response:', response.data);
             return response.data;
         } catch (error) {
-            console.error('❌ Offer API error:', error);
-            
             // Create a more informative error
             if (error.response?.status === 404) {
                 throw new Error('Offer not found. It may have been removed or expired.');
@@ -287,12 +261,10 @@ export const offerAPI = {
     },
 };
 
-// NEW: Favorites API endpoints - integrated with your existing patterns
+// FIXED: Favorites API endpoints - with better response handling
 export const favoritesAPI = {
-    // Get user's favorite offers
+    // Get user's favorite offers - FIXED RESPONSE HANDLING
     getFavorites: async (params = {}) => {
-        console.log('🔍 Fetching user favorites with params:', params);
-        
         try {
             const queryParams = new URLSearchParams();
             if (params.page) queryParams.append('page', params.page);
@@ -300,18 +272,35 @@ export const favoritesAPI = {
             if (params.category) queryParams.append('category', params.category);
             
             const url = API_ENDPOINTS.user.favorites + (queryParams.toString() ? `?${queryParams.toString()}` : '');
-            console.log('📡 Request URL:', url);
             
             const response = await api.get(url);
-            console.log('✅ Favorites response:', response.data);
+            console.log('🔍 Raw favorites API response:', response.data);
+            
+            // Handle the actual API response structure
+            const apiData = response.data;
+            const favorites = apiData.favorites || apiData.data || [];
+            
+            console.log('📋 Processed favorites:', favorites);
+            console.log('📊 Sample favorite structure:', favorites[0]);
             
             return {
                 success: true,
-                favorites: response.data.favorites || response.data.data || [],
-                pagination: response.data.pagination || {}
+                favorites: favorites,
+                pagination: apiData.pagination || {}
             };
         } catch (error) {
             console.error('❌ Error fetching favorites:', error);
+            
+            // If it's a 401 error, don't treat it as a failure
+            if (error.response?.status === 401) {
+                return {
+                    success: false,
+                    message: 'Authentication required',
+                    favorites: [],
+                    pagination: {}
+                };
+            }
+            
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to fetch favorites',
@@ -321,17 +310,17 @@ export const favoritesAPI = {
         }
     },
 
-    // Add offer to favorites
+    // Add offer to favorites - FIXED ERROR HANDLING
     addToFavorites: async (offerId) => {
         if (!offerId) {
-            throw new Error('Offer ID is required');
+            return {
+                success: false,
+                message: 'Offer ID is required'
+            };
         }
-        
-        console.log('💖 Adding offer to favorites:', offerId);
         
         try {
             const response = await api.post(API_ENDPOINTS.offers.addToFavorites(offerId));
-            console.log('✅ Added to favorites:', response.data);
             
             return {
                 success: true,
@@ -340,6 +329,16 @@ export const favoritesAPI = {
             };
         } catch (error) {
             console.error('❌ Error adding to favorites:', error);
+            
+            // Check if it's already in favorites
+            if (error.response?.status === 400 && error.response?.data?.message?.includes('already')) {
+                return {
+                    success: false,
+                    message: 'Already in favorites',
+                    alreadyExists: true
+                };
+            }
+            
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to add to favorites'
@@ -347,17 +346,17 @@ export const favoritesAPI = {
         }
     },
 
-    // Remove offer from favorites
+    // Remove offer from favorites - FIXED ERROR HANDLING
     removeFromFavorites: async (offerId) => {
         if (!offerId) {
-            throw new Error('Offer ID is required');
+            return {
+                success: false,
+                message: 'Offer ID is required'
+            };
         }
-        
-        console.log('💔 Removing offer from favorites:', offerId);
         
         try {
             const response = await api.delete(API_ENDPOINTS.offers.removeFromFavorites(offerId));
-            console.log('✅ Removed from favorites:', response.data);
             
             return {
                 success: true,
@@ -373,17 +372,17 @@ export const favoritesAPI = {
         }
     },
 
-    // Toggle favorite status (recommended for UI interactions)
+    // Toggle favorite status - FIXED TOGGLE LOGIC
     toggleFavorite: async (offerId) => {
         if (!offerId) {
-            throw new Error('Offer ID is required');
+            return {
+                success: false,
+                message: 'Offer ID is required'
+            };
         }
-        
-        console.log('🔄 Toggling favorite status for offer:', offerId);
         
         try {
             const response = await api.post(API_ENDPOINTS.offers.toggleFavorite(offerId));
-            console.log('✅ Toggled favorite:', response.data);
             
             return {
                 success: true,
@@ -436,37 +435,6 @@ export const favoritesAPI = {
                 count: 0
             };
         }
-    },
-
-    // Batch check favorites (for lists of offers)
-    checkMultipleFavorites: async (offerIds) => {
-        if (!Array.isArray(offerIds) || offerIds.length === 0) {
-            return { success: true, favorites: {} };
-        }
-        
-        try {
-            // Check each offer individually (can be optimized with a batch endpoint later)
-            const results = {};
-            
-            for (const offerId of offerIds) {
-                const result = await this.isFavorite(offerId);
-                results[offerId] = result.isFavorite;
-                
-                // Small delay to prevent overwhelming the server
-                await new Promise(resolve => setTimeout(resolve, 50));
-            }
-            
-            return {
-                success: true,
-                favorites: results
-            };
-        } catch (error) {
-            console.error('❌ Error batch checking favorites:', error);
-            return {
-                success: false,
-                favorites: {}
-            };
-        }
     }
 };
 
@@ -498,7 +466,7 @@ export const serviceAPI = {
     },
 };
 
-// NEW: User API endpoints
+// User API endpoints
 export const userAPI = {
     getProfile: async () => {
         return handleApiCall(() => api.get('/users/profile'));
@@ -525,57 +493,6 @@ export const healthCheck = async () => {
     } catch (error) {
         throw new Error('API is not available');
     }
-};
-
-// Test endpoint to verify API connection
-export const testConnection = async () => {
-    try {
-        console.log('🧪 Testing API connection to:', BASE_URL);
-        const response = await api.get('/cors-test');
-        console.log('✅ API connection test successful:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('❌ API connection test failed:', error);
-        throw new Error(`Cannot connect to API at ${BASE_URL}`);
-    }
-};
-
-// NEW: API test function specifically for favorites
-export const testFavoritesAPI = async () => {
-    console.log('🧪 Testing Favorites API endpoints...');
-    
-    const tests = [
-        {
-            name: 'Get Favorites',
-            test: () => favoritesAPI.getFavorites()
-        },
-        {
-            name: 'Get Favorites Count',
-            test: () => favoritesAPI.getFavoritesCount()
-        }
-    ];
-    
-    const results = {};
-    
-    for (const test of tests) {
-        try {
-            console.log(`🔄 Testing: ${test.name}`);
-            const result = await test.test();
-            results[test.name] = {
-                success: result.success !== false,
-                data: result
-            };
-            console.log(`✅ ${test.name}: ${result.success !== false ? 'PASSED' : 'FAILED'}`);
-        } catch (error) {
-            results[test.name] = {
-                success: false,
-                error: error.message
-            };
-            console.log(`❌ ${test.name}: FAILED - ${error.message}`);
-        }
-    }
-    
-    return results;
 };
 
 // Export cookie management functions

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Heart, Star, Store, ArrowLeft, MapPin, Calendar, Percent, Loader2, AlertCircle, X } from 'lucide-react';
+import { Heart, Star, Store, ArrowLeft, MapPin, Calendar, Percent, Loader2, AlertCircle, X, RefreshCw } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import authService from '../../services/authService';
@@ -11,14 +11,15 @@ const FavouritesStandalone = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Use favorites hook
+  // Use favorites hook with improved state management
   const {
     favorites,
     loading: favoritesLoading,
     error: favoritesError,
     removeFromFavorites,
     refreshFavorites,
-    clearError
+    clearError,
+    initialized: favoritesInitialized
   } = useFavorites();
 
   useEffect(() => {
@@ -46,28 +47,45 @@ const FavouritesStandalone = () => {
     checkAuth();
   }, [navigate]);
 
+  // Debug log favorites data
+  useEffect(() => {
+    console.log('📋 Favorites page data:', {
+      favoritesCount: favorites.length,
+      favoritesInitialized,
+      favoritesLoading,
+      favoritesError,
+      sampleFavorite: favorites[0]
+    });
+  }, [favorites, favoritesInitialized, favoritesLoading, favoritesError]);
+
   const handleRemoveFavorite = async (offerId) => {
     const confirmRemove = window.confirm('Are you sure you want to remove this offer from your favorites?');
     if (!confirmRemove) return;
 
+    console.log('🗑️ Removing favorite:', offerId);
     const success = await removeFromFavorites(offerId);
     if (success) {
-      // Optional: Add toast notification here
-      console.log('Offer removed from favorites successfully');
+      console.log('✅ Offer removed from favorites successfully');
+      // The useFavorites hook will automatically update the favorites list
+    } else {
+      console.log('❌ Failed to remove from favorites');
     }
   };
 
   const handleOfferClick = (offerId) => {
+    console.log('🔗 Navigating to offer:', offerId);
     navigate(`/offer/${offerId}`);
   };
 
   const formatOfferData = (favorite) => {
+    console.log('🔧 Formatting favorite data:', favorite);
+    
     // Handle different data structures that might come from the API
     const offer = favorite.offer || favorite;
     const service = offer.service || favorite.service;
     const store = offer.store || service?.store || favorite.store;
 
-    return {
+    const formatted = {
       id: offer.id || favorite.offer_id,
       title: offer.title || service?.name || 'Special Offer',
       description: offer.description || service?.description || 'Exclusive offer available',
@@ -85,9 +103,32 @@ const FavouritesStandalone = () => {
       expirationDate: offer.expiration_date || offer.expiry_date,
       featured: offer.featured || false
     };
+
+    console.log('📋 Formatted offer:', formatted);
+    return formatted;
   };
 
-  if (loading || favoritesLoading) {
+  const handleRefreshFavorites = async () => {
+    console.log('🔄 Manually refreshing favorites...');
+    await refreshFavorites();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="animate-spin w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <p className="text-gray-600">Checking authentication...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (favoritesLoading && !favoritesInitialized) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -130,14 +171,21 @@ const FavouritesStandalone = () => {
                 <p className="text-gray-600 mt-1">
                   {favorites.length} {favorites.length === 1 ? 'offer' : 'offers'} saved
                 </p>
+                {process.env.NODE_ENV === 'development' && (
+                  <p className="text-xs text-blue-500 mt-1">
+                    Debug: Initialized: {favoritesInitialized ? 'Yes' : 'No'} | 
+                    Loading: {favoritesLoading ? 'Yes' : 'No'}
+                  </p>
+                )}
               </div>
               
               <button
-                onClick={refreshFavorites}
+                onClick={handleRefreshFavorites}
                 disabled={favoritesLoading}
                 className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                title="Refresh favorites"
               >
-                <Loader2 className={`w-4 h-4 ${favoritesLoading ? 'animate-spin' : 'hidden'}`} />
+                <RefreshCw className={`w-4 h-4 ${favoritesLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
             </div>
@@ -149,11 +197,15 @@ const FavouritesStandalone = () => {
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-red-700">
                   <AlertCircle className="w-5 h-5" />
-                  <span>{favoritesError}</span>
+                  <div>
+                    <span className="block font-medium">Error loading favorites</span>
+                    <span className="block text-sm">{favoritesError}</span>
+                  </div>
                 </div>
                 <button
                   onClick={clearError}
                   className="text-red-500 hover:text-red-700"
+                  title="Clear error"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -161,9 +213,19 @@ const FavouritesStandalone = () => {
             </div>
           )}
 
+          {/* Loading indicator while refreshing */}
+          {favoritesLoading && favoritesInitialized && (
+            <div className="p-4 border-b border-gray-200">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2 text-blue-700">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Refreshing favorites...</span>
+              </div>
+            </div>
+          )}
+
           {/* Content */}
           <div className="p-6">
-            {favorites.length === 0 ? (
+            {favorites.length === 0 && favoritesInitialized ? (
               <div className="text-center py-16">
                 <div className="max-w-md mx-auto">
                   <Heart className="w-24 h-24 mx-auto mb-6 text-gray-300" />
@@ -187,15 +249,20 @@ const FavouritesStandalone = () => {
                   </div>
                 </div>
               </div>
+            ) : !favoritesInitialized ? (
+              <div className="text-center py-16">
+                <Loader2 className="animate-spin w-12 h-12 text-blue-600 mx-auto mb-4" />
+                <p className="text-gray-600">Initializing favorites...</p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {favorites.map((favorite) => {
+                {favorites.map((favorite, index) => {
                   const offer = formatOfferData(favorite);
                   const isExpired = offer.expirationDate && new Date(offer.expirationDate) < new Date();
                   
                   return (
                     <div 
-                      key={offer.id} 
+                      key={`${offer.id}-${index}`} 
                       className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 group"
                     >
                       {/* Image */}
@@ -216,9 +283,11 @@ const FavouritesStandalone = () => {
                               FEATURED
                             </span>
                           )}
-                          <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
-                            {offer.discount}% OFF
-                          </span>
+                          {offer.discount > 0 && (
+                            <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+                              {offer.discount}% OFF
+                            </span>
+                          )}
                         </div>
 
                         {/* Remove from favorites button */}
@@ -229,8 +298,13 @@ const FavouritesStandalone = () => {
                           }}
                           className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
                           title="Remove from favorites"
+                          disabled={favoritesLoading}
                         >
-                          <Heart className="w-4 h-4 fill-current" />
+                          {favoritesLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Heart className="w-4 h-4 fill-current" />
+                          )}
                         </button>
 
                         {/* Status overlay for expired offers */}
@@ -321,10 +395,15 @@ const FavouritesStandalone = () => {
                               e.stopPropagation();
                               handleRemoveFavorite(offer.id);
                             }}
-                            className="px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                            disabled={favoritesLoading}
+                            className="px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
                             title="Remove from favorites"
                           >
-                            <Heart className="w-4 h-4 fill-current" />
+                            {favoritesLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Heart className="w-4 h-4 fill-current" />
+                            )}
                           </button>
                         </div>
                       </div>
@@ -349,7 +428,7 @@ const FavouritesStandalone = () => {
                 </div>
                 
                 <button
-                  onClick={() => navigate('/offers')}
+                  onClick={() => navigate('/Hotdeals')}
                   className="text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Find more offers

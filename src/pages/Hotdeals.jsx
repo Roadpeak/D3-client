@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2, AlertCircle } from 'lucide-react';
+import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
-import { offerAPI } from '../services/offerService';
+import { offerAPI } from '../services/api';
 import { useFavorites } from '../hooks/useFavorites';
 import authService from '../services/authService';
 
@@ -13,6 +13,7 @@ export default function Hotdeals() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Data states
   const [offers, setOffers] = useState([]);
@@ -31,19 +32,33 @@ export default function Hotdeals() {
 
   const navigate = useNavigate();
 
-  // Use favorites hook
+  // Favorites hook
   const {
     favoriteIds,
     loading: favoritesLoading,
     error: favoritesError,
     toggleFavorite,
     isFavorite,
-    clearError: clearFavoritesError
+    clearError: clearFavoritesError,
+    initialized: favoritesInitialized
   } = useFavorites();
 
   // Check authentication status
   useEffect(() => {
-    setIsAuthenticated(authService.isAuthenticated());
+    const checkAuth = () => {
+      const authStatus = authService.isAuthenticated();
+      setIsAuthenticated(authStatus);
+    };
+    
+    checkAuth();
+
+    // Listen for auth changes
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Fetch data on component mount and when filters change
@@ -51,7 +66,7 @@ export default function Hotdeals() {
     fetchData();
   }, [currentPage, selectedCategory, sortBy, limit]);
 
-  // Fetch categories and top deals on mount and when filters change
+  // Fetch categories and top deals on mount
   useEffect(() => {
     fetchCategoriesAndDeals();
   }, []);
@@ -94,12 +109,21 @@ export default function Hotdeals() {
 
       setOffers(transformedOffers);
       setPagination(response.pagination || {});
+      setRetryCount(0); // Reset retry count on success
 
       // Refresh categories after fetching offers to ensure they're in sync
       await fetchCategories();
     } catch (err) {
-      setError('Failed to fetch offers. Please try again.');
       console.error('Error fetching offers:', err);
+      setError(`Failed to fetch offers: ${err.message || 'Unknown error'}`);
+      
+      // Add retry logic for network errors
+      if (retryCount < 3 && (err.code === 'NETWORK_ERROR' || err.code === 'ECONNABORTED')) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          fetchData();
+        }, 2000 * (retryCount + 1)); // Exponential backoff
+      }
     } finally {
       setLoading(false);
     }
@@ -128,6 +152,7 @@ export default function Hotdeals() {
 
       // Fetch top deals
       const dealsResponse = await offerAPI.getTopDeals(3);
+      
       const transformedDeals = dealsResponse.topDeals?.map(deal => ({
         title: deal.title || deal.service?.name || "Special Deal",
         category: deal.service?.category || 'General',
@@ -157,7 +182,7 @@ export default function Hotdeals() {
     }
   };
 
-  // Enhanced favorite handling
+  // Enhanced favorite handling - FIXED TOGGLE BEHAVIOR
   const handleFavoriteClick = async (e, offer) => {
     e.stopPropagation();
     
@@ -169,6 +194,11 @@ export default function Hotdeals() {
           state: { returnUrl: window.location.pathname } 
         });
       }
+      return;
+    }
+
+    // Wait for favorites to be initialized before allowing interactions
+    if (!favoritesInitialized) {
       return;
     }
 
@@ -185,14 +215,13 @@ export default function Hotdeals() {
       store: offer.store_info
     };
 
+    // Simple toggle - no need for additional messages
     const success = await toggleFavorite(offer.id, offerData);
     
-    if (success) {
-      // Show success feedback
-      const action = isFavorite(offer.id) ? 'removed from' : 'added to';
-      // You could add a toast notification here
-      console.log(`Offer ${action} favorites successfully`);
+    if (!success) {
+      console.log('❌ Failed to toggle favorite');
     }
+    // No success message needed - the UI change is enough feedback
   };
 
   const handleSortChange = (newSortBy) => {
@@ -218,6 +247,7 @@ export default function Hotdeals() {
   };
 
   const handleRetry = () => {
+    setRetryCount(0);
     fetchData();
     fetchCategoriesAndDeals();
   };
@@ -236,6 +266,9 @@ export default function Hotdeals() {
           <div className="flex items-center space-x-2">
             <Loader2 className="animate-spin" size={24} />
             <span>Loading offers...</span>
+            {retryCount > 0 && (
+              <span className="text-sm text-gray-500">(Retry {retryCount}/3)</span>
+            )}
           </div>
         </div>
         <Footer />
@@ -267,19 +300,29 @@ export default function Hotdeals() {
         </div>
       </nav>
 
+      {/* Main Error */}
       {error && (
         <div className="container mx-auto px-4 py-4">
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center justify-between">
             <div className="flex items-center">
               <AlertCircle className="w-5 h-5 mr-2" />
-              <span>{error}</span>
+              <div>
+                <span className="block">{error}</span>
+                {retryCount > 0 && (
+                  <span className="text-sm">Retry attempt {retryCount}/3</span>
+                )}
+              </div>
             </div>
-            <button 
-              onClick={handleRetry} 
-              className="ml-4 underline hover:no-underline"
-            >
-              Try again
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={handleRetry} 
+                className="ml-4 flex items-center gap-1 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Retry
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -304,7 +347,7 @@ export default function Hotdeals() {
 
       <div className="container mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
-          {/* Sidebar - keeping the existing sidebar code */}
+          {/* Sidebar */}
           <div className={`${
             isSidebarOpen ? 'block' : 'hidden'
           } md:block w-full md:w-80 flex-shrink-0 ${
@@ -477,7 +520,7 @@ export default function Hotdeals() {
                   <option value="latest">Latest</option>
                   <option value="price_low_high">Price: Low to High</option>
                   <option value="price_high_low">Price: High to Low</option>
-                  <option value="discount">Discount</option>
+                  <option value="price_low_high">Discount</option>
                 </select>
               </div>
             </div>
@@ -492,129 +535,136 @@ export default function Hotdeals() {
               </div>
             )}
 
-            {/* Deals Grid with Enhanced Favorites */}
+            {/* Deals Grid */}
             <div className={`grid gap-4 sm:gap-6 mb-8 ${
               viewMode === 'grid' 
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
                 : 'grid-cols-1'
             }`}>
-              {offers.map((offer) => (
-                <div 
-                  key={offer.id} 
-                  className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
-                    viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
-                  }`}
-                  onClick={() => handleOfferClick(offer.id)}
-                >
-                  <div className={`relative ${viewMode === 'list' ? 'sm:w-1/3' : ''}`}>
-                    <img 
-                      src={offer.image} 
-                      alt={offer.title}
-                      className={`w-full object-cover ${
-                        viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
-                      }`}
-                      onError={(e) => {
-                        e.target.src = '/api/placeholder/300/200';
-                      }}
-                    />
-                    
-                    {/* Enhanced Favorite Button */}
-                    <button 
-                      className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 ${
-                        isFavorite(offer.id) 
-                          ? 'bg-red-500 text-white shadow-lg' 
-                          : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-                      } ${favoritesLoading ? 'cursor-not-allowed opacity-50' : ''}`}
-                      onClick={(e) => handleFavoriteClick(e, offer)}
-                      disabled={favoritesLoading}
-                      title={
-                        !isAuthenticated 
-                          ? 'Login to add favorites' 
-                          : isFavorite(offer.id) 
-                            ? 'Remove from favorites' 
-                            : 'Add to favorites'
-                      }
-                    >
-                      {favoritesLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
+              {offers.map((offer) => {
+                // Check if this offer is favorited - this will properly work after refresh
+                const isOfferFavorited = favoritesInitialized && isFavorite(offer.id);
+                
+                return (
+                  <div 
+                    key={offer.id} 
+                    className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+                      viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
+                    }`}
+                    onClick={() => handleOfferClick(offer.id)}
+                  >
+                    <div className={`relative ${viewMode === 'list' ? 'sm:w-1/3' : ''}`}>
+                      <img 
+                        src={offer.image} 
+                        alt={offer.title}
+                        className={`w-full object-cover ${
+                          viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
+                        }`}
+                        onError={(e) => {
+                          e.target.src = '/api/placeholder/300/200';
+                        }}
+                      />
+                      
+                      {/* Favorite Button - FIXED to maintain state after refresh */}
+                      <button 
+                        className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${
+                          isOfferFavorited
+                            ? 'bg-red-500 text-white shadow-red-200' 
+                            : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+                        } ${
+                          !isAuthenticated || !favoritesInitialized
+                            ? 'cursor-not-allowed opacity-50' 
+                            : 'cursor-pointer'
+                        }`}
+                        onClick={(e) => handleFavoriteClick(e, offer)}
+                        disabled={!isAuthenticated || !favoritesInitialized}
+                        title={
+                          !isAuthenticated
+                            ? 'Login to add favorites'
+                            : !favoritesInitialized
+                              ? 'Loading favorites...'
+                              : isOfferFavorited 
+                                ? 'Remove from favorites' 
+                                : 'Add to favorites'
+                        }
+                      >
                         <Heart 
                           size={16} 
-                          className={isFavorite(offer.id) ? 'fill-current' : ''} 
+                          className={isOfferFavorited ? 'fill-current' : ''} 
                         />
-                      )}
-                    </button>
-
-                    <div className="absolute bottom-3 left-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium text-white ${
-                        offer.featured ? 'bg-red-500' : 'bg-blue-500'
-                      }`}>
-                        {offer.category}
-                      </span>
-                    </div>
-                    {offer.featured && (
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
-                          FEATURED
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className={`p-4 ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
-                    
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
-                        <img 
-                          src={offer.store?.googleLogo || '/api/placeholder/20/20'} 
-                          alt="logo"
-                          className="w-5 h-5"
-                          onError={(e) => {
-                            e.target.src = '/api/placeholder/20/20';
-                          }}
-                        />
-                      </div>
-                      
-                      {/* Store Pill */}
-                      <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
-                        <span>{offer.store?.name || 'Store name'}</span>
-                      </div>
-                    </div>
-                    
-                    <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">{offer.title}</h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{offer.description}</p>
-                    
-                    {/* Price display */}
-                    {offer.originalPrice > 0 && (
-                      <div className="flex items-center space-x-2 mb-3">
-                        <span className="text-lg font-bold text-black-600">
-                          KSH{offer.discountedPrice}
-                        </span>
-                        <span className="text-sm text-gray-500 line-through">
-                          ${offer.originalPrice}
-                        </span>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
-                        {offer.discount}
-                      </span>
-                      
-                      <button 
-                        className={`px-8 py-4 rounded text-sm font-medium transition-colors ${
-                          offer.featured ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOfferClick(offer.id);
-                        }}
-                      >
-                        Get Offer
                       </button>
+
+                      <div className="absolute bottom-3 left-3">
+                        <span className={`px-2 py-1 rounded text-xs font-medium text-white ${
+                          offer.featured ? 'bg-red-500' : 'bg-blue-500'
+                        }`}>
+                          {offer.category}
+                        </span>
+                      </div>
+                      {offer.featured && (
+                        <div className="absolute top-3 left-3">
+                          <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
+                            FEATURED
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className={`p-4 ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
+                      
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
+                          <img 
+                            src={offer.store?.googleLogo || '/api/placeholder/20/20'} 
+                            alt="logo"
+                            className="w-5 h-5"
+                            onError={(e) => {
+                              e.target.src = '/api/placeholder/20/20';
+                            }}
+                          />
+                        </div>
+                        
+                        {/* Store Pill */}
+                        <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
+                          <span>{offer.store?.name || 'Store name'}</span>
+                        </div>
+                      </div>
+                      
+                      <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">{offer.title}</h3>
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{offer.description}</p>
+                      
+                      {/* Price display */}
+                      {offer.originalPrice > 0 && (
+                        <div className="flex items-center space-x-2 mb-3">
+                          <span className="text-lg font-bold text-green-600">
+                            KSH{offer.discountedPrice}
+                          </span>
+                          <span className="text-sm text-gray-500 line-through">
+                            KSH{offer.originalPrice}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
+                          {offer.discount}
+                        </span>
+                        
+                        <button 
+                          className={`px-8 py-4 rounded text-sm font-medium transition-colors ${
+                            offer.featured ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOfferClick(offer.id);
+                          }}
+                        >
+                          Get Offer
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* No offers message */}

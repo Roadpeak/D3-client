@@ -236,7 +236,7 @@ const FollowedStoresStandalone = () => {
                     {store.cashback && (
                       <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 mb-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-green-700">Cashback</span>
+                          <span className="text-sm font-medium text-green-700">Discounts upto</span>
                           <span className="text-lg font-bold text-green-600">{store.cashback}</span>
                         </div>
                       </div>

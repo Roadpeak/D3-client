@@ -1,50 +1,49 @@
-// OffersPage.js - Fixed version with correct expiry logic and removed access fee display
-import React, { useState, useEffect } from 'react';
-import { Share2, Copy, Facebook, Twitter, Instagram, Linkedin, Star, Clock, MapPin, Tag, Users, Calendar, Loader2, AlertCircle, CheckCircle, Info } from 'lucide-react';
+// ViewOffer.jsx - Updated version with View Store button and fixed ESLint warnings
+import React, { useState, useEffect, useCallback } from 'react';
+import { Share2, Copy, Facebook, Twitter, Instagram, Linkedin, Star, Clock, MapPin, Tag, Users, Calendar, Loader2, AlertCircle, CheckCircle, Info, ExternalLink, Building2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { offerAPI } from '../services/offerService';
 import authService from '../services/authService';
 
-const OffersPage = () => {
-  const { id } = useParams();
+const ViewOffer = () => {
+  const { id, storeId, offerId } = useParams();
   const navigate = useNavigate();
-  const [showShareModal, setShowShareModal] = useState(false);
+  
+  // Handle both old and new URL structures
+  const actualOfferId = offerId || id;
+  const actualStoreId = storeId;
+
+  // Debug logging for URL structure
+  console.log('🔍 ViewOffer URL Parameters:', {
+    id,
+    storeId,
+    offerId,
+    actualOfferId,
+    actualStoreId,
+    urlStructure: actualStoreId ? 'NEW (store/offer/id)' : 'LEGACY (offer/id)'
+  });
+
+  // Helper function to generate correct offer URLs
+  const generateOfferUrl = (offerIdParam, storeIdParam = null) => {
+    if (storeIdParam) {
+      return `/store/${storeIdParam}/offer/${offerIdParam}`;
+    }
+    // For backward compatibility or when store ID is not available
+    return `/offers`; // Redirect to offers listing
+  };
+
   const [copySuccess, setCopySuccess] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [showReviewForm, setShowReviewForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [offerData, setOfferData] = useState(null);
-  const [relatedOffers, setRelatedOffers] = useState([]);
   const [user, setUser] = useState(null);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [storeNavigationLoading, setStoreNavigationLoading] = useState(false);
 
-  const [newReview, setNewReview] = useState({
-    name: '',
-    rating: 0,
-    comment: ''
-  });
-  const [userReviews, setUserReviews] = useState([]);
-
-  // Mock reviews data
-  const reviews = [
-    { id: 1, name: "John Doe", rating: 5, comment: "Amazing experience! Great value for money.", date: "2 days ago" },
-    { id: 2, name: "Sarah Smith", rating: 4, comment: "Good service, would recommend to others.", date: "1 week ago" },
-    { id: 3, name: "Mike Johnson", rating: 5, comment: "Exceeded my expectations. Will book again!", date: "2 weeks ago" },
-    { id: 4, name: "Emma Wilson", rating: 4, comment: "Nice location and great amenities.", date: "3 weeks ago" }
-  ];
-
-  useEffect(() => {
-    if (id) {
-      fetchOfferData();
-      fetchRelatedOffers();
-      checkUserAuth();
-    }
-  }, [id]);
-
-  const checkUserAuth = async () => {
+  const checkUserAuth = useCallback(async () => {
     try {
       const userResponse = await authService.getCurrentUser();
       if (userResponse && userResponse.success) {
@@ -53,16 +52,16 @@ const OffersPage = () => {
     } catch (err) {
       console.log('User not authenticated');
     }
-  };
+  }, []);
 
-  const fetchOfferData = async () => {
+  const fetchOfferData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching offer with ID:', id);
+      console.log('Fetching offer with ID:', actualOfferId);
 
-      const response = await offerAPI.getOfferById(id);
+      const response = await offerAPI.getOfferById(actualOfferId);
 
       console.log('API Response:', response);
 
@@ -109,6 +108,7 @@ const OffersPage = () => {
           serviceId: response.offer.service?.id,
           serviceType: response.offer.service?.type,
           storeId: response.offer.store?.id || response.offer.service?.store?.id,
+          storeData: response.offer.store || response.offer.service?.store, // Store complete store data
           serviceDuration: response.offer.service?.duration || 60,
           bookingEnabled: response.offer.service?.booking_enabled !== false
         };
@@ -155,31 +155,14 @@ const OffersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [actualOfferId]);
 
-  const fetchRelatedOffers = async () => {
-    try {
-      const response = await offerAPI.getRandomOffers(4);
-
-      if (response.offers) {
-        const transformedOffers = response.offers.map(offer => ({
-          id: offer.id,
-          title: offer.title || offer.service?.name || "Special Offer",
-          price: offer.service?.price && offer.discount
-            ? `KES ${(offer.service.price * (1 - offer.discount / 100)).toFixed(2)}`
-            : "KES 89.00",
-          originalPrice: offer.service?.price ? `KES ${offer.service.price}` : "KES 250.00",
-          image: offer.service?.image_url || "/api/placeholder/300/200",
-          rating: 4.5,
-          discount: offer.discount
-        }));
-
-        setRelatedOffers(transformedOffers);
-      }
-    } catch (err) {
-      console.error('Error fetching related offers:', err);
+  useEffect(() => {
+    if (actualOfferId) {
+      fetchOfferData();
+      checkUserAuth();
     }
-  };
+  }, [actualOfferId, actualStoreId, fetchOfferData, checkUserAuth]);
 
   // Enhanced booking handler with better flow
   const handleBookOffer = async () => {
@@ -189,7 +172,9 @@ const OffersPage = () => {
       // Check if user is authenticated
       if (!user) {
         // Store the current location to redirect back after login
-        const redirectUrl = `/booking/offer/${id}`;
+        const redirectUrl = actualStoreId 
+          ? `/store/${actualStoreId}/offer/${actualOfferId}`
+          : `/booking/offer/${actualOfferId}`;
         navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
         return;
       }
@@ -220,10 +205,15 @@ const OffersPage = () => {
       }
 
       // Navigate to the enhanced booking page with offer type
-      navigate(`/booking/offer/${id}`, {
+      const bookingUrl = actualStoreId 
+        ? `/store/${actualStoreId}/offer/${actualOfferId}/book`
+        : `/booking/offer/${actualOfferId}`;
+        
+      navigate(bookingUrl, {
         state: {
           offerData: offerData,
-          bookingType: 'offer'
+          bookingType: 'offer',
+          storeId: actualStoreId
         }
       });
       
@@ -232,6 +222,37 @@ const OffersPage = () => {
       setError('Failed to start booking process. Please try again.');
     } finally {
       setBookingLoading(false);
+    }
+  };
+
+  // NEW: Handle view store navigation
+  const handleViewStore = async () => {
+    try {
+      setStoreNavigationLoading(true);
+      
+      // Use store ID from URL if available, otherwise fall back to offer data
+      const targetStoreId = actualStoreId || offerData?.storeId || offerData?.storeData?.id;
+      
+      // Check if store data is available
+      if (!targetStoreId) {
+        setError('Store information not available.');
+        return;
+      }
+      
+      // Navigate to store view page
+      navigate(`/store/${targetStoreId}`, {
+        state: {
+          fromOffer: true,
+          offerData: offerData,
+          offerId: actualOfferId
+        }
+      });
+      
+    } catch (error) {
+      console.error('Store navigation error:', error);
+      setError('Failed to navigate to store. Please try again.');
+    } finally {
+      setStoreNavigationLoading(false);
     }
   };
 
@@ -265,35 +286,6 @@ const OffersPage = () => {
         className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
       />
     ));
-  };
-
-  const renderInteractiveStars = (rating, onRatingChange) => {
-    return [...Array(5)].map((_, i) => (
-      <button
-        key={i}
-        type="button"
-        onClick={() => onRatingChange(i + 1)}
-        className={`w-6 h-6 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} hover:text-yellow-400 transition-colors`}
-      >
-        <Star className="w-full h-full" />
-      </button>
-    ));
-  };
-
-  const handleSubmitReview = (e) => {
-    e.preventDefault();
-    if (newReview.name && newReview.rating > 0 && newReview.comment) {
-      const review = {
-        id: Date.now(),
-        name: newReview.name,
-        rating: newReview.rating,
-        comment: newReview.comment,
-        date: 'Just now'
-      };
-      setUserReviews([review, ...userReviews]);
-      setNewReview({ name: '', rating: 0, comment: '' });
-      setShowReviewForm(false);
-    }
   };
 
   // FIXED: Check if offer is active and bookable using actual expiration_date
@@ -374,6 +366,29 @@ const OffersPage = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb for Store Context */}
+        {actualStoreId && offerData && (
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
+            <Link 
+              to="/stores" 
+              className="hover:text-blue-600 transition-colors"
+            >
+              Stores
+            </Link>
+            <span>›</span>
+            <Link 
+              to={`/store/${actualStoreId}`}
+              className="hover:text-blue-600 transition-colors"
+            >
+              {offerData.platform || offerData.storeData?.name || 'Store'}
+            </Link>
+            <span>›</span>
+            <span className="text-gray-900 font-medium">
+              {offerData.title}
+            </span>
+          </nav>
+        )}
+
         {/* Error Alert */}
         {error && offerData && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -537,7 +552,7 @@ const OffersPage = () => {
             </div>
           </div>
 
-          {/* Right Column - Enhanced Booking Widget (REMOVED ACCESS FEE) */}
+          {/* Right Column - Enhanced Booking Widget */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
               <h1 className="text-2xl font-bold text-gray-900 mb-2">{offerData.title}</h1>
@@ -611,30 +626,55 @@ const OffersPage = () => {
                 </div>
               )}
 
-              {/* Enhanced Booking Button */}
-              <button
-                onClick={handleBookOffer}
-                disabled={!isOfferActive || !offerData.bookingEnabled || bookingLoading}
-                className={`w-full font-semibold py-4 px-6 rounded-lg transition-all duration-200 mb-4 flex items-center justify-center space-x-2 ${
-                  isOfferActive && offerData.bookingEnabled
-                    ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                }`}
-              >
-                {bookingLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Loading...</span>
-                  </>
-                ) : isOfferActive && offerData.bookingEnabled ? (
-                  <>
-                    <Calendar className="w-5 h-5" />
-                    <span>BOOK THIS OFFER</span>
-                  </>
-                ) : (
-                  <span>OFFER UNAVAILABLE</span>
+              {/* Enhanced Action Buttons */}
+              <div className="space-y-3 mb-4">
+                {/* Primary Booking Button */}
+                <button
+                  onClick={handleBookOffer}
+                  disabled={!isOfferActive || !offerData.bookingEnabled || bookingLoading}
+                  className={`w-full font-semibold py-4 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 ${
+                    isOfferActive && offerData.bookingEnabled
+                      ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                      : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  {bookingLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Loading...</span>
+                    </>
+                  ) : isOfferActive && offerData.bookingEnabled ? (
+                    <>
+                      <Calendar className="w-5 h-5" />
+                      <span>BOOK THIS OFFER</span>
+                    </>
+                  ) : (
+                    <span>OFFER UNAVAILABLE</span>
+                  )}
+                </button>
+
+                {/* NEW: View Store Button */}
+                {(actualStoreId || offerData.storeId || offerData.storeData?.id) && (
+                  <button
+                    onClick={handleViewStore}
+                    disabled={storeNavigationLoading}
+                    className="w-full font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white border border-blue-600 hover:border-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {storeNavigationLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Building2 className="w-5 h-5" />
+                        <span>VIEW STORE</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+              </div>
 
               {/* User Authentication Info */}
               {!user && (
@@ -645,7 +685,20 @@ const OffersPage = () => {
                 </div>
               )}
 
-              {/* Important Note - REMOVED ACCESS FEE, ONLY GENERAL INFO */}
+              {/* Store Information Display */}
+              {offerData.storeData && (
+                <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <Building2 className="w-5 h-5 text-gray-600" />
+                    <div>
+                      <p className="font-semibold text-gray-900">{offerData.storeData.name || offerData.platform}</p>
+                      <p className="text-sm text-gray-600">{offerData.storeData.location || offerData.location}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Important Note */}
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-start space-x-2">
                   <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -674,7 +727,6 @@ const OffersPage = () => {
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-gray-700">Share this offer:</span>
                   <button
-                    onClick={() => setShowShareModal(true)}
                     className="flex items-center text-blue-600 hover:text-blue-700 text-sm transition-colors"
                   >
                     <Share2 className="w-4 h-4 mr-1" />
@@ -730,39 +782,26 @@ const OffersPage = () => {
           </div>
         </div>
 
-        {/* Reviews Section */}
+        {/* Reviews Section - Simplified */}
         <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center">
-                  {renderStars(4)}
-                </div>
-                <span className="text-gray-600">4.0 ({205 + userReviews.length} reviews)</span>
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center">
+                {renderStars(4)}
               </div>
-              <button
-                onClick={() => setShowReviewForm(!showReviewForm)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Write Review
-              </button>
+              <span className="text-gray-600">4.0 (205 reviews)</span>
             </div>
           </div>
-
-          {/* Reviews display and other sections remain the same... */}
-          
+          <div className="text-center py-8 text-gray-500">
+            <p>Reviews will be displayed here when available.</p>
+          </div>
         </div>
-
-        {/* Related Offers Section remains the same... */}
-        
       </div>
 
-      {/* Share Modal remains the same... */}
-      
       <Footer />
     </div>
   );
 };
 
-export default OffersPage;
+export default ViewOffer;
