@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -18,24 +18,20 @@ export default function Hotdeals() {
   // Data states
   const [offers, setOffers] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [topDeals, setTopDeals] = useState([]);
-  const [brands, setBrands] = useState([]);
   const [pagination, setPagination] = useState({});
   
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('latest');
-  const [limit, setLimit] = useState(12);
+  const [limit] = useState(12);
 
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const navigate = useNavigate();
 
-  // Favorites hook
+  // Favorites hook - only destructure what we use
   const {
-    favoriteIds,
-    loading: favoritesLoading,
     error: favoritesError,
     toggleFavorite,
     isFavorite,
@@ -43,35 +39,19 @@ export default function Hotdeals() {
     initialized: favoritesInitialized
   } = useFavorites();
 
-  // Check authentication status
-  useEffect(() => {
-    const checkAuth = () => {
-      const authStatus = authService.isAuthenticated();
-      setIsAuthenticated(authStatus);
-    };
+  // Calculate category counts from current offers
+  const calculateCategoryCounts = useCallback((offers) => {
+    const counts = {};
     
-    checkAuth();
-
-    // Listen for auth changes
-    const handleStorageChange = () => {
-      checkAuth();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    offers.forEach(offer => {
+      const category = offer.category || offer.service?.category || 'General';
+      counts[category] = (counts[category] || 0) + 1;
+    });
+    
+    return counts;
   }, []);
 
-  // Fetch data on component mount and when filters change
-  useEffect(() => {
-    fetchData();
-  }, [currentPage, selectedCategory, sortBy, limit]);
-
-  // Fetch categories and top deals on mount
-  useEffect(() => {
-    fetchCategoriesAndDeals();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -102,17 +82,33 @@ export default function Hotdeals() {
         originalPrice: offer.service?.price || 0,
         discountedPrice: offer.service?.price ? (offer.service.price * (1 - offer.discount / 100)).toFixed(2) : 0,
         status: offer.status,
-        // Add data needed for favorites
         service: offer.service,
         store_info: offer.store
       })) || [];
 
       setOffers(transformedOffers);
       setPagination(response.pagination || {});
-      setRetryCount(0); // Reset retry count on success
+      setRetryCount(0);
 
-      // Refresh categories after fetching offers to ensure they're in sync
-      await fetchCategories();
+      // Update categories based on fetched offers
+      const counts = calculateCategoryCounts(transformedOffers);
+      const offerCategories = [...new Set(transformedOffers.map(offer => 
+        offer.category || offer.service?.category || 'General'
+      ))];
+      
+      const updatedCategories = offerCategories.map(categoryName => ({
+        name: categoryName,
+        count: counts[categoryName] || 0
+      }));
+      
+      updatedCategories.sort((a, b) => {
+        if (a.count > 0 && b.count === 0) return -1;
+        if (a.count === 0 && b.count > 0) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      setCategories(updatedCategories);
+      
     } catch (err) {
       console.error('Error fetching offers:', err);
       setError(`Failed to fetch offers: ${err.message || 'Unknown error'}`);
@@ -121,73 +117,18 @@ export default function Hotdeals() {
       if (retryCount < 3 && (err.code === 'NETWORK_ERROR' || err.code === 'ECONNABORTED')) {
         setTimeout(() => {
           setRetryCount(prev => prev + 1);
-          fetchData();
-        }, 2000 * (retryCount + 1)); // Exponential backoff
+        }, 2000 * (retryCount + 1));
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, limit, sortBy, selectedCategory, retryCount, calculateCategoryCounts]);
 
-  const fetchCategories = async () => {
-    try {
-      const categoriesResponse = await offerAPI.getCategories();
-      setCategories(categoriesResponse.categories || []);
-    } catch (err) {
-      console.error('Error fetching categories:', err);
-      // Set fallback categories if API fails
-      setCategories([
-        { name: 'Food & Dining', count: 0 },
-        { name: 'Health & Beauty', count: 0 },
-        { name: 'Fitness & Sports', count: 0 },
-        { name: 'Automotive', count: 0 }
-      ]);
-    }
-  };
-
-  const fetchCategoriesAndDeals = async () => {
-    try {
-      // Fetch categories from active offers
-      await fetchCategories();
-
-      // Fetch top deals
-      const dealsResponse = await offerAPI.getTopDeals(3);
-      
-      const transformedDeals = dealsResponse.topDeals?.map(deal => ({
-        title: deal.title || deal.service?.name || "Special Deal",
-        category: deal.service?.category || 'General',
-        price: deal.service?.price && deal.discount 
-          ? `${(deal.service.price * (1 - deal.discount / 100)).toFixed(2)}`
-          : '$50.00',
-        originalPrice: deal.service?.price ? `${deal.service.price}` : '$100.00',
-        discount: `${deal.discount}% OFF`
-      })) || [];
-      
-      setTopDeals(transformedDeals);
-
-      // Keep static brands for demo
-      setBrands([
-        'https://via.placeholder.com/60x40/FF6B35/FFFFFF?text=KFC',
-        'https://via.placeholder.com/60x40/00A651/FFFFFF?text=SB',
-        'https://via.placeholder.com/60x40/FDB913/000000?text=MW',
-        'https://via.placeholder.com/60x40/E31837/FFFFFF?text=Pizza',
-        'https://via.placeholder.com/60x40/0066CC/FFFFFF?text=Star',
-        'https://via.placeholder.com/60x40/FF0000/FFFFFF?text=KFC',
-        'https://via.placeholder.com/60x40/8B4513/FFFFFF?text=Cafe',
-        'https://via.placeholder.com/60x40/228B22/FFFFFF?text=MT',
-        'https://via.placeholder.com/60x40/FF69B4/FFFFFF?text=Ice'
-      ]);
-    } catch (err) {
-      console.error('Error fetching categories and deals:', err);
-    }
-  };
-
-  // Enhanced favorite handling - FIXED TOGGLE BEHAVIOR
-  const handleFavoriteClick = async (e, offer) => {
+  // Enhanced favorite handling
+  const handleFavoriteClick = useCallback(async (e, offer) => {
     e.stopPropagation();
     
     if (!isAuthenticated) {
-      // Show login prompt or redirect to login
       const shouldLogin = window.confirm('Please log in to add favorites. Would you like to log in now?');
       if (shouldLogin) {
         navigate('/accounts/sign-in', { 
@@ -197,12 +138,10 @@ export default function Hotdeals() {
       return;
     }
 
-    // Wait for favorites to be initialized before allowing interactions
     if (!favoritesInitialized) {
       return;
     }
 
-    // Clear any previous favorites error
     if (favoritesError) {
       clearFavoritesError();
     }
@@ -215,48 +154,63 @@ export default function Hotdeals() {
       store: offer.store_info
     };
 
-    // Simple toggle - no need for additional messages
-    const success = await toggleFavorite(offer.id, offerData);
-    
-    if (!success) {
-      console.log('❌ Failed to toggle favorite');
-    }
-    // No success message needed - the UI change is enough feedback
-  };
+    await toggleFavorite(offer.id, offerData);
+  }, [isAuthenticated, favoritesInitialized, favoritesError, navigate, clearFavoritesError, toggleFavorite]);
 
-  const handleSortChange = (newSortBy) => {
+  const handleSortChange = useCallback((newSortBy) => {
     setSortBy(newSortBy);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleCategoryChange = (category) => {
+  const handleCategoryChange = useCallback((category) => {
     setSelectedCategory(selectedCategory === category ? '' : category);
     setCurrentPage(1);
-  };
+  }, [selectedCategory]);
 
-  const handlePageChange = (page) => {
+  const handlePageChange = useCallback((page) => {
     if (page >= 1 && page <= pagination.totalPages) {
       setCurrentPage(page);
-      // Scroll to top when page changes
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, [pagination.totalPages]);
 
-  const handleOfferClick = (offerId) => {
+  const handleOfferClick = useCallback((offerId) => {
     navigate(`/offer/${offerId}`);
-  };
+  }, [navigate]);
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     setRetryCount(0);
-    fetchData();
-    fetchCategoriesAndDeals();
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSelectedCategory('');
     setSortBy('latest');
     setCurrentPage(1);
-  };
+  }, []);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const authStatus = authService.isAuthenticated();
+      setIsAuthenticated(authStatus);
+    };
+    
+    checkAuth();
+
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Fetch data effect
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading && offers.length === 0) {
     return (
@@ -370,13 +324,6 @@ export default function Hotdeals() {
                   <h3 className="font-semibold text-gray-800 border-b border-yellow-400 pb-2">
                     CATEGORIES
                   </h3>
-                  <button
-                    onClick={fetchCategories}
-                    className="text-xs text-blue-600 hover:text-blue-800"
-                    title="Refresh categories"
-                  >
-                    🔄
-                  </button>
                 </div>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
@@ -418,63 +365,15 @@ export default function Hotdeals() {
                 )}
               </div>
 
-              {/* Top Deals */}
-              {topDeals.length > 0 && (
-                <div className="bg-white rounded-lg p-6">
-                  <h3 className="font-semibold text-gray-800 mb-4 border-b border-yellow-400 pb-2">
-                    TOP DEALS
-                  </h3>
-                  <div className="space-y-4">
-                    {topDeals.map((deal, index) => (
-                      <div key={index} className="border-b border-gray-100 pb-3 last:border-b-0">
-                        <h4 className="text-sm font-medium text-gray-800 mb-1">{deal.title}</h4>
-                        <p className="text-sm text-gray-500 mb-2">{deal.category}</p>
-                        <div className="flex items-center space-x-2">
-                          <p className="text-lg font-bold text-red-500">{deal.price}</p>
-                          {deal.originalPrice && (
-                            <p className="text-sm text-gray-400 line-through">{deal.originalPrice}</p>
-                          )}
-                        </div>
-                        <p className="text-xs text-green-600 font-medium">{deal.discount}</p>
-                      </div>
-                    ))}
-                    <button className="text-red-500 text-sm font-medium flex items-center hover:underline">
-                      View All <ChevronRight size={14} className="ml-1" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Popular Brands */}
-              <div className="bg-white rounded-lg p-6">
-                <h3 className="font-semibold text-gray-800 mb-4 border-b border-yellow-400 pb-2">
-                  POPULAR STORES
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                  {brands.map((brand, index) => (
-                    <div key={index} className="w-16 h-12 bg-gray-100 rounded flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer">
-                      <img 
-                        src={brand} 
-                        alt={`Brand ${index + 1}`} 
-                        className="w-full h-full object-contain rounded"
-                        onError={(e) => {
-                          e.target.src = '/api/placeholder/60/40';
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* ListZilla Ad */}
+              {/* Promo Ad */}
               <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-6 text-white text-center">
-                <h3 className="text-xl font-bold mb-2">ListZilla</h3>
+                <h3 className="text-xl font-bold mb-2">Special Deals</h3>
                 <div className="bg-yellow-400 text-purple-800 px-4 py-2 rounded-lg font-bold text-lg mb-3">
                   SALE
                   <div className="text-sm">Get 20% Off</div>
                 </div>
-                <p className="text-sm mb-2">Hurry! 200+ Listings Available</p>
-                <p className="text-lg font-bold">Over $2000 worth Coupons</p>
+                <p className="text-sm mb-2">Limited Time Offers</p>
+                <p className="text-lg font-bold">Amazing Savings</p>
               </div>
             </div>
           </div>
@@ -520,7 +419,7 @@ export default function Hotdeals() {
                   <option value="latest">Latest</option>
                   <option value="price_low_high">Price: Low to High</option>
                   <option value="price_high_low">Price: High to Low</option>
-                  <option value="price_low_high">Discount</option>
+                  <option value="discount">Discount</option>
                 </select>
               </div>
             </div>
@@ -542,7 +441,6 @@ export default function Hotdeals() {
                 : 'grid-cols-1'
             }`}>
               {offers.map((offer) => {
-                // Check if this offer is favorited - this will properly work after refresh
                 const isOfferFavorited = favoritesInitialized && isFavorite(offer.id);
                 
                 return (
@@ -565,7 +463,6 @@ export default function Hotdeals() {
                         }}
                       />
                       
-                      {/* Favorite Button - FIXED to maintain state after refresh */}
                       <button 
                         className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${
                           isOfferFavorited
@@ -623,7 +520,6 @@ export default function Hotdeals() {
                           />
                         </div>
                         
-                        {/* Store Pill */}
                         <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
                           <span>{offer.store?.name || 'Store name'}</span>
                         </div>
@@ -632,7 +528,6 @@ export default function Hotdeals() {
                       <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">{offer.title}</h3>
                       <p className="text-sm text-gray-600 mb-3 line-clamp-2">{offer.description}</p>
                       
-                      {/* Price display */}
                       {offer.originalPrice > 0 && (
                         <div className="flex items-center space-x-2 mb-3">
                           <span className="text-lg font-bold text-green-600">
@@ -751,7 +646,6 @@ export default function Hotdeals() {
                   </button>
                 </div>
                 
-                {/* Pagination Info */}
                 {pagination.totalItems > 0 && (
                   <p className="text-center text-sm text-gray-500">
                     Page {currentPage} of {pagination.totalPages} • {pagination.totalItems} total results
@@ -785,10 +679,10 @@ export default function Hotdeals() {
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-4 sm:space-y-0">
             <button className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 w-full sm:w-auto transition-colors">
-              Add a Listing ⭕
+              Add a Listing
             </button>
             <button className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-yellow-500 w-full sm:w-auto transition-colors">
-              Search for a Coupon 🔍
+              Search for a Coupon
             </button>
           </div>
         </div>

@@ -48,6 +48,14 @@ const Stores = () => {
     fetchInitialData();
   }, []);
 
+  useEffect(() => {
+    console.log('Stores data:', stores.slice(0, 3).map(s => ({
+      name: s.name,
+      logo: s.logo,
+      logo_url: s.logo_url
+    })));
+  }, [stores]);
+
   // Fetch stores when filters change
   useEffect(() => {
     const fetchStores = async () => {

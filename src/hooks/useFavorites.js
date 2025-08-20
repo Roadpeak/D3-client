@@ -1,4 +1,4 @@
-// hooks/useFavorites.js - TRULY FIXED VERSION with proper ID extraction
+// hooks/useFavorites.js - FIXED VERSION - No infinite loops
 import { useState, useEffect, useCallback } from 'react';
 import { favoritesAPI } from '../services/api';
 import authService from '../services/authService';
@@ -11,7 +11,7 @@ export const useFavorites = () => {
   const [initialized, setInitialized] = useState(false);
 
   // Helper function to extract offer ID from favorite object
-  const extractOfferId = (favorite) => {
+  const extractOfferId = useCallback((favorite) => {
     // Try multiple possible ID fields based on your API response structure
     const possibleIds = [
       favorite.offer_id,
@@ -26,19 +26,19 @@ export const useFavorites = () => {
     // Find the first valid ID
     for (const id of possibleIds) {
       if (id) {
-        console.log('🔍 Extracted offer ID:', id, 'from favorite:', favorite);
+        // REMOVED: Excessive logging that was causing console spam
         return id;
       }
     }
     
-    console.warn('⚠️ Could not extract offer ID from favorite:', favorite);
+    // Only log when there's actually a problem
+    console.warn('Could not extract offer ID from favorite:', favorite);
     return null;
-  };
+  }, []);
 
   // Fetch all favorites
   const fetchFavorites = useCallback(async () => {
     if (!authService.isAuthenticated()) {
-      console.log('🔒 User not authenticated, clearing favorites');
       setFavorites([]);
       setFavoriteIds(new Set());
       setInitialized(true);
@@ -49,13 +49,9 @@ export const useFavorites = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Fetching favorites from API...');
       const response = await favoritesAPI.getFavorites();
-      console.log('📥 Favorites API response:', response);
       
       if (response.success && Array.isArray(response.favorites)) {
-        console.log('✅ Processing favorites:', response.favorites.length, 'items');
-        
         setFavorites(response.favorites);
         
         // Extract offer IDs with better error handling
@@ -64,25 +60,10 @@ export const useFavorites = () => {
           .filter(Boolean); // Remove null/undefined values
         
         const ids = new Set(extractedIds);
-        
-        console.log('📋 Extracted favorite IDs:', Array.from(ids));
-        console.log('🔢 Total favorites:', response.favorites.length, 'Extracted IDs:', ids.size);
-        
         setFavoriteIds(ids);
         setInitialized(true);
         
-        // Debug: log each favorite and its extracted ID
-        response.favorites.forEach((fav, index) => {
-          const id = extractOfferId(fav);
-          console.log(`Favorite ${index + 1}:`, {
-            structure: Object.keys(fav),
-            extractedId: id,
-            rawFavorite: fav
-          });
-        });
-        
       } else {
-        console.log('⚠️ No favorites found or API error:', response.message);
         setFavorites([]);
         setFavoriteIds(new Set());
         setInitialized(true);
@@ -91,7 +72,7 @@ export const useFavorites = () => {
         }
       }
     } catch (err) {
-      console.error('❌ Error in fetchFavorites:', err);
+      console.error('Error in fetchFavorites:', err);
       setError('Failed to load favorites');
       setFavorites([]);
       setFavoriteIds(new Set());
@@ -99,7 +80,7 @@ export const useFavorites = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [extractOfferId]);
 
   // Add to favorites
   const addToFavorites = useCallback(async (offerId, offerData = null) => {
@@ -109,12 +90,11 @@ export const useFavorites = () => {
     }
 
     if (!offerId) {
-      console.error('❌ No offer ID provided to addToFavorites');
+      console.error('No offer ID provided to addToFavorites');
       return false;
     }
 
     try {
-      console.log('💖 Adding offer to favorites:', offerId);
       const response = await favoritesAPI.addToFavorites(offerId);
       
       if (response.success) {
@@ -122,7 +102,6 @@ export const useFavorites = () => {
         setFavoriteIds(prev => {
           const newSet = new Set(prev);
           newSet.add(offerId);
-          console.log('✅ Updated favoriteIds (add):', Array.from(newSet));
           return newSet;
         });
         
@@ -137,12 +116,10 @@ export const useFavorites = () => {
         }
         
         setError(null);
-        console.log('✅ Successfully added to favorites');
         return true;
       } else {
         // Handle "already exists" case gracefully
         if (response.alreadyExists) {
-          console.log('ℹ️ Offer already in favorites, updating local state');
           setFavoriteIds(prev => new Set([...prev, offerId]));
           return true;
         }
@@ -150,7 +127,7 @@ export const useFavorites = () => {
         return false;
       }
     } catch (err) {
-      console.error('❌ Error adding to favorites:', err);
+      console.error('Error adding to favorites:', err);
       setError('Failed to add to favorites');
       return false;
     }
@@ -163,12 +140,11 @@ export const useFavorites = () => {
     }
 
     if (!offerId) {
-      console.error('❌ No offer ID provided to removeFromFavorites');
+      console.error('No offer ID provided to removeFromFavorites');
       return false;
     }
 
     try {
-      console.log('💔 Removing offer from favorites:', offerId);
       const response = await favoritesAPI.removeFromFavorites(offerId);
       
       if (response.success) {
@@ -176,7 +152,6 @@ export const useFavorites = () => {
         setFavoriteIds(prev => {
           const newSet = new Set(prev);
           newSet.delete(offerId);
-          console.log('✅ Updated favoriteIds (remove):', Array.from(newSet));
           return newSet;
         });
         
@@ -186,28 +161,26 @@ export const useFavorites = () => {
         }));
         
         setError(null);
-        console.log('✅ Successfully removed from favorites');
         return true;
       } else {
         setError(response.message);
         return false;
       }
     } catch (err) {
-      console.error('❌ Error removing from favorites:', err);
+      console.error('Error removing from favorites:', err);
       setError('Failed to remove from favorites');
       return false;
     }
-  }, []);
+  }, [extractOfferId]);
 
   // Toggle favorite status - FIXED to work properly
   const toggleFavorite = useCallback(async (offerId, offerData = null) => {
     if (!offerId) {
-      console.error('❌ No offer ID provided to toggleFavorite');
+      console.error('No offer ID provided to toggleFavorite');
       return false;
     }
 
     const isFav = favoriteIds.has(offerId);
-    console.log(`🔄 Toggling favorite: ${offerId} (currently ${isFav ? 'favorited' : 'not favorited'})`);
     
     if (isFav) {
       return await removeFromFavorites(offerId);
@@ -216,15 +189,14 @@ export const useFavorites = () => {
     }
   }, [favoriteIds, addToFavorites, removeFromFavorites]);
 
-  // Check if offer is favorite - WITH DEBUGGING
+  // Check if offer is favorite - REMOVED EXCESSIVE LOGGING
   const isFavorite = useCallback((offerId) => {
     if (!offerId) {
       return false;
     }
     
-    const result = favoriteIds.has(offerId);
-    console.log(`🔍 Checking isFavorite for ${offerId}:`, result, 'in set:', Array.from(favoriteIds));
-    return result;
+    // FIXED: No more console.log on every check - this was causing 28k logs!
+    return favoriteIds.has(offerId);
   }, [favoriteIds]);
 
   // Get favorites count
@@ -238,7 +210,6 @@ export const useFavorites = () => {
     
     const initFavorites = async () => {
       if (mounted) {
-        console.log('🚀 Initializing favorites hook...');
         await fetchFavorites();
       }
     };
@@ -251,10 +222,7 @@ export const useFavorites = () => {
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Debug log when favoriteIds changes
-  useEffect(() => {
-    console.log('🔄 FavoriteIds updated:', Array.from(favoriteIds));
-  }, [favoriteIds]);
+  // REMOVED: Debug log that was firing on every favoriteIds change
 
   return {
     favorites,
