@@ -1,4 +1,4 @@
-// services/api.js - INTEGRATED VERSION WITH FAVORITES
+// services/api.js - USER API
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL

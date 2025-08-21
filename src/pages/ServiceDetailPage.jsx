@@ -27,6 +27,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import StoreService from '../services/storeService';
 import serviceAPI from '../services/serviceService';
+import authService from '../services/authService';
 
 const ServiceDetailPage = () => {
   const { storeId, serviceId, id } = useParams();
@@ -104,24 +105,34 @@ const ServiceDetailPage = () => {
     try {
       setBookingLoading(true);
       
-      // Check if user is authenticated
-      const user = localStorage.getItem('access_token') || 
-                   localStorage.getItem('authToken') || 
-                   localStorage.getItem('token');
-      
-      if (!user) {
+      // FIXED: Use authService to check authentication instead of localStorage
+      if (!authService.isAuthenticated()) {
         // Redirect to login with service booking redirect
         const redirectUrl = `/booking/service/${actualServiceId}`;
         navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
         return;
       }
-
+  
+      // Optional: Also verify the user is actually valid
+      try {
+        const userResponse = await authService.getCurrentUser();
+        if (!userResponse.success) {
+          // Token exists but is invalid/expired
+          const redirectUrl = `/booking/service/${actualServiceId}`;
+          navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+          return;
+        }
+      } catch (error) {
+        console.warn('User verification failed:', error);
+        // Still proceed if this fails - the backend will handle auth
+      }
+  
       // Check if service is bookable
       if (!serviceData.booking_enabled) {
         setError('Booking is not enabled for this service.');
         return;
       }
-
+  
       // For dynamic services, show information
       if (serviceData.type === 'dynamic') {
         const confirmDynamic = window.confirm(
@@ -134,7 +145,7 @@ const ServiceDetailPage = () => {
           return;
         }
       }
-
+  
       // Navigate to the enhanced booking page for services
       navigate(`/booking/service/${actualServiceId}`, {
         state: {

@@ -1,3 +1,5 @@
+// EnhancedBookingPage.js - Complete updated version supporting both offers and services
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Calendar, Clock, MapPin, User, CreditCard, Smartphone, Check, 
@@ -10,10 +12,11 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import bookingService from '../services/enhancedBookingService';
 import { offerAPI } from '../services/offerService';
+import serviceAPI from '../services/serviceService';
 import authService from '../services/authService';
 
 const EnhancedBookingPage = () => {
-  const { offerId } = useParams();
+  const { offerId, serviceId } = useParams();
   const navigate = useNavigate();
   
   // ==================== STATE MANAGEMENT ====================
@@ -31,20 +34,20 @@ const EnhancedBookingPage = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [detailedSlots, setDetailedSlots] = useState([]);
   const [bookingRules, setBookingRules] = useState(null);
-  const [branchInfo, setBranchInfo] = useState(null); // CHANGED: storeInfo → branchInfo
-  const [branch, setBranch] = useState(null); // CHANGED: stores → branch (single)
+  const [branchInfo, setBranchInfo] = useState(null);
+  const [branch, setBranch] = useState(null);
   const [staff, setStaff] = useState([]);
   const [user, setUser] = useState(null);
 
   // Entity State Management
-  const [entityType, setEntityType] = useState('offer');
-  const [isOfferBooking, setIsOfferBooking] = useState(true);
+  const [entityType, setEntityType] = useState('');
+  const [isOfferBooking, setIsOfferBooking] = useState(false);
 
-  // Form States - UPDATED
+  // Form States
   const [bookingData, setBookingData] = useState({
     date: '',
     time: '',
-    branch: null, // CHANGED: store → branch
+    branch: null,
     staff: null,
     notes: ''
   });
@@ -56,8 +59,9 @@ const EnhancedBookingPage = () => {
   const [accessFee, setAccessFee] = useState(0);
 
   // Derived values from URL params
-  const entityId = offerId;
-  const initialEntityType = 'offer';
+  const entityId = offerId || serviceId;
+  const initialEntityType = offerId ? 'offer' : 'service';
+  const initialIsOfferBooking = !!offerId;
 
   // Constants
   const platformFee = 5.99;
@@ -89,49 +93,38 @@ const EnhancedBookingPage = () => {
     return `KES ${parseFloat(amount).toFixed(2)}`;
   }, []);
 
-  // FIXED: Case-insensitive working day validation with consistent date parsing
   const isWorkingDay = useCallback((date, workingDays) => {
     if (!workingDays || !Array.isArray(workingDays)) {
-      console.warn('FIXED: Invalid working days:', workingDays);
+      console.warn('Invalid working days:', workingDays);
       return false;
     }
 
-    // CRITICAL FIX: Consistent date parsing with backend (force local timezone)
     const targetDate = new Date(date + 'T00:00:00');
     const dayName = targetDate.toLocaleDateString('en-US', { weekday: 'long' });
     
-    console.log('🔍 FIXED: Frontend working day check:', {
+    console.log('Working day check:', {
       inputDate: date,
-      targetDate: targetDate.toISOString(),
-      targetDateLocal: targetDate.toString(),
       dayName,
-      dayNameLower: dayName.toLowerCase(),
-      dayIndex: targetDate.getDay(),
       workingDays,
-      workingDaysLower: workingDays.map(d => d.toLowerCase()),
       isWorking: workingDays.some(d => d.toLowerCase() === dayName.toLowerCase())
     });
 
-    // CRITICAL FIX: Case-insensitive comparison to match database format
     return workingDays.some(workingDay => 
       workingDay.toString().toLowerCase() === dayName.toLowerCase()
     );
   }, []);
 
-  // FIXED: Safe getAvailableDates that handles undefined branchInfo
   const getAvailableDates = useCallback(() => {
-    // FIXED: Return empty array if no branch info yet
     if (!branchInfo?.workingDays || !Array.isArray(branchInfo.workingDays)) {
-      console.log('🔍 FIXED: No working days available yet, branchInfo:', branchInfo);
+      console.log('No working days available yet, branchInfo:', branchInfo);
       return [];
     }
 
-    console.log('🔍 FIXED: Branch working days available:', branchInfo.workingDays);
+    console.log('Branch working days available:', branchInfo.workingDays);
 
     const availableDates = [];
     const today = new Date();
     
-    // Check next 30 days
     for (let i = 0; i < 30; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
@@ -150,11 +143,10 @@ const EnhancedBookingPage = () => {
       }
     }
     
-    console.log('🔍 FIXED: Available dates generated:', availableDates.length);
+    console.log('Available dates generated:', availableDates.length);
     return availableDates;
   }, [branchInfo, isWorkingDay]);
 
-  // Helper to create timeout promise
   const withTimeout = useCallback((promise, timeoutMs = REQUEST_TIMEOUT) => {
     return Promise.race([
       promise,
@@ -164,21 +156,20 @@ const EnhancedBookingPage = () => {
     ]);
   }, []);
 
-  // Retry logic for failed requests
   const retryRequest = useCallback(async (requestFn, maxRetries = MAX_RETRY_ATTEMPTS) => {
     let lastError;
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`🔄 Attempt ${attempt}/${maxRetries}`);
+        console.log(`Retry attempt ${attempt}/${maxRetries}`);
         return await requestFn();
       } catch (error) {
         lastError = error;
-        console.warn(`❌ Attempt ${attempt} failed:`, error.message);
+        console.warn(`Attempt ${attempt} failed:`, error.message);
         
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt - 1) * 1000;
-          console.log(`⏳ Waiting ${delay}ms before retry...`);
+          console.log(`Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
@@ -195,10 +186,10 @@ const EnhancedBookingPage = () => {
       setError(null);
 
       if (!entityId || entityId.trim() === '') {
-        throw new Error('Invalid booking request. Entity ID is missing.');
+        throw new Error(`Invalid booking request. ${initialEntityType} ID is missing.`);
       }
 
-      console.log('🎯 Initializing booking:', { entityId });
+      console.log('Initializing booking:', { entityId, entityType: initialEntityType, isOfferBooking: initialIsOfferBooking });
 
       // Get current user
       const userResponse = await withTimeout(authService.getCurrentUser());
@@ -212,49 +203,61 @@ const EnhancedBookingPage = () => {
       setUser(userData);
       setPhoneNumber(userData?.phoneNumber || userData?.phone || '');
 
-      // Get entity details with retry logic
-      const entityData = await retryRequest(async () => {
-        const offerResponse = await withTimeout(offerAPI.getOfferById(entityId));
-        return offerResponse.offer || offerResponse.data || offerResponse;
-      });
-
-      if (!entityData) {
-        throw new Error('Offer not found');
+      // Get entity details based on type
+      let entityData;
+      if (initialIsOfferBooking) {
+        entityData = await retryRequest(async () => {
+          const offerResponse = await withTimeout(offerAPI.getOfferById(entityId));
+          return offerResponse.offer || offerResponse.data || offerResponse;
+        });
+      } else {
+        entityData = await retryRequest(async () => {
+          const serviceResponse = await withTimeout(serviceAPI.getServiceById(entityId));
+          return serviceResponse.service || serviceResponse.data || serviceResponse;
+        });
       }
 
-      setEntityType('offer');
-      setIsOfferBooking(true);
+      if (!entityData) {
+        throw new Error(`${initialEntityType === 'offer' ? 'Offer' : 'Service'} not found`);
+      }
+
+      setEntityType(initialEntityType);
+      setIsOfferBooking(initialIsOfferBooking);
       setEntityDetails(entityData);
 
-      // UPDATED: Get branch instead of stores
+      // Get branch (use offer endpoint since they share same store logic)
       try {
         const branchResponse = await retryRequest(async () => {
-          return await withTimeout(bookingService.getBranchForOffer(entityId));
+          if (isOfferBooking) {
+            return await withTimeout(bookingService.getBranchForOffer(entityId));
+          } else {
+            return await withTimeout(bookingService.getBranchForService(entityId));
+          }
         });
         
         if (branchResponse?.branch) {
           setBranch(branchResponse.branch);
-          console.log('✅ Branch loaded:', branchResponse.branch.name);
+          console.log('Branch loaded:', branchResponse.branch.name);
         } else {
-          console.warn('⚠️ No branch found, will use fallback');
+          console.warn('No branch found, will use fallback');
           setBranch(null);
         }
       } catch (branchError) {
-        console.warn('⚠️ Error fetching branch:', branchError);
+        console.warn('Error fetching branch:', branchError);
         setBranch(null);
       }
 
-      console.log('🎉 Booking initialization completed');
+      console.log('Booking initialization completed');
 
     } catch (err) {
-      console.error('💥 Error initializing booking:', err);
+      console.error('Error initializing booking:', err);
       
-      let errorMessage = 'Failed to load booking information';
+      let errorMessage = `Failed to load ${initialEntityType} booking information`;
       
       if (err.message.includes('timeout')) {
         errorMessage = 'The request is taking too long. Please check your connection and try again.';
       } else if (err.message.includes('not found')) {
-        errorMessage = 'This offer is no longer available.';
+        errorMessage = `This ${initialEntityType} is no longer available.`;
       } else if (err.status === 401) {
         navigate(`/login?redirect=${window.location.pathname}`);
         return;
@@ -264,38 +267,93 @@ const EnhancedBookingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [entityId, navigate, withTimeout, retryRequest]);
+  }, [entityId, initialEntityType, initialIsOfferBooking, navigate, withTimeout, retryRequest]);
 
   // ==================== SLOT MANAGEMENT ====================
 
-  // FIXED: Enhanced fetchAvailableSlots that handles undefined branchInfo
   const fetchAvailableSlots = useCallback(async (forceRefresh = false) => {
-    if (!bookingData.date || !entityId || !entityType) return;
-
+    if (!bookingData.date || !entityId) return;
+  
     try {
       if (forceRefresh) {
         setRefreshing(true);
         setRetryAttempts(prev => prev + 1);
       }
-
-      console.log('⏰ FIXED: Fetching slots for:', { entityId, date: bookingData.date });
+  
+      console.log('⏰ Fetching slots for:', { entityId, entityType, date: bookingData.date });
       
-      const response = await retryRequest(async () => {
-        return await withTimeout(
-          bookingService.getAvailableSlotsForOffer(entityId, bookingData.date)
-        );
-      });
+      let response;
       
-      console.log('📡 FIXED: API Response:', response);
+      // FIXED: Use different endpoints based on entity type, matching original logic
+      if (isOfferBooking) {
+        // For offers, use the original offer slots endpoint
+        try {
+          response = await retryRequest(async () => {
+            return await withTimeout(
+              bookingService.getAvailableSlotsForOffer(entityId, bookingData.date)
+            );
+          });
+        } catch (error) {
+          console.warn('⚠️ Offer slots endpoint failed, trying legacy method');
+          
+          // Fallback to direct API call with original parameters
+          response = await retryRequest(async () => {
+            return await withTimeout(
+              bookingService.api.get('/bookings/slots', {
+                params: { 
+                  offerId: entityId, 
+                  date: bookingData.date, 
+                  bookingType: 'offer' 
+                }
+              })
+            );
+          });
+          
+          // Transform response to expected format
+          if (response.data) {
+            response = response.data;
+          }
+        }
+      } else {
+        // For services, use service-specific endpoint or fallback
+        try {
+          response = await retryRequest(async () => {
+            return await withTimeout(
+              bookingService.getAvailableSlotsForService(entityId, bookingData.date)
+            );
+          });
+        } catch (error) {
+          console.warn('⚠️ Service slots endpoint failed, trying legacy method');
+          
+          // Fallback for services
+          response = await retryRequest(async () => {
+            return await withTimeout(
+              bookingService.api.get('/bookings/slots', {
+                params: { 
+                  serviceId: entityId, 
+                  date: bookingData.date, 
+                  bookingType: 'service' 
+                }
+              })
+            );
+          });
+          
+          if (response.data) {
+            response = response.data;
+          }
+        }
+      }
       
-      // FIXED: Handle business rule violations properly
+      console.log('📡 API Response:', response);
+      
+      // Handle business rule violations properly
       if (response?.businessRuleViolation || (!response?.success && response?.message)) {
         setAvailableSlots([]);
         setDetailedSlots([]);
         
         // Update branchInfo from response if available
         if (response.storeInfo || response.branchInfo) {
-          console.log('🏪 FIXED: Updating branchInfo from error response:', response.storeInfo || response.branchInfo);
+          console.log('🏪 Updating branchInfo from error response:', response.storeInfo || response.branchInfo);
           setBranchInfo(response.storeInfo || response.branchInfo);
         }
         
@@ -303,41 +361,42 @@ const EnhancedBookingPage = () => {
         return;
       }
       
-      if (response?.success) {
+      if (response?.success || response?.availableSlots) {
         setAvailableSlots(response.availableSlots || []);
         setDetailedSlots(response.detailedSlots || []);
         setBookingRules(response.bookingRules);
         
-        // CRITICAL: Update branchInfo from successful response
+        // Update branchInfo from successful response
         if (response.storeInfo || response.branchInfo) {
-          console.log('🏪 FIXED: Updating branchInfo from success response:', response.storeInfo || response.branchInfo);
+          console.log('🏪 Updating branchInfo from success response:', response.storeInfo || response.branchInfo);
           setBranchInfo(response.storeInfo || response.branchInfo);
         }
         
-        setAccessFee(response.accessFee || platformFee);
+        // Set access fee based on booking type
+        setAccessFee(isOfferBooking ? (response.accessFee || platformFee) : 0);
         setError(null);
         
-        console.log('✅ FIXED: Slots loaded successfully:', response.availableSlots?.length || 0);
+        console.log('✅ Slots loaded successfully:', response.availableSlots?.length || 0);
         return;
       }
-
-      // Fallback error handling
+  
+      // If we get here, no slots were found
       setAvailableSlots([]);
       setDetailedSlots([]);
       setError('No available time slots for this date. Please try a different date.');
       
     } catch (err) {
-      console.error('❌ FIXED: Error fetching slots:', err);
+      console.error('❌ Error fetching slots:', err);
       setAvailableSlots([]);
       setDetailedSlots([]);
       
-      // ENHANCED: Better error message handling
+      // Enhanced error handling
       if (err.response?.data?.message) {
         setError(err.response.data.message);
         
         // Update branchInfo if provided in error response
         if (err.response.data.storeInfo || err.response.data.branchInfo) {
-          console.log('🏪 FIXED: Updating branchInfo from error:', err.response.data.storeInfo || err.response.data.branchInfo);
+          console.log('🏪 Updating branchInfo from error:', err.response.data.storeInfo || err.response.data.branchInfo);
           setBranchInfo(err.response.data.storeInfo || err.response.data.branchInfo);
         }
       } else if (err.message.includes('timeout')) {
@@ -350,7 +409,40 @@ const EnhancedBookingPage = () => {
     } finally {
       if (forceRefresh) setRefreshing(false);
     }
-  }, [bookingData.date, entityId, entityType, retryRequest, withTimeout]);
+  }, [bookingData.date, entityId, entityType, isOfferBooking, retryRequest, withTimeout]);
+  
+  // ALSO ADD: Debug function to check what's happening
+  const debugSlotGeneration = useCallback(async () => {
+    console.log('🐛 DEBUG: Slot generation details');
+    console.log('Entity ID:', entityId);
+    console.log('Entity Type:', entityType);
+    console.log('Is Offer Booking:', isOfferBooking);
+    console.log('Selected Date:', bookingData.date);
+    console.log('Branch Info:', branchInfo);
+    
+    // Check what day of week the selected date is
+    if (bookingData.date) {
+      const selectedDate = new Date(bookingData.date + 'T00:00:00');
+      const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+      console.log('Selected day name:', dayName);
+      console.log('Day index:', selectedDate.getDay());
+    }
+    
+    // Test API call directly
+    try {
+      const testResponse = await bookingService.api.get('/bookings/slots', {
+        params: { 
+          [isOfferBooking ? 'offerId' : 'serviceId']: entityId, 
+          date: bookingData.date, 
+          bookingType: entityType 
+        }
+      });
+      console.log('🧪 Direct API test response:', testResponse.data);
+    } catch (testError) {
+      console.log('🧪 Direct API test failed:', testError);
+    }
+  }, [entityId, entityType, isOfferBooking, bookingData.date, branchInfo]);
+  
 
   const getSlotDetails = useCallback((selectedTime) => {
     return detailedSlots.find(slot => 
@@ -362,14 +454,13 @@ const EnhancedBookingPage = () => {
     fetchAvailableSlots(true);
   }, [fetchAvailableSlots]);
 
-  // ==================== STAFF MANAGEMENT - ENHANCED ====================
+  // ==================== STAFF MANAGEMENT ====================
 
-  // ENHANCED: Service-specific staff fetching - UPDATED for branch support
   const fetchStaffForService = useCallback(async () => {
     if (!entityId) return;
 
     try {
-      console.log('👥 Fetching staff for service/offer:', {
+      console.log('Fetching staff for service/offer:', {
         entityId,
         entityType: isOfferBooking ? 'offer' : 'service',
         branchId: branch?.id
@@ -377,38 +468,30 @@ const EnhancedBookingPage = () => {
       
       let response;
       
-      // UPDATED: Use the new branch-aware staff endpoints
       if (isOfferBooking) {
-        // For offer bookings, use the offer-specific staff endpoint
         response = await bookingService.getStaffForOffer(entityId);
       } else {
-        // For service bookings, use the service-specific staff endpoint
         response = await bookingService.getStaffForService(entityId);
       }
       
-      // Handle the response
       if (response?.staff && Array.isArray(response.staff)) {
         setStaff(response.staff);
-        console.log('✅ Staff loaded:', {
+        console.log('Staff loaded:', {
           count: response.staff.length,
           branchId: response.serviceInfo?.branchId,
           serviceName: response.serviceInfo?.name
         });
       } else {
-        // No staff in response - still loading or error
         setStaff([]);
-        console.log('ℹ️ No staff in response - may still be loading');
+        console.log('No staff in response - may still be loading');
       }
       
     } catch (err) {
-      console.error('❌ Error fetching staff:', err);
-      
-      // CRITICAL FIX: Don't throw errors for staff fetch failures
+      console.error('Error fetching staff:', err);
       setStaff([]);
       
-      // Only log detailed error in development
       if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️ Staff fetch failed but booking can continue:', {
+        console.warn('Staff fetch failed but booking can continue:', {
           entityId,
           entityType: isOfferBooking ? 'offer' : 'service',
           error: err.message,
@@ -436,10 +519,9 @@ const EnhancedBookingPage = () => {
       setError(null);
       
       const bookingPayload = {
-        offerId: entityId,
         userId: user.id,
         startTime: `${bookingData.date}T${convertTo24Hour(bookingData.time)}`,
-        branchId: bookingData.branch.id, // UPDATED: Use branchId
+        branchId: bookingData.branch.id,
         staffId: bookingData.staff?.id,
         notes: bookingData.notes,
         bookingType: entityType,
@@ -450,7 +532,15 @@ const EnhancedBookingPage = () => {
         }
       };
 
-      if (accessFee > 0) {
+      // Add correct ID field based on booking type
+      if (isOfferBooking) {
+        bookingPayload.offerId = entityId;
+      } else {
+        bookingPayload.serviceId = entityId;
+      }
+
+      // Only add payment data for offer bookings (platform access fee)
+      if (isOfferBooking && accessFee > 0) {
         bookingPayload.paymentData = {
           amount: accessFee,
           currency: 'KES',
@@ -468,12 +558,12 @@ const EnhancedBookingPage = () => {
       }
 
     } catch (err) {
-      console.error('❌ Error creating booking:', err);
+      console.error('Error creating booking:', err);
       setError(err.message || 'Failed to create booking');
     } finally {
       setSubmitting(false);
     }
-  }, [bookingData, user, entityId, entityType, accessFee, paymentMethod, phoneNumber, convertTo24Hour, withTimeout]);
+  }, [bookingData, user, entityId, entityType, isOfferBooking, accessFee, paymentMethod, phoneNumber, convertTo24Hour, withTimeout]);
 
   const handleMpesaPayment = useCallback(async () => {
     try {
@@ -497,7 +587,7 @@ const EnhancedBookingPage = () => {
       }
 
     } catch (err) {
-      console.error('❌ M-Pesa payment error:', err);
+      console.error('M-Pesa payment error:', err);
       setError(err.message || 'Payment failed');
     } finally {
       setSubmitting(false);
@@ -511,7 +601,10 @@ const EnhancedBookingPage = () => {
       if (entityId && entityId.trim() !== '' && entityId !== 'undefined') {
         initializeBooking();
       } else {
-        setError('Invalid booking request. Please select a valid offer.');
+        const errorMessage = initialIsOfferBooking 
+          ? 'Invalid booking request. Please select a valid offer.'
+          : 'Invalid booking request. Please select a valid service.';
+        setError(errorMessage);
         setLoading(false);
       }
     }, 100);
@@ -520,12 +613,11 @@ const EnhancedBookingPage = () => {
   }, [entityId, initializeBooking]);
 
   useEffect(() => {
-    if (bookingData.date && entityId && entityType) {
+    if (bookingData.date && entityId) {
       fetchAvailableSlots();
     }
-  }, [bookingData.date, entityId, entityType, fetchAvailableSlots]);
+  }, [bookingData.date, entityId, fetchAvailableSlots]);
 
-  // UPDATED: Fetch staff when branch is available
   useEffect(() => {
     if (branch && entityId) {
       fetchStaffForService();
@@ -538,17 +630,15 @@ const EnhancedBookingPage = () => {
     }
   }, [bookingData.date]);
 
-  // Clear staff when branch changes
   useEffect(() => {
     if (bookingData.branch) {
       setBookingData(prev => ({ ...prev, staff: null }));
     }
   }, [bookingData.branch]);
 
-  // ADDED: Log branchInfo changes for debugging
   useEffect(() => {
     if (branchInfo) {
-      console.log('🏪 FIXED: BranchInfo updated:', {
+      console.log('BranchInfo updated:', {
         name: branchInfo.name,
         workingDays: branchInfo.workingDays,
         openingTime: branchInfo.openingTime,
@@ -655,7 +745,6 @@ const EnhancedBookingPage = () => {
     </div>
   );
 
-  // FIXED: Enhanced SmartDatePicker that handles undefined branchInfo gracefully
   const SmartDatePicker = () => {
     const availableDates = getAvailableDates();
     
@@ -665,33 +754,17 @@ const EnhancedBookingPage = () => {
           Select Date
         </label>
         
-        {/* Standard date input */}
         <input
           type="date"
           value={bookingData.date}
           onChange={(e) => {
-            console.log('📅 FIXED: Date selected:', e.target.value);
-            
-            // Enhanced debugging for date selection
-            const selectedDate = new Date(e.target.value + 'T00:00:00');
-            console.log('📅 FIXED: Date analysis:', {
-              inputValue: e.target.value,
-              parsedDate: selectedDate,
-              parsedDateISO: selectedDate.toISOString(),
-              parsedDateLocal: selectedDate.toString(),
-              dayName: selectedDate.toLocaleDateString('en-US', { weekday: 'long' }),
-              dayIndex: selectedDate.getDay(),
-              branchInfoAvailable: !!branchInfo?.workingDays,
-              workingDays: branchInfo?.workingDays
-            });
-            
+            console.log('Date selected:', e.target.value);
             setBookingData(prev => ({ ...prev, date: e.target.value, time: '' }));
           }}
           min={new Date().toISOString().split('T')[0]}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
         />
         
-        {/* Quick date selection - only show if we have working days */}
         {availableDates.length > 0 && (
           <div>
             <p className="text-sm text-gray-600 mb-2">Quick select (working days only):</p>
@@ -700,7 +773,7 @@ const EnhancedBookingPage = () => {
                 <button
                   key={dateObj.date}
                   onClick={() => {
-                    console.log('📅 FIXED: Quick date selected:', dateObj);
+                    console.log('Quick date selected:', dateObj);
                     setBookingData(prev => ({ ...prev, date: dateObj.date, time: '' }));
                   }}
                   className={`p-2 text-xs rounded border transition-colors ${
@@ -717,7 +790,6 @@ const EnhancedBookingPage = () => {
           </div>
         )}
         
-        {/* Branch info display - show loading state if undefined */}
         {branchInfo ? (
           <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
             <p className="text-sm font-medium text-gray-700">{branchInfo.name}</p>
@@ -739,28 +811,10 @@ const EnhancedBookingPage = () => {
             </p>
           </div>
         )}
-        
-        {/* Enhanced debug info */}
-        {process.env.NODE_ENV === 'development' && bookingData.date && (
-          <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-            <strong>FIXED Debug:</strong><br/>
-            Selected: {bookingData.date}<br/>
-            Day: {new Date(bookingData.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })}<br/>
-            Day Index: {new Date(bookingData.date + 'T00:00:00').getDay()}<br/>
-            BranchInfo: {branchInfo ? 'Available' : 'Loading...'}<br/>
-            {branchInfo?.workingDays && (
-              <>
-                Working Days: {JSON.stringify(branchInfo.workingDays)}<br/>
-                Valid Working Day: {isWorkingDay(bookingData.date, branchInfo.workingDays) ? '✅ Yes' : '❌ No'}
-              </>
-            )}
-          </div>
-        )}
       </div>
     );
   };
 
-  // FIXED: Enhanced Error Display with working days context
   const ErrorDisplay = ({ error, onRetry, showDebug = false }) => (
     <div className="flex items-center justify-center h-64 border-2 border-dashed border-red-300 rounded-lg bg-red-50">
       <div className="text-center max-w-md">
@@ -781,26 +835,8 @@ const EnhancedBookingPage = () => {
           >
             {refreshing ? 'Retrying...' : 'Try Again'}
           </button>
-          
-          {showDebug && process.env.NODE_ENV === 'development' && (
-            <button
-              onClick={async () => {
-                console.log('🐛 Running debug...');
-                try {
-                  const debugResult = await bookingService.debugOfferWorkingDays(entityId);
-                  console.log('🐛 Debug result:', debugResult);
-                } catch (err) {
-                  console.error('🐛 Debug failed:', err);
-                }
-              }}
-              className="ml-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded text-sm transition-colors"
-            >
-              Debug Issue
-            </button>
-          )}
         </div>
         
-        {/* FIXED: Enhanced working days display for error cases */}
         {error.includes('closed') && branchInfo?.workingDays && (
           <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
             <p className="text-blue-800 font-medium">Branch is open on:</p>
@@ -863,12 +899,11 @@ const EnhancedBookingPage = () => {
         <h2 className="text-2xl font-bold text-gray-900">Select Date & Time</h2>
         {isOfferBooking && accessFee > 0 && (
           <div className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-            Access Fee: {formatCurrency(accessFee)}
+            Platform Access Fee: {formatCurrency(accessFee)}
           </div>
         )}
       </div>
 
-      {/* Retry information */}
       {retryAttempts > 0 && !error && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-800">
@@ -1004,7 +1039,6 @@ const EnhancedBookingPage = () => {
     </div>
   );
 
-  // UPDATED: BranchSelection component (replaces LocationStep)
   const BranchSelection = () => (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Service Location & Staff</h2>
@@ -1028,7 +1062,6 @@ const EnhancedBookingPage = () => {
         </div>
       )}
 
-      {/* UPDATED: Branch Display */}
       <div className="mb-8">
         <h3 className="text-lg font-semibold mb-4">Service Branch</h3>
         {!branch ? (
@@ -1081,7 +1114,6 @@ const EnhancedBookingPage = () => {
         )}
       </div>
 
-      {/* UPDATED: Staff Selection */}
       {bookingData.branch && (
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4">Select Staff Member (Optional)</h3>
@@ -1114,11 +1146,6 @@ const EnhancedBookingPage = () => {
                         Assigned to this service
                       </p>
                     )}
-                    {member.branchId && (
-                      <p className="text-xs text-gray-500">
-                        Branch ID: {member.branchId}
-                      </p>
-                    )}
                   </div>
                   {bookingData.staff?.id === member.id && (
                     <Check className="w-5 h-5 text-blue-600" />
@@ -1140,7 +1167,6 @@ const EnhancedBookingPage = () => {
         </div>
       )}
 
-      {/* Notes section */}
       <div className="mb-8">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Additional Notes (Optional)
@@ -1154,7 +1180,6 @@ const EnhancedBookingPage = () => {
         />
       </div>
 
-      {/* Navigation buttons */}
       <div className="flex justify-between">
         <button
           onClick={() => setCurrentStep(1)}
@@ -1175,7 +1200,6 @@ const EnhancedBookingPage = () => {
     </div>
   );
 
-  // UPDATED: Review step to show branch instead of store
   const ReviewStep = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-sm p-6">
@@ -1199,7 +1223,6 @@ const EnhancedBookingPage = () => {
               </div>
             </div>
 
-            {/* UPDATED: Show branch instead of store */}
             <div className="flex items-start space-x-3">
               <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
               <div>
@@ -1282,7 +1305,7 @@ const EnhancedBookingPage = () => {
 
       {accessFee > 0 && isOfferBooking && (
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Payment</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-6">Platform Access Fee</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div
@@ -1315,7 +1338,7 @@ const EnhancedBookingPage = () => {
           <div className="border-t pt-6">
             <div className="space-y-3">
               <div className="flex justify-between font-bold text-lg">
-                <span>Access Fee</span>
+                <span>Platform Access Fee</span>
                 <span>{formatCurrency(accessFee)}</span>
               </div>
             </div>
@@ -1325,9 +1348,9 @@ const EnhancedBookingPage = () => {
                 <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm text-blue-800">
-                    <strong>Important:</strong> This fee secures your booking and grants access to the exclusive offer.
+                    <strong>Platform Access Fee:</strong> This fee secures your booking slot and gives you access to the exclusive offer.
                     You'll pay the discounted service price of <strong>{entityDetails?.offerPrice || entityDetails?.discounted_price}</strong>
-                    when you arrive for your appointment.
+                    directly to the merchant when you arrive for your appointment.
                   </p>
                 </div>
               </div>
@@ -1392,7 +1415,8 @@ const EnhancedBookingPage = () => {
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
         <p className="text-gray-600 mb-6">
-          Your {isOfferBooking ? 'offer' : 'service'} booking has been successfully created{isOfferBooking && accessFee > 0 ? ' and payment processed' : ''}.
+          Your {isOfferBooking ? 'offer' : 'service'} booking has been successfully created
+          {isOfferBooking && accessFee > 0 ? ' and platform access fee processed' : ''}.
         </p>
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
@@ -1409,12 +1433,12 @@ const EnhancedBookingPage = () => {
             {isOfferBooking ? (
               <li className="flex items-center">
                 <Check className="w-4 h-4 mr-2" />
-                Pay the discounted rate at the branch: {entityDetails?.offerPrice || entityDetails?.discounted_price}
+                Pay the discounted rate directly to merchant: {entityDetails?.offerPrice || entityDetails?.discounted_price}
               </li>
             ) : (
               <li className="flex items-center">
                 <Check className="w-4 h-4 mr-2" />
-                Pay the service fee at the branch: KES {entityDetails?.price}
+                Pay the service fee directly to merchant: KES {entityDetails?.price}
               </li>
             )}
             <li className="flex items-center">
@@ -1459,7 +1483,7 @@ const EnhancedBookingPage = () => {
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
             <div className="flex items-center space-x-2">
               <Smartphone className="w-5 h-5 text-green-600" />
-              <span className="font-medium text-green-800">Amount to Pay</span>
+              <span className="font-medium text-green-800">Platform Access Fee</span>
             </div>
             <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(accessFee)}</p>
           </div>
@@ -1520,7 +1544,7 @@ const EnhancedBookingPage = () => {
       case 1:
         return <DateTimeStep />;
       case 2:
-        return <BranchSelection />; // CHANGED: LocationStep → BranchSelection
+        return <BranchSelection />;
       case 3:
         return <ReviewStep />;
       case 4:

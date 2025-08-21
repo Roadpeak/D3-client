@@ -1,4 +1,4 @@
-// services/api.js - FIXED FAVORITES API VERSION
+// services/api.js - USER API
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL

@@ -200,6 +200,27 @@ const StoreViewPage = () => {
     }
   };
 
+  const getAuthenticationStatus = () => {
+    try {
+      const isAuthenticated = authService.isAuthenticated();
+      const token = getTokenFromCookie() || localStorage.getItem('access_token') || localStorage.getItem('authToken');
+      
+      return {
+        isAuthenticated: isAuthenticated && !!token,
+        hasToken: !!token,
+        tokenType: token ? 'found' : 'missing'
+      };
+    } catch (error) {
+      console.error('Error checking authentication status:', error);
+      return {
+        isAuthenticated: false,
+        hasToken: false,
+        tokenType: 'error',
+        error: error.message
+      };
+    }
+  };
+
   const handleOfferClick = (offerId) => {
     navigate(`/offer/${offerId}`);
   };
@@ -333,23 +354,22 @@ const StoreViewPage = () => {
     try {
       console.log('=== CHAT BUTTON CLICKED ===');
 
+      // Validate store data and ID first
       if (!storeData || !id) {
+        console.error('❌ Missing store data or ID:', { storeData: !!storeData, id });
         setError('Store information not available. Please refresh the page.');
         return;
       }
 
-      // Use auth service to check authentication
-      if (!authService.isAuthenticated()) {
-        console.log('❌ Not authenticated, redirecting to login');
-        setError(`Please log in to chat with ${storeData.name}`);
-        navigate('/accounts/sign-in', {
-          state: { from: { pathname: location.pathname } }
-        });
-        return;
-      }
-
+      const authStatus = getAuthenticationStatus();
       const currentUser = getCurrentUser();
-      if (!currentUser.isLoggedIn) {
+
+      console.log('🔐 Auth Status:', authStatus);
+      console.log('👤 Current User:', currentUser);
+
+      if (!authStatus.isAuthenticated || !currentUser.isLoggedIn) {
+        console.log('❌ Authentication failed, redirecting to login');
+        setError(`Please log in to chat with ${storeData.name}`);
         navigate('/accounts/sign-in', {
           state: { from: { pathname: location.pathname } }
         });
@@ -359,90 +379,132 @@ const StoreViewPage = () => {
       setStartingChat(true);
       setError(null);
 
-      // Get auth token using your auth service method
-      const token = getTokenFromCookie() || localStorage.getItem('access_token');
+      try {
+        console.log('🚀 Starting chat process...');
+        console.log('Store ID:', id, 'Store Name:', storeData.name);
+        console.log('User:', currentUser.name, 'ID:', currentUser.id);
 
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
+        // Ensure we have a valid store ID (convert to number if needed)
+        const storeId = parseInt(id);
+        if (isNaN(storeId)) {
+          throw new Error('Invalid store ID');
+        }
 
-      console.log('🚀 Starting chat with proper auth...');
+        const chatToken = chatService.getAuthToken();
+        console.log('💬 Chat service token:', chatToken ? 'Found' : 'Not found');
 
-      // Your existing chat logic here...
-      const storeId = parseInt(id);
-      if (isNaN(storeId)) {
-        throw new Error('Invalid store ID');
-      }
+        // Get customer conversations
+        console.log('📋 Fetching customer conversations...');
+        const conversationsResponse = await chatService.getConversations('customer');
+        console.log('📋 Conversations response:', conversationsResponse);
 
-      const conversationsResponse = await chatService.getConversations('customer');
+        if (conversationsResponse.success) {
+          // Look for existing conversation with this store
+          const existingConversation = conversationsResponse.data.find(
+            conv => conv.store && (conv.store.id === storeId || conv.store.id === id)
+          );
 
-      if (conversationsResponse.success) {
-        const existingConversation = conversationsResponse.data.find(
-          conv => conv.store && (conv.store.id === storeId || conv.store.id === id)
-        );
+          console.log('🔍 Existing conversation found:', !!existingConversation);
 
-        if (existingConversation) {
-          navigate('/chat', {
-            state: {
-              selectedConversation: existingConversation,
-              storeData: storeData,
-              user: { ...currentUser, userType: 'customer', role: 'customer' },
-              userType: 'customer'
-            }
-          });
-        } else {
-          const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
-          const newConversationResponse = await chatService.startConversation(storeId, initialMessage);
-
-          if (newConversationResponse.success) {
-            const newConversation = {
-              id: newConversationResponse.data.conversationId,
-              store: {
-                id: storeId,
-                name: storeData.name,
-                avatar: storeData.logo || storeData.logo_url,
-                category: storeData.category,
-                online: true
-              },
-              lastMessage: initialMessage,
-              lastMessageTime: 'now',
-              unreadCount: 0
-            };
-
+          if (existingConversation) {
+            console.log('✅ Using existing conversation:', existingConversation.id);
             navigate('/chat', {
               state: {
-                selectedConversation: newConversation,
-                newConversationId: newConversationResponse.data.conversationId,
+                selectedConversation: existingConversation,
                 storeData: storeData,
-                user: { ...currentUser, userType: 'customer', role: 'customer' },
+                user: {
+                  ...currentUser,
+                  userType: 'customer',
+                  role: 'customer'
+                },
                 userType: 'customer'
               }
             });
           } else {
-            throw new Error(newConversationResponse.message || 'Failed to start conversation');
+            console.log('🆕 Creating new conversation...');
+
+            const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
+
+            const newConversationResponse = await chatService.startConversation(
+              storeId, // Use the parsed integer ID
+              initialMessage
+            );
+
+            console.log('🆕 New conversation response:', newConversationResponse);
+
+            if (newConversationResponse.success) {
+              console.log('✅ New conversation created:', newConversationResponse.data.conversationId);
+
+              const newConversation = {
+                id: newConversationResponse.data.conversationId,
+                store: {
+                  id: storeId,
+                  name: storeData.name,
+                  avatar: storeData.logo || storeData.logo_url,
+                  category: storeData.category,
+                  online: true
+                },
+                lastMessage: initialMessage,
+                lastMessageTime: 'now',
+                unreadCount: 0
+              };
+
+              navigate('/chat', {
+                state: {
+                  selectedConversation: newConversation,
+                  newConversationId: newConversationResponse.data.conversationId,
+                  storeData: storeData,
+                  user: {
+                    ...currentUser,
+                    userType: 'customer',
+                    role: 'customer'
+                  },
+                  userType: 'customer'
+                }
+              });
+
+              console.log('🎉 Chat started successfully!');
+            } else {
+              throw new Error(newConversationResponse.message || 'Failed to start conversation');
+            }
           }
+        } else {
+          throw new Error(conversationsResponse.message || 'Failed to load conversations');
         }
-      } else {
-        throw new Error(conversationsResponse.message || 'Failed to load conversations');
+
+      } catch (apiError) {
+        console.error('❌ Chat API Error:', apiError);
+
+        if (apiError.message.includes('Authentication') ||
+          apiError.message.includes('401') ||
+          apiError.message.includes('403') ||
+          apiError.message.includes('token')) {
+
+          setError('Your session has expired. Please log in again to chat.');
+
+          // Clear all auth tokens
+          ['access_token', 'authToken', 'token', 'userInfo', 'user', 'userData'].forEach(key => {
+            localStorage.removeItem(key);
+          });
+
+          navigate('/accounts/sign-in', {
+            state: {
+              from: { pathname: location.pathname },
+              message: 'Please log in to chat with stores'
+            }
+          });
+        } else {
+          setError(`Unable to start chat: ${apiError.message}`);
+        }
       }
 
     } catch (error) {
-      console.error('❌ Chat error:', error);
-      if (error.message.includes('Authentication') ||
-        error.message.includes('401') ||
-        error.message.includes('token')) {
-        setError('Your session has expired. Please log in again to chat.');
-        navigate('/accounts/sign-in', {
-          state: { from: { pathname: location.pathname } }
-        });
-      } else {
-        setError(`Unable to start chat: ${error.message}`);
-      }
+      console.error('❌ General Chat error:', error);
+      setError(`Failed to start chat: ${error.message}`);
     } finally {
       setStartingChat(false);
     }
   };
-
   // Enhanced getCookieValue function
   const getCookieValue = (name) => {
     try {
