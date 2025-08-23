@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Modern SVG icons for footer
 const LocationIcon = () => (
@@ -100,11 +101,11 @@ const Footer = () => {
             <div className="space-y-3 text-sm text-gray-600">
               <p className="flex items-start">
                 <LocationIcon />
-                <span className="ml-2">2307 Beverley Rd Brooklyn, NY 11226</span>
+                <span className="ml-2">NAIROBI (K)</span>
               </p>
               <p className="flex items-start">
                 <EmailIcon />
-                <span className="ml-2">support@daily.com</span>
+                <span className="ml-2">support@discoun3.com</span>
               </p>
               <p className="flex items-start">
                 <PhoneIcon />
@@ -117,34 +118,41 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* ListZilla */}
+          {/* D3 */}
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-4">ListZilla</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-4">D3 (Discoun3)</h3>
             <div className="space-y-3 text-sm text-gray-600">
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/about-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M12 16V12M12 8H12.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="ml-2">About Us</span>
+              </Link>
+              <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <ContactIcon />
                 <span className="ml-2">Contact us</span>
-              </p>
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              </Link>
+              <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <FeedbackIcon />
                 <span className="ml-2">Feedback</span>
-              </p>
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              </Link>
+              <Link to="/faq" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <FAQIcon />
                 <span className="ml-2">FAQ</span>
-              </p>
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              </Link>
+              <Link to="/careers" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <CareerIcon />
                 <span className="ml-2">Careers</span>
-              </p>
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              </Link>
+              <Link to="/terms-conditions" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <TermsIcon />
                 <span className="ml-2">Terms & Conditions</span>
-              </p>
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              </Link>
+              <Link to="/privacy-policy" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <PrivacyIcon />
                 <span className="ml-2">Privacy Policy</span>
-              </p>
+              </Link>
             </div>
           </div>
 
@@ -152,30 +160,30 @@ const Footer = () => {
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-4">Business</h3>
             <div className="space-y-3 text-sm text-gray-600">
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <AddBusinessIcon />
                 <span className="ml-2">Add your business</span>
-              </p>
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              </Link>
+              <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <AdvertiseIcon />
                 <span className="ml-2">Advertise with us</span>
-              </p>
+              </Link>
             </div>
 
             <h4 className="text-sm font-medium text-gray-900 mt-6 mb-4">Quick links</h4>
             <div className="space-y-3 text-sm text-gray-600">
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/stores" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <CompanyIcon />
                 <span className="ml-2">Browse Company</span>
-              </p>
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              </Link>
+              <Link to="/stores" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <DirectoryIcon />
                 <span className="ml-2">Browse Directory</span>
-              </p>
-              <p className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              </Link>
+              <Link to="/profile" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <LoginIcon />
                 <span className="ml-2">Login to your account</span>
-              </p>
+              </Link>
             </div>
           </div>
 
@@ -228,7 +236,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="text-center pt-8 mt-8 border-t border-gray-100">
           <p className="text-sm text-gray-500">
-            Copyright © 2025, D3. All rights reserved.
+            Copyright © 2025, D3 (Discoun3). All rights reserved.
           </p>
         </div>
       </div>

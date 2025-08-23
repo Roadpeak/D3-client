@@ -196,17 +196,14 @@ export default function Hero() {
 
   return (
     <section className="container mx-auto px-4 py-8">
-      {/* Header Section */}
-
-
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Hero Banner with Carousel */}
-        <div className="lg:col-span-2 relative bg-gradient-to-br from-purple-900 via-pink-900 to-red-900 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="lg:col-span-2 relative bg-white rounded-2xl overflow-hidden shadow-2xl">
           {heroOffers.length > 0 && (
             <>
               {/* Carousel Container */}
               <div
-                className="flex transition-transform duration-700 ease-in-out h-[500px]"
+                className="flex transition-transform duration-700 ease-in-out h-[520px]"
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
               >
                 {heroOffers.map((offer, index) => (
@@ -233,30 +230,30 @@ export default function Hero() {
                         )}
                         
                         {/* Title */}
-                        <h2 className="text-4xl lg:text-6xl font-black text-white mb-4 leading-tight">
+                        <h2 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
                           {offer.title}
                         </h2>
                         
                         {/* Description */}
-                        <p className="text-xl text-gray-200 mb-6 leading-relaxed">
+                        <p className="text-lg text-gray-200 mb-6 leading-relaxed">
                           {offer.description}
                         </p>
                         
                         {/* Discount Badge */}
                         {offer.discountPercentage && (
-                          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-3 rounded-full text-2xl font-black mb-6 shadow-lg">
-                            <FireIcon className="w-6 h-6" />
+                          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-3 rounded-full text-xl font-black mb-6 shadow-lg">
+                            <FireIcon className="w-5 h-5" />
                             {offer.discountPercentage}% OFF
                           </div>
                         )}
                         
                         {/* Price Section */}
                         <div className="flex items-center gap-4 mb-6">
-                          <span className="text-3xl font-bold text-white">
+                          <span className="text-2xl font-bold text-white">
                             ${offer.discountedPrice?.toFixed(2)}
                           </span>
                           {offer.originalPrice && (
-                            <span className="text-xl text-gray-400 line-through">
+                            <span className="text-lg text-gray-400 line-through">
                               ${offer.originalPrice.toFixed(2)}
                             </span>
                           )}
@@ -264,16 +261,16 @@ export default function Hero() {
                         
                         {/* Time Left */}
                         {offer.timeLeft && (
-                          <div className="flex items-center gap-2 text-yellow-400 mb-8">
-                            <TimerIcon className="w-5 h-5" />
-                            <span className="text-lg font-semibold">{offer.timeLeft}</span>
+                          <div className="flex items-center gap-2 text-yellow-400 mb-6">
+                            <TimerIcon className="w-4 h-4" />
+                            <span className="text-md font-semibold">{offer.timeLeft}</span>
                           </div>
                         )}
                         
                         {/* CTA Button */}
                         <button
                           onClick={() => handleOfferClick(offer.id)}
-                          className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-8 py-4 rounded-xl text-lg font-bold hover:shadow-2xl transform hover:scale-105 transition-all duration-300 hover:from-pink-600 hover:to-red-600"
+                          className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-6 py-3 rounded-xl text-md font-bold hover:shadow-2xl transform hover:scale-105 transition-all duration-300 hover:from-pink-600 hover:to-red-600"
                         >
                           Grab This Deal Now! 
                         </button>
@@ -316,7 +313,7 @@ export default function Hero() {
 
               {/* Dots Indicator */}
               {heroOffers.length > 1 && (
-                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3">
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3">
                   {heroOffers.map((_, index) => (
                     <button
                       key={index}
@@ -335,26 +332,21 @@ export default function Hero() {
         </div>
 
         {/* Side Deals */}
-        <div className="space-y-6">
-          {/* <div className="text-center lg:text-left">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">⚡ Quick Picks</h3>
-            <p className="text-gray-600">Don't miss these limited-time offers</p>
-          </div> */}
-          
-          {sideOffers.map((offer) => (
-            <div key={offer.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100">
-              <div className="relative">
+        <div className="flex flex-col gap-6 h-[520px]">
+          {sideOffers.slice(0, 2).map((offer) => (
+            <div key={offer.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100 flex-1">
+              <div className="relative h-36">
                 <img
                   src={offer.image}
                   alt={offer.title}
-                  className="w-full h-36 object-cover"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.src = '/images/default.jpg';
                   }}
                 />
                 
                 {/* Badges */}
-                <div className="absolute top-3 left-3 flex gap-2">
+                <div className="absolute top-2 left-2 flex gap-2">
                   {offer.isHot && (
                     <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
                       <FireIcon className="w-3 h-3" />
@@ -369,22 +361,17 @@ export default function Hero() {
                 </div>
                 
                 {/* Discount Badge */}
-                <div className="absolute top-3 right-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-sm font-bold">
+                <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-1 rounded-full text-xs font-bold">
                   {offer.discountPercentage}% OFF
                 </div>
               </div>
               
-              <div className="p-5">
+              <div className="p-6 flex-1 flex flex-col">
                 <h4 className="font-bold text-lg mb-2 text-gray-800">{offer.title}</h4>
-                
-                {/* Store */}
-                {offer.store && (
-                  <p className="text-sm text-gray-500 mb-3">at {offer.store}</p>
-                )}
                 
                 {/* Price */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl font-bold text-black-600">
+                  <span className="text-xl font-bold text-black">
                     ${offer.discountedPrice?.toFixed(2)}
                   </span>
                   {offer.originalPrice && (
@@ -394,8 +381,13 @@ export default function Hero() {
                   )}
                 </div>
                 
+                {/* Store */}
+                {offer.store && (
+                  <p className="text-sm text-gray-500 mb-3">at {offer.store}</p>
+                )}
+                
                 {/* Time Left */}
-                <div className="flex items-center gap-2 text-orange-600 mb-4">
+                <div className="flex items-center gap-2 text-orange-600 mb-5">
                   <TimerIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">{offer.timeLeft}</span>
                 </div>
@@ -403,7 +395,7 @@ export default function Hero() {
                 {/* CTA Button */}
                 <button
                   onClick={() => handleOfferClick(offer.id)}
-                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-bold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl text-sm font-bold hover:shadow-lg transform hover:scale-105 transition-all duration-200 mt-auto"
                 >
                   Get Deal 
                 </button>
@@ -412,9 +404,9 @@ export default function Hero() {
           ))}
 
           {sideOffers.length === 0 && !loading && (
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8 text-center border border-gray-200">
-              <div className="text-gray-400 text-4xl mb-4">🔍</div>
-              <p className="text-gray-600 font-medium">No side offers available</p>
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8 text-center border border-gray-200 flex-1 flex flex-col justify-center">
+              <div className="text-gray-400 text-3xl mb-3">🔍</div>
+              <p className="text-gray-600 font-medium text-md">No side offers available</p>
               <p className="text-gray-500 text-sm mt-2">Check back soon for more deals!</p>
             </div>
           )}
