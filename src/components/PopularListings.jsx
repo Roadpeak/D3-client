@@ -29,6 +29,12 @@ const PopularListings = () => {
   
   const navigate = useNavigate();
 
+  // ADDED: Function to check if offer is expired
+  const isOfferExpired = useCallback((expirationDate) => {
+    if (!expirationDate) return false;
+    return new Date(expirationDate) < new Date();
+  }, []);
+
   // Fetch deals with highest discounts from backend
   useEffect(() => {
     const fetchTopDeals = async () => {
@@ -36,9 +42,9 @@ const PopularListings = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch offers sorted by discount (highest first) with limit of 8
+        // Fetch offers sorted by discount (highest first) with limit of 12 to account for potential expired offers
         const response = await offerAPI.getOffers({
-          limit: 8,
+          limit: 12, // Fetch more to account for expired ones
           sortBy: 'discount',
           sortOrder: 'desc',
           status: 'active' // Only get active offers
@@ -76,11 +82,20 @@ const PopularListings = () => {
               storeId: offer.store?.id || offer.service?.store?.id,
               serviceId: offer.service?.id,
               offer_type: offer.offer_type,
-              status: offer.status
+              status: offer.status,
+              expiration_date: offer.expiration_date // ADDED: Include expiration date
             };
           });
           
-          setDeals(transformedDeals);
+          // ADDED: Filter out expired offers for customer-facing page
+          const activeDeals = transformedDeals.filter(deal => !isOfferExpired(deal.expiration_date));
+          
+          // Take only 8 active deals for display
+          const displayDeals = activeDeals.slice(0, 8);
+          
+          console.log(`📋 Total deals received: ${transformedDeals.length}, Active deals: ${activeDeals.length}, Displaying: ${displayDeals.length}`);
+          
+          setDeals(displayDeals);
         } else {
           setError(response.message || 'Failed to fetch deals');
         }
@@ -93,7 +108,7 @@ const PopularListings = () => {
     };
 
     fetchTopDeals();
-  }, []);
+  }, [isOfferExpired]);
 
   // Calculate time left for offer expiration
   const calculateTimeLeft = (expirationDate) => {
@@ -155,14 +170,12 @@ const PopularListings = () => {
   };
 
   const renderDealCard = (deal) => {
-    const isExpired = deal.timeLeft === 'Expired';
+    // REMOVED: isExpired check since we already filter expired offers
     
     return (
       <div 
         key={deal.id} 
-        className={`bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1 ${
-          isExpired ? 'opacity-75' : ''
-        }`}
+        className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
         onClick={() => handleDealClick(deal.id)}
       >
         <div className="relative">
@@ -191,11 +204,6 @@ const PopularListings = () => {
           <div className="absolute bottom-3 right-3 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-bold text-red-600">
             {deal.discount} OFF
           </div>
-          {isExpired && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <span className="text-white font-bold">EXPIRED</span>
-            </div>
-          )}
         </div>
         <div className="p-4">
           <h3 className="font-semibold mb-2 text-sm line-clamp-2 hover:text-red-600 transition-colors">
@@ -208,7 +216,7 @@ const PopularListings = () => {
               <span className="text-sm font-medium">{deal.rating}</span>
               <span className="text-xs text-gray-500">({deal.reviews})</span>
             </div>
-            {deal.timeLeft && !isExpired && (
+            {deal.timeLeft && deal.timeLeft !== 'Expired' && (
               <div className="flex items-center space-x-1 text-orange-600 text-xs">
                 <Clock className="w-3 h-3" />
                 <span>{deal.timeLeft}</span>
@@ -223,20 +231,13 @@ const PopularListings = () => {
               )}
             </div>
             <button 
-              className={`px-3 py-1 rounded text-sm font-semibold transition-colors ${
-                isExpired 
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-red-500 text-white hover:bg-red-600'
-              }`}
+              className="px-3 py-1 rounded text-sm font-semibold transition-colors bg-red-500 text-white hover:bg-red-600"
               onClick={(e) => {
                 e.stopPropagation();
-                if (!isExpired) {
-                  handleDealClick(deal.id);
-                }
+                handleDealClick(deal.id);
               }}
-              disabled={isExpired}
             >
-              {isExpired ? 'Expired' : 'Get Deal'}
+              Get Deal
             </button>
           </div>
         </div>
@@ -289,7 +290,7 @@ const PopularListings = () => {
       <section className="container mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
         <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">No deals available at the moment.</p>
+          <p className="text-gray-500 mb-4">No active deals available at the moment.</p>
           <button 
             onClick={() => window.location.reload()} 
             className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600"
@@ -309,7 +310,7 @@ const PopularListings = () => {
           <p className="text-sm text-gray-600 mt-1">Save big with our best discount offers</p>
         </div>
         <div className="text-right">
-          <span className="text-sm text-gray-500">{deals.length} deals available</span>
+          <span className="text-sm text-gray-500">{deals.length} active deals available</span>
           <p className="text-xs text-green-600 font-medium">Sorted by highest discount</p>
         </div>
       </div>
@@ -332,7 +333,7 @@ const PopularListings = () => {
           onClick={handleViewAllDeals}
           className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
         >
-          View All Discount Deals
+          View All Active Deals
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
           </svg>

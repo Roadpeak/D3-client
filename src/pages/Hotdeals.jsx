@@ -39,17 +39,24 @@ export default function Hotdeals() {
     initialized: favoritesInitialized
   } = useFavorites();
 
-  // Calculate category counts from current offers
+  // ADDED: Function to check if offer is expired
+  const isOfferExpired = useCallback((expirationDate) => {
+    if (!expirationDate) return false;
+    return new Date(expirationDate) < new Date();
+  }, []);
+
+  // Calculate category counts from current offers (excluding expired)
   const calculateCategoryCounts = useCallback((offers) => {
     const counts = {};
     
-    offers.forEach(offer => {
+    // Only count non-expired offers
+    offers.filter(offer => !isOfferExpired(offer.expiration_date)).forEach(offer => {
       const category = offer.category || offer.service?.category || 'General';
       counts[category] = (counts[category] || 0) + 1;
     });
     
     return counts;
-  }, []);
+  }, [isOfferExpired]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -83,16 +90,22 @@ export default function Hotdeals() {
         discountedPrice: offer.service?.price ? (offer.service.price * (1 - offer.discount / 100)).toFixed(2) : 0,
         status: offer.status,
         service: offer.service,
-        store_info: offer.store
+        store_info: offer.store,
+        expiration_date: offer.expiration_date // ADDED: Include expiration date
       })) || [];
 
-      setOffers(transformedOffers);
+      // ADDED: Filter out expired offers for customer-facing page
+      const activeOffers = transformedOffers.filter(offer => !isOfferExpired(offer.expiration_date));
+      
+      console.log(`📋 Total offers received: ${transformedOffers.length}, Active offers: ${activeOffers.length}`);
+
+      setOffers(activeOffers);
       setPagination(response.pagination || {});
       setRetryCount(0);
 
-      // Update categories based on fetched offers
-      const counts = calculateCategoryCounts(transformedOffers);
-      const offerCategories = [...new Set(transformedOffers.map(offer => 
+      // Update categories based on active (non-expired) offers only
+      const counts = calculateCategoryCounts(activeOffers);
+      const offerCategories = [...new Set(activeOffers.map(offer => 
         offer.category || offer.service?.category || 'General'
       ))];
       
@@ -122,7 +135,7 @@ export default function Hotdeals() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, limit, sortBy, selectedCategory, retryCount, calculateCategoryCounts]);
+  }, [currentPage, limit, sortBy, selectedCategory, retryCount, calculateCategoryCounts, isOfferExpired]);
 
   // Enhanced favorite handling
   const handleFavoriteClick = useCallback(async (e, offer) => {
@@ -569,11 +582,11 @@ export default function Hotdeals() {
                   <div className="text-gray-400 mb-4">
                     <Grid size={48} className="mx-auto" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No offers found</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No active offers found</h3>
                   <p className="text-gray-500 mb-4">
                     {selectedCategory 
-                      ? `No offers found in "${selectedCategory}" category.`
-                      : 'No offers are currently available.'
+                      ? `No active offers found in "${selectedCategory}" category.`
+                      : 'No active offers are currently available.'
                     }
                   </p>
                   {(selectedCategory || sortBy !== 'latest') && (

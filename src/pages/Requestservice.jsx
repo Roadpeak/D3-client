@@ -100,7 +100,7 @@ const ExternalLink = ({ className }) => (
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
   </div>
 );
 
@@ -144,8 +144,11 @@ export default function UserServiceRequestPage() {
     timeline: 'all',
     location: '',
     page: 1,
-    limit: 6 // Changed to 6 items per page
+    limit: 6
   });
+
+  // Filter visibility state for mobile
+  const [showFilters, setShowFilters] = useState(false);
 
   // Pagination state
   const [pagination, setPagination] = useState({});
@@ -200,20 +203,20 @@ export default function UserServiceRequestPage() {
     checkAuthState();
   }, [checkAuthState]);
 
-  // ✅ Load initial data (NO DUMMY DATA FALLBACKS)
+  // Load initial data (NO DUMMY DATA FALLBACKS)
   const loadInitialData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Loading initial data...');
+      console.log('Loading initial data...');
 
       const [categoriesRes, statsRes] = await Promise.all([
         userServiceRequestService.getServiceCategories(),
         userServiceRequestService.getPlatformStatistics()
       ]);
 
-      console.log('✅ Initial data loaded:', {
+      console.log('Initial data loaded:', {
         categories: categoriesRes.data?.length || 0,
         stats: !!statsRes.data
       });
@@ -222,24 +225,24 @@ export default function UserServiceRequestPage() {
       setStatistics(statsRes.data || {});
       await loadServiceRequests();
     } catch (err) {
-      console.error('❌ Error loading initial data:', err);
+      console.error('Error loading initial data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Load service requests (NO DUMMY DATA FALLBACKS)
+  // Load service requests (NO DUMMY DATA FALLBACKS)
   const loadServiceRequests = async () => {
     try {
       setLoadingRequests(true);
       setError(null);
       
-      console.log('🔄 Loading service requests with filters:', filters);
+      console.log('Loading service requests with filters:', filters);
       
       const response = await userServiceRequestService.getPublicServiceRequests(filters);
       
-      console.log('✅ Service requests loaded:', {
+      console.log('Service requests loaded:', {
         count: response.data?.requests?.length || 0,
         pagination: response.data?.pagination
       });
@@ -247,7 +250,7 @@ export default function UserServiceRequestPage() {
       setServiceRequests(response.data?.requests || []);
       setPagination(response.data?.pagination || {});
     } catch (err) {
-      console.error('❌ Error loading service requests:', err);
+      console.error('Error loading service requests:', err);
       setError(err.message);
       setServiceRequests([]);
     } finally {
@@ -255,7 +258,7 @@ export default function UserServiceRequestPage() {
     }
   };
 
-  // ✅ Load user offers 
+  // Load user offers 
   const loadUserOffers = async () => {
     if (!isAuthenticated) return;
 
@@ -263,11 +266,11 @@ export default function UserServiceRequestPage() {
       setLoadingOffers(true);
       setError(null);
 
-      console.log('🔄 Loading user offers...');
+      console.log('Loading user offers...');
       
       const response = await userServiceRequestService.getUserOffers(filters);
       
-      console.log('✅ User offers loaded:', {
+      console.log('User offers loaded:', {
         count: response.data?.offers?.length || 0,
         pagination: response.data?.pagination
       });
@@ -275,7 +278,7 @@ export default function UserServiceRequestPage() {
       setUserOffers(response.data?.offers || []);
       setPagination(response.data?.pagination || {});
     } catch (err) {
-      console.error('❌ Error loading user offers:', err);
+      console.error('Error loading user offers:', err);
       setError(err.message);
       setUserOffers([]);
     } finally {
@@ -283,7 +286,7 @@ export default function UserServiceRequestPage() {
     }
   };
 
-  // ✅ Load user past requests 
+  // Load user past requests 
   const loadUserPastRequests = async () => {
     if (!isAuthenticated) return;
 
@@ -291,11 +294,11 @@ export default function UserServiceRequestPage() {
       setLoadingRequests(true);
       setError(null);
 
-      console.log('🔄 Loading user past requests...');
+      console.log('Loading user past requests...');
       
       const response = await userServiceRequestService.getUserPastRequests(filters);
       
-      console.log('✅ User past requests loaded:', {
+      console.log('User past requests loaded:', {
         count: response.data?.requests?.length || 0,
         pagination: response.data?.pagination
       });
@@ -303,7 +306,7 @@ export default function UserServiceRequestPage() {
       setUserPastRequests(response.data?.requests || []);
       setPagination(response.data?.pagination || {});
     } catch (err) {
-      console.error('❌ Error loading user past requests:', err);
+      console.error('Error loading user past requests:', err);
       setError(err.message);
       setUserPastRequests([]);
     } finally {
@@ -420,7 +423,7 @@ export default function UserServiceRequestPage() {
     }
   };
 
-  // ✅ Fixed accept offer with proper request ID
+  // Fixed accept offer with proper request ID
   const handleAcceptOffer = async (offerId, requestId) => {
     setConfirmMessage('Are you sure you want to accept this offer? This action cannot be undone and will reject all other offers.');
     setConfirmAction(() => async () => {
@@ -439,7 +442,7 @@ export default function UserServiceRequestPage() {
     setShowConfirmModal(true);
   };
 
-  // ✅ Fixed reject offer with proper request ID
+  // Fixed reject offer with proper request ID
   const handleRejectOffer = async (offerId, requestId, reason = '') => {
     try {
       setSubmitting(true);
@@ -453,7 +456,7 @@ export default function UserServiceRequestPage() {
     }
   };
 
-  // ✅ FIXED: Handle view store functionality with navigation
+  // FIXED: Handle view store functionality with navigation
   const handleViewStore = (storeDetails) => {
     if (!storeDetails || !storeDetails.id) {
       alert('Store information not available');
@@ -483,8 +486,8 @@ export default function UserServiceRequestPage() {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      'pending': { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle },
-      'accepted': { color: 'bg-green-100 text-green-800', icon: CheckCircle },
+      'pending': { color: 'bg-amber-100 text-amber-800', icon: AlertCircle },
+      'accepted': { color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle },
       'rejected': { color: 'bg-red-100 text-red-800', icon: XCircle }
     };
 
@@ -505,7 +508,7 @@ export default function UserServiceRequestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-50">
         <Navbar />
         <LoadingSpinner />
         <Footer />
@@ -515,13 +518,13 @@ export default function UserServiceRequestPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-50">
         <Navbar />
         <div className="container mx-auto px-4 py-8">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
             <h3 className="font-bold">Error</h3>
             <p>{error}</p>
-            <button onClick={loadInitialData} className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+            <button onClick={loadInitialData} className="mt-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
               Retry
             </button>
           </div>
@@ -532,105 +535,169 @@ export default function UserServiceRequestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-red-500 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Need a Service?</h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Post your service request and get competitive quotes from verified professional service providers in your area
-          </p>
-          <button
-            onClick={handleRequestFormShow}
-            className="bg-white text-red-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition-colors flex items-center space-x-2 mx-auto"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Post Service Request</span>
-          </button>
-
-          {/* Auth status for development */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 text-sm opacity-75">
-              User Auth: {isAuthenticated ? `Logged in (${currentUser?.firstName || 'Unknown'})` : 'Not logged in'}
+      {/* Modern Compact Hero Section */}
+      <section className="bg-white border-b border-slate-200">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
+                Find Professional Services
+              </h1>
+              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                Post your service request and get competitive quotes from verified providers in your area
+              </p>
             </div>
-          )}
+
+            {/* Modern Action Bar */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <button
+                onClick={handleRequestFormShow}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Post Service Request</span>
+              </button>
+              
+              <div className="text-sm text-slate-500 flex items-center space-x-4">
+                <span className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                  <span>{statistics.totalProviders?.toLocaleString() || '0'} verified providers</span>
+                </span>
+                <span className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span>{statistics.activeRequests?.toLocaleString() || '0'} active requests</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Auth status for development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 text-center text-xs text-slate-400">
+                User Auth: {isAuthenticated ? `Logged in (${currentUser?.firstName || 'Unknown'})` : 'Not logged in'}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Filter Bar */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg p-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium">Filters:</span>
+      {/* Mobile-Friendly Filter Bar */}
+      <section className="container mx-auto px-4 py-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50">
+          {/* Filter Header - Always Visible */}
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-slate-100 rounded-lg">
+                <Filter className="w-4 h-4 text-slate-600" />
+              </div>
+              <span className="font-medium text-slate-700">Filters</span>
             </div>
-            <select
-              value={filters.category}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="border border-gray-200 rounded px-3 py-1 text-sm"
-            >
-              <option value="all">All Categories</option>
-              {serviceCategories.map((cat, index) => (
-                <option key={index} value={cat.name}>{cat.name}</option>
-              ))}
-            </select>
-            <select
-              value={filters.budget}
-              onChange={(e) => handleFilterChange('budget', e.target.value)}
-              className="border border-gray-200 rounded px-3 py-1 text-sm"
-            >
-              <option value="all">All Budgets</option>
-              <option value="0-100">$0 - $100</option>
-              <option value="100-300">$100 - $300</option>
-              <option value="300-500">$300 - $500</option>
-              <option value="500+">$500+</option>
-            </select>
-            <select
-              value={filters.timeline}
-              onChange={(e) => handleFilterChange('timeline', e.target.value)}
-              className="border border-gray-200 rounded px-3 py-1 text-sm"
-            >
-              <option value="all">All Timelines</option>
-              <option value="urgent">ASAP/Urgent</option>
-              <option value="thisweek">This Week</option>
-              <option value="nextweek">Next Week</option>
-              <option value="thismonth">This Month</option>
-              <option value="flexible">Flexible</option>
-            </select>
+            
+            <div className="flex items-center space-x-4">
+              <div className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+                {pagination.totalCount || 0} requests
+              </div>
+              
+              {/* Mobile Filter Toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="lg:hidden flex items-center space-x-2 px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors"
+              >
+                <span className="text-sm font-medium">
+                  {showFilters ? 'Hide' : 'Show'} Filters
+                </span>
+                <div className={`transform transition-transform ${showFilters ? 'rotate-180' : ''}`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </button>
+            </div>
           </div>
-          <div className="text-sm text-gray-600">
-            <span className="font-semibold">{pagination.totalCount || 0}</span> active requests
+
+          {/* Filter Options - Collapsible on Mobile, Always Visible on Desktop */}
+          <div className={`${showFilters ? 'block' : 'hidden'} lg:block border-t border-slate-200 p-4`}>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <select
+                value={filters.category}
+                onChange={(e) => handleFilterChange('category', e.target.value)}
+                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-colors"
+              >
+                <option value="all">All Categories</option>
+                {serviceCategories.map((cat, index) => (
+                  <option key={index} value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+
+              <select
+                value={filters.budget}
+                onChange={(e) => handleFilterChange('budget', e.target.value)}
+                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-colors"
+              >
+                <option value="all">All Budgets</option>
+                <option value="0-100">$0 - $100</option>
+                <option value="100-300">$100 - $300</option>
+                <option value="300-500">$300 - $500</option>
+                <option value="500+">$500+</option>
+              </select>
+
+              <select
+                value={filters.timeline}
+                onChange={(e) => handleFilterChange('timeline', e.target.value)}
+                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-colors"
+              >
+                <option value="all">All Timelines</option>
+                <option value="urgent">ASAP/Urgent</option>
+                <option value="thisweek">This Week</option>
+                <option value="nextweek">Next Week</option>
+                <option value="thismonth">This Month</option>
+                <option value="flexible">Flexible</option>
+              </select>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Service Requests</h2>
-          <div className="flex space-x-2">
+      <section className="container mx-auto px-4 py-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+          <h2 className="text-2xl font-bold text-slate-900">Service Requests</h2>
+          
+          {/* Modern Tab Navigation */}
+          <div className="flex bg-slate-100 rounded-xl p-1">
             <button
               onClick={() => handleTabChange('all')}
-              className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'all' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                activeTab === 'all' 
+                  ? 'bg-white text-indigo-600 shadow-sm' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
             >
-              All Requests ({serviceRequests.length})
+              All ({serviceRequests.length})
             </button>
             {isAuthenticated && (
               <>
                 <button
                   onClick={() => handleTabChange('offers')}
-                  className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'offers' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                    activeTab === 'offers' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
                   My Offers ({userOffers.length})
                 </button>
                 <button
                   onClick={() => handleTabChange('past')}
-                  className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'past' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
+                    activeTab === 'past' 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  Past Requests ({userPastRequests.length})
+                  Past ({userPastRequests.length})
                 </button>
               </>
             )}
@@ -639,94 +706,110 @@ export default function UserServiceRequestPage() {
 
         {/* All Requests Tab */}
         {activeTab === 'all' && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {loadingRequests ? (
               <LoadingSpinner />
             ) : serviceRequests.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-xl mb-4">No service requests found</div>
-                <p className="text-gray-600 mb-6">Be the first to post a service request!</p>
-                <button onClick={handleRequestFormShow} className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 font-medium">
+              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-8 h-8 text-slate-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">No service requests found</h3>
+                <p className="text-slate-500 mb-6">Be the first to post a service request!</p>
+                <button 
+                  onClick={handleRequestFormShow} 
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
+                >
                   Post First Request
                 </button>
               </div>
             ) : (
               serviceRequests.map((request) => (
-                <div key={request.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+                <div key={request.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200 overflow-hidden">
                   <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-xl font-semibold">{request.title}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${request.priority === 'urgent' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                        <div className="flex items-center flex-wrap gap-3 mb-3">
+                          <h3 className="text-xl font-semibold text-slate-900">{request.title}</h3>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              request.priority === 'urgent' 
+                                ? 'bg-red-100 text-red-800' 
+                                : 'bg-emerald-100 text-emerald-800'
                             }`}>
-                            {request.priority}
-                          </span>
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {request.status.toUpperCase()}
-                          </span>
-                          {request.verified && (
-                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                              Verified User
+                              {request.priority}
                             </span>
-                          )}
-                        </div>
-                        <p className="text-gray-600 mb-3">{request.description}</p>
-
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{request.location}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <DollarSign className="w-4 h-4" />
-                            <span>{request.budget}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{getTimelineLabel(request.timeline)}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <User className="w-4 h-4" />
-                            <span>by {request.postedBy}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-500">{request.postedTime}</span>
-                            <div className="flex items-center space-x-2">
-                              <MessageSquare className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm font-medium text-red-600">
-                                {request.offers} offer{request.offers !== 1 ? 's' : ''} received
+                            
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {request.status.toUpperCase()}
+                            </span>
+                            
+                            {request.verified && (
+                              <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Verified
                               </span>
-                            </div>
-                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                            )}
+                            
+                            <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs">
                               {request.category}
                             </span>
                           </div>
+                        </div>
+                        
+                        <p className="text-slate-600 mb-4 line-clamp-2">{request.description}</p>
 
-                          <div className="flex space-x-2">
-                            <button 
-                              onClick={() => handleViewDetails(request)}
-                              className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 font-medium"
-                            >
-                              View Details
-                            </button>
-                            {/* Removed Make Offer button */}
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm mb-4">
+                          <div className="flex items-center space-x-2 text-slate-500">
+                            <MapPin className="w-4 h-4" />
+                            <span>{request.location}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-slate-500">
+                            <DollarSign className="w-4 h-4" />
+                            <span>{request.budget}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-slate-500">
+                            <Clock className="w-4 h-4" />
+                            <span>{getTimelineLabel(request.timeline)}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-slate-500">
+                            <User className="w-4 h-4" />
+                            <span>by {request.postedBy}</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {request.requirements && request.requirements.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-100">
-                        <span className="text-sm text-gray-600 mr-2">Requirements:</span>
-                        {request.requirements.map((req, index) => (
-                          <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                            {req}
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div className="flex items-center space-x-4">
+                        <span className="text-sm text-slate-500">{request.postedTime}</span>
+                        <div className="flex items-center space-x-2">
+                          <MessageSquare className="w-4 h-4 text-indigo-500" />
+                          <span className="text-sm font-medium text-indigo-600">
+                            {request.offers} offer{request.offers !== 1 ? 's' : ''}
                           </span>
-                        ))}
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => handleViewDetails(request)}
+                        className="px-4 py-2 border border-indigo-500 text-indigo-600 rounded-lg hover:bg-indigo-50 font-medium transition-colors"
+                      >
+                        View Details
+                      </button>
+                    </div>
+
+                    {request.requirements && request.requirements.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-sm text-slate-600 mr-2">Requirements:</span>
+                          {request.requirements.map((req, index) => (
+                            <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+                              {req}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -734,13 +817,13 @@ export default function UserServiceRequestPage() {
               ))
             )}
 
-            {/* Pagination */}
+            {/* Modern Pagination */}
             {pagination.totalPages > 1 && (
               <div className="flex justify-center items-center space-x-4 mt-8">
                 <button
                   onClick={() => handleFilterChange('page', Math.max(1, filters.page - 1))}
                   disabled={!pagination.hasPrev}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Previous
                 </button>
@@ -753,9 +836,9 @@ export default function UserServiceRequestPage() {
                         key={pageNum}
                         onClick={() => handleFilterChange('page', pageNum)}
                         className={`px-3 py-2 rounded-lg ${pageNum === pagination.currentPage
-                          ? 'bg-red-500 text-white'
-                          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                          }`}
+                          ? 'bg-indigo-600 text-white'
+                          : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+                          } transition-colors`}
                       >
                         {pageNum}
                       </button>
@@ -766,7 +849,7 @@ export default function UserServiceRequestPage() {
                 <button
                   onClick={() => handleFilterChange('page', Math.min(pagination.totalPages, filters.page + 1))}
                   disabled={!pagination.hasNext}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
                 </button>
@@ -775,82 +858,95 @@ export default function UserServiceRequestPage() {
           </div>
         )}
 
-        {/* ✅ FIXED: My Offers Tab with View Store functionality */}
+        {/* My Offers Tab with View Store functionality */}
         {activeTab === 'offers' && isAuthenticated && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {loadingOffers ? (
               <LoadingSpinner />
             ) : userOffers.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-xl mb-4">No offers yet</div>
-                <p className="text-gray-600 mb-6">Offers from service providers will appear here when they respond to your requests.</p>
-                <button onClick={() => handleTabChange('all')} className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 font-medium">
+              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-8 h-8 text-slate-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">No offers yet</h3>
+                <p className="text-slate-500 mb-6">Offers from service providers will appear here when they respond to your requests.</p>
+                <button 
+                  onClick={() => handleTabChange('all')} 
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
+                >
                   Browse Requests
                 </button>
               </div>
             ) : (
               userOffers.map((offer) => (
-                <div key={offer.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+                <div key={offer.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
                   <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                          <MessageSquare className="w-6 h-6 text-gray-600" />
+                        <div className="w-12 h-12 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center">
+                          <MessageSquare className="w-6 h-6 text-indigo-600" />
                         </div>
                         <div>
-                          <div className="flex items-center space-x-2">
-                            <h3 className="text-lg font-semibold">{offer.storeName || offer.providerName}</h3>
+                          <div className="flex items-center space-x-3 mb-1">
+                            <h3 className="text-lg font-semibold text-slate-900">{offer.storeName || offer.providerName}</h3>
                             {offer.verified && (
-                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Verified</span>
+                              <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                Verified
+                              </span>
                             )}
                             {getStatusBadge(offer.status)}
                           </div>
-                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                          <div className="flex items-center space-x-3 text-sm text-slate-600">
                             <div className="flex items-center">
-                              <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                              <Star className="w-4 h-4 text-amber-400 mr-1" />
                               <span className="font-medium">{offer.rating || 0}</span>
+                              <span className="ml-1">({offer.reviews || 0} reviews)</span>
                             </div>
-                            <span>({offer.reviews || 0} reviews)</span>
-                            <span className="text-gray-400">•</span>
+                            <span className="text-slate-400">•</span>
                             <span>{offer.responseTime}</span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">{offer.price}</div>
-                        <div className="text-sm text-gray-500">Quoted Price</div>
+                        <div className="text-2xl font-bold text-emerald-600">{offer.price}</div>
+                        <div className="text-sm text-slate-500">Quoted Price</div>
                       </div>
                     </div>
 
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                      <p className="text-gray-700 italic">"{offer.message}"</p>
-                      {offer.availability && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          <span className="font-medium">Availability:</span> {offer.availability}
-                        </div>
-                      )}
-                      {offer.estimatedDuration && (
-                        <div className="mt-1 text-sm text-gray-600">
-                          <span className="font-medium">Duration:</span> {offer.estimatedDuration}
-                        </div>
-                      )}
-                      {offer.includesSupplies && (
-                        <div className="mt-1 text-sm text-green-600">
-                          ✓ Includes supplies and materials
-                        </div>
-                      )}
+                    <div className="bg-slate-50 rounded-xl p-4 mb-4">
+                      <p className="text-slate-700 italic mb-3">"{offer.message}"</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        {offer.availability && (
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="w-4 h-4 text-slate-400" />
+                            <span className="text-slate-600"><span className="font-medium">Available:</span> {offer.availability}</span>
+                          </div>
+                        )}
+                        {offer.estimatedDuration && (
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-4 h-4 text-slate-400" />
+                            <span className="text-slate-600"><span className="font-medium">Duration:</span> {offer.estimatedDuration}</span>
+                          </div>
+                        )}
+                        {offer.includesSupplies && (
+                          <div className="flex items-center space-x-2 text-emerald-600 col-span-full">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="font-medium">Includes supplies and materials</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-500">
-                        Offer for: <span className="font-medium text-gray-700">{offer.requestTitle}</span>
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div className="text-sm text-slate-500">
+                        Offer for: <span className="font-medium text-slate-700">{offer.requestTitle}</span>
                       </div>
-                      <div className="flex space-x-2">
-                        {/* ✅ FIXED: View Store Button with navigation */}
+                      <div className="flex space-x-3">
                         {offer.storeDetails && (
                           <button
                             onClick={() => handleViewStore(offer.storeDetails)}
-                            className="px-4 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 font-medium flex items-center space-x-1"
+                            className="px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-medium flex items-center space-x-2 transition-colors"
                           >
                             <ExternalLink className="w-4 h-4" />
                             <span>View Store</span>
@@ -859,33 +955,33 @@ export default function UserServiceRequestPage() {
                         
                         <button 
                           onClick={() => handleViewDetails(offer)}
-                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                          className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
                         >
-                          View Details
+                          Details
                         </button>
                         
                         {offer.status === 'pending' && (
                           <>
                             <button
                               onClick={() => handleRejectOffer(offer.id, offer.requestId)}
-                              className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 font-medium"
+                              className="px-4 py-2 border border-red-500 text-red-600 rounded-lg hover:bg-red-50 font-medium transition-colors"
                               disabled={submitting}
                             >
                               Reject
                             </button>
                             <button
                               onClick={() => handleAcceptOffer(offer.id, offer.requestId)}
-                              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium"
+                              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors"
                               disabled={submitting}
                             >
-                              {submitting ? 'Accepting...' : 'Accept Offer'}
+                              {submitting ? 'Accepting...' : 'Accept'}
                             </button>
                           </>
                         )}
                         
                         {offer.status === 'accepted' && (
-                          <span className="px-4 py-2 bg-green-100 text-green-800 rounded-lg font-medium">
-                            ✓ Accepted
+                          <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg font-medium">
+                            Accepted
                           </span>
                         )}
                       </div>
@@ -897,60 +993,69 @@ export default function UserServiceRequestPage() {
           </div>
         )}
 
-        {/* ✅ FIXED: Past Requests Tab - NO DUMMY DATA */}
+        {/* Past Requests Tab - NO DUMMY DATA */}
         {activeTab === 'past' && isAuthenticated && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {loadingRequests ? (
               <LoadingSpinner />
             ) : userPastRequests.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-xl mb-4">No past requests</div>
-                <p className="text-gray-600 mb-6">Your completed and cancelled service requests will appear here.</p>
-                <button onClick={() => handleTabChange('all')} className="bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-600 font-medium">
+              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-8 h-8 text-slate-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-slate-700 mb-2">No past requests</h3>
+                <p className="text-slate-500 mb-6">Your completed and cancelled service requests will appear here.</p>
+                <button 
+                  onClick={() => handleTabChange('all')} 
+                  className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
+                >
                   Browse Requests
                 </button>
               </div>
             ) : (
               userPastRequests.map((request) => (
-                <div key={request.id} className="bg-white rounded-lg shadow-sm border">
+                <div key={request.id} className="bg-white rounded-2xl shadow-sm border border-slate-200">
                   <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-xl font-semibold">{request.title}</h3>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${request.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                            }`}>
+                        <div className="flex items-center space-x-3 mb-3">
+                          <h3 className="text-xl font-semibold text-slate-900">{request.title}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            request.status === 'completed' 
+                              ? 'bg-emerald-100 text-emerald-800' 
+                              : 'bg-slate-100 text-slate-800'
+                          }`}>
                             {request.status.toUpperCase()}
                           </span>
                         </div>
-                        <p className="text-gray-600 mb-3">{request.description}</p>
+                        <p className="text-slate-600 mb-4">{request.description}</p>
 
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
-                          <div className="flex items-center space-x-1">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+                          <div className="flex items-center space-x-2 text-slate-500">
                             <MapPin className="w-4 h-4" />
                             <span>{request.location}</span>
                           </div>
-                          <div className="flex items-center space-x-1">
+                          <div className="flex items-center space-x-2 text-slate-500">
                             <DollarSign className="w-4 h-4" />
                             <span>{request.budget}</span>
                           </div>
-                          <div className="flex items-center space-x-1">
+                          <div className="flex items-center space-x-2 text-slate-500">
                             <Calendar className="w-4 h-4" />
                             <span>Completed: {request.completedAt ? new Date(request.completedAt).toLocaleDateString() : 'N/A'}</span>
                           </div>
                         </div>
 
                         {request.acceptedOffer && (
-                          <div className="bg-green-50 rounded-lg p-4 mb-4">
-                            <h4 className="font-medium text-green-800 mb-2">Accepted Offer</h4>
+                          <div className="bg-emerald-50 rounded-xl p-4 mb-4">
+                            <h4 className="font-medium text-emerald-800 mb-2">Accepted Offer</h4>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-green-700 font-medium">{request.acceptedOffer.storeName}</p>
-                                <p className="text-green-600 text-sm">Final Price: {request.acceptedOffer.price}</p>
+                                <p className="text-emerald-700 font-medium">{request.acceptedOffer.storeName}</p>
+                                <p className="text-emerald-600 text-sm">Final Price: {request.acceptedOffer.price}</p>
                               </div>
                               {request.acceptedOffer.rating && (
                                 <div className="flex items-center">
-                                  <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                                  <Star className="w-4 h-4 text-amber-400 mr-1" />
                                   <span className="text-sm font-medium">{request.acceptedOffer.rating}/5</span>
                                 </div>
                               )}
@@ -958,24 +1063,24 @@ export default function UserServiceRequestPage() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                           <div className="flex items-center space-x-4">
-                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full">
+                            <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs">
                               {request.category}
                             </span>
-                            <span className="text-sm text-gray-500">
-                              {request.offers} offer{request.offers !== 1 ? 's' : ''} received
+                            <span className="text-sm text-slate-500">
+                              {request.offers} offer{request.offers !== 1 ? 's' : ''}
                             </span>
                           </div>
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-3">
                             <button 
                               onClick={() => handleViewDetails(request)}
-                              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
                             >
                               View Details
                             </button>
                             {request.status === 'completed' && !request.finalRating && (
-                              <button className="px-4 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 font-medium">
+                              <button className="px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-medium transition-colors">
                                 Rate & Review
                               </button>
                             )}
@@ -991,57 +1096,21 @@ export default function UserServiceRequestPage() {
         )}
       </section>
 
-      {/* Statistics Section */}
-      <section className="bg-white py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why Choose Our Platform?</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Connect with verified service providers and get the best deals for your needs
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">
-                {statistics.totalProviders?.toLocaleString() || '0'}
-              </div>
-              <div className="text-gray-600">Verified Providers</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">
-                {statistics.completedRequests?.toLocaleString() || '0'}
-              </div>
-              <div className="text-gray-600">Completed Requests</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">
-                {statistics.averageRating?.toFixed(1) || '0'}★
-              </div>
-              <div className="text-gray-600">Average Rating</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-red-600 mb-2">
-                {statistics.activeRequests?.toLocaleString() || '0'}
-              </div>
-              <div className="text-gray-600">Active Requests</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <Footer />
+
+      {/* Rest of the modals remain the same but with updated styling... */}
+      {/* I'll continue with the modals in the next part to keep this manageable */}
 
       {/* Details Modal */}
       {showDetailsModal && selectedRequestDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6 border-b border-slate-200">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Request Details</h2>
+                <h2 className="text-2xl font-bold text-slate-900">Request Details</h2>
                 <button 
                   onClick={() => setShowDetailsModal(false)} 
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  className="text-slate-400 hover:text-slate-600 text-2xl transition-colors"
                 >
                   ×
                 </button>
@@ -1051,70 +1120,70 @@ export default function UserServiceRequestPage() {
             <div className="p-6 space-y-6">
               <div>
                 <div className="flex items-center space-x-3 mb-3">
-                  <h3 className="text-xl font-semibold">{selectedRequestDetails.title}</h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  <h3 className="text-xl font-semibold text-slate-900">{selectedRequestDetails.title}</h3>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     selectedRequestDetails.priority === 'urgent' 
                       ? 'bg-red-100 text-red-800' 
-                      : 'bg-green-100 text-green-800'
+                      : 'bg-emerald-100 text-emerald-800'
                   }`}>
                     {selectedRequestDetails.priority}
                   </span>
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {selectedRequestDetails.status?.toUpperCase()}
                   </span>
                 </div>
               </div>
 
               <div>
-                <h4 className="font-semibold text-gray-700 mb-2">Description</h4>
-                <p className="text-gray-600">{selectedRequestDetails.description}</p>
+                <h4 className="font-semibold text-slate-700 mb-2">Description</h4>
+                <p className="text-slate-600">{selectedRequestDetails.description}</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Service Details</h4>
+                  <h4 className="font-semibold text-slate-700 mb-2">Service Details</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center space-x-2">
-                      <span className="text-gray-500">Category:</span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                      <span className="text-slate-500">Category:</span>
+                      <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-full text-xs">
                         {selectedRequestDetails.category}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-500">Location:</span>
+                      <MapPin className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-500">Location:</span>
                       <span>{selectedRequestDetails.location}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-500">Budget:</span>
+                      <DollarSign className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-500">Budget:</span>
                       <span>{selectedRequestDetails.budget}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-500">Timeline:</span>
+                      <Clock className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-500">Timeline:</span>
                       <span>{getTimelineLabel(selectedRequestDetails.timeline)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Request Information</h4>
+                  <h4 className="font-semibold text-slate-700 mb-2">Request Information</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-500">Posted by:</span>
+                      <User className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-500">Posted by:</span>
                       <span>{selectedRequestDetails.postedBy}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-500">Posted:</span>
+                      <Calendar className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-500">Posted:</span>
                       <span>{selectedRequestDetails.postedTime}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <MessageSquare className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-500">Offers received:</span>
-                      <span className="font-medium text-red-600">
+                      <MessageSquare className="w-4 h-4 text-slate-400" />
+                      <span className="text-slate-500">Offers received:</span>
+                      <span className="font-medium text-indigo-600">
                         {selectedRequestDetails.offers || 0}
                       </span>
                     </div>
@@ -1124,10 +1193,10 @@ export default function UserServiceRequestPage() {
 
               {selectedRequestDetails.requirements && selectedRequestDetails.requirements.length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Requirements</h4>
+                  <h4 className="font-semibold text-slate-700 mb-2">Requirements</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedRequestDetails.requirements.map((req, index) => (
-                      <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                      <span key={index} className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full">
                         {req}
                       </span>
                     ))}
@@ -1137,16 +1206,16 @@ export default function UserServiceRequestPage() {
 
               {selectedRequestDetails.acceptedOffer && (
                 <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Accepted Offer</h4>
-                  <div className="bg-green-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-slate-700 mb-2">Accepted Offer</h4>
+                  <div className="bg-emerald-50 rounded-xl p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-green-700 font-medium">{selectedRequestDetails.acceptedOffer.storeName}</p>
-                        <p className="text-green-600 text-sm">Final Price: {selectedRequestDetails.acceptedOffer.price}</p>
+                        <p className="text-emerald-700 font-medium">{selectedRequestDetails.acceptedOffer.storeName}</p>
+                        <p className="text-emerald-600 text-sm">Final Price: {selectedRequestDetails.acceptedOffer.price}</p>
                       </div>
                       {selectedRequestDetails.acceptedOffer.rating && (
                         <div className="flex items-center">
-                          <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                          <Star className="w-4 h-4 text-amber-400 mr-1" />
                           <span className="text-sm font-medium">{selectedRequestDetails.acceptedOffer.rating}/5</span>
                         </div>
                       )}
@@ -1156,10 +1225,10 @@ export default function UserServiceRequestPage() {
               )}
             </div>
 
-            <div className="p-6 border-t bg-gray-50">
+            <div className="p-6 border-t border-slate-200 bg-slate-50">
               <button
                 onClick={() => setShowDetailsModal(false)}
-                className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                className="w-full px-4 py-2 bg-slate-600 text-white rounded-xl hover:bg-slate-700 transition-colors"
               >
                 Close
               </button>
@@ -1170,12 +1239,12 @@ export default function UserServiceRequestPage() {
 
       {/* Request Form Modal */}
       {showRequestForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="p-6 border-b border-slate-200">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Post a Service Request</h2>
-                <button onClick={() => setShowRequestForm(false)} className="text-gray-500 hover:text-gray-700 text-2xl">
+                <h2 className="text-2xl font-bold text-slate-900">Post a Service Request</h2>
+                <button onClick={() => setShowRequestForm(false)} className="text-slate-400 hover:text-slate-600 text-2xl transition-colors">
                   ×
                 </button>
               </div>
@@ -1183,11 +1252,11 @@ export default function UserServiceRequestPage() {
 
             <form onSubmit={handleRequestFormSubmit} className="p-6 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Service Category *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Service Category *</label>
                 <select
                   value={requestForm.category}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                   required
                 >
                   <option value="">Select a category</option>
@@ -1198,63 +1267,63 @@ export default function UserServiceRequestPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Service Title *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Service Title *</label>
                 <input
                   type="text"
                   value={requestForm.title}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="Briefly describe what service you need"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Description *</label>
                 <textarea
                   rows="4"
                   value={requestForm.description}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Provide detailed description of your requirements..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Min Budget *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Min Budget *</label>
                   <input
                     type="number"
                     step="0.01"
                     value={requestForm.budgetMin}
                     onChange={(e) => setRequestForm(prev => ({ ...prev, budgetMin: e.target.value }))}
                     placeholder="Minimum budget"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Max Budget *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Max Budget *</label>
                   <input
                     type="number"
                     step="0.01"
                     value={requestForm.budgetMax}
                     onChange={(e) => setRequestForm(prev => ({ ...prev, budgetMax: e.target.value }))}
                     placeholder="Maximum budget"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Timeline *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Timeline *</label>
                 <select
                   value={requestForm.timeline}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, timeline: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                   required
                 >
                   <option value="">When do you need this?</option>
@@ -1267,23 +1336,23 @@ export default function UserServiceRequestPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Location *</label>
                 <input
                   type="text"
                   value={requestForm.location}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="Enter your location"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Priority</label>
                 <select
                   value={requestForm.priority}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, priority: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                 >
                   <option value="low">Low Priority</option>
                   <option value="normal">Normal Priority</option>
@@ -1293,15 +1362,15 @@ export default function UserServiceRequestPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Special Requirements</label>
-                <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Special Requirements</label>
+                <div className="grid grid-cols-2 gap-2">
                   {['Licensed', 'Insurance', 'References', 'Portfolio'].map((req) => (
-                    <label key={req} className="flex items-center">
+                    <label key={req} className="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={requestForm.requirements.includes(req)}
                         onChange={(e) => handleRequirementChange(req, e.target.checked)}
-                        className="mr-2"
+                        className="mr-2 text-indigo-600"
                       />
                       <span className="text-sm">{req} required</span>
                     </label>
@@ -1309,18 +1378,18 @@ export default function UserServiceRequestPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4 pt-4 border-t">
+              <div className="flex justify-end space-x-4 pt-4 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setShowRequestForm(false)}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="px-6 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
                   disabled={submitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
                   disabled={submitting}
                 >
                   {submitting ? 'Posting...' : 'Post Request'}
@@ -1331,70 +1400,70 @@ export default function UserServiceRequestPage() {
         </div>
       )}
 
-      {/* Offer Form Modal (for individual service providers) */}
+      {/* Offer Form Modal */}
       {showOfferForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg">
-            <div className="p-6 border-b">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="p-6 border-b border-slate-200">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Make an Offer</h2>
-                <button onClick={() => setShowOfferForm(false)} className="text-gray-500 hover:text-gray-700 text-2xl">
+                <h2 className="text-2xl font-bold text-slate-900">Make an Offer</h2>
+                <button onClick={() => setShowOfferForm(false)} className="text-slate-400 hover:text-slate-600 text-2xl transition-colors">
                   ×
                 </button>
               </div>
-              <p className="text-gray-600 text-sm mt-1">You're making an individual offer as a service provider</p>
+              <p className="text-slate-600 text-sm mt-1">You're making an individual offer as a service provider</p>
             </div>
 
             <form onSubmit={handleOfferFormSubmit} className="p-6 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Quoted Price *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Quoted Price *</label>
                 <input
                   type="number"
                   step="0.01"
                   value={offerForm.quotedPrice}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, quotedPrice: e.target.value }))}
                   placeholder="Enter your price quote"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Message *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Message *</label>
                 <textarea
                   rows="4"
                   value={offerForm.message}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, message: e.target.value }))}
                   placeholder="Describe your offer, experience, and why you're the best choice..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Availability *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Availability *</label>
                 <input
                   type="text"
                   value={offerForm.availability}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, availability: e.target.value }))}
                   placeholder="When can you start? (e.g., Tomorrow, This weekend, Next week)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
                   required
                 />
               </div>
 
-              <div className="flex justify-end space-x-4 pt-4 border-t">
+              <div className="flex justify-end space-x-4 pt-4 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setShowOfferForm(false)}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="px-6 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
                   disabled={submitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
                   disabled={submitting}
                 >
                   {submitting ? 'Submitting...' : 'Submit Offer'}
@@ -1407,23 +1476,26 @@ export default function UserServiceRequestPage() {
 
       {/* Login Prompt Modal */}
       {showLoginPrompt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
             <div className="p-6 text-center">
-              <h2 className="text-2xl font-bold mb-4">Login Required</h2>
-              <p className="text-gray-600 mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-indigo-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Login Required</h2>
+              <p className="text-slate-600 mb-6">
                 Please login to access this feature and manage your service requests.
               </p>
               <div className="flex space-x-4">
                 <button
                   onClick={() => setShowLoginPrompt(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleLogin}
-                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-colors"
                 >
                   Login
                 </button>
@@ -1435,21 +1507,24 @@ export default function UserServiceRequestPage() {
 
       {/* Confirm Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
             <div className="p-6 text-center">
-              <h2 className="text-2xl font-bold mb-4">Confirm Action</h2>
-              <p className="text-gray-600 mb-6">{confirmMessage}</p>
+              <div className="w-16 h-16 bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-amber-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Confirm Action</h2>
+              <p className="text-slate-600 mb-6">{confirmMessage}</p>
               <div className="flex space-x-4">
                 <button
                   onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmAction}
-                  className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-colors"
                   disabled={submitting}
                 >
                   {submitting ? 'Processing...' : 'Confirm'}

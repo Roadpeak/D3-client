@@ -513,57 +513,106 @@ const EnhancedBookingPage = () => {
     }
   }, [bookingData.date, bookingData.time, bookingData.branch]);
 
-  const handleBookingSubmit = useCallback(async () => {
-    try {
-      setSubmitting(true);
-      setError(null);
-      
-      const bookingPayload = {
-        userId: user.id,
-        startTime: `${bookingData.date}T${convertTo24Hour(bookingData.time)}`,
-        branchId: bookingData.branch.id,
-        staffId: bookingData.staff?.id,
-        notes: bookingData.notes,
-        bookingType: entityType,
-        clientInfo: {
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-          phone: user.phoneNumber || user.phone || phoneNumber
-        }
-      };
+ // Replace the handleBookingSubmit function in your EnhancedBookingPage.js
 
-      // Add correct ID field based on booking type
-      if (isOfferBooking) {
-        bookingPayload.offerId = entityId;
-      } else {
-        bookingPayload.serviceId = entityId;
-      }
-
-      // Only add payment data for offer bookings (platform access fee)
-      if (isOfferBooking && accessFee > 0) {
-        bookingPayload.paymentData = {
-          amount: accessFee,
-          currency: 'KES',
-          method: paymentMethod,
-          phoneNumber: phoneNumber
-        };
-      }
-
-      const result = await withTimeout(bookingService.createBooking(bookingPayload));
-
-      if (result.success) {
-        setCurrentStep(4);
-      } else {
-        throw new Error(result.message || 'Failed to create booking');
-      }
-
-    } catch (err) {
-      console.error('Error creating booking:', err);
-      setError(err.message || 'Failed to create booking');
-    } finally {
-      setSubmitting(false);
+ const handleBookingSubmit = useCallback(async () => {
+  // FIXED: Declare processedBookingData outside try block to avoid scope issues
+  let processedBookingData = {
+    userId: user.id,
+    startTime: `${bookingData.date}T${convertTo24Hour(bookingData.time)}:00`, // FIXED: Add seconds
+    staffId: bookingData.staff?.id,
+    notes: bookingData.notes,
+    bookingType: entityType,
+    clientInfo: {
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      phone: user.phoneNumber || user.phone || phoneNumber
     }
-  }, [bookingData, user, entityId, entityType, isOfferBooking, accessFee, paymentMethod, phoneNumber, convertTo24Hour, withTimeout]);
+  };
+
+  // FIXED: Handle branch ID that might be a store fallback
+  if (bookingData.branch) {
+    if (bookingData.branch.id && bookingData.branch.id.startsWith('store-')) {
+      // Extract actual store ID from store-prefixed ID
+      const actualStoreId = bookingData.branch.id.replace('store-', '');
+      processedBookingData.storeId = actualStoreId;
+      console.log('🔧 Using storeId instead of branchId:', actualStoreId);
+    } else if (bookingData.branch.isMainBranch) {
+      // For main branches that are actually stores
+      processedBookingData.storeId = bookingData.branch.storeId || bookingData.branch.id;
+      console.log('🔧 Using storeId for main branch:', processedBookingData.storeId);
+    } else {
+      // Real branch ID
+      processedBookingData.branchId = bookingData.branch.id;
+      console.log('🔧 Using branchId:', processedBookingData.branchId);
+    }
+  }
+
+  // Add correct ID field based on booking type
+  if (isOfferBooking) {
+    processedBookingData.offerId = entityId;
+  } else {
+    processedBookingData.serviceId = entityId;
+  }
+
+  // Only add payment data for offer bookings (platform access fee)
+  if (isOfferBooking && accessFee > 0) {
+    processedBookingData.paymentData = {
+      amount: accessFee,
+      currency: 'KES',
+      method: paymentMethod,
+      phoneNumber: phoneNumber
+    };
+  }
+
+  try {
+    setSubmitting(true);
+    setError(null);
+
+    console.log('📝 Final booking payload:', processedBookingData);
+
+    const result = await withTimeout(bookingService.createBooking(processedBookingData));
+
+    if (result.success) {
+      setCurrentStep(4);
+    } else {
+      throw new Error(result.message || 'Failed to create booking');
+    }
+
+  } catch (err) {
+    console.error('Error creating booking:', err);
+    
+    // Enhanced error handling for branch/store issues
+    if (err.message && err.message.includes('Branch not found')) {
+      console.log('🔧 Branch not found, trying fallback approach...');
+      
+      // Retry with just storeId if we had a branch issue
+      try {
+        const fallbackData = {
+          ...processedBookingData,
+          storeId: bookingData.branch?.id?.replace('store-', '') || bookingData.branch?.storeId
+        };
+        delete fallbackData.branchId; // Remove branchId
+        
+        console.log('🔄 Retrying with fallback data:', fallbackData);
+        
+        const retryResult = await withTimeout(bookingService.createBooking(fallbackData));
+        
+        if (retryResult.success) {
+          setCurrentStep(4);
+          return;
+        }
+      } catch (retryError) {
+        console.error('❌ Retry also failed:', retryError);
+      }
+    }
+    
+    setError(err.message || 'Failed to create booking');
+  } finally {
+    setSubmitting(false);
+  }
+}, [bookingData, user, entityId, entityType, isOfferBooking, accessFee, paymentMethod, phoneNumber, convertTo24Hour, withTimeout]);
+
 
   const handleMpesaPayment = useCallback(async () => {
     try {
@@ -1450,7 +1499,7 @@ const EnhancedBookingPage = () => {
 
         <div className="space-y-3">
           <button
-            onClick={() => navigate('/my-vouchers')}
+            onClick={() => navigate('/profile/bookings')}
             className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             View My Bookings

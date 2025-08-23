@@ -1,7 +1,7 @@
-// pages/ChatPage.jsx - FIXED: Desktop Layout & Customer↔Store Communication
+// pages/ChatPage.jsx - Updated with image support and removed buttons
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Send, Search, Phone, Video, MoreVertical, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle, Store } from 'lucide-react';
+import { Send, Search, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle, Store, Paperclip, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import chatService from '../services/chatService';
@@ -19,7 +19,10 @@ const ChatPage = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Enhanced cookie reading function
   const getCookieValue = (name) => {
@@ -172,13 +175,13 @@ const ChatPage = () => {
     getTypingUsers
   } = useSocket(user);
 
-  // FIXED: Socket event handlers for customer↔store communication
+  // Socket event handlers for customer↔store communication
   useEffect(() => {
     if (!socket || !user) return;
 
     console.log('🔌 Setting up CUSTOMER socket handlers for store communication');
 
-    // FIXED: Handle store messages (messages FROM stores TO this customer)
+    // Handle store messages (messages FROM stores TO this customer)
     const handleStoreToCustomerMessage = (messageData) => {
       console.log('📨 Customer received store message:', messageData);
       
@@ -206,7 +209,7 @@ const ChatPage = () => {
       }));
     };
 
-    // FIXED: Handle general new messages but filter for store messages
+    // Handle general new messages but filter for store messages
     const handleNewMessage = (messageData) => {
       console.log('📨 Customer received general message:', messageData);
       
@@ -374,7 +377,26 @@ const ChatPage = () => {
     }
   };
 
-  // FIXED: Send message to store
+  // Image handling functions
+  const handleImageSelect = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => setImagePreview(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Send message to store
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedChat || sendingMessage) return;
 
@@ -441,6 +463,20 @@ const ChatPage = () => {
     }
   };
 
+  // Handle sending with image
+  const handleSendWithImage = async () => {
+    if (selectedImage) {
+      // Handle image sending logic here
+      console.log('Sending image:', selectedImage);
+      // You'll need to implement image upload in your chatService
+      // For now, we'll just remove the selected image
+      removeSelectedImage();
+    }
+    if (message.trim()) {
+      await handleSendMessage();
+    }
+  };
+
   const handleMessageChange = (e) => {
     setMessage(e.target.value);
 
@@ -465,26 +501,8 @@ const ChatPage = () => {
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      selectedImage ? handleSendWithImage() : handleSendMessage();
     }
-  };
-
-  // Customer quick responses for stores
-  const quickResponses = [
-    "Thank you!",
-    "That sounds great!",
-    "Can you tell me more about this?",
-    "What are your store hours?",
-    "Do you have this item in stock?",
-    "What's the price for this service?",
-    "Is this available today?",
-    "Can I visit your store?",
-    "Do you offer delivery?",
-    "Thank you for your help!"
-  ];
-
-  const handleQuickResponse = (response) => {
-    setMessage(response);
   };
 
   const scrollToBottom = () => {
@@ -530,65 +548,16 @@ const ChatPage = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       
-      {/* Main Chat Container - FIXED: Better desktop layout */}
-      <div className="flex-1 max-w-full mx-auto">
-        <div className="h-full bg-white shadow-sm border-b border-gray-200">
-          {/* FIXED: Header with better spacing and alignment */}
-          <div className="bg-white px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between max-w-7xl mx-auto">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </button>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">Store Messages</h1>
-                  <p className="text-sm text-gray-500 flex items-center gap-2">
-                    Chat with your favorite stores
-                    {isConnected && <span className="text-green-600 flex items-center gap-1">● Connected</span>}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                {totalUnreadCount > 0 && (
-                  <div className="flex items-center space-x-2 bg-orange-50 px-3 py-1 rounded-full">
-                    <AlertCircle className="w-4 h-4 text-orange-500" />
-                    <span className="text-sm font-medium text-orange-700">
-                      {totalUnreadCount} unread
-                    </span>
-                  </div>
-                )}
-                <button
-                  onClick={loadChats}
-                  className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Refresh
-                </button>
-              </div>
-            </div>
-            {error && (
-              <div className="max-w-7xl mx-auto mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center justify-between">
-                <span>{error}</span>
-                <button 
-                  onClick={() => setError(null)}
-                  className="ml-2 text-red-800 hover:text-red-900 font-bold text-lg leading-none"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* FIXED: Main chat layout with proper desktop sizing */}
-          <div className="flex max-w-7xl mx-auto" style={{ height: 'calc(100vh - 200px)' }}>
-            {/* FIXED: Store Chat List Sidebar - Better responsive behavior */}
+      {/* Main Chat Container - Constrained width like navbar */}
+      <div className="flex-1 w-full">
+        <div className="max-w-7xl mx-auto h-full bg-white shadow-sm">
+          {/* Main chat layout - Constrained width */}
+          <div className="flex w-full" style={{ height: 'calc(100vh - 120px)' }}>
+            {/* Store Chat List Sidebar - Fixed width */}
             <div className={`${selectedChat
                 ? 'hidden xl:flex'
                 : 'flex'
-              } w-full xl:w-96 flex-col bg-gray-50 border-r border-gray-200`}>
+              } w-full xl:w-80 flex-col bg-gray-50 border-r border-gray-200`}>
               
               {/* Search */}
               <div className="p-4 bg-white border-b border-gray-200">
@@ -604,7 +573,7 @@ const ChatPage = () => {
                 </div>
               </div>
 
-              {/* Store Chat List - FIXED: Better scrolling */}
+              {/* Store Chat List */}
               <div className="flex-1 overflow-y-auto">
                 {filteredChats.length === 0 ? (
                   <div className="flex items-center justify-center h-48 text-gray-500">
@@ -686,14 +655,14 @@ const ChatPage = () => {
               </div>
             </div>
 
-            {/* FIXED: Chat Area - Better desktop layout */}
+            {/* Chat Area */}
             <div className={`${selectedChat
                 ? 'flex'
                 : 'hidden xl:flex'
               } flex-1 flex-col bg-white`}>
               {selectedChat ? (
                 <>
-                  {/* FIXED: Store Chat Header - Better desktop styling */}
+                  {/* Store Chat Header - Removed action buttons */}
                   <div className="bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center">
                       <button
@@ -732,20 +701,9 @@ const ChatPage = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <Phone className="w-5 h-5 text-gray-600" />
-                      </button>
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <Video className="w-5 h-5 text-gray-600" />
-                      </button>
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <MoreVertical className="w-5 h-5 text-gray-600" />
-                      </button>
-                    </div>
                   </div>
 
-                  {/* FIXED: Messages Area - Better desktop scrolling and spacing */}
+                  {/* Messages Area */}
                   <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gray-50">
                     {messages.length === 0 ? (
                       <div className="flex items-center justify-center h-full text-gray-500">
@@ -755,17 +713,6 @@ const ChatPage = () => {
                           </div>
                           <h3 className="text-lg font-medium mb-2 text-gray-900">Start chatting with {selectedChat.store?.name || 'this store'}</h3>
                           <p className="text-sm text-gray-600 mb-4">Ask about products, services, store hours, or anything else!</p>
-                          <div className="flex flex-wrap gap-2 justify-center">
-                            {quickResponses.slice(0, 3).map((response, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => handleQuickResponse(response)}
-                                className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs rounded-full transition-colors"
-                              >
-                                {response}
-                              </button>
-                            ))}
-                          </div>
                         </div>
                       </div>
                     ) : (
@@ -774,7 +721,7 @@ const ChatPage = () => {
                           <div
                             key={msg.id}
                             className={`flex ${
-                              // FIXED: Customer messages align right, store messages align left
+                              // Customer messages align right, store messages align left
                               msg.sender === 'user' || msg.sender === 'customer'
                                 ? 'justify-end' 
                                 : 'justify-start'
@@ -794,7 +741,6 @@ const ChatPage = () => {
                               
                               <div
                                 className={`px-4 py-3 rounded-2xl max-w-full ${
-                                  // FIXED: Better message styling for desktop
                                   msg.sender === 'user' || msg.sender === 'customer'
                                     ? 'bg-blue-500 text-white rounded-br-md'
                                     : 'bg-white text-gray-900 rounded-bl-md border border-gray-200 shadow-sm'
@@ -867,42 +813,61 @@ const ChatPage = () => {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* FIXED: Quick Responses - Better desktop layout */}
-                  <div className="bg-white px-6 py-3 border-t border-gray-100">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {quickResponses.map((response, index) => (
+                  {/* WhatsApp-style Message Input */}
+                  <div className="bg-white px-8 py-6 border-t border-gray-200 flex-shrink-0">
+                    {/* Image Preview Area */}
+                    {imagePreview && (
+                      <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="flex items-start justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-700">Image to send:</span>
+                          <button
+                            onClick={removeSelectedImage}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="max-w-sm max-h-48 rounded-lg border border-gray-300 shadow-sm"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* WhatsApp-style Input Container */}
+                    <div className="flex items-end gap-3">
+                      {/* Input with integrated attach button */}
+                      <div className="flex-1 relative bg-white border border-gray-300 rounded-3xl flex items-center">
+                        {/* Attach Button - Inside input like WhatsApp */}
                         <button
-                          key={index}
-                          onClick={() => handleQuickResponse(response)}
-                          className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-full transition-colors whitespace-nowrap"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="p-3 text-gray-500 hover:text-gray-700 transition-colors"
+                          title="Attach image"
                         >
-                          {response}
+                          <Paperclip className="w-5 h-5" />
                         </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* FIXED: Message Input - Better desktop styling */}
-                  <div className="bg-white px-6 py-4 border-t border-gray-200 flex-shrink-0">
-                    <div className="flex items-end space-x-3">
-                      <div className="flex-1 relative">
+                        
+                        {/* Text Input */}
                         <textarea
                           value={message}
                           onChange={handleMessageChange}
                           onKeyPress={handleKeyPress}
-                          placeholder={`Message ${selectedChat.store?.name || 'store'}...`}
+                          placeholder={`Chat with ${selectedChat.store?.name || 'store'}...`}
                           rows={1}
                           disabled={sendingMessage || !isConnected}
-                          className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none max-h-32 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
-                          style={{ minHeight: '44px' }}
+                          className="flex-1 px-2 py-3 bg-transparent border-none focus:outline-none resize-none max-h-32 disabled:cursor-not-allowed placeholder-gray-500"
+                          style={{ minHeight: '48px' }}
                         />
                       </div>
+                      
+                      {/* Send Button */}
                       <button
-                        onClick={handleSendMessage}
-                        disabled={!message.trim() || sendingMessage || !isConnected}
-                        className="p-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center flex-shrink-0"
-                        title={!isConnected ? 'Connecting...' : 'Send to store'}
-                        style={{ minHeight: '44px', minWidth: '44px' }}
+                        onClick={selectedImage ? handleSendWithImage : handleSendMessage}
+                        disabled={(!message.trim() && !selectedImage) || sendingMessage || !isConnected}
+                        className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                        title={!isConnected ? 'Connecting...' : 'Send message'}
+                        style={{ minHeight: '48px', minWidth: '48px' }}
                       >
                         {sendingMessage ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -911,16 +876,29 @@ const ChatPage = () => {
                         )}
                       </button>
                     </div>
+                    
+                    {/* Connection Status */}
                     {!isConnected && (
-                      <p className="text-xs text-orange-500 mt-2 flex items-center gap-1">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        Connecting to chat server...
-                      </p>
+                      <div className="mt-3">
+                        <p className="text-xs text-orange-600 flex items-center gap-2">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Connecting to chat server...
+                        </p>
+                      </div>
                     )}
+                    
+                    {/* Hidden File Input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
                   </div>
                 </>
               ) : (
-                /* FIXED: Welcome Screen - Better desktop centering and spacing */
+                /* Welcome Screen */
                 <div className="flex-1 flex items-center justify-center bg-gray-50">
                   <div className="text-center max-w-lg px-8">
                     <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">

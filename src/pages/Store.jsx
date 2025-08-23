@@ -117,6 +117,12 @@ const StoreViewPage = () => {
   const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
 
+  // ADDED: Function to check if offer is expired
+  const isOfferExpired = (expirationDate) => {
+    if (!expirationDate) return false;
+    return new Date(expirationDate) < new Date();
+  };
+
   // Enhanced getCurrentUser function
   const getCurrentUser = () => {
     const isAuthenticated = authService.isAuthenticated();
@@ -256,12 +262,19 @@ const StoreViewPage = () => {
     }
   };
 
-  // Fetch offers for the store
+  // UPDATED: Fetch offers for the store with expiration filtering
   const fetchOffers = async () => {
     try {
       setOffersLoading(true);
       const response = await offerAPI.getOffersByStore(id);
-      setOffers(response.offers || []);
+      
+      // ADDED: Filter out expired offers for customer-facing store view
+      const allOffers = response.offers || [];
+      const activeOffers = allOffers.filter(offer => !isOfferExpired(offer.expiration_date));
+      
+      console.log(`📋 Store offers - Total: ${allOffers.length}, Active: ${activeOffers.length}`);
+      
+      setOffers(activeOffers);
     } catch (err) {
       console.error('Error fetching offers:', err);
       setOffers([]);
@@ -719,8 +732,16 @@ const StoreViewPage = () => {
     ));
   };
 
-  // Enhanced Offer Card Component (matching deals page design)
+  // UPDATED: Enhanced Offer Card Component with expiration check
   const OfferCard = ({ offer, isListView = false }) => {
+    // ADDED: Check if offer is expired (shouldn't happen since we filter, but good to have)
+    const expired = isOfferExpired(offer.expiration_date);
+    
+    // Skip rendering if expired (extra safety)
+    if (expired) {
+      return null;
+    }
+
     // Calculate prices if available
     const originalPrice = offer.service?.price || offer.original_price || 0;
     const discountValue = offer.discount_value || offer.discount || 0;
@@ -828,7 +849,7 @@ const StoreViewPage = () => {
             </button>
           </div>
 
-          {/* Expiry Date */}
+          {/* Expiry Date - UPDATED: Show remaining time instead of raw date */}
           {offer.expiry_date && (
             <div className="mt-2 text-xs text-gray-500">
               Expires: {new Date(offer.expiry_date).toLocaleDateString()}
@@ -920,7 +941,6 @@ const StoreViewPage = () => {
         return <Globe {...iconProps} className="w-5 h-5 text-gray-600" />;
     }
   };
-
 
   // Enhanced Outlet Card Component
   const OutletCard = ({ branch }) => (
@@ -1221,7 +1241,7 @@ const StoreViewPage = () => {
         return (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Current Offers</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Active Offers</h2>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-1">
                   <button
@@ -1254,7 +1274,7 @@ const StoreViewPage = () => {
             ) : (
               <div className="text-center py-12 bg-gray-50 rounded-xl">
                 <Tag className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No offers available</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No active offers available</h3>
                 <p className="text-gray-600">Check back later for exciting deals and offers!</p>
               </div>
             )}
@@ -1573,13 +1593,13 @@ const StoreViewPage = () => {
             </div>
           </div>
 
-          {/* Store Stats */}
+          {/* Store Stats - UPDATED: Changed "Offers" label to "Active Offers" */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
             <button
               onClick={() => setActiveSection('offers')}
               className={`text-center p-3 rounded-lg transition-colors ${activeSection === 'offers' ? 'bg-red-50 border border-red-200' : 'hover:bg-gray-50'}`}
             >
-              <div className="text-sm text-gray-500">Offers</div>
+              <div className="text-sm text-gray-500">Active Offers</div>
               <div className="text-xl font-bold text-red-500">
                 {offersLoading ? (
                   <Loader2 className="w-5 h-5 mx-auto animate-spin" />
