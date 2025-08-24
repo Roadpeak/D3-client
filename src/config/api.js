@@ -1,4 +1,4 @@
-// services/api.js - USER API
+// services/api.js - COMPLETE UPDATED VERSION WITH LOCATION SUPPORT
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
@@ -102,6 +102,8 @@ export const API_ENDPOINTS = {
         get: (id) => `/stores/${id}`,
         update: (id) => `/stores/${id}`,
         delete: (id) => `/stores/${id}`,
+        locations: '/stores/locations',
+        categories: '/stores/categories',
     },
     // Service endpoints
     services: {
@@ -118,11 +120,21 @@ export const API_ENDPOINTS = {
         get: (id) => `/offers/${id}`,
         update: (id) => `/offers/${id}`,
         delete: (id) => `/offers/${id}`,
-        // NEW: Favorites endpoints
+        random: '/offers/random',
+        topDeals: '/offers/top-deals',
+        featured: '/offers/featured',
+        categories: '/offers/categories',
+        // Favorites endpoints
         addToFavorites: (id) => `/offers/${id}/favorite`,
         removeFromFavorites: (id) => `/offers/${id}/favorite`,
         favoriteStatus: (id) => `/offers/${id}/favorite/status`,
         toggleFavorite: (id) => `/offers/${id}/favorite/toggle`,
+    },
+    // Location endpoints - NEW
+    locations: {
+        available: '/locations/available',
+        reverseGeocode: '/locations/reverse-geocode',
+        stats: '/locations/stats',
     },
     // Booking endpoints
     bookings: {
@@ -196,16 +208,163 @@ const handleApiCall = async (apiCall) => {
     }
 };
 
-// FIXED: Offer API endpoints with correct error handling
-export const offerAPI = {
-    // Get all offers with pagination and filters
-    getOffers: async (params = {}) => {
-        return handleApiCall(() => api.get('/offers', { params }));
+// NEW: Location API endpoints
+export const locationAPI = {
+    // Get all available locations from stores and offers
+    getAvailableLocations: async () => {
+        console.log('📍 Fetching available locations from API...');
+        
+        try {
+            const response = await api.get(API_ENDPOINTS.locations.available);
+            console.log('✅ Available locations response:', response.data);
+            
+            return {
+                success: true,
+                locations: response.data.locations || [],
+                message: response.data.message
+            };
+        } catch (error) {
+            console.error('❌ Error fetching available locations:', error);
+            
+            // Fallback: Try to get locations from stores endpoint
+            try {
+                const storeResponse = await api.get(API_ENDPOINTS.stores.locations);
+                return {
+                    success: true,
+                    locations: storeResponse.data.locations || [],
+                    message: 'Fetched from stores endpoint'
+                };
+            } catch (fallbackError) {
+                console.error('❌ Fallback location fetch also failed:', fallbackError);
+                return {
+                    success: false,
+                    locations: [],
+                    message: error.response?.data?.message || 'Failed to fetch locations'
+                };
+            }
+        }
     },
 
-    // Get random offers
-    getRandomOffers: async (limit = 12) => {
-        return handleApiCall(() => api.get('/offers/random', { params: { limit } }));
+    // Get location statistics
+    getLocationStats: async () => {
+        try {
+            const response = await api.get(API_ENDPOINTS.locations.stats);
+            return {
+                success: true,
+                stats: response.data.stats || {}
+            };
+        } catch (error) {
+            console.error('❌ Error fetching location stats:', error);
+            return {
+                success: false,
+                stats: {}
+            };
+        }
+    },
+
+    // Reverse geocode coordinates to location name
+    reverseGeocode: async (latitude, longitude) => {
+        if (!latitude || !longitude) {
+            throw new Error('Latitude and longitude are required');
+        }
+
+        console.log(`🌍 Reverse geocoding: ${latitude}, ${longitude}`);
+        
+        try {
+            const response = await api.post(API_ENDPOINTS.locations.reverseGeocode, {
+                latitude,
+                longitude
+            });
+            
+            return {
+                success: true,
+                location: response.data.location,
+                nearestAvailableLocation: response.data.nearestAvailableLocation,
+                coordinates: response.data.coordinates
+            };
+        } catch (error) {
+            console.error('❌ Backend reverse geocoding failed:', error);
+            
+            // Fallback to client-side reverse geocoding
+            return await locationAPI.clientReverseGeocode(latitude, longitude);
+        }
+    },
+
+    // Client-side reverse geocoding fallback
+    clientReverseGeocode: async (latitude, longitude) => {
+        try {
+            console.log('🔄 Using client-side reverse geocoding...');
+            
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=en`,
+                {
+                    headers: {
+                        'User-Agent': 'YourApp/1.0'
+                    }
+                }
+            );
+            
+            if (!response.ok) {
+                throw new Error('Geocoding request failed');
+            }
+            
+            const data = await response.json();
+            
+            if (data && data.address) {
+                const area = data.address.suburb || 
+                             data.address.neighbourhood || 
+                             data.address.residential || 
+                             data.address.commercial ||
+                             data.address.city_district ||
+                             'Unknown Area';
+                             
+                const city = data.address.city || 
+                             data.address.town || 
+                             data.address.municipality ||
+                             'Unknown City';
+                
+                const locationName = `${area}, ${city}`;
+                
+                return {
+                    success: true,
+                    location: locationName,
+                    coordinates: { latitude, longitude }
+                };
+            }
+            
+            throw new Error('No address found in geocoding response');
+        } catch (error) {
+            console.error('❌ Client-side reverse geocoding failed:', error);
+            
+            // Ultimate fallback for Kenya coordinates
+            if (latitude >= -4.7 && latitude <= 4.6 && longitude >= 33.9 && longitude <= 41.9) {
+                return {
+                    success: true,
+                    location: 'Nairobi, Kenya',
+                    isApproximate: true
+                };
+            }
+            
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+};
+
+// UPDATED: Offer API endpoints with location support
+export const offerAPI = {
+    // Get all offers with pagination and filters (including location)
+    getOffers: async (params = {}) => {
+        return handleApiCall(() => api.get(API_ENDPOINTS.offers.list, { params }));
+    },
+
+    // Get random offers (location-aware)
+    getRandomOffers: async (limit = 12, location = null) => {
+        const params = { limit };
+        if (location && location !== 'All Locations') params.location = location;
+        return handleApiCall(() => api.get(API_ENDPOINTS.offers.random, { params }));
     },
 
     // Get offers by store
@@ -216,7 +375,7 @@ export const offerAPI = {
         return handleApiCall(() => api.get(`/offers/store/${storeId}`, { params }));
     },
 
-    // FIXED: Get single offer by ID with better error handling
+    // Get single offer by ID
     getOfferById: async (id) => {
         if (!id || id.trim() === '') {
             throw new Error('Offer ID is required');
@@ -225,13 +384,12 @@ export const offerAPI = {
         console.log('🔍 Fetching offer by ID:', id);
         
         try {
-            const response = await api.get(`/offers/${id}`);
+            const response = await api.get(API_ENDPOINTS.offers.get(id));
             console.log('✅ Offer API response:', response.data);
             return response.data;
         } catch (error) {
             console.error('❌ Offer API error:', error);
             
-            // Create a more informative error
             if (error.response?.status === 404) {
                 throw new Error('Offer not found. It may have been removed or expired.');
             } else if (error.response?.status === 401) {
@@ -249,7 +407,7 @@ export const offerAPI = {
         if (!offerData) {
             throw new Error('Offer data is required');
         }
-        return handleApiCall(() => api.post('/offers', offerData));
+        return handleApiCall(() => api.post(API_ENDPOINTS.offers.create, offerData));
     },
 
     // Update offer
@@ -260,7 +418,7 @@ export const offerAPI = {
         if (!offerData) {
             throw new Error('Offer data is required');
         }
-        return handleApiCall(() => api.put(`/offers/${id}`, offerData));
+        return handleApiCall(() => api.put(API_ENDPOINTS.offers.update(id), offerData));
     },
 
     // Delete offer
@@ -268,26 +426,88 @@ export const offerAPI = {
         if (!id) {
             throw new Error('Offer ID is required');
         }
-        return handleApiCall(() => api.delete(`/offers/${id}`));
+        return handleApiCall(() => api.delete(API_ENDPOINTS.offers.delete(id)));
     },
 
-    // Get categories with counts
-    getCategories: async () => {
-        return handleApiCall(() => api.get('/offers/categories'));
+    // Get categories with counts (location-aware)
+    getCategories: async (location = null) => {
+        const params = (location && location !== 'All Locations') ? { location } : {};
+        return handleApiCall(() => api.get(API_ENDPOINTS.offers.categories, { params }));
     },
 
-    // Get top deals
-    getTopDeals: async (limit = 3) => {
-        return handleApiCall(() => api.get('/offers/top-deals', { params: { limit } }));
+    // Get top deals (location-aware)
+    getTopDeals: async (limit = 3, location = null) => {
+        const params = { limit };
+        if (location && location !== 'All Locations') params.location = location;
+        return handleApiCall(() => api.get(API_ENDPOINTS.offers.topDeals, { params }));
     },
 
-    // Get featured offers
-    getFeaturedOffers: async (limit = 6) => {
-        return handleApiCall(() => api.get('/offers/featured', { params: { limit } }));
+    // Get featured offers (location-aware)
+    getFeaturedOffers: async (limit = 6, location = null) => {
+        const params = { limit };
+        if (location && location !== 'All Locations') params.location = location;
+        return handleApiCall(() => api.get(API_ENDPOINTS.offers.featured, { params }));
     },
 };
 
-// NEW: Favorites API endpoints - integrated with your existing patterns
+// UPDATED: Store API endpoints with location support
+export const storeAPI = {
+    // Get stores with location filtering
+    getStores: async (params = {}) => {
+        return handleApiCall(() => api.get(API_ENDPOINTS.stores.list, { params }));
+    },
+
+    // Get single store by ID
+    getStoreById: async (id) => {
+        if (!id) {
+            throw new Error('Store ID is required');
+        }
+        return handleApiCall(() => api.get(API_ENDPOINTS.stores.get(id)));
+    },
+
+    // Get stores by location
+    getStoresByLocation: async (location, params = {}) => {
+        const mergedParams = { ...params };
+        if (location && location !== 'All Locations') {
+            mergedParams.location = location;
+        }
+        return handleApiCall(() => api.get(API_ENDPOINTS.stores.list, { params: mergedParams }));
+    },
+
+    // Get available store locations
+    getStoreLocations: async () => {
+        return handleApiCall(() => api.get(API_ENDPOINTS.stores.locations));
+    },
+
+    // Get store categories (location-aware)
+    getStoreCategories: async (location = null) => {
+        const params = (location && location !== 'All Locations') ? { location } : {};
+        return handleApiCall(() => api.get(API_ENDPOINTS.stores.categories, { params }));
+    },
+
+    // Get random stores (location-aware)
+    getRandomStores: async (limit = 21, location = null) => {
+        const params = { limit };
+        if (location && location !== 'All Locations') params.location = location;
+        return handleApiCall(() => api.get('/stores/random', { params }));
+    },
+};
+
+// Service API endpoints
+export const serviceAPI = {
+    getServices: async (params = {}) => {
+        return handleApiCall(() => api.get(API_ENDPOINTS.services.list, { params }));
+    },
+
+    getServiceById: async (id) => {
+        if (!id) {
+            throw new Error('Service ID is required');
+        }
+        return handleApiCall(() => api.get(API_ENDPOINTS.services.get(id)));
+    },
+};
+
+// Favorites API endpoints
 export const favoritesAPI = {
     // Get user's favorite offers
     getFavorites: async (params = {}) => {
@@ -470,50 +690,22 @@ export const favoritesAPI = {
     }
 };
 
-// Store API endpoints
-export const storeAPI = {
-    getStores: async (params = {}) => {
-        return handleApiCall(() => api.get('/stores', { params }));
-    },
-
-    getStoreById: async (id) => {
-        if (!id) {
-            throw new Error('Store ID is required');
-        }
-        return handleApiCall(() => api.get(`/stores/${id}`));
-    },
-};
-
-// Service API endpoints
-export const serviceAPI = {
-    getServices: async (params = {}) => {
-        return handleApiCall(() => api.get('/services', { params }));
-    },
-
-    getServiceById: async (id) => {
-        if (!id) {
-            throw new Error('Service ID is required');
-        }
-        return handleApiCall(() => api.get(`/services/${id}`));
-    },
-};
-
-// NEW: User API endpoints
+// User API endpoints
 export const userAPI = {
     getProfile: async () => {
-        return handleApiCall(() => api.get('/users/profile'));
+        return handleApiCall(() => api.get(API_ENDPOINTS.user.profile));
     },
 
     updateProfile: async (profileData) => {
-        return handleApiCall(() => api.put('/users/profile', profileData));
+        return handleApiCall(() => api.put(API_ENDPOINTS.user.profile, profileData));
     },
 
     login: async (credentials) => {
-        return handleApiCall(() => api.post('/users/login', credentials));
+        return handleApiCall(() => api.post(API_ENDPOINTS.user.login, credentials));
     },
 
     register: async (userData) => {
-        return handleApiCall(() => api.post('/users/register', userData));
+        return handleApiCall(() => api.post(API_ENDPOINTS.user.register, userData));
     },
 };
 
@@ -540,7 +732,7 @@ export const testConnection = async () => {
     }
 };
 
-// NEW: API test function specifically for favorites
+// API test function specifically for favorites
 export const testFavoritesAPI = async () => {
     console.log('🧪 Testing Favorites API endpoints...');
     
@@ -576,6 +768,51 @@ export const testFavoritesAPI = async () => {
     }
     
     return results;
+};
+
+// NEW: Location-aware search functionality
+export const searchAPI = {
+    // Search stores with location filtering
+    searchStores: async (query, location = null, params = {}) => {
+        const searchParams = { ...params, search: query };
+        if (location && location !== 'All Locations') {
+            searchParams.location = location;
+        }
+        return handleApiCall(() => api.get(API_ENDPOINTS.stores.list, { params: searchParams }));
+    },
+
+    // Search offers with location filtering
+    searchOffers: async (query, location = null, params = {}) => {
+        const searchParams = { ...params, search: query };
+        if (location && location !== 'All Locations') {
+            searchParams.location = location;
+        }
+        return handleApiCall(() => api.get(API_ENDPOINTS.offers.list, { params: searchParams }));
+    },
+
+    // Combined search
+    searchAll: async (query, location = null, params = {}) => {
+        try {
+            const [storesResult, offersResult] = await Promise.allSettled([
+                searchAPI.searchStores(query, location, { ...params, limit: 5 }),
+                searchAPI.searchOffers(query, location, { ...params, limit: 5 })
+            ]);
+
+            return {
+                success: true,
+                stores: storesResult.status === 'fulfilled' ? storesResult.value : { stores: [] },
+                offers: offersResult.status === 'fulfilled' ? offersResult.value : { offers: [] },
+                location: location
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: 'Search failed',
+                stores: { stores: [] },
+                offers: { offers: [] }
+            };
+        }
+    }
 };
 
 // Export cookie management functions

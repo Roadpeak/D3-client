@@ -1,4 +1,4 @@
-// pages/ChatPage.jsx - Updated with image support and removed buttons
+// pages/ChatPage.jsx - Updated with NO auto-selection
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Send, Search, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle, Store, Paperclip, X } from 'lucide-react';
@@ -207,6 +207,9 @@ const ChatPage = () => {
         }
         return chat;
       }));
+
+      // Dispatch event to update navbar count
+      window.dispatchEvent(new CustomEvent('messageReceived'));
     };
 
     // Handle general new messages but filter for store messages
@@ -235,6 +238,9 @@ const ChatPage = () => {
           }
           return chat;
         }));
+
+        // Dispatch event to update navbar count
+        window.dispatchEvent(new CustomEvent('messageReceived'));
       } else {
         console.log('⚠️ Ignoring message not from store to customer');
       }
@@ -269,22 +275,27 @@ const ChatPage = () => {
     };
   }, [socket, on, off, selectedChat, user]);
 
-  // Load customer↔store chats
+  // FIXED: Load customer↔store chats WITHOUT auto-selection
   useEffect(() => {
     if (user) {
       loadChats();
       
+      // ONLY auto-select if there's a specific conversation passed via navigation state
       if (location.state?.selectedConversation) {
+        console.log('📌 Auto-selecting conversation from navigation state');
         setSelectedChat(location.state.selectedConversation);
         loadMessages(location.state.selectedConversation.id);
       } else if (location.state?.newConversationId) {
+        console.log('📌 Auto-selecting new conversation from navigation state');
         const newChatId = location.state.newConversationId;
+        // Find the conversation in the list after it's loaded
         loadMessages(newChatId);
       }
+      // REMOVED: Auto-selection of first chat when no specific chat is provided
     }
   }, [user, location.state]);
 
-  // Load customer's chats with stores
+  // FIXED: Load customer's chats with stores WITHOUT auto-selection
   const loadChats = async () => {
     try {
       setLoading(true);
@@ -307,18 +318,18 @@ const ChatPage = () => {
       if (response.success) {
         setChats(response.data);
         
-        // Auto-select chat if specified
-        if (!selectedChat && location.state?.newConversationId) {
+        // FIXED: Only auto-select if specifically requested via navigation state
+        if (location.state?.newConversationId) {
           const newChat = response.data.find(chat => chat.id === location.state.newConversationId);
           if (newChat) {
+            console.log('📌 Auto-selecting new conversation:', newChat.id);
             setSelectedChat(newChat);
             loadMessages(newChat.id);
           }
-        } else if (!selectedChat && response.data.length > 0) {
-          const firstChat = response.data[0];
-          setSelectedChat(firstChat);
-          loadMessages(firstChat.id);
         }
+        // REMOVED: Auto-selection of first chat
+        // No longer auto-selects first chat - user must manually select
+        
       } else {
         setError(response.message || 'Failed to load chats');
       }
@@ -360,6 +371,9 @@ const ChatPage = () => {
     joinConversation(chat.id);
     loadMessages(chat.id);
     markAsRead(chat.id);
+
+    // Dispatch event to update navbar count when messages are read
+    window.dispatchEvent(new CustomEvent('chatUpdated'));
   };
 
   // Mark store messages as read
@@ -372,6 +386,9 @@ const ChatPage = () => {
           ? { ...chat, unreadCount: 0 }
           : chat
       ));
+
+      // Dispatch event to update navbar count
+      window.dispatchEvent(new CustomEvent('chatUpdated'));
     } catch (error) {
       console.error('Failed to mark as read:', error);
     }
@@ -451,6 +468,9 @@ const ChatPage = () => {
             }
             : chat
         ));
+
+        // Dispatch event to update navbar count
+        window.dispatchEvent(new CustomEvent('chatUpdated'));
       } else {
         throw new Error(response.message || 'Failed to send message');
       }
@@ -898,15 +918,15 @@ const ChatPage = () => {
                   </div>
                 </>
               ) : (
-                /* Welcome Screen */
+                /* FIXED: Enhanced Welcome Screen - Always shows when no chat selected */
                 <div className="flex-1 flex items-center justify-center bg-gray-50">
                   <div className="text-center max-w-lg px-8">
                     <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Store className="w-12 h-12 text-blue-500" />
+                      <MessageCircle className="w-12 h-12 text-blue-500" />
                     </div>
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-3">Your Store Messages</h2>
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-3">Welcome to Store Chat</h2>
                     <p className="text-gray-600 mb-8 leading-relaxed">
-                      Select a store conversation from the sidebar to start chatting. Get instant support, ask questions, and stay updated on your orders.
+                      Connect with stores to ask questions, get support, and stay updated on your orders. Select a conversation from the sidebar to start chatting.
                     </p>
                     
                     <div className="grid grid-cols-2 gap-6 mb-8">
@@ -930,13 +950,26 @@ const ChatPage = () => {
                       </div>
                     </div>
                     
-                    {chats.length === 0 && (
-                      <button
-                        onClick={() => navigate('/stores')}
-                        className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
-                      >
-                        Browse Stores
-                      </button>
+                    {chats.length === 0 ? (
+                      <div>
+                        <p className="text-gray-500 mb-4">You haven't started any conversations with stores yet.</p>
+                        <button
+                          onClick={() => navigate('/stores')}
+                          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                        >
+                          Browse Stores to Start Chatting
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-gray-500 mb-4">Select a store conversation from the sidebar to continue chatting.</p>
+                        {totalUnreadCount > 0 && (
+                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
+                            <AlertCircle className="w-4 h-4" />
+                            <span className="text-sm font-medium">You have {totalUnreadCount} unread message{totalUnreadCount !== 1 ? 's' : ''}</span>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

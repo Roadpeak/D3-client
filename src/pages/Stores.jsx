@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, MapPin, Star, Grid3X3, List, Loader2 } from 'lucide-react';
+import { ChevronDown, Star, Grid3X3, List, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useLocation } from '../contexts/LocationContext';
 import ApiService from '../services/storeService';
 
 const Stores = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('Popular');
-  const [selectedLocation, setSelectedLocation] = useState('All Locations');
-  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
 
+  // Use Location Context
+  const { currentLocation, getShortLocationName } = useLocation();
+
   // API state
   const [stores, setStores] = useState([]);
-  const [categories, setCategories] = useState(['All']);
-  const [locations, setLocations] = useState(['All Locations']);
+  const [categories, setCategories] = useState([]); // Start empty to prevent duplicates
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState(null);
@@ -25,56 +26,89 @@ const Stores = () => {
 
   const sortOptions = ['Popular', 'Highest Discount', 'Lowest Discount', 'A-Z', 'Z-A'];
 
-  // Fetch initial data
+  // Fetch categories
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchCategories = async () => {
       try {
-        setLoading(true);
-        const [categoriesData, locationsData] = await Promise.all([
-          ApiService.getCategories(),
-          ApiService.getLocations()
-        ]);
-
-        setCategories(categoriesData.categories || ['All']);
-        setLocations(locationsData.locations || ['All Locations']);
+        const categoriesData = await ApiService.getCategories();
+        console.log('Raw categories data:', categoriesData);
+        
+        // Handle different API response formats and ensure no duplicates
+        let apiCategories = [];
+        
+        if (categoriesData.categories && Array.isArray(categoriesData.categories)) {
+          apiCategories = categoriesData.categories;
+        } else if (Array.isArray(categoriesData)) {
+          apiCategories = categoriesData;
+        }
+        
+        // Remove any existing 'All' entries and create unique set
+        const uniqueCategories = [...new Set(apiCategories.filter(cat => 
+          cat && cat !== 'All' && cat.trim() !== ''
+        ))];
+        
+        // Always put 'All' first, then sorted unique categories
+        const finalCategories = ['All', ...uniqueCategories.sort()];
+        
+        console.log('Final categories being set:', finalCategories);
+        setCategories(finalCategories);
+        
       } catch (err) {
-        console.error('Error fetching initial data:', err);
-        setError('Failed to load filter options');
-      } finally {
-        setLoading(false);
+        console.error('Error fetching categories:', err);
+        // Use fallback categories (no duplicates)
+        setCategories(['All', 'Electronics', 'Fashion', 'Food & Dining', 'Beauty', 'Health', 'Home & Garden']);
       }
     };
 
-    fetchInitialData();
+    fetchCategories();
   }, []);
 
+  // Debug location changes
   useEffect(() => {
-    console.log('Stores data:', stores.slice(0, 3).map(s => ({
-      name: s.name,
-      logo: s.logo,
-      logo_url: s.logo_url
-    })));
-  }, [stores]);
+    console.log('STORES PAGE - Location changed:', {
+      currentLocation,
+      shortName: getShortLocationName()
+    });
+  }, [currentLocation, getShortLocationName]);
 
-  // Fetch stores when filters change
+  // Fetch stores when filters or location change
   useEffect(() => {
     const fetchStores = async () => {
       try {
         setLoading(true);
+        setError(null);
+        
         const filters = {
-          category: selectedCategory,
-          location: selectedLocation,
+          category: selectedCategory !== 'All' ? selectedCategory : undefined,
           sortBy: sortBy,
           page: currentPage,
           limit: 20
         };
 
+        // Add location filter explicitly
+        if (currentLocation && currentLocation !== 'All Locations') {
+          filters.location = currentLocation;
+          console.log('STORES PAGE - Adding location filter:', currentLocation);
+        } else {
+          console.log('STORES PAGE - No location filter (showing all)');
+        }
+
+        console.log('STORES PAGE - Fetching with filters:', filters);
+
         const response = await ApiService.getStores(filters);
+        
+        console.log('STORES PAGE - API Response:', {
+          storesCount: response.stores?.length || 0,
+          totalItems: response.pagination?.totalItems || 0,
+          currentLocation: currentLocation,
+          appliedLocationFilter: filters.location || 'None'
+        });
+        
         setStores(response.stores || []);
         setPagination(response.pagination || null);
         setError(null);
       } catch (err) {
-        console.error('Error fetching stores:', err);
+        console.error('STORES PAGE - Error fetching stores:', err);
         setError('Failed to load stores');
         setStores([]);
       } finally {
@@ -83,7 +117,19 @@ const Stores = () => {
     };
 
     fetchStores();
-  }, [selectedCategory, selectedLocation, sortBy, currentPage]);
+  }, [currentLocation, selectedCategory, sortBy, currentPage]);
+
+  // Listen for location changes from navbar
+  useEffect(() => {
+    const handleLocationChange = (event) => {
+      console.log('STORES PAGE - Received location change event:', event.detail);
+      // Reset page when location changes
+      setCurrentPage(1);
+    };
+
+    window.addEventListener('locationChanged', handleLocationChange);
+    return () => window.removeEventListener('locationChanged', handleLocationChange);
+  }, []);
 
   const handleStoreClick = (store) => {
     navigate(`/Store/${store.id}`)
@@ -96,10 +142,6 @@ const Stores = () => {
       case 'category':
         setSelectedCategory(value);
         break;
-      case 'location':
-        setSelectedLocation(value);
-        setShowLocationDropdown(false);
-        break;
       case 'sort':
         setSortBy(value);
         setShowSortDropdown(false);
@@ -111,7 +153,6 @@ const Stores = () => {
 
   const clearFilters = () => {
     setSelectedCategory('All');
-    setSelectedLocation('All Locations');
     setSortBy('Popular');
     setCurrentPage(1);
   };
@@ -142,6 +183,9 @@ const Stores = () => {
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
               </div>
+              {store.location && (
+                <div className="text-xs text-gray-500 mt-1">{store.location}</div>
+              )}
             </div>
           </div>
           <div className="text-right">
@@ -169,6 +213,9 @@ const Stores = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-gray-900 text-sm md:text-base leading-tight truncate">{store.name}</h3>
+                {store.location && (
+                  <div className="text-xs text-gray-500 mt-1 truncate">{store.location}</div>
+                )}
               </div>
             </div>
             <div className="text-right flex-shrink-0 ml-2">
@@ -209,11 +256,26 @@ const Stores = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">All stores</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">All Stores</h1>
+            <p className="text-gray-600 mt-1">
+              {currentLocation && currentLocation !== 'All Locations' 
+                ? `Showing stores in ${getShortLocationName()}`
+                : 'Showing stores from all locations'
+              }
+            </p>
+            {pagination && pagination.totalItems > 0 && (
+              <p className="text-sm text-gray-500 mt-1">
+                {pagination.totalItems} stores found
+              </p>
+            )}
+          </div>
 
-          {/* Sort and Location Filters */}
+          {/* Sort and View Controls */}
           <div className="flex items-center space-x-4">
             {/* Mobile View Toggle */}
             <div className="md:hidden flex items-center space-x-2">
@@ -229,33 +291,6 @@ const Stores = () => {
               >
                 <List className="w-4 h-4" />
               </button>
-            </div>
-
-            {/* Location Filter */}
-            <div className="relative">
-              <button
-                onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors"
-              >
-                <MapPin className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-700 hidden sm:inline">{selectedLocation}</span>
-                <span className="text-gray-700 sm:hidden">Location</span>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              </button>
-
-              {showLocationDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                  {locations.map((location) => (
-                    <button
-                      key={location}
-                      onClick={() => handleFilterChange('location', location)}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors"
-                    >
-                      {location}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Sort Filter */}
@@ -288,9 +323,9 @@ const Stores = () => {
 
         {/* Category Filter Tabs */}
         <div className="flex space-x-2 mb-8 overflow-x-auto pb-2">
-          {categories.map((category) => (
+          {[...new Set(categories)].map((category, index) => (
             <button
-              key={category}
+              key={`category-${index}-${category}`}
               onClick={() => handleFilterChange('category', category)}
               className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-300 ${selectedCategory === category
                   ? 'bg-red-500 text-white shadow-lg'
@@ -364,13 +399,53 @@ const Stores = () => {
         {/* No results message */}
         {!loading && stores.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-500 text-lg">No stores found for the selected filters.</div>
+            <div className="text-gray-500 text-lg">
+              {currentLocation && currentLocation !== 'All Locations' 
+                ? `No stores found in ${getShortLocationName()} for the selected filters.`
+                : 'No stores found for the selected filters.'
+              }
+            </div>
             <button
               onClick={clearFilters}
               className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
               Clear Filters
             </button>
+            {currentLocation && currentLocation !== 'All Locations' && (
+              <p className="text-sm text-gray-400 mt-2">
+                Try changing location in the navbar to see more stores
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Location Stats */}
+        {!loading && (
+          <div className="mt-8 p-4 bg-white rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>
+                {stores.length > 0 ? (
+                  currentLocation && currentLocation !== 'All Locations' 
+                    ? `${stores.length} stores found in ${getShortLocationName()}`
+                    : `${stores.length} stores found`
+                ) : (
+                  currentLocation && currentLocation !== 'All Locations'
+                    ? `No stores in ${getShortLocationName()}`
+                    : 'No stores found'
+                )}
+              </span>
+              <div className="flex items-center space-x-4">
+                <span className="text-xs">
+                  Location: {currentLocation || 'Loading...'}
+                </span>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  Refresh Page
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

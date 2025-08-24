@@ -3,6 +3,7 @@ import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+import { useLocation } from '../contexts/LocationContext'; // Added Location Context
 import { offerAPI } from '../services/api';
 import { useFavorites } from '../hooks/useFavorites';
 import authService from '../services/authService';
@@ -27,6 +28,9 @@ export default function Hotdeals() {
 
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Location Context
+  const { currentLocation, getShortLocationName } = useLocation();
 
   const navigate = useNavigate();
 
@@ -71,7 +75,23 @@ export default function Hotdeals() {
         ...(selectedCategory && { category: selectedCategory })
       };
 
+      // Add location filter from context
+      if (currentLocation && currentLocation !== 'All Locations') {
+        params.location = currentLocation;
+        console.log('HOTDEALS - Adding location filter:', currentLocation);
+      } else {
+        console.log('HOTDEALS - No location filter (showing all)');
+      }
+
+      console.log('HOTDEALS - Fetching with params:', params);
+
       const response = await offerAPI.getOffers(params);
+      
+      console.log('HOTDEALS - API Response:', {
+        offersReceived: response.offers?.length || 0,
+        totalItems: response.pagination?.totalItems || 0,
+        appliedLocation: params.location || 'All Locations'
+      });
       
       // Transform offers to match frontend expectations
       const transformedOffers = response.offers?.map(offer => ({
@@ -91,13 +111,13 @@ export default function Hotdeals() {
         status: offer.status,
         service: offer.service,
         store_info: offer.store,
-        expiration_date: offer.expiration_date // ADDED: Include expiration date
+        expiration_date: offer.expiration_date
       })) || [];
 
-      // ADDED: Filter out expired offers for customer-facing page
+      // Filter out expired offers for customer-facing page
       const activeOffers = transformedOffers.filter(offer => !isOfferExpired(offer.expiration_date));
       
-      console.log(`📋 Total offers received: ${transformedOffers.length}, Active offers: ${activeOffers.length}`);
+      console.log(`HOTDEALS - Total offers: ${transformedOffers.length}, Active: ${activeOffers.length}, Location: ${currentLocation}`);
 
       setOffers(activeOffers);
       setPagination(response.pagination || {});
@@ -123,7 +143,7 @@ export default function Hotdeals() {
       setCategories(updatedCategories);
       
     } catch (err) {
-      console.error('Error fetching offers:', err);
+      console.error('HOTDEALS - Error fetching offers:', err);
       setError(`Failed to fetch offers: ${err.message || 'Unknown error'}`);
       
       // Add retry logic for network errors
@@ -135,7 +155,7 @@ export default function Hotdeals() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, limit, sortBy, selectedCategory, retryCount, calculateCategoryCounts, isOfferExpired]);
+  }, [currentPage, limit, sortBy, selectedCategory, retryCount, calculateCategoryCounts, isOfferExpired, currentLocation]);
 
   // Enhanced favorite handling
   const handleFavoriteClick = useCallback(async (e, offer) => {
@@ -220,6 +240,25 @@ export default function Hotdeals() {
     };
   }, []);
 
+  // Listen for location changes from navbar
+  useEffect(() => {
+    const handleLocationChange = (event) => {
+      console.log('HOTDEALS - Received location change event:', event.detail);
+      setCurrentPage(1); // Reset pagination when location changes
+    };
+
+    window.addEventListener('locationChanged', handleLocationChange);
+    return () => window.removeEventListener('locationChanged', handleLocationChange);
+  }, []);
+
+  // Debug location changes
+  useEffect(() => {
+    console.log('HOTDEALS - Location changed:', {
+      currentLocation,
+      shortName: getShortLocationName()
+    });
+  }, [currentLocation, getShortLocationName]);
+
   // Fetch data effect
   useEffect(() => {
     fetchData();
@@ -252,8 +291,13 @@ export default function Hotdeals() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-3">
             <div className="flex items-center space-x-8">
-              <a href='/Home' className="text-gray-600 hover:text-red-500">Home</a>
-              <a href='/Home' className="text-red-500 font-medium">Nairobi</a>
+              <a href='/' className="text-gray-600 hover:text-red-500">Home</a>
+              <span className="text-red-500 font-medium">
+                {currentLocation && currentLocation !== 'All Locations' 
+                  ? `Hot Deals - ${getShortLocationName()}` 
+                  : 'Hot Deals - All Locations'
+                }
+              </span>
             </div>
             
             {/* Mobile Filter Button */}
@@ -331,6 +375,17 @@ export default function Hotdeals() {
             )}
 
             <div className="p-4 md:p-0 space-y-6">
+              {/* Location Info */}
+              {currentLocation && currentLocation !== 'All Locations' && (
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-indigo-800 text-sm mb-2">CURRENT LOCATION</h3>
+                  <p className="text-indigo-600 font-medium">{getShortLocationName()}</p>
+                  <p className="text-xs text-indigo-500 mt-1">
+                    Showing deals available in your area
+                  </p>
+                </div>
+              )}
+
               {/* Categories */}
               <div className="bg-white rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -387,6 +442,11 @@ export default function Hotdeals() {
                 </div>
                 <p className="text-sm mb-2">Limited Time Offers</p>
                 <p className="text-lg font-bold">Amazing Savings</p>
+                {currentLocation && currentLocation !== 'All Locations' && (
+                  <p className="text-xs mt-2 text-purple-100">
+                    Available in {getShortLocationName()}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -419,6 +479,9 @@ export default function Hotdeals() {
                 {pagination.totalItems > 0 && (
                   <span className="text-sm text-gray-600 hidden sm:inline">
                     Showing {Math.min((currentPage - 1) * pagination.itemsPerPage + 1, pagination.totalItems)} - {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} results
+                    {currentLocation && currentLocation !== 'All Locations' && (
+                      <span className="ml-1">in {getShortLocationName()}</span>
+                    )}
                   </span>
                 )}
               </div>
@@ -584,18 +647,28 @@ export default function Hotdeals() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No active offers found</h3>
                   <p className="text-gray-500 mb-4">
-                    {selectedCategory 
-                      ? `No active offers found in "${selectedCategory}" category.`
-                      : 'No active offers are currently available.'
-                    }
+                    {currentLocation && currentLocation !== 'All Locations' ? (
+                      selectedCategory 
+                        ? `No active offers found in "${selectedCategory}" category for ${getShortLocationName()}.`
+                        : `No active offers are currently available in ${getShortLocationName()}.`
+                    ) : (
+                      selectedCategory 
+                        ? `No active offers found in "${selectedCategory}" category.`
+                        : 'No active offers are currently available.'
+                    )}
                   </p>
                   {(selectedCategory || sortBy !== 'latest') && (
                     <button 
                       onClick={clearFilters}
-                      className="text-red-500 hover:underline"
+                      className="text-red-500 hover:underline mb-2"
                     >
                       Clear all filters
                     </button>
+                  )}
+                  {currentLocation && currentLocation !== 'All Locations' && (
+                    <p className="text-sm text-gray-400">
+                      Try selecting "All Locations" from the navbar dropdown for more deals
+                    </p>
                   )}
                 </div>
               </div>
@@ -662,8 +735,41 @@ export default function Hotdeals() {
                 {pagination.totalItems > 0 && (
                   <p className="text-center text-sm text-gray-500">
                     Page {currentPage} of {pagination.totalPages} • {pagination.totalItems} total results
+                    {currentLocation && currentLocation !== 'All Locations' && (
+                      <span className="ml-1">in {getShortLocationName()}</span>
+                    )}
                   </p>
                 )}
+              </div>
+            )}
+
+            {/* Location Stats */}
+            {!loading && (
+              <div className="mt-8 p-4 bg-white rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <span>
+                    {offers.length > 0 ? (
+                      currentLocation && currentLocation !== 'All Locations' 
+                        ? `${offers.length} hot deals found in ${getShortLocationName()}`
+                        : `${offers.length} hot deals available`
+                    ) : (
+                      currentLocation && currentLocation !== 'All Locations'
+                        ? `No hot deals in ${getShortLocationName()}`
+                        : 'No hot deals found'
+                    )}
+                  </span>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-xs">
+                      Location: {currentLocation || 'Loading...'}
+                    </span>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -685,6 +791,11 @@ export default function Hotdeals() {
                 Get <span className="text-yellow-300">$95,00,000</span> worth Coupons Savings
               </p>
               <p className="text-blue-100 text-sm sm:text-base">The Coolest Library of Verified Lists</p>
+              {currentLocation && currentLocation !== 'All Locations' && (
+                <p className="text-blue-100 text-xs mt-2">
+                  Now available in {getShortLocationName()}
+                </p>
+              )}
             </div>
             <div className="bg-white p-3 rounded-lg">
               🎁

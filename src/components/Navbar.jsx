@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import api from '../config/api';
 import RealTimeSearch from './RealTimeSearch';
+import { useLocation } from '../contexts/LocationContext'; // Import the Location Context
+import chatService from '../services/chatService'; // Import ChatService
 
 // Custom SVG Icons with improved styling
 const Search = ({ className }) => (
@@ -98,27 +100,58 @@ const BookmarkIcon = ({ className }) => (
 );
 
 const Navbar = () => {
+  // FIXED: Safe location hook without hardcoded fallback
+  const useSafeLocation = () => {
+    try {
+      return useLocation();
+    } catch (error) {
+      // Return minimal fallback object when provider is missing
+      console.warn('LocationProvider not found, using minimal fallback');
+      return {
+        currentLocation: 'All Locations', // Default to "All Locations"
+        isLocationLoading: false,
+        availableLocations: [], // Empty array instead of hardcoded locations
+        changeLocation: async (location) => {
+          console.log('Fallback: changing location to', location);
+        },
+        getShortLocationName: () => 'All Locations',
+        getCurrentLocationFromBrowser: async () => {
+          console.log('Fallback: getting current location');
+        }
+      };
+    }
+  };
+
+  // Always call hooks in the same order
+  const {
+    currentLocation,
+    isLocationLoading,
+    availableLocations,
+    changeLocation,
+    getShortLocationName,
+    getCurrentLocationFromBrowser
+  } = useSafeLocation();
+
   // State management
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState('Westlands, Nairobi');
 
   // User and authentication state
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
-  const [locations, setLocations] = useState([]);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const navigate = useNavigate();
-  const location = useLocation();
+  const location = useRouterLocation();
 
   // Check authentication status on component mount
   useEffect(() => {
     checkAuthStatus();
     loadNotifications();
-    loadLocations();
+    loadUnreadChatMessages();
   }, []);
 
   const checkAuthStatus = async () => {
@@ -180,29 +213,76 @@ const Navbar = () => {
     }
   };
 
-  const loadLocations = async () => {
+  const loadUnreadChatMessages = async () => {
     try {
-      // You can implement API call to get locations
-      // const response = await api.get('/locations');
-      // setLocations(response.data.locations);
+      if (!authService.isAuthenticated()) {
+        setUnreadChatCount(0);
+        return;
+      }
 
-      // For now, use sample data
-      setLocations([
-        { id: 1, name: "Westlands, Nairobi", area: "Current Location", offers: "120 deals" },
-        { id: 2, name: "CBD, Nairobi", area: "Central Business District", offers: "95 deals" },
-        { id: 3, name: "Karen, Nairobi", area: "Residential Area", offers: "85 deals" },
-        { id: 4, name: "Kilimani, Nairobi", area: "Shopping & Dining", offers: "110 deals" },
-        { id: 5, name: "Upperhill, Nairobi", area: "Business District", offers: "75 deals" },
-        { id: 6, name: "Kileleshwa, Nairobi", area: "Residential", offers: "60 deals" },
-        { id: 7, name: "Lavington, Nairobi", area: "Upmarket Area", offers: "90 deals" },
-        { id: 8, name: "Gigiri, Nairobi", area: "Diplomatic Area", offers: "45 deals" },
-        { id: 9, name: "Runda, Nairobi", area: "Residential Estate", offers: "55 deals" },
-        { id: 10, name: "Muthaiga, Nairobi", area: "Exclusive Suburb", offers: "40 deals" }
-      ]);
+      console.log('📨 Loading unread chat messages count...');
+      
+      // Check if ChatService has a valid token
+      const chatToken = chatService.getAuthToken();
+      if (!chatToken) {
+        console.log('❌ No chat token available');
+        setUnreadChatCount(0);
+        return;
+      }
+
+      // Get all customer conversations with stores
+      const response = await chatService.getConversations('customer');
+      
+      if (response.success && response.data) {
+        // Calculate total unread count from all conversations
+        const totalUnreadCount = response.data.reduce((total, chat) => {
+          return total + (chat.unreadCount || 0);
+        }, 0);
+        
+        console.log(`📊 Total unread chat messages: ${totalUnreadCount}`);
+        setUnreadChatCount(totalUnreadCount);
+      } else {
+        console.log('⚠️ Failed to load chat conversations:', response.message);
+        setUnreadChatCount(0);
+      }
     } catch (error) {
-      console.error('Error loading locations:', error);
+      console.error('❌ Error loading unread chat messages:', error);
+      setUnreadChatCount(0);
     }
   };
+
+  // Refresh chat count periodically and when user returns to tab
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Refresh chat count every 30 seconds
+    const interval = setInterval(() => {
+      loadUnreadChatMessages();
+    }, 30000);
+
+    // Refresh when user returns to tab
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated) {
+        loadUnreadChatMessages();
+      }
+    };
+
+    // Listen for chat updates from other components
+    const handleChatUpdate = () => {
+      loadUnreadChatMessages();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('chatUpdated', handleChatUpdate);
+    window.addEventListener('messageReceived', handleChatUpdate);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('chatUpdated', handleChatUpdate);
+      window.removeEventListener('messageReceived', handleChatUpdate);
+    };
+  }, [isAuthenticated]);
 
   // Event handlers
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -222,10 +302,39 @@ const Navbar = () => {
     navigate(`/offer/${offerId}`);
   };
 
-  const handleLocationSelect = (selectedLocation) => {
-    setCurrentLocation(selectedLocation.name);
-    setIsLocationOpen(false);
-    // You can implement location change logic here
+  // FIXED: Updated location handler using context
+  const handleLocationSelect = async (selectedLocation) => {
+    try {
+      console.log('📍 Navbar: Changing location to:', selectedLocation.name);
+      
+      await changeLocation(selectedLocation.name);
+      setIsLocationOpen(false);
+      
+      // Dispatch event with more details
+      const locationChangeEvent = new CustomEvent('locationChanged', {
+        detail: { 
+          location: selectedLocation.name,
+          source: 'navbar',
+          timestamp: Date.now()
+        }
+      });
+      
+      console.log('📍 Navbar: Dispatching locationChanged event');
+      window.dispatchEvent(locationChangeEvent);
+      
+    } catch (error) {
+      console.error('❌ Navbar: Error changing location:', error);
+    }
+  };
+
+  // Auto-detect location handler
+  const handleUseCurrentLocation = async () => {
+    try {
+      await getCurrentLocationFromBrowser();
+      setIsLocationOpen(false);
+    } catch (error) {
+      console.error('Error getting current location:', error);
+    }
   };
 
   const markNotificationAsRead = async (notificationId) => {
@@ -257,9 +366,10 @@ const Navbar = () => {
   };
 
   const unreadCount = notifications.filter(notif => !notif.isRead).length;
-  const currentLocationShort = currentLocation.split(',')[0];
+  const currentLocationDisplay = getShortLocationName();
 
-  if (loading) {
+  // Show loading state if either auth or location is loading
+  if (loading || isLocationLoading) {
     return (
       <header className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-slate-200/50 sticky top-0 z-40">
         <div className="container mx-auto px-4">
@@ -272,6 +382,7 @@ const Navbar = () => {
             </div>
             <div className="flex items-center space-x-3">
               <div className="animate-pulse bg-slate-200 rounded-lg w-20 h-8"></div>
+              <div className="animate-pulse bg-slate-200 rounded-full w-8 h-8"></div>
             </div>
           </div>
         </div>
@@ -305,37 +416,56 @@ const Navbar = () => {
                     <MapPin className="w-5 h-5 text-slate-600" />
                   </button>
 
-                  {/* Location Dropdown */}
-                  {isLocationOpen && (
+                  {/* FIXED: Location Dropdown - Only show if locations are available */}
+                  {isLocationOpen && availableLocations.length > 0 && (
                     <div className="absolute top-12 right-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
                       <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
                         <h3 className="text-sm font-semibold text-slate-800">Choose Your Location</h3>
                         <p className="text-xs text-slate-600 mt-1">Find the best deals near you</p>
                       </div>
                       <div className="max-h-64 overflow-y-auto">
-                        {locations.map((location) => (
+                        {availableLocations.map((locationItem) => (
                           <button
-                            key={location.id}
+                            key={locationItem.id}
                             className="w-full p-4 text-left hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 border-b border-slate-100/50 last:border-b-0 transition-all duration-200"
-                            onClick={() => handleLocationSelect(location)}
+                            onClick={() => handleLocationSelect(locationItem)}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-medium text-slate-900">{location.name}</p>
-                                <p className="text-xs text-slate-500">{location.area}</p>
+                                <p className="text-sm font-medium text-slate-900">{locationItem.name}</p>
+                                <p className="text-xs text-slate-500">{locationItem.area}</p>
                               </div>
                               <div className="text-right">
-                                {location.area === "Current Location" && (
+                                {locationItem.name === currentLocation && (
                                   <div className="w-2 h-2 bg-emerald-500 rounded-full mb-1"></div>
                                 )}
-                                <p className="text-xs text-indigo-600 font-medium">{location.offers}</p>
+                                <p className="text-xs text-indigo-600 font-medium">{locationItem.offers}</p>
                               </div>
                             </div>
                           </button>
                         ))}
                       </div>
                       <div className="p-4 border-t border-slate-200/50 bg-slate-50/50">
-                        <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 transition-colors">
+                        <button
+                          onClick={handleUseCurrentLocation}
+                          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 transition-colors"
+                        >
+                          <span>📍</span>
+                          <span>Use My Current Location</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show message if no locations available */}
+                  {isLocationOpen && availableLocations.length === 0 && (
+                    <div className="absolute top-12 right-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
+                      <div className="p-5 text-center">
+                        <p className="text-sm text-slate-600">Loading locations...</p>
+                        <button
+                          onClick={handleUseCurrentLocation}
+                          className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
+                        >
                           <span>📍</span>
                           <span>Use My Current Location</span>
                         </button>
@@ -466,45 +596,64 @@ const Navbar = () => {
                   </Link>
                 </div>
 
-                {/* Desktop location dropdown */}
+                {/* FIXED: Desktop location dropdown - only show if locations available */}
                 <div className="flex items-center space-x-3 text-sm text-slate-600 relative">
                   <MapPin className="w-4 h-4 text-indigo-500" />
                   <button onClick={toggleLocation} className="flex items-center space-x-2 hover:text-indigo-600 transition-colors">
-                    <span className="font-medium">{currentLocation}</span>
+                    <span className="font-medium">{currentLocationDisplay}</span>
                     <ChevronDown className="w-4 h-4" />
                   </button>
 
                   {/* Location Dropdown */}
-                  {isLocationOpen && (
+                  {isLocationOpen && availableLocations.length > 0 && (
                     <div className="absolute top-10 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
                       <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
                         <h3 className="text-sm font-semibold text-slate-800">Choose Your Location</h3>
                         <p className="text-xs text-slate-600 mt-1">Find the best deals near you</p>
                       </div>
                       <div className="max-h-64 overflow-y-auto">
-                        {locations.map((location) => (
+                        {availableLocations.map((locationItem) => (
                           <button
-                            key={location.id}
+                            key={locationItem.id}
                             className="w-full p-4 text-left hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 border-b border-slate-100/50 last:border-b-0 transition-all duration-200"
-                            onClick={() => handleLocationSelect(location)}
+                            onClick={() => handleLocationSelect(locationItem)}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-medium text-slate-900">{location.name}</p>
-                                <p className="text-xs text-slate-500">{location.area}</p>
+                                <p className="text-sm font-medium text-slate-900">{locationItem.name}</p>
+                                <p className="text-xs text-slate-500">{locationItem.area}</p>
                               </div>
                               <div className="text-right">
-                                {location.area === "Current Location" && (
+                                {locationItem.name === currentLocation && (
                                   <div className="w-2 h-2 bg-emerald-500 rounded-full mb-1"></div>
                                 )}
-                                <p className="text-xs text-indigo-600 font-medium">{location.offers}</p>
+                                <p className="text-xs text-indigo-600 font-medium">{locationItem.offers}</p>
                               </div>
                             </div>
                           </button>
                         ))}
                       </div>
                       <div className="p-4 border-t border-slate-200/50 bg-slate-50/50">
-                        <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 transition-colors">
+                        <button
+                          onClick={handleUseCurrentLocation}
+                          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 transition-colors"
+                        >
+                          <span>📍</span>
+                          <span>Use My Current Location</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show loading/empty state for desktop too */}
+                  {isLocationOpen && availableLocations.length === 0 && (
+                    <div className="absolute top-10 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
+                      <div className="p-5 text-center">
+                        <p className="text-sm text-slate-600">Loading locations...</p>
+                        <button
+                          onClick={handleUseCurrentLocation}
+                          className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
+                        >
                           <span>📍</span>
                           <span>Use My Current Location</span>
                         </button>
@@ -639,8 +788,13 @@ const Navbar = () => {
                 <Link to="/requestservice" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-4 py-2.5 rounded-xl hover:bg-slate-100/60 ${location.pathname === '/requestservice' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
                   Request Service
                 </Link>
-                <Link to="/chat" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-4 py-2.5 rounded-xl hover:bg-slate-100/60 ${location.pathname === '/chat' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
+                <Link to="/chat" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-4 py-2.5 rounded-xl hover:bg-slate-100/60 relative ${location.pathname === '/chat' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
                   Chat
+                  {unreadChatCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-1.5 py-0.5 rounded-full shadow-lg">
+                      {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                    </span>
+                  )}
                 </Link>
               </nav>
 
@@ -672,52 +826,55 @@ const Navbar = () => {
       {/* Fixed Bottom Mobile Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/50 shadow-xl z-50">
         <div className="grid grid-cols-4 gap-1 p-2">
-          <Link 
-            to="/" 
-            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 ${
-              location.pathname === '/' 
-                ? 'text-indigo-600 bg-indigo-50' 
-                : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
-            }`}
+          <Link
+            to="/"
+            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/'
+              ? 'text-indigo-600 bg-indigo-50'
+              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+              }`}
           >
             <HomeIcon className="w-5 h-5" />
             <span className="text-xs font-medium">Home</span>
           </Link>
-          
-          <Link 
-            to="/hotdeals" 
-            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 relative ${
-              location.pathname === '/hotdeals' 
-                ? 'text-indigo-600 bg-indigo-50' 
-                : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
-            }`}
+
+          <Link
+            to="/hotdeals"
+            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 relative ${location.pathname === '/hotdeals'
+              ? 'text-indigo-600 bg-indigo-50'
+              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+              }`}
           >
             <FireIcon className="w-5 h-5" />
             <span className="text-xs font-medium">Deals</span>
             <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
           </Link>
-          
-          <Link 
-            to="/stores" 
-            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 ${
-              location.pathname === '/stores' 
-                ? 'text-indigo-600 bg-indigo-50' 
-                : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
-            }`}
+
+          <Link
+            to="/stores"
+            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/stores'
+              ? 'text-indigo-600 bg-indigo-50'
+              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+              }`}
           >
             <StoreIcon className="w-5 h-5" />
             <span className="text-xs font-medium">Stores</span>
           </Link>
-          
-          <Link 
-            to="/chat" 
-            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 ${
-              location.pathname === '/chat' 
-                ? 'text-indigo-600 bg-indigo-50' 
-                : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
-            }`}
+
+          <Link
+            to="/chat"
+            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 relative ${location.pathname === '/chat'
+              ? 'text-indigo-600 bg-indigo-50'
+              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+              }`}
           >
-            <ChatIcon className="w-5 h-5" />
+            <div className="relative">
+              <ChatIcon className="w-5 h-5" />
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center shadow-lg">
+                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                </span>
+              )}
+            </div>
             <span className="text-xs font-medium">Chat</span>
           </Link>
         </div>

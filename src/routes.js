@@ -1,4 +1,4 @@
-// src/routes/index.js - Updated version with enhanced booking system and profile routes
+
 import React from 'react'
 import { Route, Routes, Navigate } from 'react-router-dom'
 import Home from './pages/Home'

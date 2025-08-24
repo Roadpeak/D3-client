@@ -3,7 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Loader2, MapPin, Tag, X } from 'lucide-react';
 import { offerAPI, storeAPI } from '../services/api';
 
-const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...", className = "" }) => {
+const RealTimeSearch = ({ 
+  placeholder = "Search for deals, coupons & stores...", 
+  className = "",
+  currentLocation = null, // Optional prop for location
+  onLocationChange = null // Optional callback for location changes
+}) => {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,6 +19,14 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
   const searchRef = useRef(null);
   const resultsRef = useRef(null);
   const navigate = useNavigate();
+
+  // Helper function to get short location name
+  const getShortLocationName = () => {
+    if (!currentLocation || currentLocation === 'All Locations') {
+      return 'All Locations';
+    }
+    return currentLocation.split(',')[0];
+  };
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -27,19 +40,27 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
     }
   }, []);
 
-  // Search stores using your API
+  // Search stores using your API with optional location support
   const searchStores = async (searchQuery) => {
     try {
-      const response = await storeAPI.getStores({
+      const searchParams = {
         search: searchQuery,
         limit: 5
-      });
+      };
+      
+      // Add location parameter if current location is set and not "All Locations"
+      if (currentLocation && currentLocation !== 'All Locations') {
+        searchParams.location = currentLocation;
+      }
+
+      const response = await storeAPI.getStores(searchParams);
       
       // Transform store data to match component expectations
       return (response.stores || []).map(store => ({
         id: store.id,
         name: store.name,
-        category: store.category,
+        category: store.category || 'Store',
+        location: store.location,
         logo: store.logo || store.logo_url || '/images/default-store.png',
         cashback: store.cashback || store.discount || 'Available'
       }));
@@ -49,13 +70,20 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
     }
   };
 
-  // Search offers using your API
+  // Search offers using your API with optional location support
   const searchOffers = async (searchQuery) => {
     try {
-      const response = await offerAPI.getOffers({
+      const searchParams = {
         search: searchQuery,
         limit: 5
-      });
+      };
+      
+      // Add location parameter if current location is set and not "All Locations"
+      if (currentLocation && currentLocation !== 'All Locations') {
+        searchParams.location = currentLocation;
+      }
+
+      const response = await offerAPI.getOffers(searchParams);
       
       // Transform offer data to match component expectations
       return (response.offers || []).map(offer => ({
@@ -63,7 +91,8 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
         title: offer.title || offer.service?.name || 'Special Offer',
         description: offer.description || offer.service?.description || 'Great deal available',
         discount: offer.discount ? `${offer.discount}% OFF` : 'Special Price',
-        store: offer.store?.name || offer.store_info?.name || 'Store',
+        store: offer.store?.name || offer.service?.store?.name || 'Store',
+        location: offer.store?.location || offer.service?.store?.location || 'Location',
         category: offer.category || offer.service?.category || 'General',
         image: offer.image || offer.service?.image_url || '/images/default-offer.png'
       }));
@@ -84,6 +113,8 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
 
       try {
         setIsLoading(true);
+        console.log(`Searching for "${searchQuery}"${currentLocation ? ` in location: ${currentLocation}` : ''}`);
+        
         const [stores, offers] = await Promise.all([
           searchStores(searchQuery),
           searchOffers(searchQuery)
@@ -100,8 +131,16 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
         setIsLoading(false);
       }
     }, 300),
-    []
+    [currentLocation] // Re-create debounced function when location changes
   );
+
+  // Re-search when location changes and there's an active query
+  useEffect(() => {
+    if (query.trim() && isOpen) {
+      setIsLoading(true);
+      debouncedSearch(query);
+    }
+  }, [currentLocation, debouncedSearch]);
 
   // Handle input change
   const handleInputChange = (e) => {
@@ -134,8 +173,14 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
       setRecentSearches(newRecentSearches);
       localStorage.setItem('recentSearches', JSON.stringify(newRecentSearches));
       
-      // Navigate to search results page
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      // Navigate to search results page with location parameter
+      const searchParams = new URLSearchParams();
+      searchParams.append('q', searchQuery);
+      if (currentLocation && currentLocation !== 'All Locations') {
+        searchParams.append('location', currentLocation);
+      }
+      
+      navigate(`/search?${searchParams.toString()}`);
       setIsOpen(false);
       setQuery('');
     }
@@ -200,6 +245,7 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
     switch (result.type) {
       case 'recent':
         setQuery(result.item);
+        setIsLoading(true);
         debouncedSearch(result.item);
         break;
       case 'store':
@@ -245,7 +291,7 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
       <form onSubmit={handleSearch} className="relative">
         <input
           type="text"
-          placeholder={placeholder}
+          placeholder={`${placeholder}${currentLocation && currentLocation !== 'All Locations' ? ` in ${getShortLocationName()}` : ''}`}
           value={query}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
@@ -270,11 +316,24 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
           ref={resultsRef}
           className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto"
         >
+          {/* Location indicator - only show if location is specified */}
+          {currentLocation && (hasResults || isLoading || query.trim()) && (
+            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs text-gray-600 flex items-center">
+              <MapPin className="w-3 h-3 mr-1" />
+              {currentLocation !== 'All Locations' 
+                ? `Results in ${getShortLocationName()}` 
+                : 'Results from all locations'
+              }
+            </div>
+          )}
+
           {/* Loading State */}
           {isLoading && query.trim() && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-red-500" />
-              <span className="ml-2 text-gray-600">Searching...</span>
+              <span className="ml-2 text-gray-600">
+                Searching{currentLocation && currentLocation !== 'All Locations' ? ` in ${getShortLocationName()}` : ''}...
+              </span>
             </div>
           )}
 
@@ -335,7 +394,15 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
                         />
                         <div className="flex-1 text-left">
                           <p className="font-medium text-gray-900">{store.name}</p>
-                          <p className="text-sm text-gray-500">{store.category}</p>
+                          <div className="flex items-center text-sm text-gray-500">
+                            <span>{store.category}</span>
+                            {store.location && (
+                              <>
+                                <span className="mx-1">•</span>
+                                <span>{store.location}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                         <div className="text-red-500 font-medium text-sm">
                           {store.cashback}
@@ -374,7 +441,15 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
                         <div className="flex-1 text-left">
                           <p className="font-medium text-gray-900 truncate">{offer.title}</p>
                           <p className="text-sm text-gray-500 truncate">{offer.description}</p>
-                          <p className="text-xs text-blue-600">{offer.store}</p>
+                          <div className="flex items-center text-xs text-blue-600">
+                            <span>{offer.store}</span>
+                            {offer.location && (
+                              <>
+                                <span className="mx-1">•</span>
+                                <span>{offer.location}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
                         <div className="text-red-500 font-medium text-sm">
                           {offer.discount}
@@ -386,14 +461,16 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
               )}
 
               {/* View All Results */}
-              {/* <div className="p-4 border-t border-gray-100">
-                <button
-                  onClick={handleSearch}
-                  className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-lg hover:from-red-600 hover:to-pink-600 transition-colors font-medium"
-                >
-                  View All Results for "{query}"
-                </button>
-              </div> */}
+              {query.trim() && (
+                <div className="p-4 border-t border-gray-100">
+                  <button
+                    onClick={handleSearch}
+                    className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-lg hover:from-red-600 hover:to-pink-600 transition-colors font-medium"
+                  >
+                    View All Results for "{query}"{currentLocation && currentLocation !== 'All Locations' && ` in ${getShortLocationName()}`}
+                  </button>
+                </div>
+              )}
             </>
           )}
 
@@ -401,8 +478,14 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
           {!isLoading && !hasResults && query.trim() && (
             <div className="p-8 text-center">
               <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 mb-2">No results found for "{query}"</p>
-              <p className="text-sm text-gray-400">Try searching for stores, deals, or categories</p>
+              <p className="text-gray-500 mb-2">
+                No results found for "{query}"
+                {currentLocation && currentLocation !== 'All Locations' && ` in ${getShortLocationName()}`}
+              </p>
+              <p className="text-sm text-gray-400">
+                Try searching for stores, deals, or categories
+                {currentLocation && currentLocation !== 'All Locations' && ', or change your location'}
+              </p>
             </div>
           )}
 
@@ -411,7 +494,10 @@ const RealTimeSearch = ({ placeholder = "Search for deals, coupons & stores...",
             <div className="p-8 text-center">
               <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 mb-2">Start typing to search</p>
-              <p className="text-sm text-gray-400">Search for stores, deals, or categories</p>
+              <p className="text-sm text-gray-400">
+                Search for stores, deals, or categories
+                {currentLocation && currentLocation !== 'All Locations' && ` in ${getShortLocationName()}`}
+              </p>
             </div>
           )}
         </div>
