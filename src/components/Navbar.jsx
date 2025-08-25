@@ -1,12 +1,14 @@
+// components/Navbar.jsx - Enhanced with comprehensive notification system
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import api from '../config/api';
 import RealTimeSearch from './RealTimeSearch';
-import { useLocation } from '../contexts/LocationContext'; // Import the Location Context
-import chatService from '../services/chatService'; // Import ChatService
+import { useLocation } from '../contexts/LocationContext';
+import chatService from '../services/chatService';
+import notificationService from '../services/notificationService'; // NEW
 
-// Custom SVG Icons with improved styling
+// SVG Icons (keeping existing ones plus new ones)
 const Search = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -56,7 +58,42 @@ const LogoutIcon = ({ className }) => (
   </svg>
 );
 
-// Modern compact icon components for mobile navigation
+// NEW: Additional notification type icons
+const MessageCircleIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+  </svg>
+);
+
+const CalendarIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+const GiftIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <polyline points="20,12 20,22 4,22 4,12"></polyline>
+    <rect x="2" y="7" width="20" height="5"></rect>
+    <line x1="12" y1="22" x2="12" y2="7"></line>
+    <path d="M12,7H7.5a2.5,2.5 0 0,1 0,-5C11,2 12,7 12,7z"></path>
+    <path d="M12,7h4.5a2.5,2.5 0 0,0 0,-5C13,2 12,7 12,7z"></path>
+  </svg>
+);
+
+const StoreIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path>
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+    <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path>
+    <path d="M2 7h20"></path>
+    <path d="M22 7v3a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V7"></path>
+    <path d="M18 7v3a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V7"></path>
+    <path d="M10 7v3a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V7"></path>
+    <path d="M6 7v3a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V7"></path>
+  </svg>
+);
+
 const HomeIcon = ({ className }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
     <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
@@ -69,15 +106,9 @@ const FireIcon = ({ className }) => (
   </svg>
 );
 
-const StoreIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z" />
-  </svg>
-);
-
-const ServiceIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z" />
+const TagIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
   </svg>
 );
 
@@ -87,30 +118,17 @@ const ChatIcon = ({ className }) => (
   </svg>
 );
 
-const TagIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-  </svg>
-);
-
-const BookmarkIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" />
-  </svg>
-);
-
 const Navbar = () => {
-  // FIXED: Safe location hook without hardcoded fallback
+  // Location hook with fallback
   const useSafeLocation = () => {
     try {
       return useLocation();
     } catch (error) {
-      // Return minimal fallback object when provider is missing
       console.warn('LocationProvider not found, using minimal fallback');
       return {
-        currentLocation: 'All Locations', // Default to "All Locations"
+        currentLocation: 'All Locations',
         isLocationLoading: false,
-        availableLocations: [], // Empty array instead of hardcoded locations
+        availableLocations: [],
         changeLocation: async (location) => {
           console.log('Fallback: changing location to', location);
         },
@@ -122,7 +140,6 @@ const Navbar = () => {
     }
   };
 
-  // Always call hooks in the same order
   const {
     currentLocation,
     isLocationLoading,
@@ -141,7 +158,19 @@ const Navbar = () => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // ENHANCED: Comprehensive notification state
   const [notifications, setNotifications] = useState([]);
+  const [notificationCounts, setNotificationCounts] = useState({
+    total: 0,
+    unread: 0,
+    byType: {
+      message: 0,
+      booking: 0,
+      offer: 0,
+      store_follow: 0
+    }
+  });
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const navigate = useNavigate();
@@ -150,8 +179,6 @@ const Navbar = () => {
   // Check authentication status on component mount
   useEffect(() => {
     checkAuthStatus();
-    loadNotifications();
-    loadUnreadChatMessages();
   }, []);
 
   const checkAuthStatus = async () => {
@@ -176,43 +203,87 @@ const Navbar = () => {
     }
   };
 
+  // ENHANCED: Load comprehensive notifications
   const loadNotifications = async () => {
+    if (!isAuthenticated) return;
+
     try {
-      if (authService.isAuthenticated()) {
-        // You can implement API call to get user notifications
-        // const response = await api.get('/users/notifications');
-        // setNotifications(response.data.notifications);
+      console.log('🔔 Loading comprehensive notifications...');
+
+      // Load notification counts first
+      const countsResponse = await notificationService.getNotificationCounts();
+      if (countsResponse.success) {
+        setNotificationCounts(countsResponse.data);
+        console.log('📊 Notification counts loaded:', countsResponse.data);
       }
 
-      // For now, use sample data
+      // Load recent notifications
+      const notificationsResponse = await notificationService.getNotifications({
+        page: 1,
+        limit: 10
+      });
+
+      if (notificationsResponse.success) {
+        const formattedNotifications = notificationsResponse.data.notifications.map(
+          notification => notificationService.formatNotification(notification)
+        );
+        setNotifications(formattedNotifications);
+        console.log('📋 Notifications loaded:', formattedNotifications.length);
+      }
+
+    } catch (error) {
+      console.error('❌ Error loading notifications:', error);
+      // Set fallback sample data if API fails
       setNotifications([
         {
           id: 1,
-          title: "Flash Sale Alert!",
-          message: "Up to 70% off Electronics - Only 2 hours left!",
+          type: 'message',
+          title: "New Message",
+          message: "You have a new message from Tech Store",
           time: "2 hours ago",
-          isRead: false
+          isRead: false,
+          icon: '💬',
+          color: 'bg-blue-100 text-blue-800',
+          isNew: true
         },
         {
           id: 2,
-          title: "Coupon Applied",
-          message: "Your 25% off coupon was successfully applied",
+          type: 'booking',
+          title: "Booking Confirmation",
+          message: "Your booking for Hair Cut has been confirmed",
           time: "1 day ago",
-          isRead: true
+          isRead: true,
+          icon: '📅',
+          color: 'bg-green-100 text-green-800',
+          isNew: false
         },
         {
           id: 3,
-          title: "Welcome Bonus!",
-          message: "Get 50% off your first purchase with code WELCOME50",
+          type: 'offer',
+          title: "New Service Offer",
+          message: "You received a new offer for your plumbing request",
           time: "3 days ago",
-          isRead: true
+          isRead: true,
+          icon: '🎯',
+          color: 'bg-orange-100 text-orange-800',
+          isNew: false
         }
       ]);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
+
+      setNotificationCounts({
+        total: 3,
+        unread: 1,
+        byType: {
+          message: 1,
+          booking: 1,
+          offer: 1,
+          store_follow: 0
+        }
+      });
     }
   };
 
+  // Load chat message counts (existing functionality)
   const loadUnreadChatMessages = async () => {
     try {
       if (!authService.isAuthenticated()) {
@@ -222,7 +293,6 @@ const Navbar = () => {
 
       console.log('📨 Loading unread chat messages count...');
       
-      // Check if ChatService has a valid token
       const chatToken = chatService.getAuthToken();
       if (!chatToken) {
         console.log('❌ No chat token available');
@@ -230,11 +300,9 @@ const Navbar = () => {
         return;
       }
 
-      // Get all customer conversations with stores
       const response = await chatService.getConversations('customer');
       
       if (response.success && response.data) {
-        // Calculate total unread count from all conversations
         const totalUnreadCount = response.data.reduce((total, chat) => {
           return total + (chat.unreadCount || 0);
         }, 0);
@@ -251,34 +319,50 @@ const Navbar = () => {
     }
   };
 
-  // Refresh chat count periodically and when user returns to tab
+  // ENHANCED: Load all notification data when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadNotifications();
+      loadUnreadChatMessages();
+    }
+  }, [isAuthenticated]);
+
+  // ENHANCED: Refresh notifications periodically and when user returns
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Refresh chat count every 30 seconds
+    // Refresh every 30 seconds
     const interval = setInterval(() => {
+      loadNotifications();
       loadUnreadChatMessages();
     }, 30000);
 
     // Refresh when user returns to tab
     const handleVisibilityChange = () => {
       if (!document.hidden && isAuthenticated) {
+        loadNotifications();
         loadUnreadChatMessages();
       }
     };
 
-    // Listen for chat updates from other components
+    // Listen for notification updates from other components
+    const handleNotificationUpdate = () => {
+      loadNotifications();
+    };
+
     const handleChatUpdate = () => {
       loadUnreadChatMessages();
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('notificationUpdate', handleNotificationUpdate);
     window.addEventListener('chatUpdated', handleChatUpdate);
     window.addEventListener('messageReceived', handleChatUpdate);
 
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('notificationUpdate', handleNotificationUpdate);
       window.removeEventListener('chatUpdated', handleChatUpdate);
       window.removeEventListener('messageReceived', handleChatUpdate);
     };
@@ -302,7 +386,7 @@ const Navbar = () => {
     navigate(`/offer/${offerId}`);
   };
 
-  // FIXED: Updated location handler using context
+  // Location handlers
   const handleLocationSelect = async (selectedLocation) => {
     try {
       console.log('📍 Navbar: Changing location to:', selectedLocation.name);
@@ -310,7 +394,6 @@ const Navbar = () => {
       await changeLocation(selectedLocation.name);
       setIsLocationOpen(false);
       
-      // Dispatch event with more details
       const locationChangeEvent = new CustomEvent('locationChanged', {
         detail: { 
           location: selectedLocation.name,
@@ -327,7 +410,6 @@ const Navbar = () => {
     }
   };
 
-  // Auto-detect location handler
   const handleUseCurrentLocation = async () => {
     try {
       await getCurrentLocationFromBrowser();
@@ -337,16 +419,59 @@ const Navbar = () => {
     }
   };
 
+  // ENHANCED: Notification handlers
+  const handleNotificationClick = async (notification) => {
+    console.log('🔔 Clicked notification:', notification);
+    
+    // Close notification dropdown
+    setIsNotificationOpen(false);
+    
+    // Handle the notification click
+    notificationService.handleNotificationClick(notification, navigate);
+    
+    // Update local state to mark as read
+    setNotifications(prev =>
+      prev.map(notif =>
+        notif.id === notification.id ? { ...notif, isRead: true } : notif
+      )
+    );
+
+    // Update counts
+    setNotificationCounts(prev => ({
+      ...prev,
+      unread: Math.max(0, prev.unread - 1),
+      byType: {
+        ...prev.byType,
+        [notification.type]: Math.max(0, prev.byType[notification.type] - 1)
+      }
+    }));
+
+    // Dispatch event to update other components
+    window.dispatchEvent(new CustomEvent('notificationUpdate'));
+  };
+
   const markNotificationAsRead = async (notificationId) => {
     try {
-      // API call to mark notification as read
-      // await api.put(`/notifications/${notificationId}/read`);
+      await notificationService.markAsRead(notificationId);
 
       setNotifications(prev =>
         prev.map(notif =>
           notif.id === notificationId ? { ...notif, isRead: true } : notif
         )
       );
+
+      // Update counts
+      const notification = notifications.find(n => n.id === notificationId);
+      if (notification && !notification.isRead) {
+        setNotificationCounts(prev => ({
+          ...prev,
+          unread: Math.max(0, prev.unread - 1),
+          byType: {
+            ...prev.byType,
+            [notification.type]: Math.max(0, prev.byType[notification.type] - 1)
+          }
+        }));
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -354,21 +479,42 @@ const Navbar = () => {
 
   const markAllNotificationsAsRead = async () => {
     try {
-      // API call to mark all notifications as read
-      // await api.put('/notifications/mark-all-read');
+      await notificationService.markAllAsRead();
 
       setNotifications(prev =>
         prev.map(notif => ({ ...notif, isRead: true }))
       );
+
+      setNotificationCounts(prev => ({
+        ...prev,
+        unread: 0,
+        byType: {
+          message: 0,
+          booking: 0,
+          offer: 0,
+          store_follow: 0
+        }
+      }));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
   };
 
-  const unreadCount = notifications.filter(notif => !notif.isRead).length;
+  // ENHANCED: Get notification icon based on type
+  const getNotificationIcon = (type) => {
+    const iconMap = {
+      message: MessageCircleIcon,
+      booking: CalendarIcon,
+      offer: GiftIcon,
+      store_follow: StoreIcon
+    };
+    return iconMap[type] || NotificationIcon;
+  };
+
+  const totalUnreadCount = notificationCounts.unread + unreadChatCount;
   const currentLocationDisplay = getShortLocationName();
 
-  // Show loading state if either auth or location is loading
+  // Show loading state
   if (loading || isLocationLoading) {
     return (
       <header className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-slate-200/50 sticky top-0 z-40">
@@ -410,13 +556,13 @@ const Navbar = () => {
 
               {/* Right Icons */}
               <div className="flex items-center space-x-3">
-                {/* Location Icon Only */}
+                {/* Location Icon */}
                 <div className="relative">
                   <button onClick={toggleLocation} className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50">
                     <MapPin className="w-5 h-5 text-slate-600" />
                   </button>
 
-                  {/* FIXED: Location Dropdown - Only show if locations are available */}
+                  {/* Location Dropdown */}
                   {isLocationOpen && availableLocations.length > 0 && (
                     <div className="absolute top-12 right-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
                       <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
@@ -457,7 +603,6 @@ const Navbar = () => {
                     </div>
                   )}
 
-                  {/* Show message if no locations available */}
                   {isLocationOpen && availableLocations.length === 0 && (
                     <div className="absolute top-12 right-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
                       <div className="p-5 text-center">
@@ -474,66 +619,175 @@ const Navbar = () => {
                   )}
                 </div>
 
-                {/* Notifications */}
+                {/* ENHANCED: Comprehensive Notifications */}
                 <div className="relative">
                   <button onClick={toggleNotifications} className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50">
                     <NotificationIcon className="w-5 h-5 text-slate-600" />
-                    {unreadCount > 0 && (
+                    {totalUnreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center shadow-lg">
-                        {unreadCount}
+                        {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
                       </span>
                     )}
                   </button>
 
-                  {/* Enhanced Notification Popup */}
+                  {/* ENHANCED: Comprehensive Notification Popup */}
                   {isNotificationOpen && (
-                    <div className="absolute right-0 top-12 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
+                    <div className="absolute right-0 top-12 w-96 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50 max-h-[80vh] overflow-hidden flex flex-col">
+                      {/* Header */}
                       <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
-                        <h3 className="text-lg font-semibold text-slate-800">Notifications</h3>
-                        <p className="text-xs text-slate-600 mt-1">Stay updated with the latest deals</p>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-slate-800">Notifications</h3>
+                          <div className="flex items-center space-x-2">
+                            {totalUnreadCount > 0 && (
+                              <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-1 rounded-full">
+                                {totalUnreadCount} new
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1">Stay updated with your activities</p>
                       </div>
-                      <div className="max-h-96 overflow-y-auto">
+
+                      {/* Notification Type Tabs */}
+                      <div className="p-3 border-b border-slate-200/50 bg-white/50">
+                        <div className="grid grid-cols-4 gap-1 text-xs">
+                          <div className="text-center p-2 rounded-lg bg-blue-50">
+                            <MessageCircleIcon className="w-4 h-4 text-blue-600 mx-auto mb-1" />
+                            <span className="text-blue-600 font-medium">Messages</span>
+                            {notificationCounts.byType.message > 0 && (
+                              <span className="bg-blue-500 text-white rounded-full px-1 text-xs ml-1">
+                                {notificationCounts.byType.message}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-green-50">
+                            <CalendarIcon className="w-4 h-4 text-green-600 mx-auto mb-1" />
+                            <span className="text-green-600 font-medium">Bookings</span>
+                            {notificationCounts.byType.booking > 0 && (
+                              <span className="bg-green-500 text-white rounded-full px-1 text-xs ml-1">
+                                {notificationCounts.byType.booking}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-orange-50">
+                            <GiftIcon className="w-4 h-4 text-orange-600 mx-auto mb-1" />
+                            <span className="text-orange-600 font-medium">Offers</span>
+                            {notificationCounts.byType.offer > 0 && (
+                              <span className="bg-orange-500 text-white rounded-full px-1 text-xs ml-1">
+                                {notificationCounts.byType.offer}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-purple-50">
+                            <StoreIcon className="w-4 h-4 text-purple-600 mx-auto mb-1" />
+                            <span className="text-purple-600 font-medium">Stores</span>
+                            {notificationCounts.byType.store_follow > 0 && (
+                              <span className="bg-purple-500 text-white rounded-full px-1 text-xs ml-1">
+                                {notificationCounts.byType.store_follow}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Notifications List */}
+                      <div className="flex-1 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="p-6 text-center text-slate-500">
                             <div className="text-4xl mb-3">🔔</div>
                             <p className="text-sm">No notifications yet</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              We'll notify you about messages, bookings, and offers
+                            </p>
                           </div>
                         ) : (
-                          notifications.map((notification) => (
-                            <div
-                              key={notification.id}
-                              className={`p-4 border-b border-slate-100/50 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 cursor-pointer ${!notification.isRead ? 'bg-gradient-to-r from-amber-50/50 to-orange-50/50' : ''
+                          notifications.map((notification) => {
+                            const IconComponent = getNotificationIcon(notification.type);
+                            
+                            return (
+                              <div
+                                key={notification.id}
+                                className={`p-4 border-b border-slate-100/50 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 cursor-pointer ${
+                                  !notification.isRead ? 'bg-gradient-to-r from-amber-50/30 to-orange-50/30' : ''
                                 }`}
-                              onClick={() => markNotificationAsRead(notification.id)}
-                            >
-                              <div className="flex justify-between items-start">
-                                <div className="flex-1">
-                                  <h4 className={`text-sm font-medium ${!notification.isRead ? 'text-slate-900' : 'text-slate-700'
-                                    }`}>
-                                    {notification.title}
-                                  </h4>
-                                  <p className="text-sm text-slate-600 mt-1">
-                                    {notification.message}
-                                  </p>
-                                  <p className="text-xs text-slate-400 mt-2">
-                                    {notification.time}
-                                  </p>
+                                onClick={() => handleNotificationClick(notification)}
+                              >
+                                <div className="flex items-start space-x-3">
+                                  {/* Notification Icon */}
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${notification.color || 'bg-slate-100 text-slate-600'}`}>
+                                    <IconComponent className="w-5 h-5" />
+                                  </div>
+                                  
+                                  {/* Notification Content */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className={`text-sm font-medium truncate ${
+                                          !notification.isRead ? 'text-slate-900' : 'text-slate-700'
+                                        }`}>
+                                          {notification.title}
+                                        </h4>
+                                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                          {notification.message}
+                                        </p>
+                                        <div className="flex items-center justify-between mt-2">
+                                          <p className="text-xs text-slate-400">
+                                            {notification.timeAgo || notification.time}
+                                          </p>
+                                          <div className="flex items-center space-x-2">
+                                            {notification.isNew && (
+                                              <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                                                New
+                                              </span>
+                                            )}
+                                            {!notification.isRead && (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  markNotificationAsRead(notification.id);
+                                                }}
+                                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                              >
+                                                Mark read
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      {!notification.isRead && (
+                                        <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full ml-2 mt-2 flex-shrink-0"></div>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
-                                {!notification.isRead && (
-                                  <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full ml-2 mt-1"></div>
-                                )}
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
-                      {notifications.length > 0 && unreadCount > 0 && (
-                        <div className="p-4 border-t border-slate-200/50 bg-slate-50/50">
+
+                      {/* Footer Actions */}
+                      {notifications.length > 0 && (
+                        <div className="p-4 border-t border-slate-200/50 bg-slate-50/50 flex justify-between items-center">
+                          {totalUnreadCount > 0 ? (
+                            <button
+                              onClick={markAllNotificationsAsRead}
+                              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                            >
+                              Mark all as read
+                            </button>
+                          ) : (
+                            <span className="text-sm text-slate-500">All caught up!</span>
+                          )}
+                          
                           <button
-                            onClick={markAllNotificationsAsRead}
-                            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                            onClick={() => {
+                              setIsNotificationOpen(false);
+                              navigate('/profile/notifications');
+                            }}
+                            className="text-sm text-slate-600 hover:text-slate-700 font-medium transition-colors"
                           >
-                            Mark all as read
+                            View all
                           </button>
                         </div>
                       )}
@@ -541,7 +795,7 @@ const Navbar = () => {
                   )}
                 </div>
 
-                {/* Profile Button - Updated to navigate directly */}
+                {/* Profile Button */}
                 {isAuthenticated && user ? (
                   <Link
                     to="/profile"
@@ -568,7 +822,7 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Mobile Search Bar - Updated with RealTimeSearch */}
+            {/* Mobile Search Bar */}
             <div className="pb-4">
               <RealTimeSearch
                 placeholder="Search for deals, coupons & stores..."
@@ -579,7 +833,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Desktop Header - Updated Profile Section */}
+          {/* Desktop Header with similar enhancements... */}
           <div className="hidden lg:block">
             {/* Top Header */}
             <div className="flex items-center justify-between py-4 border-b border-slate-200/50">
@@ -596,7 +850,7 @@ const Navbar = () => {
                   </Link>
                 </div>
 
-                {/* FIXED: Desktop location dropdown - only show if locations available */}
+                {/* Desktop location dropdown */}
                 <div className="flex items-center space-x-3 text-sm text-slate-600 relative">
                   <MapPin className="w-4 h-4 text-indigo-500" />
                   <button onClick={toggleLocation} className="flex items-center space-x-2 hover:text-indigo-600 transition-colors">
@@ -604,7 +858,7 @@ const Navbar = () => {
                     <ChevronDown className="w-4 h-4" />
                   </button>
 
-                  {/* Location Dropdown */}
+                  {/* Desktop Location Dropdown - Same as mobile */}
                   {isLocationOpen && availableLocations.length > 0 && (
                     <div className="absolute top-10 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
                       <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
@@ -645,7 +899,6 @@ const Navbar = () => {
                     </div>
                   )}
 
-                  {/* Show loading/empty state for desktop too */}
                   {isLocationOpen && availableLocations.length === 0 && (
                     <div className="absolute top-10 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
                       <div className="p-5 text-center">
@@ -673,7 +926,7 @@ const Navbar = () => {
                   <span className="font-medium">24/7 Support</span>
                 </button>
 
-                {/* Authentication Section - Updated to navigate directly */}
+                {/* Authentication Section */}
                 {isAuthenticated && user ? (
                   <Link
                     to="/profile"
@@ -703,66 +956,170 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                {/* Notifications */}
+                {/* Desktop Notifications - Same enhanced version as mobile */}
                 <div className="relative">
                   <button onClick={toggleNotifications} className="relative flex items-center bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm p-2.5 rounded-xl border border-slate-200/50 transition-all duration-200">
                     <NotificationIcon className="w-5 h-5 text-slate-600" />
-                    {unreadCount > 0 && (
+                    {totalUnreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
-                        {unreadCount}
+                        {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
                       </span>
                     )}
                   </button>
 
-                  {/* Enhanced Notification Popup */}
+                  {/* Desktop notification popup - Same as mobile version */}
                   {isNotificationOpen && (
-                    <div className="absolute right-0 top-12 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
+                    <div className="absolute right-0 top-12 w-96 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50 max-h-[80vh] overflow-hidden flex flex-col">
+                      {/* Same content as mobile notification popup */}
                       <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
-                        <h3 className="text-lg font-semibold text-slate-800">Notifications</h3>
-                        <p className="text-xs text-slate-600 mt-1">Stay updated with the latest deals</p>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-slate-800">Notifications</h3>
+                          <div className="flex items-center space-x-2">
+                            {totalUnreadCount > 0 && (
+                              <span className="bg-red-100 text-red-600 text-xs font-medium px-2 py-1 rounded-full">
+                                {totalUnreadCount} new
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1">Stay updated with your activities</p>
                       </div>
-                      <div className="max-h-96 overflow-y-auto">
+
+                      <div className="p-3 border-b border-slate-200/50 bg-white/50">
+                        <div className="grid grid-cols-4 gap-1 text-xs">
+                          <div className="text-center p-2 rounded-lg bg-blue-50">
+                            <MessageCircleIcon className="w-4 h-4 text-blue-600 mx-auto mb-1" />
+                            <span className="text-blue-600 font-medium">Messages</span>
+                            {notificationCounts.byType.message > 0 && (
+                              <span className="bg-blue-500 text-white rounded-full px-1 text-xs ml-1">
+                                {notificationCounts.byType.message}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-green-50">
+                            <CalendarIcon className="w-4 h-4 text-green-600 mx-auto mb-1" />
+                            <span className="text-green-600 font-medium">Bookings</span>
+                            {notificationCounts.byType.booking > 0 && (
+                              <span className="bg-green-500 text-white rounded-full px-1 text-xs ml-1">
+                                {notificationCounts.byType.booking}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-orange-50">
+                            <GiftIcon className="w-4 h-4 text-orange-600 mx-auto mb-1" />
+                            <span className="text-orange-600 font-medium">Offers</span>
+                            {notificationCounts.byType.offer > 0 && (
+                              <span className="bg-orange-500 text-white rounded-full px-1 text-xs ml-1">
+                                {notificationCounts.byType.offer}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-center p-2 rounded-lg bg-purple-50">
+                            <StoreIcon className="w-4 h-4 text-purple-600 mx-auto mb-1" />
+                            <span className="text-purple-600 font-medium">Stores</span>
+                            {notificationCounts.byType.store_follow > 0 && (
+                              <span className="bg-purple-500 text-white rounded-full px-1 text-xs ml-1">
+                                {notificationCounts.byType.store_follow}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="p-6 text-center text-slate-500">
                             <div className="text-4xl mb-3">🔔</div>
                             <p className="text-sm">No notifications yet</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              We'll notify you about messages, bookings, and offers
+                            </p>
                           </div>
                         ) : (
-                          notifications.map((notification) => (
-                            <div
-                              key={notification.id}
-                              className={`p-4 border-b border-slate-100/50 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 cursor-pointer ${!notification.isRead ? 'bg-gradient-to-r from-amber-50/50 to-orange-50/50' : ''
+                          notifications.map((notification) => {
+                            const IconComponent = getNotificationIcon(notification.type);
+                            
+                            return (
+                              <div
+                                key={notification.id}
+                                className={`p-4 border-b border-slate-100/50 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 cursor-pointer ${
+                                  !notification.isRead ? 'bg-gradient-to-r from-amber-50/30 to-orange-50/30' : ''
                                 }`}
-                              onClick={() => markNotificationAsRead(notification.id)}
-                            >
-                              <div className="flex justify-between items-start">
-                                <div className="flex-1">
-                                  <h4 className={`text-sm font-medium ${!notification.isRead ? 'text-slate-900' : 'text-slate-700'
-                                    }`}>
-                                    {notification.title}
-                                  </h4>
-                                  <p className="text-sm text-slate-600 mt-1">
-                                    {notification.message}
-                                  </p>
-                                  <p className="text-xs text-slate-400 mt-2">
-                                    {notification.time}
-                                  </p>
+                                onClick={() => handleNotificationClick(notification)}
+                              >
+                                <div className="flex items-start space-x-3">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${notification.color || 'bg-slate-100 text-slate-600'}`}>
+                                    <IconComponent className="w-5 h-5" />
+                                  </div>
+                                  
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className={`text-sm font-medium truncate ${
+                                          !notification.isRead ? 'text-slate-900' : 'text-slate-700'
+                                        }`}>
+                                          {notification.title}
+                                        </h4>
+                                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                          {notification.message}
+                                        </p>
+                                        <div className="flex items-center justify-between mt-2">
+                                          <p className="text-xs text-slate-400">
+                                            {notification.timeAgo || notification.time}
+                                          </p>
+                                          <div className="flex items-center space-x-2">
+                                            {notification.isNew && (
+                                              <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                                                New
+                                              </span>
+                                            )}
+                                            {!notification.isRead && (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  markNotificationAsRead(notification.id);
+                                                }}
+                                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                              >
+                                                Mark read
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      {!notification.isRead && (
+                                        <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full ml-2 mt-2 flex-shrink-0"></div>
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
-                                {!notification.isRead && (
-                                  <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full ml-2 mt-1"></div>
-                                )}
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
-                      {notifications.length > 0 && unreadCount > 0 && (
-                        <div className="p-4 border-t border-slate-200/50 bg-slate-50/50">
+
+                      {notifications.length > 0 && (
+                        <div className="p-4 border-t border-slate-200/50 bg-slate-50/50 flex justify-between items-center">
+                          {totalUnreadCount > 0 ? (
+                            <button
+                              onClick={markAllNotificationsAsRead}
+                              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                            >
+                              Mark all as read
+                            </button>
+                          ) : (
+                            <span className="text-sm text-slate-500">All caught up!</span>
+                          )}
+                          
                           <button
-                            onClick={markAllNotificationsAsRead}
-                            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                            onClick={() => {
+                              setIsNotificationOpen(false);
+                              navigate('/profile/notifications');
+                            }}
+                            className="text-sm text-slate-600 hover:text-slate-700 font-medium transition-colors"
                           >
-                            Mark all as read
+                            View all
                           </button>
                         </div>
                       )}
@@ -798,7 +1155,7 @@ const Navbar = () => {
                 </Link>
               </nav>
 
-              {/* Desktop Search Bar - Updated with RealTimeSearch */}
+              {/* Desktop Search Bar */}
               <div className="flex-1 max-w-3xl mx-8">
                 <RealTimeSearch
                   placeholder="Search for deals, coupons & stores..."
@@ -811,7 +1168,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Modern Promotional Banner - Moved Below Navbar Content */}
+        {/* Promotional Banner */}
         <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-1.5 px-4">
           <div className="container mx-auto flex items-center justify-center text-center">
             <div className="flex items-center space-x-2">

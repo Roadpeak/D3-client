@@ -1,4 +1,4 @@
-// services/storeService.js - FIXED version with proper authentication
+// services/storeService.js - UPDATED with top-rated store methods
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 const API_KEY = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
 
@@ -10,9 +10,8 @@ class StoreService {
     console.log('🔑 API Key configured:', API_KEY ? 'Yes' : 'No');
   }
 
-  // FIXED: Get auth token using the same method as your auth service
+  // Get auth token using the same method as your auth service
   getAuthToken() {
-    // Priority order matching your auth service
     const tokenSources = [
       localStorage.getItem('access_token'),
       localStorage.getItem('authToken'), 
@@ -33,7 +32,7 @@ class StoreService {
     return token;
   }
 
-  // FIXED: Get token from cookie (matching your auth system)
+  // Get token from cookie
   getCookieToken(name = 'access_token') {
     try {
       if (typeof document === 'undefined') return null;
@@ -52,13 +51,12 @@ class StoreService {
     }
   }
 
-  // FIXED: Get headers with proper auth token inclusion
+  // Get headers with proper auth token inclusion
   getHeaders() {
     const headers = {
       'Content-Type': 'application/json',
     };
 
-    // Always include API key if available
     if (API_KEY) {
       headers['api-key'] = API_KEY;
       console.log('✅ API key added to store service request');
@@ -66,7 +64,6 @@ class StoreService {
       console.warn('⚠️ REACT_APP_API_KEY not found in environment variables');
     }
 
-    // Include auth token if available
     const token = this.getAuthToken();
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -74,12 +71,6 @@ class StoreService {
     } else {
       console.log('ℹ️ No auth token found for request');
     }
-
-    console.log('📋 Final headers:', {
-      'Content-Type': headers['Content-Type'],
-      'Authorization': headers['Authorization'] ? 'Bearer [TOKEN]' : 'Not set',
-      'api-key': headers['api-key'] ? '[API_KEY]' : 'Not set'
-    });
 
     return headers;
   }
@@ -123,14 +114,6 @@ class StoreService {
 
       const data = await response.json();
       console.log('✅ Response data received successfully');
-      console.log('📊 Data summary:', {
-        success: data.success,
-        hasStore: !!data.store,
-        hasStores: !!data.stores,
-        socialLinksCount: data.store?.socialLinksRaw?.length || 0,
-        storesCount: data.stores?.length,
-        hasPagination: !!data.pagination
-      });
       return data;
       
     } catch (error) {
@@ -149,7 +132,86 @@ class StoreService {
     }
   }
 
-  // FIXED: Enhanced getStoreById with social links debugging
+  // NEW: Get most reviewed stores specifically
+  async getMostReviewedStores(limit = 8) {
+    console.log(`📝 Fetching top ${limit} most reviewed stores`);
+    const endpoint = `/stores?sortBy=Most Reviewed&limit=${limit}`;
+    
+    try {
+      const data = await this.fetchData(endpoint);
+      
+      if (data.success && data.stores) {
+        console.log(`✅ Successfully fetched ${data.stores.length} most reviewed stores`);
+        console.log('📊 Review count distribution:', {
+          averageReviews: data.stores.reduce((sum, store) => sum + (parseInt(store.totalReviews) || 0), 0) / data.stores.length,
+          highestReviews: Math.max(...data.stores.map(store => parseInt(store.totalReviews) || 0)),
+          lowestReviews: Math.min(...data.stores.map(store => parseInt(store.totalReviews) || 0))
+        });
+        
+        return data;
+      } else {
+        throw new Error(data.message || 'Failed to fetch most reviewed stores');
+      }
+    } catch (error) {
+      console.error('🔥 Error fetching most reviewed stores:', error);
+      throw error;
+    }
+  }
+
+  // NEW: Get most reviewed stores by category
+  async getMostReviewedStoresByCategory(category, limit = 4) {
+    console.log(`📝 Fetching top ${limit} most reviewed stores in ${category} category`);
+    const endpoint = `/stores?sortBy=Most Reviewed&category=${encodeURIComponent(category)}&limit=${limit}`;
+    
+    try {
+      const data = await this.fetchData(endpoint);
+      
+      if (data.success) {
+        console.log(`✅ Successfully fetched ${data.stores?.length || 0} most reviewed ${category} stores`);
+        return data;
+      } else {
+        throw new Error(data.message || `Failed to fetch most reviewed ${category} stores`);
+      }
+    } catch (error) {
+      console.error(`🔥 Error fetching most reviewed ${category} stores:`, error);
+      throw error;
+    }
+  }
+
+  // NEW: Get trending stores (high ratings + recent activity)
+  async getTrendingStores(limit = 8) {
+    console.log(`📈 Fetching ${limit} trending stores`);
+    
+    try {
+      // First try to get popular stores, then filter for trending characteristics
+      const data = await this.getTopRatedStores(limit * 2); // Get more to filter from
+      
+      if (data.success && data.stores) {
+        // Filter for stores with good ratings and recent reviews
+        const trendingStores = data.stores
+          .filter(store => {
+            const rating = parseFloat(store.rating) || 0;
+            const reviews = parseInt(store.totalReviews) || 0;
+            return rating >= 3.5 && reviews > 0; // Basic trending criteria
+          })
+          .slice(0, limit);
+        
+        console.log(`✅ Found ${trendingStores.length} trending stores`);
+        
+        return {
+          ...data,
+          stores: trendingStores
+        };
+      } else {
+        throw new Error('Failed to fetch trending stores');
+      }
+    } catch (error) {
+      console.error('🔥 Error fetching trending stores:', error);
+      throw error;
+    }
+  }
+
+  // Enhanced getStoreById with social links debugging
   async getStoreById(id) {
     if (!id) {
       throw new Error('Store ID is required');
@@ -175,7 +237,7 @@ class StoreService {
     return data;
   }
 
-  // Your existing methods remain the same...
+  // Your existing methods...
   async getStores(filters = {}) {
     console.log('🏪 StoreService.getStores called with filters:', filters);
     
@@ -253,6 +315,42 @@ class StoreService {
     });
   }
 
+  // NEW: Follow/Unfollow store
+  async toggleFollowStore(storeId) {
+    if (!storeId) {
+      throw new Error('Store ID is required');
+    }
+    
+    console.log(`💖 Toggling follow for store ${storeId}`);
+    
+    return this.fetchData(`/stores/${storeId}/follow`, {
+      method: 'POST'
+    });
+  }
+
+  // NEW: Get followed stores
+  async getFollowedStores() {
+    console.log('💖 Fetching followed stores');
+    return this.fetchData('/stores/followed');
+  }
+
+  // NEW: Submit review
+  async submitReview(storeId, reviewData) {
+    if (!storeId) {
+      throw new Error('Store ID is required');
+    }
+    if (!reviewData || !reviewData.rating) {
+      throw new Error('Review data with rating is required');
+    }
+    
+    console.log(`📝 Submitting review for store ${storeId}`);
+    
+    return this.fetchData(`/stores/${storeId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(reviewData)
+    });
+  }
+
   async healthCheck() {
     try {
       console.log('🏥 Performing health check');
@@ -298,7 +396,15 @@ class StoreService {
         console.log('🐛 Categories endpoint:', 'FAIL', error.message);
       }
       
-      // Test 3: Stores endpoint
+      // Test 3: Most reviewed stores endpoint
+      try {
+        const mostReviewedStores = await this.getMostReviewedStores(5);
+        console.log('🐛 Most reviewed stores endpoint:', 'PASS', `${mostReviewedStores.stores?.length || 0} stores`);
+      } catch (error) {
+        console.log('🐛 Most reviewed stores endpoint:', 'FAIL', error.message);
+      }
+      
+      // Test 4: Stores endpoint
       try {
         const stores = await this.getStores({ limit: 1 });
         console.log('🐛 Stores endpoint:', 'PASS', `${stores.stores?.length || 0} stores`);
@@ -311,7 +417,7 @@ class StoreService {
     }
   }
 
-  // FIXED: Add method to test authentication
+  // Test authentication
   async testAuthentication() {
     try {
       console.log('🔐 Testing authentication...');
@@ -323,7 +429,6 @@ class StoreService {
         return { authenticated: false, reason: 'No token found' };
       }
 
-      // Test with a simple authenticated endpoint
       const response = await fetch(`${this.baseURL}/stores/categories`, {
         headers: this.getHeaders()
       });
