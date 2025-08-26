@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { offerAPI } from '../services/api'; // Import the proper API service
+import { favoritesAPI } from '../services/favoritesService'; // Import favorites service
 
 const Star = ({ className }) => (
   <svg className={className} fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,6 +27,7 @@ const PopularListings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
+  const [favoritesLoading, setFavoritesLoading] = useState(true);
   
   const navigate = useNavigate();
 
@@ -33,6 +35,34 @@ const PopularListings = () => {
   const isOfferExpired = useCallback((expirationDate) => {
     if (!expirationDate) return false;
     return new Date(expirationDate) < new Date();
+  }, []);
+
+  // Load user's existing favorites
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        setFavoritesLoading(true);
+        const response = await favoritesAPI.getFavorites();
+        
+        if (response.success) {
+          // Extract offer IDs from favorites and add to Set
+          const favoriteIds = new Set(
+            (response.favorites || []).map(favorite => 
+              favorite.offer_id || favorite.id
+            )
+          );
+          setFavorites(favoriteIds);
+        } else {
+          console.warn('Failed to load favorites:', response.message);
+        }
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+      } finally {
+        setFavoritesLoading(false);
+      }
+    };
+
+    loadFavorites();
   }, []);
 
   // Fetch deals with highest discounts from backend
@@ -141,9 +171,8 @@ const PopularListings = () => {
     event.stopPropagation(); // Prevent deal click when clicking heart
     
     try {
-      // Here you would typically call the favorites API
-      // const result = await favoritesAPI.toggleFavorite(dealId);
-      
+      // Optimistic update - update UI immediately
+      const wasAlreadyFavorited = favorites.has(dealId);
       setFavorites(prev => {
         const newFavorites = new Set(prev);
         if (newFavorites.has(dealId)) {
@@ -153,8 +182,40 @@ const PopularListings = () => {
         }
         return newFavorites;
       });
+
+      // Call the API to update on backend
+      const result = await favoritesAPI.toggleFavorite(dealId);
+      
+      if (!result.success) {
+        // Revert optimistic update on API failure
+        setFavorites(prev => {
+          const newFavorites = new Set(prev);
+          if (wasAlreadyFavorited) {
+            newFavorites.add(dealId);
+          } else {
+            newFavorites.delete(dealId);
+          }
+          return newFavorites;
+        });
+        
+        console.error('Failed to toggle favorite:', result.message);
+        // You might want to show a toast notification here
+      } else {
+        console.log('Favorite toggled successfully:', result.action);
+      }
     } catch (error) {
       console.error('Error toggling favorite:', error);
+      
+      // Revert optimistic update on error
+      setFavorites(prev => {
+        const newFavorites = new Set(prev);
+        if (favorites.has(dealId)) {
+          newFavorites.delete(dealId);
+        } else {
+          newFavorites.add(dealId);
+        }
+        return newFavorites;
+      });
     }
   };
 
@@ -246,7 +307,7 @@ const PopularListings = () => {
   };
 
   // Loading state
-  if (loading) {
+  if (loading || favoritesLoading) {
     return (
       <section className="container mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
@@ -328,7 +389,7 @@ const PopularListings = () => {
       )}
 
       {/* View All Button */}
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-end mt-8">
         <button 
           onClick={handleViewAllDeals}
           className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
