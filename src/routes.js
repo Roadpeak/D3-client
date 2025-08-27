@@ -8,7 +8,7 @@ import Login from './pages/auth/Login'
 // Updated Offer Components
 import OffersPage from './pages/ViewOffer' // Our new enhanced offers page
 import ViewOffer from './pages/ViewOffer' // Keep existing for backward compatibility
-import Offers from './pages/Offers'
+
 
 // Store Components
 import Stores from './pages/Stores'
@@ -22,8 +22,6 @@ import ViewService from './pages/ViewService' // Keep existing for backward comp
 import EnhancedBookingPage from './pages/Booking'
 
 // Other Pages
-import Checkout from './pages/Checkout'
-import MyVouchers from './pages/MyVouchers'
 import Chat from './pages/Chat'
 import Profile from './pages/Profile'
 import SearchResults from './pages/SearchResults'
@@ -103,8 +101,7 @@ const AppRoutes = () => {
 
         {/* ==================== OFFER ROUTES ==================== */}
 
-        {/* Offers listing */}
-        <Route path='/offers' element={<Offers />} />
+        
 
         {/* Individual Offer Routes - Use new enhanced OffersPage */}
         <Route path='/offer/:id' element={<OffersPage />} />
@@ -212,7 +209,7 @@ const AppRoutes = () => {
         {/* ==================== EXISTING USER DASHBOARD ROUTES ==================== */}
 
         {/* My Bookings/Vouchers - Keep existing route but also redirect to profile */}
-        <Route path='/my-vouchers' element={<MyVouchers />} />
+       
         <Route path='/bookings' element={<Navigate to="/my-vouchers" replace />} />
         <Route path='/vouchers' element={<Navigate to="/my-vouchers" replace />} />
 
@@ -224,7 +221,6 @@ const AppRoutes = () => {
         {/* ==================== PAYMENT AND CHECKOUT ==================== */}
 
         {/* Checkout */}
-        <Route path='/checkout' element={<Checkout />} />
         <Route path='/Checkout' element={<Navigate to="/checkout" replace />} />
         <Route path='/payment' element={<Navigate to="/checkout" replace />} />
 
