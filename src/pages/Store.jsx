@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Heart,
@@ -38,6 +38,13 @@ import serviceAPI from '../services/serviceService';
 import chatService from '../services/chatService';
 import authService from '../services/authService';
 import { getTokenFromCookie } from '../config/api';
+
+// FIXED: Stable fallback images using data URLs (these will never fail)
+const STORE_LOGO_FALLBACK = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iOCIgZmlsbD0iIzk0QTNCOCIvPgo8cGF0aCBkPSJNMjQgMzJINTZWMzdINTZWNDRINTZ2MjJIMjRWMzJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMjQgNTZINTZWNjBIMjRWNTZaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI0MCIgY3k9IjQwIiByPSIzIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
+
+const OFFER_IMAGE_FALLBACK = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxyZWN0IHg9IjEwMCIgeT0iNjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iODAiIHJ4PSI4IiBmaWxsPSIjOUNBM0FGIi8+CjxjaXJjbGUgY3g9IjEzMCIgY3k9Ijg1IiByPSI4IiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSIxNzAiIGN5PSI4NSIgcj0iOCIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTEzMCAxMDVIMTcwIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8dGV4dCB4PSIxNTAiIHk9IjE2MCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2QjcyODAiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk9mZmVyIEltYWdlPC90ZXh0Pgo8L3N2Zz4K';
+
+const SMALL_LOGO_FALLBACK = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiByeD0iMTAiIGZpbGw9IiM5NEEzQjgiLz4KPHN2ZyB4PSI2IiB5PSI2IiB3aWR0aD0iOCIgaGVpZ2h0PSI4IiB2aWV3Qm94PSIwIDAgOCA4IiBmaWxsPSJ3aGl0ZSI+CjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IndoaXRlIi8+CjwvZXN2Zz4KPC9zdmc+';
 
 // Enhanced API services with better error handling
 const offerAPI = {
@@ -117,7 +124,65 @@ const StoreViewPage = () => {
   const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
 
-  // ADDED: Function to check if offer is expired
+  // FIXED: Enhanced Image Component with stable error handling
+  const StableImage = React.memo(({ 
+    src, 
+    fallbackSrc, 
+    alt, 
+    className, 
+    onError: customOnError,
+    ...props 
+  }) => {
+    const [imageError, setImageError] = useState(false);
+    const [currentSrc, setCurrentSrc] = useState(src);
+
+    // Reset error state when src changes
+    useEffect(() => {
+      if (src !== currentSrc) {
+        setImageError(false);
+        setCurrentSrc(src);
+      }
+    }, [src, currentSrc]);
+
+    // FIXED: Stable error handler that only runs once per image
+    const handleImageError = useCallback((e) => {
+      if (!imageError) {
+        console.log('Image failed to load:', src);
+        setImageError(true);
+        
+        // Set to fallback immediately
+        if (fallbackSrc && e.target.src !== fallbackSrc) {
+          e.target.src = fallbackSrc;
+        }
+        
+        // Call custom error handler if provided
+        if (customOnError) {
+          customOnError(e);
+        }
+      }
+    }, [imageError, src, fallbackSrc, customOnError]);
+
+    const handleImageLoad = useCallback(() => {
+      setImageError(false);
+    }, []);
+
+    // Use fallback immediately if we know there's an error
+    const imageSrc = imageError ? fallbackSrc : (src || fallbackSrc);
+
+    return (
+      <img
+        {...props}
+        src={imageSrc}
+        alt={alt}
+        className={className}
+        onError={handleImageError}
+        onLoad={handleImageLoad}
+        loading="lazy"
+      />
+    );
+  });
+
+  // Function to check if offer is expired
   const isOfferExpired = (expirationDate) => {
     if (!expirationDate) return false;
     return new Date(expirationDate) < new Date();
@@ -146,17 +211,17 @@ const StoreViewPage = () => {
             const parsed = JSON.parse(stored);
             if (parsed && (parsed.id || parsed.userId)) {
               userInfo = parsed;
-              console.log(`✅ User info found in localStorage.${key}:`, userInfo);
+              console.log(`User info found in localStorage.${key}:`, userInfo);
               break;
             }
           }
         } catch (e) {
-          console.log(`⚠️ Failed to parse ${key}:`, e.message);
+          console.log(`Failed to parse ${key}:`, e.message);
         }
       }
 
       if (!userInfo || (!userInfo.id && !userInfo.userId)) {
-        console.error('❌ No valid user info found in localStorage');
+        console.error('No valid user info found in localStorage');
         return {
           isLoggedIn: false,
           error: 'User info not found'
@@ -186,7 +251,7 @@ const StoreViewPage = () => {
         displayName = lastName ? `${firstName} ${lastName.charAt(0)}.` : firstName;
       }
 
-      console.log('👤 User display name calculated:', displayName);
+      console.log('User display name calculated:', displayName);
 
       return {
         isLoggedIn: true,
@@ -227,9 +292,9 @@ const StoreViewPage = () => {
     }
   };
 
-  const handleOfferClick = (offerId) => {
+  const handleOfferClick = useCallback((offerId) => {
     navigate(`/offer/${offerId}`);
-  };
+  }, [navigate]);
 
   const currentUser = getCurrentUser();
 
@@ -239,10 +304,10 @@ const StoreViewPage = () => {
       setLoading(true);
       setError(null);
 
-      console.log('🏪 Fetching store data for ID:', id);
+      console.log('Fetching store data for ID:', id);
 
       const data = await StoreService.getStoreById(id);
-      console.log('✅ Store data received:', data);
+      console.log('Store data received:', data);
 
       if (data.success && data.store) {
         setStoreData(data.store);
@@ -262,17 +327,17 @@ const StoreViewPage = () => {
     }
   };
 
-  // UPDATED: Fetch offers for the store with expiration filtering
+  // Fetch offers for the store with expiration filtering
   const fetchOffers = async () => {
     try {
       setOffersLoading(true);
       const response = await offerAPI.getOffersByStore(id);
       
-      // ADDED: Filter out expired offers for customer-facing store view
+      // Filter out expired offers for customer-facing store view
       const allOffers = response.offers || [];
       const activeOffers = allOffers.filter(offer => !isOfferExpired(offer.expiration_date));
       
-      console.log(`📋 Store offers - Total: ${allOffers.length}, Active: ${activeOffers.length}`);
+      console.log(`Store offers - Total: ${allOffers.length}, Active: ${activeOffers.length}`);
       
       setOffers(activeOffers);
     } catch (err) {
@@ -301,10 +366,10 @@ const StoreViewPage = () => {
   const fetchBranches = async () => {
     try {
       setBranchesLoading(true);
-      console.log('🏢 Fetching branches for store:', id);
+      console.log('Fetching branches for store:', id);
 
       const data = await branchAPI.getBranchesByStore(id);
-      console.log('✅ Branches response:', data);
+      console.log('Branches response:', data);
 
       if (data.success && data.branches && data.branches.length > 0) {
         setBranches(data.branches);
@@ -325,7 +390,6 @@ const StoreViewPage = () => {
             workingDays: storeData.working_days || [],
             isMainBranch: true,
             isStoreMainBranch: true,
-            // Add coordinates if available
             latitude: storeData.latitude || null,
             longitude: storeData.longitude || null
           };
@@ -335,8 +399,7 @@ const StoreViewPage = () => {
         }
       }
     } catch (err) {
-      console.error('❌ Error fetching branches:', err);
-      // Fallback: use store data as main branch
+      console.error('Error fetching branches:', err);
       if (storeData) {
         const mainBranch = {
           id: `store-${storeData.id}`,
@@ -350,7 +413,6 @@ const StoreViewPage = () => {
           workingDays: storeData.working_days || [],
           isMainBranch: true,
           isStoreMainBranch: true,
-          // Add coordinates if available
           latitude: storeData.latitude || null,
           longitude: storeData.longitude || null
         };
@@ -367,9 +429,8 @@ const StoreViewPage = () => {
     try {
       console.log('=== CHAT BUTTON CLICKED ===');
 
-      // Validate store data and ID first
       if (!storeData || !id) {
-        console.error('❌ Missing store data or ID:', { storeData: !!storeData, id });
+        console.error('Missing store data or ID:', { storeData: !!storeData, id });
         setError('Store information not available. Please refresh the page.');
         return;
       }
@@ -377,11 +438,11 @@ const StoreViewPage = () => {
       const authStatus = getAuthenticationStatus();
       const currentUser = getCurrentUser();
 
-      console.log('🔐 Auth Status:', authStatus);
-      console.log('👤 Current User:', currentUser);
+      console.log('Auth Status:', authStatus);
+      console.log('Current User:', currentUser);
 
       if (!authStatus.isAuthenticated || !currentUser.isLoggedIn) {
-        console.log('❌ Authentication failed, redirecting to login');
+        console.log('Authentication failed, redirecting to login');
         setError(`Please log in to chat with ${storeData.name}`);
         navigate('/accounts/sign-in', {
           state: { from: { pathname: location.pathname } }
@@ -393,34 +454,31 @@ const StoreViewPage = () => {
       setError(null);
 
       try {
-        console.log('🚀 Starting chat process...');
+        console.log('Starting chat process...');
         console.log('Store ID:', id, 'Store Name:', storeData.name);
         console.log('User:', currentUser.name, 'ID:', currentUser.id);
 
-        // Ensure we have a valid store ID (convert to number if needed)
         const storeId = parseInt(id);
         if (isNaN(storeId)) {
           throw new Error('Invalid store ID');
         }
 
         const chatToken = chatService.getAuthToken();
-        console.log('💬 Chat service token:', chatToken ? 'Found' : 'Not found');
+        console.log('Chat service token:', chatToken ? 'Found' : 'Not found');
 
-        // Get customer conversations
-        console.log('📋 Fetching customer conversations...');
+        console.log('Fetching customer conversations...');
         const conversationsResponse = await chatService.getConversations('customer');
-        console.log('📋 Conversations response:', conversationsResponse);
+        console.log('Conversations response:', conversationsResponse);
 
         if (conversationsResponse.success) {
-          // Look for existing conversation with this store
           const existingConversation = conversationsResponse.data.find(
             conv => conv.store && (conv.store.id === storeId || conv.store.id === id)
           );
 
-          console.log('🔍 Existing conversation found:', !!existingConversation);
+          console.log('Existing conversation found:', !!existingConversation);
 
           if (existingConversation) {
-            console.log('✅ Using existing conversation:', existingConversation.id);
+            console.log('Using existing conversation:', existingConversation.id);
             navigate('/chat', {
               state: {
                 selectedConversation: existingConversation,
@@ -434,19 +492,19 @@ const StoreViewPage = () => {
               }
             });
           } else {
-            console.log('🆕 Creating new conversation...');
+            console.log('Creating new conversation...');
 
             const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
 
             const newConversationResponse = await chatService.startConversation(
-              storeId, // Use the parsed integer ID
+              storeId,
               initialMessage
             );
 
-            console.log('🆕 New conversation response:', newConversationResponse);
+            console.log('New conversation response:', newConversationResponse);
 
             if (newConversationResponse.success) {
-              console.log('✅ New conversation created:', newConversationResponse.data.conversationId);
+              console.log('New conversation created:', newConversationResponse.data.conversationId);
 
               const newConversation = {
                 id: newConversationResponse.data.conversationId,
@@ -476,7 +534,7 @@ const StoreViewPage = () => {
                 }
               });
 
-              console.log('🎉 Chat started successfully!');
+              console.log('Chat started successfully!');
             } else {
               throw new Error(newConversationResponse.message || 'Failed to start conversation');
             }
@@ -486,7 +544,7 @@ const StoreViewPage = () => {
         }
 
       } catch (apiError) {
-        console.error('❌ Chat API Error:', apiError);
+        console.error('Chat API Error:', apiError);
 
         if (apiError.message.includes('Authentication') ||
           apiError.message.includes('401') ||
@@ -495,7 +553,6 @@ const StoreViewPage = () => {
 
           setError('Your session has expired. Please log in again to chat.');
 
-          // Clear all auth tokens
           ['access_token', 'authToken', 'token', 'userInfo', 'user', 'userData'].forEach(key => {
             localStorage.removeItem(key);
           });
@@ -512,26 +569,10 @@ const StoreViewPage = () => {
       }
 
     } catch (error) {
-      console.error('❌ General Chat error:', error);
+      console.error('General Chat error:', error);
       setError(`Failed to start chat: ${error.message}`);
     } finally {
       setStartingChat(false);
-    }
-  };
-  // Enhanced getCookieValue function
-  const getCookieValue = (name) => {
-    try {
-      if (typeof document === 'undefined') return '';
-
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        const [key, value] = cookie.trim().split('=');
-        if (key === name) return decodeURIComponent(value);
-      }
-      return '';
-    } catch (error) {
-      console.error('Error reading cookie:', error);
-      return '';
     }
   };
 
@@ -596,7 +637,7 @@ const StoreViewPage = () => {
 
       const response = await fetch(`http://localhost:4000/api/v1/stores/${id}/toggle-follow`, {
         method: 'POST',
-        headers: StoreService.getHeaders() // This should include proper auth headers
+        headers: StoreService.getHeaders()
       });
 
       if (!response.ok) {
@@ -639,7 +680,6 @@ const StoreViewPage = () => {
   useEffect(() => {
     if (!storeData) return;
 
-    // Fetch all data for stats display
     fetchOffers();
     fetchServices();
     fetchBranches();
@@ -667,9 +707,8 @@ const StoreViewPage = () => {
 
   const fetchSocialLinksForStore = async (storeId) => {
     try {
-      console.log('📱 Frontend: Fetching social links for store:', storeId);
+      console.log('Frontend: Fetching social links for store:', storeId);
 
-      // Try the public socials endpoint
       const response = await fetch(`http://localhost:4000/api/v1/socials/store/${storeId}`, {
         method: 'GET',
         headers: {
@@ -680,25 +719,23 @@ const StoreViewPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📱 Frontend: Socials response:', data);
+        console.log('Frontend: Socials response:', data);
         return data.success ? (data.socials || []) : [];
       } else if (response.status === 404) {
-        console.log('📱 Frontend: No social links found for store');
+        console.log('Frontend: No social links found for store');
         return [];
       } else {
-        console.error('📱 Frontend: Socials fetch failed:', response.status);
+        console.error('Frontend: Socials fetch failed:', response.status);
         return [];
       }
     } catch (error) {
-      console.error('📱 Frontend: Error fetching social links:', error);
+      console.error('Frontend: Error fetching social links:', error);
       return [];
     }
   };
 
-  // Then in your StoreViewPage useEffect, add:
   useEffect(() => {
     if (storeData && storeData.id) {
-      // Fetch social links separately if not present
       if (!storeData.socialLinksRaw || storeData.socialLinksRaw.length === 0) {
         fetchSocialLinksForStore(storeData.id).then(socials => {
           if (socials.length > 0) {
@@ -732,9 +769,9 @@ const StoreViewPage = () => {
     ));
   };
 
-  // UPDATED: Enhanced Offer Card Component with expiration check
-  const OfferCard = ({ offer, isListView = false }) => {
-    // ADDED: Check if offer is expired (shouldn't happen since we filter, but good to have)
+  // FIXED: Enhanced Offer Card Component with stable images
+  const OfferCard = React.memo(({ offer, isListView = false }) => {
+    // Check if offer is expired (shouldn't happen since we filter, but good to have)
     const expired = isOfferExpired(offer.expiration_date);
     
     // Skip rendering if expired (extra safety)
@@ -752,14 +789,12 @@ const StoreViewPage = () => {
     return (
       <div className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group ${isListView ? 'flex flex-col sm:flex-row' : ''}`}>
         <div className={`relative ${isListView ? 'sm:w-1/3' : ''}`}>
-          <img
-            src={offer.image_url || offer.service?.image_url || '/api/placeholder/300/200'}
+          {/* FIXED: Use StableImage component */}
+          <StableImage
+            src={offer.image_url || offer.service?.image_url}
+            fallbackSrc={OFFER_IMAGE_FALLBACK}
             alt={offer.title || offer.description}
-            className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${isListView ? 'h-48 sm:h-full' : 'h-48'
-              }`}
-            onError={(e) => {
-              e.target.src = '/api/placeholder/300/200';
-            }}
+            className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${isListView ? 'h-48 sm:h-full' : 'h-48'}`}
           />
 
           {/* Favorite Button */}
@@ -794,13 +829,12 @@ const StoreViewPage = () => {
           {/* Store Info */}
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
-              <img
-                src={storeData?.logo || storeData?.logo_url || '/api/placeholder/20/20'}
+              {/* FIXED: Use StableImage for small store logo */}
+              <StableImage
+                src={storeData?.logo || storeData?.logo_url}
+                fallbackSrc={SMALL_LOGO_FALLBACK}
                 alt="Store logo"
                 className="w-5 h-5 rounded-full object-cover"
-                onError={(e) => {
-                  e.target.src = '/api/placeholder/20/20';
-                }}
               />
             </div>
 
@@ -849,7 +883,7 @@ const StoreViewPage = () => {
             </button>
           </div>
 
-          {/* Expiry Date - UPDATED: Show remaining time instead of raw date */}
+          {/* Expiry Date */}
           {offer.expiry_date && (
             <div className="mt-2 text-xs text-gray-500">
               Expires: {new Date(offer.expiry_date).toLocaleDateString()}
@@ -858,7 +892,7 @@ const StoreViewPage = () => {
         </div>
       </div>
     );
-  };
+  });
 
   const getSocialIcon = (platform) => {
     const iconProps = { className: "w-5 h-5" };
@@ -943,7 +977,7 @@ const StoreViewPage = () => {
   };
 
   // Enhanced Outlet Card Component
-  const OutletCard = ({ branch }) => (
+  const OutletCard = React.memo(({ branch }) => (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
       {/* Branch Header */}
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b">
@@ -1007,7 +1041,7 @@ const StoreViewPage = () => {
         </div>
       </div>
     </div>
-  );
+  ));
 
   // Google Maps Component
   const GoogleMap = ({ branches, center }) => {
@@ -1016,41 +1050,18 @@ const StoreViewPage = () => {
     const [mapError, setMapError] = React.useState(null);
 
     React.useEffect(() => {
-      // Check if Google Maps is already loaded
       if (window.google && window.google.maps) {
         initializeMap();
         return;
       }
 
-      // For demo purposes, we'll show a placeholder
-      // In production, add your Google Maps API key
       setMapError('Google Maps API key required');
-
-      // Uncomment below and add your API key to enable Google Maps
-      /*
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      
-      script.onload = () => {
-        initializeMap();
-      };
-      
-      script.onerror = () => {
-        setMapError('Failed to load Google Maps');
-      };
-
-      document.head.appendChild(script);
-      */
-
     }, []);
 
     const initializeMap = () => {
       try {
         if (!mapRef.current || !window.google) return;
 
-        // Default center (Nairobi, Kenya)
         const defaultCenter = { lat: -1.2921, lng: 36.8219 };
         const mapCenter = center || defaultCenter;
 
@@ -1120,7 +1131,6 @@ const StoreViewPage = () => {
     const getMapCenter = () => {
       if (branches.length === 0) return null;
 
-      // If only one branch, use its coordinates or geocode address
       if (branches.length === 1) {
         const branch = branches[0];
         if (branch.latitude && branch.longitude) {
@@ -1129,11 +1139,9 @@ const StoreViewPage = () => {
             lng: parseFloat(branch.longitude)
           };
         }
-        // Default to Nairobi center if no coordinates
         return { lat: -1.2921, lng: 36.8219 };
       }
 
-      // Calculate center from multiple branches
       const validCoords = branches.filter(b => b.latitude && b.longitude);
       if (validCoords.length > 0) {
         const avgLat = validCoords.reduce((sum, b) => sum + parseFloat(b.latitude), 0) / validCoords.length;
@@ -1141,7 +1149,6 @@ const StoreViewPage = () => {
         return { lat: avgLat, lng: avgLng };
       }
 
-      // Default to Nairobi if no coordinates available
       return { lat: -1.2921, lng: 36.8219 };
     };
 
@@ -1206,7 +1213,6 @@ const StoreViewPage = () => {
                     <button
                       className="text-green-500 hover:text-green-600 transition-colors p-1"
                       onClick={() => {
-                        // Try to open in maps app
                         const query = encodeURIComponent(branch.address);
                         window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
                       }}
@@ -1442,13 +1448,12 @@ const StoreViewPage = () => {
           <div className="flex flex-col md:flex-row gap-6">
             {/* Store Logo and Basic Info */}
             <div className="flex items-start gap-4">
-              <img
+              {/* FIXED: Use StableImage for main store logo */}
+              <StableImage
                 src={storeData.logo || storeData.logo_url}
+                fallbackSrc={STORE_LOGO_FALLBACK}
                 alt={storeData.name}
                 className="w-20 h-20 rounded-lg object-cover border-2 border-gray-200"
-                onError={(e) => {
-                  e.target.src = '/images/store-placeholder.png';
-                }}
               />
               <div className="flex-1">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -1593,7 +1598,7 @@ const StoreViewPage = () => {
             </div>
           </div>
 
-          {/* Store Stats - UPDATED: Changed "Offers" label to "Active Offers" */}
+          {/* Store Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
             <button
               onClick={() => setActiveSection('offers')}
@@ -1653,14 +1658,13 @@ const StoreViewPage = () => {
         {/* Dynamic Content Based on Active Section */}
         {renderActiveSection()}
 
-        {/* Reviews Section - SIMPLIFIED: Now self-contained */}
+        {/* Reviews Section */}
         <ReviewSection
           storeData={storeData}
           storeId={id}
           onNavigate={navigate}
           location={location}
           onRefreshStore={(newReviews) => {
-            // Optional: Update store data with new reviews
             setStoreData(prev => ({
               ...prev,
               reviews: newReviews

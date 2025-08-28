@@ -555,7 +555,7 @@ export default function UserServiceRequestPage() {
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
               <button
                 onClick={handleRequestFormShow}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-8 py-3 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
               >
                 <Plus className="w-5 h-5" />
                 <span>Post Service Request</span>

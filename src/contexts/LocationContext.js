@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { locationAPI } from '../config/api'; // Import from your API
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { locationAPI } from '../config/api';
 
 // Create the Location Context
 const LocationContext = createContext();
@@ -17,35 +17,15 @@ export const useLocation = () => {
 export const LocationProvider = ({ children }) => {
   // FIXED: Always default to "All Locations"
   const [currentLocation, setCurrentLocation] = useState('All Locations');
-  const [isLocationLoading, setIsLocationLoading] = useState(false); // Don't start loading immediately
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
   
   // Available locations - fetched from API only
   const [availableLocations, setAvailableLocations] = useState([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
 
-  // Load locations on component mount - but don't auto-detect user location
-  useEffect(() => {
-    const initializeLocationData = async () => {
-      console.log('🚀 Initializing location data...');
-      
-      // Only load available locations from API
-      await loadAvailableLocations();
-      
-      // Check if user has a saved location preference (but don't auto-detect)
-      const savedLocation = localStorage.getItem('userSelectedLocation');
-      if (savedLocation && savedLocation !== 'null') {
-        console.log('📱 Found saved location preference:', savedLocation);
-        setCurrentLocation(savedLocation);
-      }
-      // If no saved location, stay with "All Locations" default
-    };
-
-    initializeLocationData();
-  }, []);
-
-  // FIXED: Load available locations from API only
-  const loadAvailableLocations = async () => {
+  // FIXED: Memoize loadAvailableLocations to prevent recreating on every render
+  const loadAvailableLocations = useCallback(async () => {
     try {
       setIsLoadingLocations(true);
       console.log('📍 Fetching available locations from API...');
@@ -77,7 +57,6 @@ export const LocationProvider = ({ children }) => {
         console.log(`✅ Loaded ${formattedLocations.length} locations from API`);
       } else {
         console.warn('⚠️ No locations found in API response, using default');
-        // FIXED: Only "All Locations" as fallback
         setAvailableLocations([{
           id: 'all',
           name: 'All Locations',
@@ -87,7 +66,6 @@ export const LocationProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('❌ Error loading locations from API:', error);
-      // FIXED: Only "All Locations" as fallback on error
       setAvailableLocations([{
         id: 'all',
         name: 'All Locations',
@@ -97,10 +75,29 @@ export const LocationProvider = ({ children }) => {
     } finally {
       setIsLoadingLocations(false);
     }
-  };
+  }, []); // No dependencies - this function doesn't depend on any state
 
-  // FIXED: Simplified location change function
-  const changeLocation = async (newLocation) => {
+  // Load locations on component mount
+  useEffect(() => {
+    const initializeLocationData = async () => {
+      console.log('🚀 Initializing location data...');
+      
+      // Only load available locations from API
+      await loadAvailableLocations();
+      
+      // Check if user has a saved location preference
+      const savedLocation = localStorage.getItem('userSelectedLocation');
+      if (savedLocation && savedLocation !== 'null') {
+        console.log('📱 Found saved location preference:', savedLocation);
+        setCurrentLocation(savedLocation);
+      }
+    };
+
+    initializeLocationData();
+  }, [loadAvailableLocations]);
+
+  // FIXED: Memoized location change function
+  const changeLocation = useCallback(async (newLocation) => {
     try {
       setIsLocationLoading(true);
       setLocationError(null);
@@ -114,11 +111,9 @@ export const LocationProvider = ({ children }) => {
       try {
         if (newLocation && newLocation !== 'All Locations') {
           localStorage.setItem('userSelectedLocation', newLocation);
-          // Set flag to indicate manual selection
           localStorage.setItem('locationManuallySelected', 'true');
           localStorage.setItem('lastLocationChangeTime', Date.now().toString());
         } else {
-          // If "All Locations" is selected, clear saved location
           localStorage.removeItem('userSelectedLocation');
           localStorage.removeItem('locationManuallySelected');
           localStorage.removeItem('lastLocationChangeTime');
@@ -143,10 +138,10 @@ export const LocationProvider = ({ children }) => {
     } finally {
       setIsLocationLoading(false);
     }
-  };
+  }, []);
 
-  // FIXED: Simplified geolocation function - only called when user explicitly requests it
-  const getCurrentLocationFromBrowser = async () => {
+  // FIXED: Memoized geolocation function
+  const getCurrentLocationFromBrowser = useCallback(async () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         const error = 'Geolocation is not supported by this browser';
@@ -174,7 +169,6 @@ export const LocationProvider = ({ children }) => {
               
               console.log('🎯 Auto-detected location:', detectedLocation);
               
-              // Only change if we found a valid location
               if (detectedLocation && detectedLocation !== 'All Locations') {
                 await changeLocation(detectedLocation);
                 resolve(detectedLocation);
@@ -214,36 +208,41 @@ export const LocationProvider = ({ children }) => {
           reject(new Error(errorMessage));
         },
         {
-          enableHighAccuracy: false, // Faster response
-          timeout: 10000, // 10 seconds timeout
-          maximumAge: 600000 // 10 minutes cache
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 600000
         }
       );
     });
-  };
+  }, [changeLocation]);
 
-  // Get short location name (just the area name without city)
-  const getShortLocationName = () => {
+  // CRITICAL FIX: Memoized getShortLocationName function
+  const getShortLocationName = useCallback(() => {
     if (!currentLocation || currentLocation === 'All Locations') {
       return 'All Locations';
     }
     return currentLocation.split(',')[0];
-  };
+  }, [currentLocation]);
 
-  // Get location details
-  const getLocationDetails = () => {
+  // FIXED: Memoized getLocationDetails function
+  const getLocationDetails = useCallback(() => {
     if (!currentLocation) return null;
     return availableLocations.find(loc => loc.name === currentLocation);
-  };
+  }, [currentLocation, availableLocations]);
 
-  // Refresh available locations (useful when new stores/offers are added)
-  const refreshAvailableLocations = async () => {
+  // FIXED: Memoized refreshAvailableLocations function  
+  const refreshAvailableLocations = useCallback(async () => {
     console.log('🔄 Refreshing available locations...');
     await loadAvailableLocations();
-  };
+  }, [loadAvailableLocations]);
 
-  // Context value
-  const contextValue = {
+  // FIXED: Memoized helper functions
+  const isLocationSelected = useCallback((locationName) => currentLocation === locationName, [currentLocation]);
+  
+  const clearLocationError = useCallback(() => setLocationError(null), []);
+
+  // CRITICAL FIX: Memoized context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     // Current location state
     currentLocation,
     isLocationLoading,
@@ -253,21 +252,34 @@ export const LocationProvider = ({ children }) => {
     availableLocations,
     isLoadingLocations,
     
-    // Functions
+    // Functions - ALL MEMOIZED
     changeLocation,
-    getCurrentLocationFromBrowser, // Only called when user explicitly requests location detection
+    getCurrentLocationFromBrowser,
     refreshAvailableLocations,
     getShortLocationName,
     getLocationDetails,
     
-    // Helpers
-    isLocationSelected: (locationName) => currentLocation === locationName,
+    // Helpers - ALL MEMOIZED
+    isLocationSelected,
     hasLocationData: !!currentLocation,
-    isAutoDetected: false, // SIMPLIFIED: Remove complex auto-detection logic
+    isAutoDetected: false,
     
     // Reset error
-    clearLocationError: () => setLocationError(null)
-  };
+    clearLocationError
+  }), [
+    currentLocation,
+    isLocationLoading,
+    locationError,
+    availableLocations,
+    isLoadingLocations,
+    changeLocation,
+    getCurrentLocationFromBrowser,
+    refreshAvailableLocations,
+    getShortLocationName,
+    getLocationDetails,
+    isLocationSelected,
+    clearLocationError
+  ]);
 
   return (
     <LocationContext.Provider value={contextValue}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronDown, Star, Grid3X3, List, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -13,12 +13,20 @@ const Stores = () => {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
 
-  // Use Location Context
-  const { currentLocation, getShortLocationName } = useLocation();
+  // FIXED: Only get currentLocation, don't use the unstable getShortLocationName function
+  const { currentLocation } = useLocation();
+
+  // FIXED: Create short location name directly in component with useMemo
+  const shortLocationName = useMemo(() => {
+    if (!currentLocation || currentLocation === 'All Locations') {
+      return 'all locations';
+    }
+    return currentLocation.split(',')[0];
+  }, [currentLocation]);
 
   // API state
   const [stores, setStores] = useState([]);
-  const [categories, setCategories] = useState([]); // Start empty to prevent duplicates
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState(null);
@@ -26,14 +34,149 @@ const Stores = () => {
 
   const sortOptions = ['Popular', 'Highest Discount', 'Lowest Discount', 'A-Z', 'Z-A'];
 
-  // Fetch categories
+  // FIXED: Simple logo component that prevents onError loops
+  const StoreLogo = ({ store, className }) => {
+    const [imageError, setImageError] = useState(false);
+    
+    // Get store initials for fallback
+    const storeInitials = store.name?.charAt(0)?.toUpperCase() || 'S';
+    
+    // Check if store actually has a logo URL in the database
+    const hasValidLogo = (store.logo && store.logo.trim() !== '') || 
+                        (store.logo_url && store.logo_url.trim() !== '');
+
+    // If no logo in database OR image failed, show initials (no img tag = no onError)
+    if (!hasValidLogo || imageError) {
+      return (
+        <div className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg ${className}`}>
+          <span className="text-white font-bold text-sm">
+            {storeInitials}
+          </span>
+        </div>
+      );
+    }
+
+    // Only render img tag if we confirmed the store has a logo URL
+    return (
+      <img
+        src={store.logo || store.logo_url}
+        alt={`${store.name} logo`}
+        className={className}
+        onError={() => setImageError(true)}
+        loading="lazy"
+      />
+    );
+  };
+
+  // FIXED: StoreCard with proper logo handling
+  const StoreCard = React.memo(({ store, isListView = false }) => {
+    return (
+      <div
+        className={`bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group ${isListView ? 'p-4' : 'p-4 md:p-6'}`}
+        onClick={() => handleStoreClick(store)}
+      >
+        {isListView ? (
+          // List view layout
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <StoreLogo 
+                  store={store}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
+                />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-base">{store.name}</h3>
+                <div className="flex items-center space-x-1 mt-1">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
+                </div>
+                {store.location && (
+                  <div className="text-xs text-gray-500 mt-1">{store.location}</div>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-red-500 font-bold text-lg">{store.cashback || 'N/A'}</div>
+              <div className="text-gray-500 text-sm font-medium">Discount</div>
+              {store.wasRate && (
+                <div className="text-gray-400 text-sm mt-1">{store.wasRate}</div>
+              )}
+            </div>
+          </div>
+        ) : (
+          // Grid view layout
+          <div className="flex flex-col h-full">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="relative flex-shrink-0">
+                  <StoreLogo 
+                    store={store}
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-gray-900 text-sm md:text-base leading-tight truncate">{store.name}</h3>
+                  {store.location && (
+                    <div className="text-xs text-gray-500 mt-1 truncate">{store.location}</div>
+                  )}
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0 ml-2">
+                <div className="text-red-500 font-bold text-lg md:text-xl">{store.cashback || 'N/A'}</div>
+                <div className="text-gray-500 text-xs md:text-sm font-medium">Discount</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mt-auto">
+              <div className="flex items-center space-x-1">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
+              </div>
+              {store.wasRate && (
+                <div className="text-gray-400 text-xs">{store.wasRate}</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  });
+
+  // Memoized handlers to prevent unnecessary re-renders
+  const handleStoreClick = useCallback((store) => {
+    navigate(`/Store/${store.id}`);
+  }, [navigate]);
+
+  const handleFilterChange = useCallback((filterType, value) => {
+    setCurrentPage(1);
+
+    switch (filterType) {
+      case 'category':
+        setSelectedCategory(value);
+        break;
+      case 'sort':
+        setSortBy(value);
+        setShowSortDropdown(false);
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setSelectedCategory('All');
+    setSortBy('Popular');
+    setCurrentPage(1);
+  }, []);
+
+  // Fetch categories - runs only once
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const categoriesData = await ApiService.getCategories();
         console.log('Raw categories data:', categoriesData);
         
-        // Handle different API response formats and ensure no duplicates
         let apiCategories = [];
         
         if (categoriesData.categories && Array.isArray(categoriesData.categories)) {
@@ -42,12 +185,10 @@ const Stores = () => {
           apiCategories = categoriesData;
         }
         
-        // Remove any existing 'All' entries and create unique set
         const uniqueCategories = [...new Set(apiCategories.filter(cat => 
           cat && cat !== 'All' && cat.trim() !== ''
         ))];
         
-        // Always put 'All' first, then sorted unique categories
         const finalCategories = ['All', ...uniqueCategories.sort()];
         
         console.log('Final categories being set:', finalCategories);
@@ -55,7 +196,6 @@ const Stores = () => {
         
       } catch (err) {
         console.error('Error fetching categories:', err);
-        // Use fallback categories (no duplicates)
         setCategories(['All', 'Electronics', 'Fashion', 'Food & Dining', 'Beauty', 'Health', 'Home & Garden']);
       }
     };
@@ -63,15 +203,7 @@ const Stores = () => {
     fetchCategories();
   }, []);
 
-  // Debug location changes
-  useEffect(() => {
-    console.log('STORES PAGE - Location changed:', {
-      currentLocation,
-      shortName: getShortLocationName()
-    });
-  }, [currentLocation, getShortLocationName]);
-
-  // Fetch stores when filters or location change
+  // FIXED: Main fetch effect with only stable dependencies
   useEffect(() => {
     const fetchStores = async () => {
       try {
@@ -85,7 +217,6 @@ const Stores = () => {
           limit: 20
         };
 
-        // Add location filter explicitly
         if (currentLocation && currentLocation !== 'All Locations') {
           filters.location = currentLocation;
           console.log('STORES PAGE - Adding location filter:', currentLocation);
@@ -119,124 +250,16 @@ const Stores = () => {
     fetchStores();
   }, [currentLocation, selectedCategory, sortBy, currentPage]);
 
-  // Listen for location changes from navbar
-  useEffect(() => {
-    const handleLocationChange = (event) => {
-      console.log('STORES PAGE - Received location change event:', event.detail);
-      // Reset page when location changes
-      setCurrentPage(1);
-    };
-
-    window.addEventListener('locationChanged', handleLocationChange);
-    return () => window.removeEventListener('locationChanged', handleLocationChange);
+  // Handle location change events
+  const handleLocationChange = useCallback((event) => {
+    console.log('STORES PAGE - Received location change event:', event.detail);
+    setCurrentPage(1);
   }, []);
 
-  const handleStoreClick = (store) => {
-    navigate(`/Store/${store.id}`)
-  };
-
-  const handleFilterChange = (filterType, value) => {
-    setCurrentPage(1); // Reset to first page when filter changes
-
-    switch (filterType) {
-      case 'category':
-        setSelectedCategory(value);
-        break;
-      case 'sort':
-        setSortBy(value);
-        setShowSortDropdown(false);
-        break;
-      default:
-        break;
-    }
-  };
-
-  const clearFilters = () => {
-    setSelectedCategory('All');
-    setSortBy('Popular');
-    setCurrentPage(1);
-  };
-
-  const StoreCard = ({ store, isListView = false }) => (
-    <div
-      className={`bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group ${isListView ? 'p-4' : 'p-4 md:p-6'
-        }`}
-      onClick={() => handleStoreClick(store)}
-    >
-      {isListView ? (
-        // List view layout
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <img
-                src={store.logo || store.logo_url || '/images/default-store.png'}
-                alt={`${store.name} logo`}
-                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
-                onError={(e) => {
-                  e.target.src = '/images/default-store.png';
-                }}
-              />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 text-base">{store.name}</h3>
-              <div className="flex items-center space-x-1 mt-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
-              </div>
-              {store.location && (
-                <div className="text-xs text-gray-500 mt-1">{store.location}</div>
-              )}
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-red-500 font-bold text-lg">{store.cashback || 'N/A'}</div>
-            <div className="text-gray-500 text-sm font-medium">Discount</div>
-            {store.wasRate && (
-              <div className="text-gray-400 text-sm mt-1">{store.wasRate}</div>
-            )}
-          </div>
-        </div>
-      ) : (
-        // Grid view layout
-        <div className="flex flex-col h-full">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center space-x-3 flex-1 min-w-0">
-              <div className="relative flex-shrink-0">
-                <img
-                  src={store.logo || store.logo_url || '/images/default-store.png'}
-                  alt={`${store.name} logo`}
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
-                  onError={(e) => {
-                    e.target.src = '/images/default-store.png';
-                  }}
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-gray-900 text-sm md:text-base leading-tight truncate">{store.name}</h3>
-                {store.location && (
-                  <div className="text-xs text-gray-500 mt-1 truncate">{store.location}</div>
-                )}
-              </div>
-            </div>
-            <div className="text-right flex-shrink-0 ml-2">
-              <div className="text-red-500 font-bold text-lg md:text-xl">{store.cashback || 'N/A'}</div>
-              <div className="text-gray-500 text-xs md:text-sm font-medium">Discount</div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between mt-auto">
-            <div className="flex items-center space-x-1">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
-            </div>
-            {store.wasRate && (
-              <div className="text-gray-400 text-xs">{store.wasRate}</div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  useEffect(() => {
+    window.addEventListener('locationChanged', handleLocationChange);
+    return () => window.removeEventListener('locationChanged', handleLocationChange);
+  }, [handleLocationChange]);
 
   if (loading && stores.length === 0) {
     return (
@@ -256,15 +279,13 @@ const Stores = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-
-
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">All Stores</h1>
             <p className="text-gray-600 mt-1">
               {currentLocation && currentLocation !== 'All Locations' 
-                ? `Showing stores in ${getShortLocationName()}`
+                ? `Showing stores in ${shortLocationName}`
                 : 'Showing stores from all locations'
               }
             </p>
@@ -323,7 +344,7 @@ const Stores = () => {
 
         {/* Category Filter Tabs */}
         <div className="flex space-x-2 mb-8 overflow-x-auto pb-2">
-          {[...new Set(categories)].map((category, index) => (
+          {categories.map((category, index) => (
             <button
               key={`category-${index}-${category}`}
               onClick={() => handleFilterChange('category', category)}
@@ -401,7 +422,7 @@ const Stores = () => {
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg">
               {currentLocation && currentLocation !== 'All Locations' 
-                ? `No stores found in ${getShortLocationName()} for the selected filters.`
+                ? `No stores found in ${shortLocationName} for the selected filters.`
                 : 'No stores found for the selected filters.'
               }
             </div>
@@ -426,11 +447,11 @@ const Stores = () => {
               <span>
                 {stores.length > 0 ? (
                   currentLocation && currentLocation !== 'All Locations' 
-                    ? `${stores.length} stores found in ${getShortLocationName()}`
+                    ? `${stores.length} stores found in ${shortLocationName}`
                     : `${stores.length} stores found`
                 ) : (
                   currentLocation && currentLocation !== 'All Locations'
-                    ? `No stores in ${getShortLocationName()}`
+                    ? `No stores in ${shortLocationName}`
                     : 'No stores found'
                 )}
               </span>
