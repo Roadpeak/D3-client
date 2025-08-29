@@ -49,7 +49,7 @@ const StoreLogo = ({
   return (
     <div className={containerClassName}>
       {showFallback ? (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-400 rounded-full">
           <span className="text-white text-sm font-bold">
             {getInitial(storeName)}
           </span>
@@ -651,7 +651,7 @@ export default function Hotdeals() {
                           storeName={offer.store?.name || 'Store'}
                         />
                         
-                        <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
+                        <div className="flex items-center bg-gradient-to-r from-blue-900 to-blue-400 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
                           <span>{offer.store?.name || 'Store name'}</span>
                         </div>
                       </div>

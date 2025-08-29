@@ -6,7 +6,7 @@ import api from '../config/api';
 import RealTimeSearch from './RealTimeSearch';
 import { useLocation } from '../contexts/LocationContext';
 import chatService from '../services/chatService';
-import notificationService from '../services/notificationService'; // NEW
+import notificationService from '../services/notificationService';
 
 // SVG Icons (keeping existing ones plus new ones)
 const Search = ({ className }) => (
@@ -58,7 +58,7 @@ const LogoutIcon = ({ className }) => (
   </svg>
 );
 
-// NEW: Additional notification type icons
+// Notification type icons
 const MessageCircleIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -115,6 +115,13 @@ const TagIcon = ({ className }) => (
 const ChatIcon = ({ className }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
     <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
+  </svg>
+);
+
+const ServiceIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
 
@@ -292,7 +299,7 @@ const Navbar = () => {
       }
 
       console.log('📨 Loading unread chat messages count...');
-      
+
       const chatToken = chatService.getAuthToken();
       if (!chatToken) {
         console.log('❌ No chat token available');
@@ -301,12 +308,12 @@ const Navbar = () => {
       }
 
       const response = await chatService.getConversations('customer');
-      
+
       if (response.success && response.data) {
         const totalUnreadCount = response.data.reduce((total, chat) => {
           return total + (chat.unreadCount || 0);
         }, 0);
-        
+
         console.log(`📊 Total unread chat messages: ${totalUnreadCount}`);
         setUnreadChatCount(totalUnreadCount);
       } else {
@@ -390,21 +397,21 @@ const Navbar = () => {
   const handleLocationSelect = async (selectedLocation) => {
     try {
       console.log('📍 Navbar: Changing location to:', selectedLocation.name);
-      
+
       await changeLocation(selectedLocation.name);
       setIsLocationOpen(false);
-      
+
       const locationChangeEvent = new CustomEvent('locationChanged', {
-        detail: { 
+        detail: {
           location: selectedLocation.name,
           source: 'navbar',
           timestamp: Date.now()
         }
       });
-      
+
       console.log('📍 Navbar: Dispatching locationChanged event');
       window.dispatchEvent(locationChangeEvent);
-      
+
     } catch (error) {
       console.error('❌ Navbar: Error changing location:', error);
     }
@@ -422,13 +429,13 @@ const Navbar = () => {
   // ENHANCED: Notification handlers
   const handleNotificationClick = async (notification) => {
     console.log('🔔 Clicked notification:', notification);
-    
+
     // Close notification dropdown
     setIsNotificationOpen(false);
-    
+
     // Handle the notification click
     notificationService.handleNotificationClick(notification, navigate);
-    
+
     // Update local state to mark as read
     setNotifications(prev =>
       prev.map(notif =>
@@ -522,7 +529,9 @@ const Navbar = () => {
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
               <div className="text-3xl font-bold">
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">D3</span>
+                <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
+                  D3
+                </span>
                 <TagIcon className="w-6 h-6 text-indigo-600 inline ml-1" />
               </div>
             </div>
@@ -546,7 +555,9 @@ const Navbar = () => {
               {/* Logo */}
               <Link to="/" className="flex items-center space-x-3">
                 <div className="text-2xl font-bold">
-                  <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">D3</span>
+                  <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
+                    D3
+                  </span>
                   <TagIcon className="w-5 h-5 text-indigo-600 inline ml-1" />
                 </div>
                 <div className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3 py-1.5 rounded-full font-semibold shadow-md">
@@ -703,13 +714,12 @@ const Navbar = () => {
                         ) : (
                           notifications.map((notification) => {
                             const IconComponent = getNotificationIcon(notification.type);
-                            
+
                             return (
                               <div
                                 key={notification.id}
-                                className={`p-4 border-b border-slate-100/50 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 cursor-pointer ${
-                                  !notification.isRead ? 'bg-gradient-to-r from-amber-50/30 to-orange-50/30' : ''
-                                }`}
+                                className={`p-4 border-b border-slate-100/50 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 cursor-pointer ${!notification.isRead ? 'bg-gradient-to-r from-amber-50/30 to-orange-50/30' : ''
+                                  }`}
                                 onClick={() => handleNotificationClick(notification)}
                               >
                                 <div className="flex items-start space-x-3">
@@ -717,14 +727,13 @@ const Navbar = () => {
                                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${notification.color || 'bg-slate-100 text-slate-600'}`}>
                                     <IconComponent className="w-5 h-5" />
                                   </div>
-                                  
+
                                   {/* Notification Content */}
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between">
                                       <div className="flex-1 min-w-0">
-                                        <h4 className={`text-sm font-medium truncate ${
-                                          !notification.isRead ? 'text-slate-900' : 'text-slate-700'
-                                        }`}>
+                                        <h4 className={`text-sm font-medium truncate ${!notification.isRead ? 'text-slate-900' : 'text-slate-700'
+                                          }`}>
                                           {notification.title}
                                         </h4>
                                         <p className="text-sm text-slate-600 mt-1 line-clamp-2">
@@ -779,7 +788,7 @@ const Navbar = () => {
                           ) : (
                             <span className="text-sm text-slate-500">All caught up!</span>
                           )}
-                          
+
                           <button
                             onClick={() => {
                               setIsNotificationOpen(false);
@@ -833,7 +842,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Desktop Header with similar enhancements... */}
+          {/* Desktop Header */}
           <div className="hidden lg:block">
             {/* Top Header */}
             <div className="flex items-center justify-between py-4 border-b border-slate-200/50">
@@ -841,7 +850,9 @@ const Navbar = () => {
                 <div className="flex items-center space-x-4">
                   <Link to="/" className="flex items-center space-x-3">
                     <div className="text-3xl font-bold">
-                      <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">D3</span>
+                      <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
+                        D3
+                      </span>
                       <TagIcon className="w-6 h-6 text-indigo-600 inline ml-1" />
                     </div>
                     <div className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3 py-1.5 rounded-full font-semibold shadow-md">
@@ -858,7 +869,7 @@ const Navbar = () => {
                     <ChevronDown className="w-4 h-4" />
                   </button>
 
-                  {/* Desktop Location Dropdown - Same as mobile */}
+                  {/* Desktop Location Dropdown */}
                   {isLocationOpen && availableLocations.length > 0 && (
                     <div className="absolute top-10 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
                       <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
@@ -956,7 +967,7 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                {/* Desktop Notifications - Same enhanced version as mobile */}
+                {/* Desktop Notifications */}
                 <div className="relative">
                   <button onClick={toggleNotifications} className="relative flex items-center bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm p-2.5 rounded-xl border border-slate-200/50 transition-all duration-200">
                     <NotificationIcon className="w-5 h-5 text-slate-600" />
@@ -967,10 +978,9 @@ const Navbar = () => {
                     )}
                   </button>
 
-                  {/* Desktop notification popup - Same as mobile version */}
+                  {/* Desktop notification popup */}
                   {isNotificationOpen && (
                     <div className="absolute right-0 top-12 w-96 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50 max-h-[80vh] overflow-hidden flex flex-col">
-                      {/* Same content as mobile notification popup */}
                       <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
                         <div className="flex items-center justify-between">
                           <h3 className="text-lg font-semibold text-slate-800">Notifications</h3>
@@ -1038,26 +1048,24 @@ const Navbar = () => {
                         ) : (
                           notifications.map((notification) => {
                             const IconComponent = getNotificationIcon(notification.type);
-                            
+
                             return (
                               <div
                                 key={notification.id}
-                                className={`p-4 border-b border-slate-100/50 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 cursor-pointer ${
-                                  !notification.isRead ? 'bg-gradient-to-r from-amber-50/30 to-orange-50/30' : ''
-                                }`}
+                                className={`p-4 border-b border-slate-100/50 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 cursor-pointer ${!notification.isRead ? 'bg-gradient-to-r from-amber-50/30 to-orange-50/30' : ''
+                                  }`}
                                 onClick={() => handleNotificationClick(notification)}
                               >
                                 <div className="flex items-start space-x-3">
                                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${notification.color || 'bg-slate-100 text-slate-600'}`}>
                                     <IconComponent className="w-5 h-5" />
                                   </div>
-                                  
+
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between">
                                       <div className="flex-1 min-w-0">
-                                        <h4 className={`text-sm font-medium truncate ${
-                                          !notification.isRead ? 'text-slate-900' : 'text-slate-700'
-                                        }`}>
+                                        <h4 className={`text-sm font-medium truncate ${!notification.isRead ? 'text-slate-900' : 'text-slate-700'
+                                          }`}>
                                           {notification.title}
                                         </h4>
                                         <p className="text-sm text-slate-600 mt-1 line-clamp-2">
@@ -1111,7 +1119,7 @@ const Navbar = () => {
                           ) : (
                             <span className="text-sm text-slate-500">All caught up!</span>
                           )}
-                          
+
                           <button
                             onClick={() => {
                               setIsNotificationOpen(false);
@@ -1169,7 +1177,7 @@ const Navbar = () => {
         </div>
 
         {/* Promotional Banner */}
-        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white py-1.5 px-4">
+        <div className="bg-gradient-to-r from-blue-900 via-blue-600 to-blue-400 text-white py-1.5 px-4">
           <div className="container mx-auto flex items-center justify-center text-center">
             <div className="flex items-center space-x-2">
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-ping"></div>
@@ -1182,10 +1190,10 @@ const Navbar = () => {
 
       {/* Fixed Bottom Mobile Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/50 shadow-xl z-50">
-        <div className="grid grid-cols-4 gap-1 p-2">
+        <div className="grid grid-cols-5 gap-1 p-2">
           <Link
             to="/"
-            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/'
+            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/'
               ? 'text-indigo-600 bg-indigo-50'
               : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
               }`}
@@ -1196,7 +1204,7 @@ const Navbar = () => {
 
           <Link
             to="/hotdeals"
-            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 relative ${location.pathname === '/hotdeals'
+            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 relative ${location.pathname === '/hotdeals'
               ? 'text-indigo-600 bg-indigo-50'
               : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
               }`}
@@ -1208,7 +1216,7 @@ const Navbar = () => {
 
           <Link
             to="/stores"
-            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/stores'
+            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/stores'
               ? 'text-indigo-600 bg-indigo-50'
               : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
               }`}
@@ -1218,8 +1226,19 @@ const Navbar = () => {
           </Link>
 
           <Link
+            to="/requestservice"
+            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/requestservice'
+              ? 'text-indigo-600 bg-indigo-50'
+              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+              }`}
+          >
+            <ServiceIcon className="w-5 h-5" />
+            <span className="text-xs font-medium">Service</span>
+          </Link>
+
+          <Link
             to="/chat"
-            className={`flex flex-col items-center space-y-1 px-3 py-3 rounded-xl transition-all duration-200 relative ${location.pathname === '/chat'
+            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 relative ${location.pathname === '/chat'
               ? 'text-indigo-600 bg-indigo-50'
               : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
               }`}

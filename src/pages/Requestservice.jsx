@@ -237,11 +237,11 @@ export default function UserServiceRequestPage() {
     try {
       setLoadingRequests(true);
       setError(null);
-      
+
       console.log('Loading service requests with filters:', filters);
-      
+
       const response = await userServiceRequestService.getPublicServiceRequests(filters);
-      
+
       console.log('Service requests loaded:', {
         count: response.data?.requests?.length || 0,
         pagination: response.data?.pagination
@@ -267,9 +267,9 @@ export default function UserServiceRequestPage() {
       setError(null);
 
       console.log('Loading user offers...');
-      
+
       const response = await userServiceRequestService.getUserOffers(filters);
-      
+
       console.log('User offers loaded:', {
         count: response.data?.offers?.length || 0,
         pagination: response.data?.pagination
@@ -295,9 +295,9 @@ export default function UserServiceRequestPage() {
       setError(null);
 
       console.log('Loading user past requests...');
-      
+
       const response = await userServiceRequestService.getUserPastRequests(filters);
-      
+
       console.log('User past requests loaded:', {
         count: response.data?.requests?.length || 0,
         pagination: response.data?.pagination
@@ -555,12 +555,13 @@ export default function UserServiceRequestPage() {
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
               <button
                 onClick={handleRequestFormShow}
-                className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-8 py-3 rounded-xl font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                className="bg-red-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
+
               >
                 <Plus className="w-5 h-5" />
                 <span>Post Service Request</span>
               </button>
-              
+
               <div className="text-sm text-slate-500 flex items-center space-x-4">
                 <span className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
@@ -594,12 +595,12 @@ export default function UserServiceRequestPage() {
               </div>
               <span className="font-medium text-slate-700">Filters</span>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
                 {pagination.totalCount || 0} requests
               </div>
-              
+
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -664,16 +665,15 @@ export default function UserServiceRequestPage() {
       <section className="container mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-slate-900">Service Requests</h2>
-          
+
           {/* Modern Tab Navigation */}
           <div className="flex bg-slate-100 rounded-xl p-1">
             <button
               onClick={() => handleTabChange('all')}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                activeTab === 'all' 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === 'all'
+                ? 'bg-white text-indigo-600 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               All ({serviceRequests.length})
             </button>
@@ -681,21 +681,19 @@ export default function UserServiceRequestPage() {
               <>
                 <button
                   onClick={() => handleTabChange('offers')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                    activeTab === 'offers' 
-                      ? 'bg-white text-indigo-600 shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === 'offers'
+                    ? 'bg-white text-indigo-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                 >
                   My Offers ({userOffers.length})
                 </button>
                 <button
                   onClick={() => handleTabChange('past')}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                    activeTab === 'past' 
-                      ? 'bg-white text-indigo-600 shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === 'past'
+                    ? 'bg-white text-indigo-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                 >
                   Past ({userPastRequests.length})
                 </button>
@@ -716,8 +714,8 @@ export default function UserServiceRequestPage() {
                 </div>
                 <h3 className="text-xl font-semibold text-slate-700 mb-2">No service requests found</h3>
                 <p className="text-slate-500 mb-6">Be the first to post a service request!</p>
-                <button 
-                  onClick={handleRequestFormShow} 
+                <button
+                  onClick={handleRequestFormShow}
                   className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
                 >
                   Post First Request
@@ -731,33 +729,32 @@ export default function UserServiceRequestPage() {
                       <div className="flex-1">
                         <div className="flex items-center flex-wrap gap-3 mb-3">
                           <h3 className="text-xl font-semibold text-slate-900">{request.title}</h3>
-                          
+
                           <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              request.priority === 'urgent' 
-                                ? 'bg-red-100 text-red-800' 
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${request.priority === 'urgent'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-emerald-100 text-emerald-800'
+                              }`}>
                               {request.priority}
                             </span>
-                            
+
                             <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               {request.status.toUpperCase()}
                             </span>
-                            
+
                             {request.verified && (
                               <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-full flex items-center gap-1">
                                 <CheckCircle className="w-3 h-3" />
                                 Verified
                               </span>
                             )}
-                            
+
                             <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs">
                               {request.category}
                             </span>
                           </div>
                         </div>
-                        
+
                         <p className="text-slate-600 mb-4 line-clamp-2">{request.description}</p>
 
                         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm mb-4">
@@ -792,7 +789,7 @@ export default function UserServiceRequestPage() {
                         </div>
                       </div>
 
-                      <button 
+                      <button
                         onClick={() => handleViewDetails(request)}
                         className="px-4 py-2 border border-indigo-500 text-indigo-600 rounded-lg hover:bg-indigo-50 font-medium transition-colors"
                       >
@@ -870,8 +867,8 @@ export default function UserServiceRequestPage() {
                 </div>
                 <h3 className="text-xl font-semibold text-slate-700 mb-2">No offers yet</h3>
                 <p className="text-slate-500 mb-6">Offers from service providers will appear here when they respond to your requests.</p>
-                <button 
-                  onClick={() => handleTabChange('all')} 
+                <button
+                  onClick={() => handleTabChange('all')}
                   className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
                 >
                   Browse Requests
@@ -952,14 +949,14 @@ export default function UserServiceRequestPage() {
                             <span>View Store</span>
                           </button>
                         )}
-                        
-                        <button 
+
+                        <button
                           onClick={() => handleViewDetails(offer)}
                           className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
                         >
                           Details
                         </button>
-                        
+
                         {offer.status === 'pending' && (
                           <>
                             <button
@@ -978,7 +975,7 @@ export default function UserServiceRequestPage() {
                             </button>
                           </>
                         )}
-                        
+
                         {offer.status === 'accepted' && (
                           <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg font-medium">
                             Accepted
@@ -1005,8 +1002,8 @@ export default function UserServiceRequestPage() {
                 </div>
                 <h3 className="text-xl font-semibold text-slate-700 mb-2">No past requests</h3>
                 <p className="text-slate-500 mb-6">Your completed and cancelled service requests will appear here.</p>
-                <button 
-                  onClick={() => handleTabChange('all')} 
+                <button
+                  onClick={() => handleTabChange('all')}
                   className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
                 >
                   Browse Requests
@@ -1020,11 +1017,10 @@ export default function UserServiceRequestPage() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
                           <h3 className="text-xl font-semibold text-slate-900">{request.title}</h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            request.status === 'completed' 
-                              ? 'bg-emerald-100 text-emerald-800' 
-                              : 'bg-slate-100 text-slate-800'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${request.status === 'completed'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-slate-100 text-slate-800'
+                            }`}>
                             {request.status.toUpperCase()}
                           </span>
                         </div>
@@ -1073,7 +1069,7 @@ export default function UserServiceRequestPage() {
                             </span>
                           </div>
                           <div className="flex space-x-3">
-                            <button 
+                            <button
                               onClick={() => handleViewDetails(request)}
                               className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
                             >
@@ -1108,8 +1104,8 @@ export default function UserServiceRequestPage() {
             <div className="p-6 border-b border-slate-200">
               <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-slate-900">Request Details</h2>
-                <button 
-                  onClick={() => setShowDetailsModal(false)} 
+                <button
+                  onClick={() => setShowDetailsModal(false)}
                   className="text-slate-400 hover:text-slate-600 text-2xl transition-colors"
                 >
                   ×
@@ -1121,11 +1117,10 @@ export default function UserServiceRequestPage() {
               <div>
                 <div className="flex items-center space-x-3 mb-3">
                   <h3 className="text-xl font-semibold text-slate-900">{selectedRequestDetails.title}</h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    selectedRequestDetails.priority === 'urgent' 
-                      ? 'bg-red-100 text-red-800' 
-                      : 'bg-emerald-100 text-emerald-800'
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${selectedRequestDetails.priority === 'urgent'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                    }`}>
                     {selectedRequestDetails.priority}
                   </span>
                   <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
