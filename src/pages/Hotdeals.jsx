@@ -3,10 +3,70 @@ import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
-import { useLocation } from '../contexts/LocationContext'; // Added Location Context
+import { useLocation } from '../contexts/LocationContext';
 import { offerAPI } from '../services/api';
 import { useFavorites } from '../hooks/useFavorites';
 import authService from '../services/authService';
+
+// Store Logo Component with fallback to initials
+const StoreLogo = ({ 
+  logoUrl, 
+  storeName, 
+  className = "w-5 h-5",
+  containerClassName = "w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200"
+}) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!logoUrl);
+
+  // Reset error state when logoUrl changes
+  useEffect(() => {
+    if (logoUrl && logoUrl !== '/api/placeholder/20/20') {
+      setHasError(false);
+      setIsLoading(true);
+    } else {
+      setHasError(true);
+      setIsLoading(false);
+    }
+  }, [logoUrl]);
+
+  // Get first letter of store name, fallback to 'S'
+  const getInitial = (name) => {
+    return name && name.trim() ? name.trim().charAt(0).toUpperCase() : 'S';
+  };
+
+  const handleImageError = () => {
+    setHasError(true);
+    setIsLoading(false);
+  };
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+  };
+
+  // Show fallback if no logoUrl, has error, or is placeholder URL
+  const showFallback = !logoUrl || hasError || logoUrl === '/api/placeholder/20/20';
+
+  return (
+    <div className={containerClassName}>
+      {showFallback ? (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-full">
+          <span className="text-white text-sm font-bold">
+            {getInitial(storeName)}
+          </span>
+        </div>
+      ) : (
+        <img 
+          src={logoUrl}
+          alt={`${storeName} logo`}
+          className={className}
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+          loading="lazy"
+        />
+      )}
+    </div>
+  );
+};
 
 export default function Hotdeals() {
   const [viewMode, setViewMode] = useState('grid');
@@ -43,7 +103,7 @@ export default function Hotdeals() {
     initialized: favoritesInitialized
   } = useFavorites();
 
-  // ADDED: Function to check if offer is expired
+  // Function to check if offer is expired
   const isOfferExpired = useCallback((expirationDate) => {
     if (!expirationDate) return false;
     return new Date(expirationDate) < new Date();
@@ -104,7 +164,7 @@ export default function Hotdeals() {
         featured: offer.featured || false,
         store: {
           name: offer.store?.name || 'Store',
-          googleLogo: offer.store?.logo_url || '/api/placeholder/20/20'
+          googleLogo: offer.store?.logo_url || null // Don't set placeholder here
         },
         originalPrice: offer.service?.price || 0,
         discountedPrice: offer.service?.price ? (offer.service.price * (1 - offer.discount / 100)).toFixed(2) : 0,
@@ -358,7 +418,7 @@ export default function Hotdeals() {
 
       <div className="container mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
-          {/* Sidebar */}
+          {/* Sidebar - keeping original structure */}
           <div className={`${
             isSidebarOpen ? 'block' : 'hidden'
           } md:block w-full md:w-80 flex-shrink-0 ${
@@ -461,7 +521,7 @@ export default function Hotdeals() {
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* View Controls */}
+            {/* View Controls - keeping original structure */}
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
               <div className="flex items-center space-x-4">
                 <button 
@@ -510,7 +570,7 @@ export default function Hotdeals() {
               </div>
             )}
 
-            {/* Deals Grid */}
+            {/* Deals Grid - UPDATED WITH NEW STORE LOGO COMPONENT */}
             <div className={`grid gap-4 sm:gap-6 mb-8 ${
               viewMode === 'grid' 
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
@@ -585,16 +645,11 @@ export default function Hotdeals() {
                     <div className={`p-4 ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
                       
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
-                          <img 
-                            src={offer.store?.googleLogo || '/api/placeholder/20/20'} 
-                            alt="logo"
-                            className="w-5 h-5"
-                            onError={(e) => {
-                              e.target.src = '/api/placeholder/20/20';
-                            }}
-                          />
-                        </div>
+                        {/* UPDATED: Using the new StoreLogo component */}
+                        <StoreLogo 
+                          logoUrl={offer.store?.googleLogo}
+                          storeName={offer.store?.name || 'Store'}
+                        />
                         
                         <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
                           <span>{offer.store?.name || 'Store name'}</span>
@@ -638,7 +693,7 @@ export default function Hotdeals() {
               })}
             </div>
 
-            {/* No offers message */}
+            {/* Rest of the component remains the same - No offers message, Pagination, etc. */}
             {!loading && offers.length === 0 && (
               <div className="text-center py-12">
                 <div className="max-w-md mx-auto">

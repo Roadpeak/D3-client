@@ -3,6 +3,111 @@ import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../services/storeService'; // Use the same service as working Stores component
 
+// Store Logo Component with fallback to initials
+const StoreLogo = ({ 
+  logoUrl, 
+  storeName, 
+  className = "w-6 h-6",
+  containerClassName = ""
+}) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!logoUrl);
+
+  // Reset error state when logoUrl changes
+  useEffect(() => {
+    if (logoUrl && logoUrl.startsWith('http') && logoUrl !== '/images/placeholder-store.png') {
+      setHasError(false);
+      setIsLoading(true);
+    } else {
+      setHasError(true);
+      setIsLoading(false);
+    }
+  }, [logoUrl]);
+
+  // Get first letters of store name for fallback
+  const generateLogo = (name) => {
+    if (!name) return 'ST';
+    const words = name.split(' ');
+    if (words.length >= 2) {
+      return words[0][0] + words[1][0];
+    }
+    return name.substring(0, 2);
+  };
+
+  const handleImageError = () => {
+    setHasError(true);
+    setIsLoading(false);
+  };
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+  };
+
+  // Show fallback if no logoUrl, has error, is placeholder, or doesn't start with http
+  const showFallback = !logoUrl || hasError || !logoUrl.startsWith('http') || logoUrl === '/images/placeholder-store.png';
+
+  if (showFallback) {
+    return (
+      <span className={`text-white font-bold text-xs ${containerClassName}`}>
+        {generateLogo(storeName)}
+      </span>
+    );
+  }
+
+  return (
+    <img 
+      src={logoUrl}
+      alt={`${storeName} logo`}
+      className={`${className} rounded-full object-cover ${containerClassName}`}
+      onError={handleImageError}
+      onLoad={handleImageLoad}
+      loading="lazy"
+    />
+  );
+};
+
+// Store Image Component with fallback handling
+const StoreImage = ({ 
+  imageUrl, 
+  storeName, 
+  className = "w-full h-48 object-cover"
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  // Reset error state when imageUrl changes
+  useEffect(() => {
+    if (imageUrl && imageUrl !== '/images/placeholder-store.png') {
+      setHasError(false);
+    }
+  }, [imageUrl]);
+
+  const handleImageError = () => {
+    setHasError(true);
+  };
+
+  // If no image URL or has error, show placeholder
+  if (!imageUrl || hasError || imageUrl === '/images/placeholder-store.png') {
+    return (
+      <div className={`${className} bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center`}>
+        <div className="text-center text-gray-500">
+          <div className="text-4xl mb-2">🏪</div>
+          <div className="text-sm font-medium">{storeName}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={imageUrl}
+      alt={storeName}
+      className={className}
+      onError={handleImageError}
+      loading="lazy"
+    />
+  );
+};
+
 const PopularStores = () => {
   const navigate = useNavigate();
   const [stores, setStores] = useState({ travel: [], food: [], all: [] });
@@ -98,15 +203,6 @@ const PopularStores = () => {
     return { text: 'NEW', color: 'bg-gray-500' };
   };
 
-  const generateLogo = (name) => {
-    if (!name) return 'ST';
-    const words = name.split(' ');
-    if (words.length >= 2) {
-      return words[0][0] + words[1][0];
-    }
-    return name.substring(0, 2);
-  };
-
   const getLogoColor = (store) => {
     const colors = [
       'bg-orange-500', 'bg-red-500', 'bg-green-500', 'bg-purple-600',
@@ -132,13 +228,9 @@ const PopularStores = () => {
         </div>
         
         <div className="relative">
-          <img 
-            src={store.image || store.logo_url || '/images/placeholder-store.png'} 
-            alt={store.name} 
-            className="w-full h-48 object-cover"
-            onError={(e) => {
-              e.target.src = '/images/placeholder-store.png';
-            }}
+          <StoreImage 
+            imageUrl={store.image || store.logo_url}
+            storeName={store.name}
           />
           
           <div className={`absolute top-3 right-3 px-2 py-1 rounded text-xs font-bold text-white ${reviewTag.color}`}>
@@ -150,23 +242,10 @@ const PopularStores = () => {
           </div>
           
           <div className={`absolute bottom-3 left-3 ${getLogoColor(store)} rounded-full p-2 shadow-lg overflow-hidden`}>
-            {(store.logo_url || store.logo) && (store.logo_url?.startsWith('http') || store.logo?.startsWith('http')) ? (
-              <img 
-                src={store.logo_url || store.logo} 
-                alt={`${store.name} logo`}
-                className="w-6 h-6 rounded-full object-cover"
-                onError={(e) => {
-                  // If image fails to load, replace with text logo
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'block';
-                }}
-              />
-            ) : null}
-            <span 
-              className={`text-white font-bold text-xs ${(store.logo_url || store.logo) && (store.logo_url?.startsWith('http') || store.logo?.startsWith('http')) ? 'hidden' : 'block'}`}
-            >
-              {generateLogo(store.name)}
-            </span>
+            <StoreLogo 
+              logoUrl={store.logo_url || store.logo}
+              storeName={store.name}
+            />
           </div>
         </div>
         
