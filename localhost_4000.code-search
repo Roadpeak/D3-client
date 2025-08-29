@@ -1,0 +1,215 @@
+# Query: localhost:4000
+# ContextLines: 1
+
+48 results - 30 files
+
+src/components/Hero.jsx:
+  46    // API base URL - adjust according to your backend setup
+  47:   const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/';
+  48  
+
+src/components/StoreServices.jsx:
+  18          // First try the store-specific endpoint
+  19:         url = `${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services/store/${params.storeId}`;
+  20        } else {
+  21:         url = '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services';
+  22        }
+
+  41          try {
+  42:           const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services?storeId=${params.storeId}`, {
+  43              headers: {
+
+src/config/api.js:
+  4  // FIXED: Correct case-sensitive URL
+  5: const BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  6  
+
+src/elements/Calendar.jsx:
+  26                      const response = await axios.get(
+  27:                         `${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/shops/${shopId}/services/${serviceId}/available-slots`,
+  28                          { params: { start_date: format(startDate, 'yyyy-MM-dd'), end_date: format(endDate, 'yyyy-MM-dd') } }
+
+  63                  await axios.post(
+  64:                     '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/appointments',
+  65                      {
+
+src/elements/CategorySlider.jsx:
+  19  
+  20:                 const response = await axios.get('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/random-categories');
+  21                  setCategories(response.data);
+
+src/elements/LoginModal.jsx:
+  16          try {
+  17:             const endpoint = loginType === 'user' ? '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/user/login' : '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/seller/login';
+  18              const response = await axios.post(endpoint, { email, password });
+
+src/elements/SendMessageModal.jsx:
+  26          try {
+  27:             const response = await axios.post('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/messages/send', formData, {
+  28                  headers: {
+
+src/hooks/useRealTimeNotifications.js:
+  34      // Create socket connection
+  35:     socketRef.current = io(process.env.REACT_APP_WS_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}', {
+  36        auth: {
+
+src/hooks/useSocket.js:
+  138        ? window.location.origin
+  139:       : '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}';
+  140  
+
+src/pages/Chat.jsx:
+  116          try {
+  117:           const response = await fetch('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/users/profile', {
+  118              headers: {
+
+src/pages/SearchResults.jsx:
+  28              setLoading(true);
+  29:             const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/search?query=${query}`);
+  30              setDiscounts(response.data.discounts);
+
+src/pages/Store.jsx:
+   52      try {
+   53:       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/offers/store/${storeId}`, {
+   54          headers: {
+
+   72        // Try public endpoint first (for store view)
+   73:       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/stores/${storeId}/branches`, {
+   74          headers: {
+
+   85        // If public endpoint doesn't exist, try the protected one without auth
+   86:       const protectedResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/branches/store/${storeId}`, {
+   87          headers: {
+
+  637  
+  638:       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/stores/${id}/toggle-follow`, {
+  639          method: 'POST',
+
+  711  
+  712:       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/socials/store/${storeId}`, {
+  713          method: 'GET',
+
+src/pages/ViewService.jsx:
+   71          // Try individual service endpoint first
+   72:         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services/${id}`, {
+   73            headers: {
+
+   90          try {
+   91:           const response = await fetch('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services', {
+   92              headers: {
+
+  116          try {
+  117:           const storeResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/stores/${serviceData.store_id}`, {
+  118              headers: {
+
+  157      try {
+  158:       const response = await fetch('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services', {
+  159          headers: {
+
+src/pages/auth/GoogleSignInButton.jsx:
+  7          try {
+  8:             const response = await axios.post('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/auth/google/redirect');
+  9              const { url } = response.data;
+
+src/pages/auth/RequestPassworsReset.jsx:
+  15          try {
+  16:             const response = await axios.post('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/send-reset-link', { email });
+  17              setMessage(response.data.message);
+
+src/pages/auth/ResetPassword.jsx:
+  31              // Submit the reset password request
+  32:             const response = await axios.post('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/reset-password', {
+  33                  token,
+
+src/services/api.js:
+  4  // FIXED: Correct case-sensitive URL
+  5: const BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  6  
+
+src/services/authService.js:
+  131      console.log('📡 API Endpoint:', API_ENDPOINTS.user.profile);
+  132:     console.log('📡 Expected result: ${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/users/profile');
+  133      
+
+src/services/chatService.js:
+   8        ? `${protocol}//${hostname}/api/v1`
+   9:       : '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  10        
+
+  12        ? `${protocol}//${hostname}`
+  13:       : '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}';
+  14    }
+
+src/services/enhancedBookingService.js:
+  5  
+  6: const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  7  
+
+src/services/notificationService.js:
+  7        ? `${window.location.protocol}//${window.location.hostname}/api/v1`
+  8:       : '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  9    }
+
+src/services/offerService.js:
+  3  
+  4: const BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  5  
+
+src/services/realMpesaService.js:
+  13        passKey: process.env.MPESA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919',
+  14:       callbackURL: process.env.MPESA_CALLBACK_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/payments'
+  15      };
+
+src/services/reviewService.js:
+  2  
+  3: const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  4  
+
+src/services/serviceService.js:
+   7            // First try the store-specific endpoint
+   8:           url = `${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services/store/${params.storeId}`;
+   9          } else {
+  10:           url = '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services';
+  11          }
+
+  30            try {
+  31:             const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services?storeId=${params.storeId}`, {
+  32                headers: {
+
+  51        try {
+  52:         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services/${serviceId}`, {
+  53            headers: {
+
+  71        try {
+  72:         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/services/${serviceId}/book`, {
+  73            method: 'POST',
+
+src/services/socialsService.js:
+  1  // services/socialsService.js
+  2: const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  3  
+
+src/services/storeService.js:
+  1  // services/storeService.js - UPDATED with top-rated store methods
+  2: const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  3  const API_KEY = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
+
+src/services/userServiceRequestService.js:
+  4  
+  5: const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  6  
+
+src/utils/api/api.js:
+  4  
+  5: const API_URL = '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/discounts';
+  6: const BASE_URL = '${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1';
+  7  
+
+src/utils/context/AuthContext.jsx:
+  13                  if (token) {
+  14:                     const response = await fetch('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/profile', {
+  15                          headers: {
+
+  50          try {
+  51:             const response = await fetch('${process.env.REACT_APP_API_BASE_URL}PP_API_BASE_URL}/api/v1/v1/auth/login', {
+  52                  method: 'POST',
