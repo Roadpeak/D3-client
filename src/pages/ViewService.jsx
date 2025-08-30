@@ -69,7 +69,7 @@ const ViewService = () => {
 
       try {
         // Try individual service endpoint first
-        const response = await fetch(`http://localhost:4000/api/v1/services/${id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services/${id}`, {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -88,7 +88,7 @@ const ViewService = () => {
 
         // Fallback: try to get from services list
         try {
-          const response = await fetch('http://localhost:4000/api/v1/services', {
+          const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/api/v1/services', {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
@@ -114,7 +114,7 @@ const ViewService = () => {
       // Fetch store information if we have store_id
       if (serviceData && serviceData.store_id) {
         try {
-          const storeResponse = await fetch(`http://localhost:4000/api/v1/stores/${serviceData.store_id}`, {
+          const storeResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${serviceData.store_id}`, {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
@@ -155,7 +155,7 @@ const ViewService = () => {
 
   const fetchRelatedServices = async (category) => {
     try {
-      const response = await fetch('http://localhost:4000/api/v1/services', {
+      const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/api/v1/services', {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -264,8 +264,8 @@ const ViewService = () => {
       <Star
         key={i}
         className={`w-4 h-4 ${i < Math.floor(rating || 0)
-            ? 'fill-yellow-400 text-yellow-400'
-            : 'text-gray-300'
+          ? 'fill-yellow-400 text-yellow-400'
+          : 'text-gray-300'
           }`}
       />
     ));
@@ -372,8 +372,8 @@ const ViewService = () => {
               {/* Service Type Badge */}
               <div className="absolute top-4 right-4">
                 <span className={`px-3 py-1 text-sm font-semibold rounded-full ${service.type === 'fixed'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-blue-100 text-blue-800'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-blue-100 text-blue-800'
                   }`}>
                   {service.type === 'fixed' ? 'Fixed Price' : 'Custom Quote'}
                 </span>

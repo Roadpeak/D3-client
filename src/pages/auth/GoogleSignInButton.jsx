@@ -5,7 +5,7 @@ import { FcGoogle } from "react-icons/fc";
 const GoogleSignInButton = () => {
     const handleGoogleSignIn = async () => {
         try {
-            const response = await axios.post('http://localhost:4000/api/v1/auth/google/redirect');
+            const response = await axios.post('${process.env.REACT_APP_API_BASE_URL}/api/v1/auth/google/redirect');
             const { url } = response.data;
             window.location.href = url;
         } catch (error) {

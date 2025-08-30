@@ -114,7 +114,7 @@ const ChatPage = () => {
 
         // Fetch from API as fallback
         try {
-          const response = await fetch('http://localhost:4000/api/v1/users/profile', {
+          const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/api/v1/users/profile', {
             headers: {
               'Authorization': `Bearer ${userToken}`,
               'Content-Type': 'application/json'
@@ -621,8 +621,8 @@ const ChatPage = () => {
                           key={chat.id}
                           onClick={() => handleChatSelect(chat)}
                           className={`flex items-start p-4 hover:bg-white cursor-pointer transition-all duration-200 ${selectedChat?.id === chat.id
-                              ? 'bg-white border-r-4 border-blue-500 shadow-sm'
-                              : 'hover:shadow-sm'
+                            ? 'bg-white border-r-4 border-blue-500 shadow-sm'
+                            : 'hover:shadow-sm'
                             }`}
                         >
                           <div className="relative flex-shrink-0">
@@ -760,8 +760,8 @@ const ChatPage = () => {
 
                               <div
                                 className={`px-4 py-3 rounded-2xl max-w-full ${msg.sender === 'user' || msg.sender === 'customer'
-                                    ? 'bg-blue-500 text-white rounded-br-md'
-                                    : 'bg-white text-gray-900 rounded-bl-md border border-gray-200 shadow-sm'
+                                  ? 'bg-blue-500 text-white rounded-br-md'
+                                  : 'bg-white text-gray-900 rounded-bl-md border border-gray-200 shadow-sm'
                                   }`}
                               >
                                 {/* Store name for store messages */}
@@ -775,8 +775,8 @@ const ChatPage = () => {
                                 <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
 
                                 <div className={`flex items-center justify-end mt-2 space-x-1 ${msg.sender === 'user' || msg.sender === 'customer'
-                                    ? 'text-blue-100'
-                                    : 'text-gray-500'
+                                  ? 'text-blue-100'
+                                  : 'text-gray-500'
                                   }`}>
                                   <Clock className="w-3 h-3" />
                                   <span className="text-xs">{msg.timestamp}</span>

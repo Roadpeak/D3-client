@@ -129,7 +129,7 @@ class AuthService {
       }
 
       console.log('📡 API Endpoint:', API_ENDPOINTS.user.profile);
-      console.log('📡 Expected result: http://localhost:4000/api/v1/users/profile');
+      console.log('📡 Expected result: ${process.env.REACT_APP_API_BASE_URL}/api/v1/users/profile');
 
       const response = await api.get(API_ENDPOINTS.user.profile);
       console.log('✅ Profile request successful');

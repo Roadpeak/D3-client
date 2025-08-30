@@ -44,7 +44,7 @@ export default function Hero() {
   const [error, setError] = useState(null);
 
   // API base URL - adjust according to your backend setup
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1/';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1/';
 
   // Fetch offers from backend
   useEffect(() => {
@@ -319,8 +319,8 @@ export default function Hero() {
                       key={index}
                       onClick={() => goToSlide(index)}
                       className={`w-3 h-3 rounded-full transition-all duration-200 ${index === currentSlide
-                          ? 'bg-white scale-125'
-                          : 'bg-white/50 hover:bg-white/75'
+                        ? 'bg-white scale-125'
+                        : 'bg-white/50 hover:bg-white/75'
                         }`}
                     />
                   ))}
