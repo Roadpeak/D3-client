@@ -130,6 +130,10 @@ export default function UserServiceRequestPage() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmMessage, setConfirmMessage] = useState('');
 
+  // Count states for proper tab counts
+  const [offersPagination, setOffersPagination] = useState({});
+  const [pastRequestsPagination, setPastRequestsPagination] = useState({});
+
   // Loading and error states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -276,11 +280,12 @@ export default function UserServiceRequestPage() {
       });
 
       setUserOffers(response.data?.offers || []);
-      setPagination(response.data?.pagination || {});
+      setOffersPagination(response.data?.pagination || {});
     } catch (err) {
       console.error('Error loading user offers:', err);
       setError(err.message);
       setUserOffers([]);
+      setOffersPagination({});
     } finally {
       setLoadingOffers(false);
     }
@@ -304,20 +309,30 @@ export default function UserServiceRequestPage() {
       });
 
       setUserPastRequests(response.data?.requests || []);
-      setPagination(response.data?.pagination || {});
+      setPastRequestsPagination(response.data?.pagination || {});
     } catch (err) {
       console.error('Error loading user past requests:', err);
       setError(err.message);
       setUserPastRequests([]);
+      setPastRequestsPagination({});
     } finally {
       setLoadingRequests(false);
     }
   };
 
-  // Load initial data
+  // Load initial data and authenticated user's counts
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  // Load counts for authenticated tabs on initial load
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Load counts for offers and past requests on initial load
+      loadUserOffers();
+      loadUserPastRequests();
+    }
+  }, [isAuthenticated]);
 
   // Load data when filters or tab changes
   useEffect(() => {
@@ -329,6 +344,17 @@ export default function UserServiceRequestPage() {
       loadUserPastRequests();
     }
   }, [filters, activeTab, isAuthenticated]);
+
+  // Get accurate counts for tabs
+  const getOffersCount = () => {
+    // Use pagination total count if available, otherwise fall back to array length
+    return offersPagination.totalCount || userOffers.length || 0;
+  };
+
+  const getPastRequestsCount = () => {
+    // Use pagination total count if available, otherwise fall back to array length
+    return pastRequestsPagination.totalCount || userPastRequests.length || 0;
+  };
 
   // Event handlers
   const handleTabChange = (tab) => {
@@ -666,7 +692,7 @@ export default function UserServiceRequestPage() {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-slate-900">Service Requests</h2>
 
-          {/* Modern Tab Navigation */}
+          {/* Modern Tab Navigation with Fixed Counts */}
           <div className="flex bg-slate-100 rounded-xl p-1">
             <button
               onClick={() => handleTabChange('all')}
@@ -686,7 +712,7 @@ export default function UserServiceRequestPage() {
                     : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
-                  My Offers ({userOffers.length})
+                  My Offers ({getOffersCount()})
                 </button>
                 <button
                   onClick={() => handleTabChange('past')}
@@ -695,7 +721,7 @@ export default function UserServiceRequestPage() {
                     : 'text-slate-600 hover:text-slate-900'
                     }`}
                 >
-                  Past ({userPastRequests.length})
+                  Past ({getPastRequestsCount()})
                 </button>
               </>
             )}
@@ -1093,9 +1119,6 @@ export default function UserServiceRequestPage() {
       </section>
 
       <Footer />
-
-      {/* Rest of the modals remain the same but with updated styling... */}
-      {/* I'll continue with the modals in the next part to keep this manageable */}
 
       {/* Details Modal */}
       {showDetailsModal && selectedRequestDetails && (

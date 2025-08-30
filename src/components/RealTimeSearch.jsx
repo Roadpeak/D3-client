@@ -296,11 +296,11 @@ const RealTimeSearch = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
-          className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-colors"
+          className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-3xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-colors"
         />
         <button
           type="submit"
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:from-red-600 hover:to-pink-600 transition-colors"
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-2xl hover:from-red-600 hover:to-pink-600 transition-colors"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -314,11 +314,11 @@ const RealTimeSearch = ({
       {isOpen && (
         <div 
           ref={resultsRef}
-          className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-3xl shadow-xl z-50 max-h-96 overflow-y-auto"
         >
           {/* Location indicator - only show if location is specified */}
           {currentLocation && (hasResults || isLoading || query.trim()) && (
-            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs text-gray-600 flex items-center">
+            <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs text-gray-600 flex items-center rounded-t-3xl">
               <MapPin className="w-3 h-3 mr-1" />
               {currentLocation !== 'All Locations' 
                 ? `Results in ${getShortLocationName()}` 
@@ -345,7 +345,7 @@ const RealTimeSearch = ({
                 <button
                   key={index}
                   onClick={() => handleResultClick({ type: 'recent', item: searchTerm })}
-                  className={`flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-50 transition-colors ${
+                  className={`flex items-center justify-between w-full p-2 rounded-2xl hover:bg-gray-50 transition-colors ${
                     activeIndex === index ? 'bg-red-50 border border-red-200' : ''
                   }`}
                 >
@@ -380,14 +380,14 @@ const RealTimeSearch = ({
                       <button
                         key={store.id}
                         onClick={() => handleResultClick({ type: 'store', item: store })}
-                        className={`flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-gray-50 transition-colors ${
+                        className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 transition-colors ${
                           activeIndex === globalIndex ? 'bg-red-50 border border-red-200' : ''
                         }`}
                       >
                         <img
                           src={store.logo}
                           alt={store.name}
-                          className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                          className="w-10 h-10 rounded-2xl object-cover border border-gray-200"
                           onError={(e) => {
                             e.target.src = '/images/default-store.png';
                           }}
@@ -426,14 +426,14 @@ const RealTimeSearch = ({
                       <button
                         key={offer.id}
                         onClick={() => handleResultClick({ type: 'offer', item: offer })}
-                        className={`flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-gray-50 transition-colors ${
+                        className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 transition-colors ${
                           activeIndex === globalIndex ? 'bg-red-50 border border-red-200' : ''
                         }`}
                       >
                         <img
                           src={offer.image}
                           alt={offer.title}
-                          className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+                          className="w-12 h-12 rounded-2xl object-cover border border-gray-200"
                           onError={(e) => {
                             e.target.src = '/images/default-offer.png';
                           }}
@@ -465,7 +465,7 @@ const RealTimeSearch = ({
                 <div className="p-4 border-t border-gray-100">
                   <button
                     onClick={handleSearch}
-                    className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-lg hover:from-red-600 hover:to-pink-600 transition-colors font-medium"
+                    className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-2xl hover:from-red-600 hover:to-pink-600 transition-colors font-medium"
                   >
                     View All Results for "{query}"{currentLocation && currentLocation !== 'All Locations' && ` in ${getShortLocationName()}`}
                   </button>

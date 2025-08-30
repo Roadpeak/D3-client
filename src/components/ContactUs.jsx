@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { Link } from 'react-router-dom';
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -23,7 +24,7 @@ const ContactUs = () => {
       alert('Please fill in all required fields.');
       return;
     }
-    
+
     // Handle form submission here
     console.log('Form submitted:', formData);
     // Reset form
@@ -47,7 +48,7 @@ const ContactUs = () => {
             {/* Contact Information */}
             <div className="bg-white rounded-lg shadow-sm p-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">Get in Touch</h2>
-              
+
               <div className="space-y-6">
                 <div className="flex items-start">
                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -58,7 +59,7 @@ const ContactUs = () => {
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-medium text-gray-900">Address</h3>
-                    <p className="text-gray-600">2307 Beverley Rd Brooklyn, NY 11226</p>
+                    <p className="text-gray-600">Nairobi(k)</p>
                   </div>
                 </div>
 
@@ -70,8 +71,8 @@ const ContactUs = () => {
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-medium text-gray-900">Phone</h3>
-                    <p className="text-gray-600">1300 271 3365</p>
-                    <p className="text-gray-600">0401 271 3365</p>
+                    <p className="text-gray-600">0743007000</p>
+
                   </div>
                 </div>
 
@@ -83,7 +84,7 @@ const ContactUs = () => {
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-medium text-gray-900">Email</h3>
-                    <p className="text-gray-600">support@d3deals.com</p>
+                    <p className="text-gray-600">support@discoun3ree.com</p>
                   </div>
                 </div>
 
@@ -95,10 +96,9 @@ const ContactUs = () => {
                     </svg>
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-lg font-medium text-gray-900">Office Hours</h3>
-                    <p className="text-gray-600">Monday - Friday: 9:00 AM - 6:00 PM</p>
-                    <p className="text-gray-600">Saturday: 10:00 AM - 4:00 PM</p>
-                    <p className="text-gray-600">Sunday: Closed</p>
+
+                    <p className="text-gray-600">Reach out anyday amytime</p>
+
                   </div>
                 </div>
               </div>
@@ -107,81 +107,98 @@ const ContactUs = () => {
             {/* Contact Form */}
             <div className="bg-white rounded-lg shadow-sm p-8">
               <h2 className="text-2xl font-semibold text-gray-900 mb-6">Send us a Message</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Your full name"
-                  />
-                </div>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="your.email@example.com"
-                  />
-                </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const name = formData.get('name');
+                const email = formData.get('email');
+                const subject = formData.get('subject');
+                const message = formData.get('message');
 
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                    Subject *
-                  </label>
-                  <select
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                // Create email content
+                const emailSubject = `Contact Form: ${subject}`;
+                const emailBody = `Name: ${name}
+Email: ${email}
+Subject: ${subject}
+
+Message:
+${message}`;
+
+                // Open email client
+                window.location.href = `mailto:info@discoun3ree.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+              }}>
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Your full name"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="your.email@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+                      Subject *
+                    </label>
+                    <select
+                      id="subject"
+                      name="subject"
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select a subject</option>
+                      <option value="General Inquiry">General Inquiry</option>
+                      <option value="Technical Support">Technical Support</option>
+                      <option value="Business Listing">Business Listing</option>
+                      <option value="Feedback">Feedback</option>
+                      <option value="Advertising">Advertising</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                      Message *
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      rows="6"
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      placeholder="Please describe your inquiry in detail..."
+                    ></textarea>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
-                    <option value="">Select a subject</option>
-                    <option value="general">General Inquiry</option>
-                    <option value="support">Technical Support</option>
-                    <option value="business">Business Listing</option>
-                    <option value="feedback">Feedback</option>
-                    <option value="advertising">Advertising</option>
-                    <option value="other">Other</option>
-                  </select>
+                    Send Message
+                  </button>
                 </div>
-
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    Message *
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows="6"
-                    value={formData.message}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                    placeholder="Please describe your inquiry in detail..."
-                  ></textarea>
-                </div>
-
-                <button
-                  onClick={handleSubmit}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Send Message
-                </button>
-              </div>
+              </form>
             </div>
           </div>
 
@@ -192,9 +209,9 @@ const ContactUs = () => {
               <p className="text-gray-600 mb-4">
                 Check out our Frequently Asked Questions for instant answers to common inquiries.
               </p>
-              <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors">
+              <Link to="/faq" className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors inline-block">
                 View FAQ
-              </button>
+              </Link>
             </div>
           </div>
         </div>

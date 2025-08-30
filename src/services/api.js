@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
-const BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -16,21 +16,21 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         // Try multiple token sources
-        const token = localStorage.getItem('token') || 
-                     localStorage.getItem('authToken') || 
-                     localStorage.getItem('access_token') ||
-                     getTokenFromCookie();
-        
+        const token = localStorage.getItem('token') ||
+            localStorage.getItem('authToken') ||
+            localStorage.getItem('access_token') ||
+            getTokenFromCookie();
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        
+
         // Add API key if available
         const apiKey = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
         if (apiKey) {
             config.headers['api-key'] = apiKey;
         }
-        
+
         return config;
     },
     (error) => {
@@ -42,7 +42,7 @@ api.interceptors.request.use(
 // Helper to get token from cookie
 function getTokenFromCookie() {
     const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => 
+    const tokenCookie = cookies.find(cookie =>
         cookie.trim().startsWith('access_token=')
     );
     return tokenCookie ? tokenCookie.split('=')[1] : null;
@@ -54,7 +54,7 @@ function setTokenToCookie(token) {
     const cookieString = isProduction
         ? `access_token=${token}; path=/; domain=.discoun3ree.com; secure; SameSite=None; max-age=${30 * 24 * 60 * 60}`
         : `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}`;
-    
+
     document.cookie = cookieString;
 }
 
@@ -64,7 +64,7 @@ function removeTokenFromCookie() {
     const cookieString = isProduction
         ? `access_token=; path=/; domain=.discoun3ree.com; secure; SameSite=None; expires=Thu, 01 Jan 1970 00:00:00 GMT`
         : `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-    
+
     document.cookie = cookieString;
 }
 
@@ -146,16 +146,16 @@ api.interceptors.response.use(
             localStorage.removeItem('token');
             localStorage.removeItem('authToken');
             localStorage.removeItem('access_token');
-            
+
             // Remove cookie
             document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-            
+
             // Only redirect if not already on login page
             if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/sign-in')) {
                 window.location.href = '/accounts/sign-in';
             }
         }
-        
+
         return Promise.reject(error);
     }
 );
@@ -200,7 +200,7 @@ export const offerAPI = {
         if (!id || id.trim() === '') {
             throw new Error('Offer ID is required');
         }
-        
+
         try {
             const response = await api.get(`/offers/${id}`);
             return response.data;
@@ -270,19 +270,19 @@ export const favoritesAPI = {
             if (params.page) queryParams.append('page', params.page);
             if (params.limit) queryParams.append('limit', params.limit);
             if (params.category) queryParams.append('category', params.category);
-            
+
             const url = API_ENDPOINTS.user.favorites + (queryParams.toString() ? `?${queryParams.toString()}` : '');
-            
+
             const response = await api.get(url);
             console.log('🔍 Raw favorites API response:', response.data);
-            
+
             // Handle the actual API response structure
             const apiData = response.data;
             const favorites = apiData.favorites || apiData.data || [];
-            
+
             console.log('📋 Processed favorites:', favorites);
             console.log('📊 Sample favorite structure:', favorites[0]);
-            
+
             return {
                 success: true,
                 favorites: favorites,
@@ -290,7 +290,7 @@ export const favoritesAPI = {
             };
         } catch (error) {
             console.error('❌ Error fetching favorites:', error);
-            
+
             // If it's a 401 error, don't treat it as a failure
             if (error.response?.status === 401) {
                 return {
@@ -300,7 +300,7 @@ export const favoritesAPI = {
                     pagination: {}
                 };
             }
-            
+
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to fetch favorites',
@@ -318,10 +318,10 @@ export const favoritesAPI = {
                 message: 'Offer ID is required'
             };
         }
-        
+
         try {
             const response = await api.post(API_ENDPOINTS.offers.addToFavorites(offerId));
-            
+
             return {
                 success: true,
                 message: response.data.message || 'Added to favorites',
@@ -329,7 +329,7 @@ export const favoritesAPI = {
             };
         } catch (error) {
             console.error('❌ Error adding to favorites:', error);
-            
+
             // Check if it's already in favorites
             if (error.response?.status === 400 && error.response?.data?.message?.includes('already')) {
                 return {
@@ -338,7 +338,7 @@ export const favoritesAPI = {
                     alreadyExists: true
                 };
             }
-            
+
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to add to favorites'
@@ -354,10 +354,10 @@ export const favoritesAPI = {
                 message: 'Offer ID is required'
             };
         }
-        
+
         try {
             const response = await api.delete(API_ENDPOINTS.offers.removeFromFavorites(offerId));
-            
+
             return {
                 success: true,
                 message: response.data.message || 'Removed from favorites',
@@ -380,10 +380,10 @@ export const favoritesAPI = {
                 message: 'Offer ID is required'
             };
         }
-        
+
         try {
             const response = await api.post(API_ENDPOINTS.offers.toggleFavorite(offerId));
-            
+
             return {
                 success: true,
                 action: response.data.action, // 'added' or 'removed'
@@ -404,7 +404,7 @@ export const favoritesAPI = {
         if (!offerId) {
             return { success: false, isFavorite: false };
         }
-        
+
         try {
             const response = await api.get(API_ENDPOINTS.offers.favoriteStatus(offerId));
             return {

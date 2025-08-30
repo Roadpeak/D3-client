@@ -16,9 +16,9 @@ const serviceAPI = {
       let url;
       if (params.storeId) {
         // First try the store-specific endpoint
-        url = `${process.env.REACT_APP_API_BASE_URL}/api/v1/services/store/${params.storeId}`;
+        url = `http://localhost:4000/api/v1/services/store/${params.storeId}`;
       } else {
-        url = '${process.env.REACT_APP_API_BASE_URL}/api/v1/services';
+        url = 'http://localhost:4000/api/v1/services';
       }
 
       const response = await fetch(url, {
@@ -39,7 +39,7 @@ const serviceAPI = {
       // If store-specific endpoint fails, try general endpoint with filter
       if (params.storeId) {
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services?storeId=${params.storeId}`, {
+          const response = await fetch(`http://localhost:4000/api/v1/services?storeId=${params.storeId}`, {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
@@ -90,8 +90,8 @@ const ServiceCard = ({ service }) => {
         {/* Service Type Badge */}
         <div className="absolute top-3 right-3">
           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${service.type === 'fixed'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-blue-100 text-blue-800'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-blue-100 text-blue-800'
             }`}>
             {service.type === 'fixed' ? 'Fixed Price' : 'Dynamic Price'}
           </span>

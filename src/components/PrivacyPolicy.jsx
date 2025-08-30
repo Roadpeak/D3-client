@@ -9,10 +9,10 @@ const PrivacyPolicy = () => {
       <div className="min-h-screen bg-gray-50 py-12 px-4">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Privacy Policy</h1>
-          
+
           <div className="prose max-w-none">
             <p className="text-gray-600 mb-6 text-sm">Last updated: August 23, 2025</p>
-            
+
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Information We Collect</h2>
               <div className="text-gray-700 space-y-4">
@@ -108,11 +108,9 @@ const PrivacyPolicy = () => {
               <p className="text-gray-700">
                 If you have questions about this Privacy Policy or our data practices, please contact us at:
                 <br />
-                Email: privacy@d3deals.com
-                <br />
-                Phone: 1300 271 3365
-                <br />
-                Address: 2307 Beverley Rd Brooklyn, NY 11226
+                Email: info@discoun3ree.com
+
+
               </p>
             </section>
           </div>

@@ -98,9 +98,8 @@ const TermsConditions = () => {
               <p className="text-gray-700">
                 If you have questions about these Terms & Conditions, please contact us at:
                 <br />
-                Email: support@d3deals.com
-                <br />
-                Phone: 1300 271 3365
+                Email: info@discoun3ree.com
+                
               </p>
             </section>
           </div>

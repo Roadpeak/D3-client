@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { getTokenFromCookie } from '../config/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
 class EnhancedBookingService {
     constructor() {
@@ -21,14 +21,14 @@ class EnhancedBookingService {
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
-            
+
             if (process.env.NODE_ENV === 'development') {
                 console.log(`🔄 ${config.method?.toUpperCase()} ${config.url}`, {
                     params: config.params,
                     data: config.data
                 });
             }
-            
+
             return config;
         });
 
@@ -48,7 +48,7 @@ class EnhancedBookingService {
                         message: error.message
                     });
                 }
-                
+
                 if (error.response?.status === 401) {
                     window.location.href = '/login';
                 }
@@ -62,12 +62,12 @@ class EnhancedBookingService {
     async getAvailableSlotsForOffer(offerId, date) {
         try {
             console.log('📅 Getting unified slots for offer:', offerId, date);
-            
+
             try {
                 const response = await this.api.get('/bookings/slots/unified', {
                     params: { entityId: offerId, entityType: 'offer', date }
                 });
-                
+
                 if (response.data.success) {
                     try {
                         const offerResponse = await this.api.get(`/offers/${offerId}`);
@@ -80,28 +80,28 @@ class EnhancedBookingService {
                     }
                     response.data.requiresPayment = true;
                     response.data.bookingType = 'offer';
-                    
+
                     return response.data;
                 } else {
                     throw new Error(response.data.message || 'No slots available');
                 }
             } catch (error) {
                 console.warn('⚠️ Unified endpoint failed:', error.response?.data?.message || error.message);
-                
-                if (error.response?.data?.message?.includes('closed') || 
+
+                if (error.response?.data?.message?.includes('closed') ||
                     error.response?.data?.message?.includes('not open')) {
-                    
+
                     console.error('🐛 WORKING DAYS DEBUG:', {
                         errorMessage: error.response?.data?.message,
                         offerId,
                         date,
                         selectedDay: new Date(date).toLocaleDateString('en-US', { weekday: 'long' })
                     });
-                    
+
                     if (error.response?.data?.workingDays) {
                         console.error('🐛 Store working days from API:', error.response.data.workingDays);
                     }
-                    
+
                     throw error;
                 }
             }
@@ -111,7 +111,7 @@ class EnhancedBookingService {
                 const response = await this.api.get('/bookings/slots', {
                     params: { offerId, date, bookingType: 'offer' }
                 });
-                
+
                 if (response.data.success || response.data.availableSlots) {
                     const result = {
                         success: true,
@@ -123,31 +123,31 @@ class EnhancedBookingService {
                         requiresPayment: true,
                         bookingType: 'offer'
                     };
-                    
+
                     return result;
                 } else {
                     throw new Error(response.data.message || 'No slots available from legacy endpoint');
                 }
             } catch (legacyError) {
                 console.warn('⚠️ Legacy endpoint also failed:', legacyError.response?.data?.message || legacyError.message);
-                
-                if (legacyError.response?.data?.message?.includes('closed') || 
+
+                if (legacyError.response?.data?.message?.includes('closed') ||
                     legacyError.response?.data?.message?.includes('not open')) {
                     throw legacyError;
                 }
             }
 
             throw new Error('Unable to fetch slots from API');
-            
+
         } catch (error) {
             console.error('❌ Error fetching offer slots:', error);
-            
+
             const errorMessage = error.response?.data?.message || error.message;
-            if (errorMessage?.includes('closed') || 
+            if (errorMessage?.includes('closed') ||
                 errorMessage?.includes('not open') ||
                 errorMessage?.includes('working days') ||
                 errorMessage?.includes('business hours')) {
-                
+
                 return {
                     success: false,
                     message: errorMessage,
@@ -167,7 +167,7 @@ class EnhancedBookingService {
                     }
                 };
             }
-            
+
             throw this.handleError(error);
         }
     }
@@ -175,12 +175,12 @@ class EnhancedBookingService {
     async getAvailableSlotsForService(serviceId, date) {
         try {
             console.log('📅 Getting unified slots for service:', serviceId, date);
-            
+
             try {
                 const response = await this.api.get('/bookings/slots/unified', {
                     params: { entityId: serviceId, entityType: 'service', date }
                 });
-                
+
                 if (response.data.success) {
                     response.data.accessFee = 0;
                     response.data.requiresPayment = false;
@@ -194,7 +194,7 @@ class EnhancedBookingService {
             const response = await this.api.get('/bookings/slots', {
                 params: { serviceId, date, bookingType: 'service' }
             });
-            
+
             if (response.data.success || response.data.availableSlots) {
                 const result = {
                     success: true,
@@ -206,12 +206,12 @@ class EnhancedBookingService {
                     requiresPayment: false,
                     bookingType: 'service'
                 };
-                
+
                 return result;
             }
-            
+
             throw new Error('No slots available');
-            
+
         } catch (error) {
             console.error('❌ Error fetching service slots:', error);
             throw this.handleError(error);
@@ -223,27 +223,27 @@ class EnhancedBookingService {
     async createBooking(bookingData) {
         try {
             console.log('📝 Creating booking:', bookingData);
-            
+
             const isOfferBooking = bookingData.offerId || bookingData.bookingType === 'offer';
             const isServiceBooking = bookingData.serviceId || bookingData.bookingType === 'service';
-            
+
             if (!isOfferBooking && !isServiceBooking) {
                 throw new Error('Booking must specify either offerId or serviceId');
             }
-            
+
             const payload = {
                 ...bookingData,
                 bookingType: isOfferBooking ? 'offer' : 'service'
             };
-            
+
             if (isServiceBooking) {
                 console.log('🔧 Service booking - no payment required');
                 delete payload.paymentData;
                 payload.accessFee = 0;
             }
-            
+
             const response = await this.api.post('/bookings', payload);
-            
+
             console.log('✅ Booking created successfully:', response.data);
             return response.data;
         } catch (error) {
@@ -260,19 +260,19 @@ class EnhancedBookingService {
     async getBranchForOffer(offerId) {
         try {
             console.log('🏢 Getting branch for offer:', offerId);
-            
+
             try {
                 const response = await this.api.get(`/bookings/branches/offer/${offerId}`);
                 return response.data;
             } catch (error) {
                 console.warn('⚠️ Branch endpoint failed, trying fallback');
-                
+
                 // Fallback: get offer details and extract branch/store info
                 const offerResponse = await this.api.get(`/offers/${offerId}`);
                 if (offerResponse.data.success && offerResponse.data.offer) {
                     const offer = offerResponse.data.offer;
                     const branches = [];
-                    
+
                     if (offer.service && offer.service.store) {
                         branches.push({
                             id: `store-${offer.service.store.id}`,
@@ -285,14 +285,14 @@ class EnhancedBookingService {
                             isMainBranch: true
                         });
                     }
-                    
+
                     return {
                         success: true,
                         branch: branches[0] || null,
                         branches: branches
                     };
                 }
-                
+
                 throw new Error('No branch found for offer');
             }
         } catch (error) {
@@ -311,17 +311,17 @@ class EnhancedBookingService {
     async getBranchForService(serviceId) {
         try {
             console.log('🏢 Getting branch for service:', serviceId);
-            
+
             try {
                 const response = await this.api.get(`/bookings/branches/service/${serviceId}`);
                 return response.data;
             } catch (error) {
                 console.warn('⚠️ Branch endpoint failed, trying fallback');
-                
+
                 const serviceResponse = await this.api.get(`/services/${serviceId}`);
                 if (serviceResponse.data.success && serviceResponse.data.service) {
                     const service = serviceResponse.data.service;
-                    
+
                     const branch = service.store ? {
                         id: `store-${service.store.id}`,
                         name: service.store.name + ' (Main Branch)',
@@ -332,14 +332,14 @@ class EnhancedBookingService {
                         workingDays: service.store.working_days,
                         isMainBranch: true
                     } : null;
-                    
+
                     return {
                         success: true,
                         branch: branch,
                         branches: branch ? [branch] : []
                     };
                 }
-                
+
                 throw new Error('No branch found for service');
             }
         } catch (error) {
@@ -358,9 +358,9 @@ class EnhancedBookingService {
     async getStaffForOffer(offerId) {
         try {
             console.log('👥 Fetching staff for offer:', offerId);
-            
+
             const response = await this.api.get(`/bookings/staff/offer/${offerId}`);
-            
+
             if (response.data.success) {
                 console.log('✅ Offer staff fetched:', {
                     count: response.data.staff?.length || 0,
@@ -371,7 +371,7 @@ class EnhancedBookingService {
             } else {
                 throw new Error(response.data.message || 'Failed to fetch offer staff');
             }
-            
+
         } catch (error) {
             console.error('❌ Error getting staff for offer:', error);
             return {
@@ -388,9 +388,9 @@ class EnhancedBookingService {
     async getStaffForService(serviceId) {
         try {
             console.log('👥 Fetching staff for service:', serviceId);
-            
+
             const response = await this.api.get(`/bookings/staff/service/${serviceId}`);
-            
+
             if (response.data.success) {
                 console.log('✅ Service staff fetched:', {
                     count: response.data.staff?.length || 0,
@@ -400,7 +400,7 @@ class EnhancedBookingService {
             } else {
                 throw new Error(response.data.message || 'Failed to fetch service staff');
             }
-            
+
         } catch (error) {
             console.error('❌ Error getting staff for service:', error);
             return {
@@ -419,7 +419,7 @@ class EnhancedBookingService {
     async getStoresForOffer(offerId) {
         console.log('⚠️ Using legacy getStoresForOffer, redirecting to branches...');
         const branchResult = await this.getBranchForOffer(offerId);
-        
+
         // Convert branch to store format for compatibility
         return {
             success: true,
@@ -442,7 +442,7 @@ class EnhancedBookingService {
     async getStoresForService(serviceId) {
         console.log('⚠️ Using legacy getStoresForService, redirecting to branches...');
         const branchResult = await this.getBranchForService(serviceId);
-        
+
         return {
             success: true,
             stores: branchResult.branch ? [{
@@ -481,12 +481,12 @@ class EnhancedBookingService {
     async cancelBooking(bookingId, reason = '', refundRequested = false) {
         try {
             console.log('❌ Cancelling booking:', bookingId, 'Reason:', reason);
-            
-            const response = await this.api.put(`/bookings/${bookingId}/cancel`, { 
+
+            const response = await this.api.put(`/bookings/${bookingId}/cancel`, {
                 reason,
                 refundRequested
             });
-            
+
             console.log('✅ Booking cancelled successfully');
             return response.data;
         } catch (error) {
@@ -506,14 +506,14 @@ class EnhancedBookingService {
     async processMpesaPayment(phoneNumber, amount, bookingId) {
         try {
             console.log('💳 Processing M-Pesa payment:', { phoneNumber, amount, bookingId });
-            
+
             const response = await this.api.post('/payments/mpesa', {
                 phoneNumber,
                 amount: parseFloat(amount),
                 bookingId,
                 type: 'booking_access_fee'
             });
-            
+
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -535,7 +535,7 @@ class EnhancedBookingService {
 
     handleError(error) {
         console.error('🚨 Booking service error:', error);
-        
+
         if (error.response) {
             const message = error.response.data?.message || error.response.data?.error || 'Server error occurred';
             const newError = new Error(message);

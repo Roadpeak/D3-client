@@ -1,6 +1,6 @@
 // services/reviewService.js - Updated service for handling reviews
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
 class ReviewService {
   constructor() {
@@ -12,7 +12,7 @@ class ReviewService {
   getAuthToken() {
     const tokenSources = [
       localStorage.getItem('access_token'),
-      localStorage.getItem('authToken'), 
+      localStorage.getItem('authToken'),
       localStorage.getItem('token'),
       this.getCookieToken('access_token'),
       this.getCookieToken('authToken'),
@@ -20,13 +20,13 @@ class ReviewService {
     ];
 
     const token = tokenSources.find(t => t && t.trim());
-    
+
     if (token) {
       console.log('🔐 Auth token found for reviews');
     } else {
       console.log('⚠️ No auth token found for reviews');
     }
-    
+
     return token;
   }
 
@@ -34,7 +34,7 @@ class ReviewService {
   getCookieToken(name = 'access_token') {
     try {
       if (typeof document === 'undefined') return null;
-      
+
       const cookies = document.cookie.split(';');
       for (let cookie of cookies) {
         const [key, value] = cookie.trim().split('=');
@@ -76,7 +76,7 @@ class ReviewService {
       const fullUrl = `${this.baseURL}${endpoint}`;
       console.log(`🔗 Making review request to: ${fullUrl}`);
       console.log(`📤 Method: ${options.method || 'GET'}`);
-      
+
       const response = await fetch(fullUrl, {
         headers: this.getHeaders(),
         ...options,
@@ -87,11 +87,11 @@ class ReviewService {
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         let errorDetails = null;
-        
+
         try {
           const errorBody = await response.text();
           console.log('❌ Review error response:', errorBody);
-          
+
           try {
             errorDetails = JSON.parse(errorBody);
             errorMessage = errorDetails.message || errorMessage;
@@ -111,14 +111,14 @@ class ReviewService {
       const data = await response.json();
       console.log('✅ Review response data received');
       return data;
-      
+
     } catch (error) {
       console.error('🔥 Review API Error:', {
         message: error.message,
         status: error.status,
         endpoint: `${this.baseURL}${endpoint}`
       });
-      
+
       throw error;
     }
   }
@@ -126,9 +126,9 @@ class ReviewService {
   // Get reviews for a specific store (public endpoint)
   async getStoreReviews(storeId, params = {}) {
     const { page = 1, limit = 20, rating = 'all', sortBy = 'newest' } = params;
-    
+
     console.log('📖 Fetching store reviews:', storeId, params);
-    
+
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -145,7 +145,7 @@ class ReviewService {
   // Create a new review (for customers)
   async createReview(reviewData) {
     console.log('✍️ Creating review:', reviewData);
-    
+
     return this.fetchData('/reviews', {
       method: 'POST',
       body: JSON.stringify(reviewData)
@@ -155,7 +155,7 @@ class ReviewService {
   // Update a review
   async updateReview(reviewId, updateData) {
     console.log('✏️ Updating review:', reviewId, updateData);
-    
+
     return this.fetchData(`/reviews/${reviewId}`, {
       method: 'PUT',
       body: JSON.stringify(updateData)
@@ -165,7 +165,7 @@ class ReviewService {
   // Delete a review
   async deleteReview(reviewId) {
     console.log('🗑️ Deleting review:', reviewId);
-    
+
     return this.fetchData(`/reviews/${reviewId}`, {
       method: 'DELETE'
     });
@@ -174,16 +174,16 @@ class ReviewService {
   // Get a single review by ID
   async getReviewById(reviewId) {
     console.log('🔍 Fetching review by ID:', reviewId);
-    
+
     return this.fetchData(`/reviews/${reviewId}`);
   }
 
   // Get reviews for merchant's own store (dashboard endpoint)
   async getMerchantStoreReviews(params = {}) {
     const { page = 1, limit = 20, rating = 'all', sortBy = 'newest' } = params;
-    
+
     console.log('📊 Fetching merchant store reviews with params:', params);
-    
+
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -200,7 +200,7 @@ class ReviewService {
   // Submit review via store endpoint (alternative endpoint)
   async submitStoreReview(storeId, reviewData) {
     console.log('✍️ Submitting store review:', storeId, reviewData);
-    
+
     return this.fetchData(`/stores/${storeId}/reviews`, {
       method: 'POST',
       body: JSON.stringify(reviewData)
@@ -210,7 +210,7 @@ class ReviewService {
   // Export reviews (future feature)
   async exportReviews(storeId, format = 'csv') {
     console.log('📤 Exporting reviews:', storeId, format);
-    
+
     // This would be implemented when export functionality is added
     return this.fetchData(`/stores/${storeId}/reviews/export?format=${format}`);
   }
@@ -219,7 +219,7 @@ class ReviewService {
   async testConnectivity() {
     try {
       console.log('🧪 Testing review service connectivity...');
-      
+
       // Test basic endpoint
       const response = await fetch(`${this.baseURL}/reviews/test`, {
         method: 'GET',
@@ -229,7 +229,7 @@ class ReviewService {
       });
 
       console.log('🧪 Test response status:', response.status);
-      
+
       return {
         connected: response.ok,
         status: response.status,
@@ -249,7 +249,7 @@ class ReviewService {
   async debugAuth() {
     try {
       console.log('🔐 Debug: Testing review service authentication...');
-      
+
       const token = this.getAuthToken();
       console.log('🎫 Token available:', !!token);
       console.log('🎫 Token preview:', token ? `${token.substring(0, 20)}...` : 'None');
@@ -260,7 +260,7 @@ class ReviewService {
 
       // Test with a simple authenticated request
       const response = await this.fetchData('/reviews/auth-test');
-      
+
       return {
         authenticated: true,
         tokenValid: true,

@@ -352,7 +352,7 @@ export default function Hotdeals() {
           <div className="flex items-center justify-between py-3">
             <div className="flex items-center space-x-8">
               <a href='/' className="text-gray-600 hover:text-red-500">Home</a>
-              <span className="text-red-500 font-medium">
+              <span className="text-blue-500 font-medium">
                 {currentLocation && currentLocation !== 'All Locations' 
                   ? `Hot Deals - ${getShortLocationName()}` 
                   : 'Hot Deals - All Locations'
@@ -661,7 +661,7 @@ export default function Hotdeals() {
                       
                       {offer.originalPrice > 0 && (
                         <div className="flex items-center space-x-2 mb-3">
-                          <span className="text-lg font-bold text-green-600">
+                          <span className="text-lg font-bold text-blue-500">
                             KSH{offer.discountedPrice}
                           </span>
                           <span className="text-sm text-gray-500 line-through">

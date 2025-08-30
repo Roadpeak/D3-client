@@ -3,25 +3,25 @@ class ChatService {
   constructor() {
     const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
     const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    
-    this.API_BASE = process.env.NODE_ENV === 'production' 
+
+    this.API_BASE = process.env.NODE_ENV === 'production'
       ? `${protocol}//${hostname}/api/v1`
-      : '${process.env.REACT_APP_API_BASE_URL}/api/v1';
-      
+      : 'http://localhost:4000/api/v1';
+
     this.SOCKET_URL = process.env.NODE_ENV === 'production'
       ? `${protocol}//${hostname}`
-      : '${process.env.REACT_APP_API_BASE_URL}';
+      : 'http://localhost:4000';
   }
 
   // Enhanced token retrieval
   getAuthToken() {
     const getTokenFromCookie = () => {
       if (typeof document === 'undefined') return '';
-      
+
       const name = 'authToken=';
       const decodedCookie = decodeURIComponent(document.cookie);
       const ca = decodedCookie.split(';');
-      
+
       for (let i = 0; i < ca.length; i++) {
         let c = ca[i];
         while (c.charAt(0) === ' ') {
@@ -43,12 +43,12 @@ class ChatService {
       cookie_token: this.getCookieValue('token')
     };
 
-    const token = tokenSources.localStorage_access_token || 
-                  tokenSources.localStorage_authToken || 
-                  tokenSources.localStorage_token ||
-                  tokenSources.cookie_authToken ||
-                  tokenSources.cookie_access_token ||
-                  tokenSources.cookie_token;
+    const token = tokenSources.localStorage_access_token ||
+      tokenSources.localStorage_authToken ||
+      tokenSources.localStorage_token ||
+      tokenSources.cookie_authToken ||
+      tokenSources.cookie_access_token ||
+      tokenSources.cookie_token;
 
     console.log('🔍 ChatService token check:', token ? `Found (${token.substring(0, 20)}...)` : 'Not found');
     return token;
@@ -56,7 +56,7 @@ class ChatService {
 
   getCookieValue(name) {
     if (typeof document === 'undefined') return '';
-    
+
     try {
       const cookies = document.cookie.split(';');
       for (let cookie of cookies) {
@@ -105,7 +105,7 @@ class ChatService {
           headers: this.getHeaders(),
           credentials: 'include'
         });
-        
+
         if (response.ok) {
           const result = await this.handleResponse(response);
           console.log('✅ User fetched successfully from:', endpoint);
@@ -116,14 +116,14 @@ class ChatService {
         continue;
       }
     }
-    
+
     throw new Error('Unable to fetch user profile from any endpoint');
   }
 
   // FIXED: Get conversations with proper customer/merchant distinction
   async getConversations(userRole = 'customer') {
     let endpoint;
-    
+
     if (userRole === 'merchant') {
       // Merchant getting customer↔store conversations for their stores
       endpoint = `${this.API_BASE}/chat/merchant/conversations`;
@@ -143,13 +143,13 @@ class ChatService {
       });
 
       const result = await this.handleResponse(response);
-      
+
       if (userRole === 'merchant') {
         console.log(`✅ Loaded ${result.data?.length || 0} customer↔store conversations for merchant`);
       } else {
         console.log(`✅ Loaded ${result.data?.length || 0} customer↔store conversations`);
       }
-      
+
       return result;
     } catch (error) {
       console.error(`Error fetching ${userRole} conversations:`, error);
@@ -161,7 +161,7 @@ class ChatService {
   async getMessages(conversationId, page = 1, limit = 50) {
     const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/messages`;
     const url = `${endpoint}?page=${page}&limit=${limit}`;
-    
+
     console.log('📨 Fetching customer↔store messages from:', url);
 
     try {
@@ -180,23 +180,23 @@ class ChatService {
   // FIXED: Send message in customer↔store conversation
   async sendMessage(conversationId, content, messageType = 'text') {
     const endpoint = `${this.API_BASE}/chat/messages`;
-    
+
     // Validate content
     const validation = this.validateMessage(content);
     if (!validation.valid) {
       throw new Error(validation.error);
     }
-    
+
     const body = {
       conversationId,
       content: content.trim(),
       messageType
     };
 
-    console.log('📤 Sending customer↔store message:', { 
-      endpoint, 
-      conversationId, 
-      contentLength: content.length 
+    console.log('📤 Sending customer↔store message:', {
+      endpoint,
+      conversationId,
+      contentLength: content.length
     });
 
     try {
@@ -219,15 +219,15 @@ class ChatService {
   // FIXED: Start a new customer↔store conversation
   async startConversation(storeId, initialMessage = '') {
     const endpoint = `${this.API_BASE}/chat/conversations`;
-    
+
     const body = {
       storeId: parseInt(storeId), // Ensure it's a number
       initialMessage: initialMessage.trim()
     };
 
-    console.log('🆕 Starting customer↔store conversation:', { 
-      storeId, 
-      hasInitialMessage: !!initialMessage.trim() 
+    console.log('🆕 Starting customer↔store conversation:', {
+      storeId,
+      hasInitialMessage: !!initialMessage.trim()
     });
 
     try {
@@ -250,7 +250,7 @@ class ChatService {
   // Mark messages as read in customer↔store conversation
   async markMessagesAsRead(conversationId) {
     const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/read`;
-    
+
     console.log('📖 Marking customer↔store messages as read:', conversationId);
 
     try {
@@ -275,7 +275,7 @@ class ChatService {
   // Update message status
   async updateMessageStatus(messageId, status) {
     const endpoint = `${this.API_BASE}/chat/messages/${messageId}/status`;
-    
+
     console.log('📝 Updating message status:', { messageId, status });
 
     try {
@@ -297,7 +297,7 @@ class ChatService {
   async searchConversations(query, type = 'all') {
     const endpoint = `${this.API_BASE}/chat/search`;
     const url = `${endpoint}?query=${encodeURIComponent(query)}&type=${type}`;
-    
+
     console.log('🔍 Searching customer↔store conversations:', url);
 
     try {
@@ -317,7 +317,7 @@ class ChatService {
   async getConversationAnalytics(period = '7d') {
     const endpoint = `${this.API_BASE}/chat/analytics`;
     const url = `${endpoint}?period=${period}`;
-    
+
     console.log('📊 Fetching customer↔store analytics:', url);
 
     try {
@@ -344,8 +344,8 @@ class ChatService {
       }
 
       const userResponse = await this.getCurrentUser();
-      return { 
-        isAuthenticated: true, 
+      return {
+        isAuthenticated: true,
         user: userResponse.user || userResponse.data || userResponse
       };
     } catch (error) {
@@ -417,7 +417,7 @@ class ChatService {
   getMessageStatusIcon(status) {
     const statusMap = {
       'sent': '✓',
-      'delivered': '✓✓', 
+      'delivered': '✓✓',
       'read': '✓✓'
     };
     return statusMap[status] || '';
@@ -428,7 +428,7 @@ class ChatService {
     if (user?.avatar) {
       return user.avatar;
     }
-    
+
     const name = user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User';
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=random`;
   }
@@ -438,7 +438,7 @@ class ChatService {
     if (store?.avatar || store?.logo_url) {
       return store.avatar || store.logo_url;
     }
-    
+
     const name = store?.name || 'Store';
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=random&color=ffffff&background=2563eb`;
   }
@@ -450,11 +450,11 @@ class ChatService {
         return await requestFn();
       } catch (error) {
         console.log(`Request attempt ${attempt} failed:`, error.message);
-        
+
         if (attempt === maxRetries) {
           throw error;
         }
-        
+
         await new Promise(resolve => setTimeout(resolve, delay * attempt));
       }
     }
@@ -477,7 +477,7 @@ class ChatService {
     ];
 
     console.log('🔍 Debugging ChatService endpoints:');
-    
+
     for (const endpoint of endpoints) {
       try {
         const response = await fetch(endpoint, {
@@ -485,7 +485,7 @@ class ChatService {
           headers: this.getHeaders(),
           credentials: 'include'
         });
-        
+
         console.log(`✅ ${endpoint}: ${response.status}`);
       } catch (error) {
         console.log(`❌ ${endpoint}: ${error.message}`);
@@ -511,7 +511,7 @@ class ChatService {
         priority: conversation.customer?.priority || 'regular'
       };
     }
-    
+
     return {
       type: 'unknown',
       title: 'Unknown',
@@ -523,7 +523,7 @@ class ChatService {
   // Format conversation for display
   formatConversation(conversation, userType) {
     const baseInfo = this.getConversationType(conversation, userType);
-    
+
     return {
       ...conversation,
       displayInfo: baseInfo,
@@ -557,7 +557,7 @@ class ChatService {
         "We offer free delivery for orders over KES 2,000."
       ];
     }
-    
+
     return [];
   }
 }

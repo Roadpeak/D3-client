@@ -3,9 +3,9 @@ import api, { API_ENDPOINTS, getTokenFromCookie } from '../config/api';
 
 class NotificationService {
   constructor() {
-    this.API_BASE = process.env.NODE_ENV === 'production' 
+    this.API_BASE = process.env.NODE_ENV === 'production'
       ? `${window.location.protocol}//${window.location.hostname}/api/v1`
-      : '${process.env.REACT_APP_API_BASE_URL}/api/v1';
+      : 'http://localhost:4000/api/v1';
   }
 
   // FIXED: Use the same token retrieval as authService
@@ -17,7 +17,7 @@ class NotificationService {
   getHeaders() {
     const token = this.getAuthToken();
     console.log('🔑 Notification service token:', token ? 'Token exists' : 'No token');
-    
+
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
@@ -43,7 +43,7 @@ class NotificationService {
       });
 
       console.log('📡 Fetching notifications from:', `${this.API_BASE}/notifications?${queryParams}`);
-      
+
       const response = await fetch(`${this.API_BASE}/notifications?${queryParams}`, {
         headers: this.getHeaders(),
         credentials: 'include'
@@ -61,7 +61,7 @@ class NotificationService {
     try {
       console.log('📊 Fetching notification counts from:', `${this.API_BASE}/notifications/counts`);
       console.log('📊 Headers being sent:', this.getHeaders());
-      
+
       const response = await fetch(`${this.API_BASE}/notifications/counts`, {
         headers: this.getHeaders(),
         credentials: 'include'
@@ -106,7 +106,7 @@ class NotificationService {
   // Mark all notifications as read
   async markAllAsRead(type = null) {
     try {
-      const url = type 
+      const url = type
         ? `${this.API_BASE}/notifications/mark-all-read?type=${type}`
         : `${this.API_BASE}/notifications/mark-all-read`;
 
@@ -280,13 +280,13 @@ class NotificationService {
 
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    
+
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    
+
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7) return `${diffInDays}d ago`;
-    
+
     return time.toLocaleDateString();
   }
 
@@ -317,17 +317,17 @@ class NotificationService {
 
     // Navigate to appropriate page
     const url = this.getNotificationActionUrl(notification);
-    
+
     if (notification.metadata?.conversationId) {
-      navigate(url, { 
-        state: { 
+      navigate(url, {
+        state: {
           selectedConversation: { id: notification.metadata.conversationId }
         }
       });
     } else if (notification.metadata?.bookingId) {
-      navigate(url, { 
-        state: { 
-          selectedBooking: notification.metadata.bookingId 
+      navigate(url, {
+        state: {
+          selectedBooking: notification.metadata.bookingId
         }
       });
     } else {

@@ -18,7 +18,7 @@ const Careers = () => {
           {/* Company Values */}
           <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">Why Work With Us?</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-start">
                 <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -89,7 +89,7 @@ const Careers = () => {
           {/* Future Opportunities */}
           <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">Roles We Typically Look For</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="border border-gray-200 rounded-lg p-4">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Software Engineers</h3>
@@ -130,19 +130,19 @@ const Careers = () => {
               <p className="mb-6 text-blue-50">
                 Want to be the first to know about new opportunities? Send us your resume and we'll keep you in mind for future positions.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-3 px-6 rounded-lg transition-colors">
+                <a href="mailto:info@discoun3ree.com?subject=Resume Submission&body=Please find my resume attached." className="bg-white text-blue-600 hover:bg-blue-50 font-medium py-3 px-6 rounded-lg transition-colors inline-block">
                   Send Your Resume
-                </button>
-                <button className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-medium py-3 px-6 rounded-lg transition-colors">
+                </a>
+                <a href="https://www.linkedin.com/company/discoun3-limited/" target="_blank" rel="noopener noreferrer" className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-medium py-3 px-6 rounded-lg transition-colors inline-block">
                   Follow Us on LinkedIn
-                </button>
+                </a>
               </div>
-              
+
               <div className="mt-8 pt-6 border-t border-blue-400">
                 <p className="text-sm text-blue-100">
-                  Email us at: <a href="mailto:careers@d3deals.com" className="text-white underline">careers@d3deals.com</a>
+                  Email us at: <a href="mailto:info@discoun3ree.com" className="text-white underline">info@discoun3ree.com</a>
                 </p>
               </div>
             </div>

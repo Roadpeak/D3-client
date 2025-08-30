@@ -60,7 +60,7 @@ const ViewService = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('🔍 Fetching service:', id);
 
       // Try multiple endpoints for getting service
@@ -69,7 +69,7 @@ const ViewService = () => {
 
       try {
         // Try individual service endpoint first
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services/${id}`, {
+        const response = await fetch(`http://localhost:4000/api/v1/services/${id}`, {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -85,10 +85,10 @@ const ViewService = () => {
         }
       } catch (apiError) {
         console.warn('⚠️ Individual service API failed:', apiError);
-        
+
         // Fallback: try to get from services list
         try {
-          const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/api/v1/services', {
+          const response = await fetch('http://localhost:4000/api/v1/services', {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
@@ -99,7 +99,7 @@ const ViewService = () => {
             const data = await response.json();
             const services = data.services || data || [];
             serviceData = services.find(s => s.id === id || s.id === parseInt(id));
-            
+
             if (!serviceData) {
               throw new Error('Service not found in services list');
             }
@@ -114,7 +114,7 @@ const ViewService = () => {
       // Fetch store information if we have store_id
       if (serviceData && serviceData.store_id) {
         try {
-          const storeResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${serviceData.store_id}`, {
+          const storeResponse = await fetch(`http://localhost:4000/api/v1/stores/${serviceData.store_id}`, {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
@@ -155,7 +155,7 @@ const ViewService = () => {
 
   const fetchRelatedServices = async (category) => {
     try {
-      const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/api/v1/services', {
+      const response = await fetch('http://localhost:4000/api/v1/services', {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -165,13 +165,13 @@ const ViewService = () => {
       if (response.ok) {
         const data = await response.json();
         const services = data.services || data || [];
-        
+
         // Filter related services (same category, excluding current service)
         const related = services
           .filter(s => s.id !== id && s.id !== parseInt(id))
           .filter(s => !category || s.category === category || s.type === category)
           .slice(0, 4);
-        
+
         setRelatedServices(related);
       }
     } catch (err) {
@@ -182,7 +182,7 @@ const ViewService = () => {
   const handleBookService = async () => {
     try {
       setBookingLoading(true);
-      
+
       // Check authentication
       if (!user) {
         // Redirect to login with return URL
@@ -193,7 +193,7 @@ const ViewService = () => {
 
       // For now, we'll create a simple service booking flow
       // You can later integrate this with a service booking component similar to the offer booking
-      
+
       // Check if service allows booking
       if (service.booking_enabled === false) {
         setError('Online booking is not available for this service. Please contact the store directly.');
@@ -202,10 +202,10 @@ const ViewService = () => {
 
       // Option 1: Navigate to a service-specific booking page
       // navigate(`/booking/service/${service.id}`);
-      
+
       // Option 2: Navigate to a contact/inquiry page for services
       // navigate(`/contact/${store?.id || service.store_id}?service=${service.id}`);
-      
+
       // Option 3: For now, show a booking modal or redirect to store contact
       // Since we don't have a service booking component yet, let's redirect to store contact
       if (store) {
@@ -213,7 +213,7 @@ const ViewService = () => {
       } else {
         alert('Please contact the service provider directly to book this service.');
       }
-      
+
     } catch (error) {
       console.error('Booking error:', error);
       setError('Failed to start booking process. Please try again.');
@@ -263,11 +263,10 @@ const ViewService = () => {
     return [...Array(5)].map((_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${
-          i < Math.floor(rating || 0) 
-            ? 'fill-yellow-400 text-yellow-400' 
+        className={`w-4 h-4 ${i < Math.floor(rating || 0)
+            ? 'fill-yellow-400 text-yellow-400'
             : 'text-gray-300'
-        }`}
+          }`}
       />
     ));
   };
@@ -361,7 +360,7 @@ const ViewService = () => {
                   }}
                 />
               ) : null}
-              
+
               {/* Fallback gradient background */}
               <div className={`absolute inset-0 flex items-center justify-center ${service.image_url ? 'hidden' : 'flex'}`}>
                 <div className="text-center text-white">
@@ -372,11 +371,10 @@ const ViewService = () => {
 
               {/* Service Type Badge */}
               <div className="absolute top-4 right-4">
-                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                  service.type === 'fixed' 
-                    ? 'bg-green-100 text-green-800' 
+                <span className={`px-3 py-1 text-sm font-semibold rounded-full ${service.type === 'fixed'
+                    ? 'bg-green-100 text-green-800'
                     : 'bg-blue-100 text-blue-800'
-                }`}>
+                  }`}>
                   {service.type === 'fixed' ? 'Fixed Price' : 'Custom Quote'}
                 </span>
               </div>
@@ -404,7 +402,7 @@ const ViewService = () => {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">{service.name}</h1>
-                  
+
                   {/* Service Meta Info */}
                   <div className="flex items-center gap-4 mb-4">
                     {/* Category */}
@@ -413,7 +411,7 @@ const ViewService = () => {
                         {service.category}
                       </span>
                     )}
-                    
+
                     {/* Booking Status */}
                     {service.booking_enabled !== false && (
                       <span className="inline-block bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium flex items-center">
@@ -421,7 +419,7 @@ const ViewService = () => {
                         Bookable Online
                       </span>
                     )}
-                    
+
                     {/* Rating (if available) */}
                     {service.rating && (
                       <div className="flex items-center gap-1">
@@ -598,7 +596,7 @@ const ViewService = () => {
             {/* Booking Card */}
             <div className="bg-white rounded-xl shadow-sm p-6 mb-6 sticky top-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Book This Service</h3>
-              
+
               {/* Price Display */}
               {service.type === 'fixed' && service.price && (
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
@@ -626,7 +624,7 @@ const ViewService = () => {
               )}
 
               {/* Main Booking Button */}
-              <button 
+              <button
                 className="w-full bg-blue-500 text-white px-6 py-4 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleBookService}
                 disabled={bookingLoading}
@@ -653,15 +651,15 @@ const ViewService = () => {
               <div className="space-y-2">
                 {store && (
                   <>
-                    <button 
+                    <button
                       className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                       onClick={handleContactStore}
                     >
                       <Users className="w-4 h-4" />
                       View Store Profile
                     </button>
-                    
-                    <button 
+
+                    <button
                       className="w-full bg-green-100 text-green-700 px-6 py-3 rounded-lg font-medium hover:bg-green-200 transition-colors flex items-center justify-center gap-2"
                     >
                       <MessageCircle className="w-4 h-4" />
@@ -669,7 +667,7 @@ const ViewService = () => {
                     </button>
 
                     {store.phone_number && (
-                      <button 
+                      <button
                         className="w-full bg-orange-100 text-orange-700 px-6 py-3 rounded-lg font-medium hover:bg-orange-200 transition-colors flex items-center justify-center gap-2"
                         onClick={handleCallStore}
                       >

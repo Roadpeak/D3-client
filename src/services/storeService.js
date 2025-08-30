@@ -1,5 +1,5 @@
 // services/storeService.js - UPDATED with top-rated store methods
-const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 const API_KEY = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
 
 class StoreService {
@@ -14,7 +14,7 @@ class StoreService {
   getAuthToken() {
     const tokenSources = [
       localStorage.getItem('access_token'),
-      localStorage.getItem('authToken'), 
+      localStorage.getItem('authToken'),
       localStorage.getItem('token'),
       this.getCookieToken('access_token'),
       this.getCookieToken('authToken'),
@@ -22,13 +22,13 @@ class StoreService {
     ];
 
     const token = tokenSources.find(t => t && t.trim());
-    
+
     if (token) {
       console.log('🔐 Auth token found:', token.substring(0, 20) + '...');
     } else {
       console.log('⚠️ No auth token found in any location');
     }
-    
+
     return token;
   }
 
@@ -36,7 +36,7 @@ class StoreService {
   getCookieToken(name = 'access_token') {
     try {
       if (typeof document === 'undefined') return null;
-      
+
       const cookies = document.cookie.split(';');
       for (let cookie of cookies) {
         const [key, value] = cookie.trim().split('=');
@@ -80,7 +80,7 @@ class StoreService {
       const fullUrl = `${this.baseURL}${endpoint}`;
       console.log(`🔗 Making request to: ${fullUrl}`);
       console.log(`📤 Request method: ${options.method || 'GET'}`);
-      
+
       const response = await fetch(fullUrl, {
         headers: this.getHeaders(),
         ...options,
@@ -91,11 +91,11 @@ class StoreService {
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         let errorDetails = null;
-        
+
         try {
           const errorBody = await response.text();
           console.log('❌ Error response body:', errorBody);
-          
+
           try {
             errorDetails = JSON.parse(errorBody);
             errorMessage = errorDetails.message || errorMessage;
@@ -115,7 +115,7 @@ class StoreService {
       const data = await response.json();
       console.log('✅ Response data received successfully');
       return data;
-      
+
     } catch (error) {
       console.error('🔥 API Error Details:', {
         message: error.message,
@@ -123,7 +123,7 @@ class StoreService {
         endpoint: `${this.baseURL}${endpoint}`,
         name: error.name
       });
-      
+
       const enhancedError = new Error(error.message);
       enhancedError.originalError = error;
       enhancedError.endpoint = endpoint;
@@ -136,10 +136,10 @@ class StoreService {
   async getMostReviewedStores(limit = 8) {
     console.log(`📝 Fetching top ${limit} most reviewed stores`);
     const endpoint = `/stores?sortBy=Most Reviewed&limit=${limit}`;
-    
+
     try {
       const data = await this.fetchData(endpoint);
-      
+
       if (data.success && data.stores) {
         console.log(`✅ Successfully fetched ${data.stores.length} most reviewed stores`);
         console.log('📊 Review count distribution:', {
@@ -147,7 +147,7 @@ class StoreService {
           highestReviews: Math.max(...data.stores.map(store => parseInt(store.totalReviews) || 0)),
           lowestReviews: Math.min(...data.stores.map(store => parseInt(store.totalReviews) || 0))
         });
-        
+
         return data;
       } else {
         throw new Error(data.message || 'Failed to fetch most reviewed stores');
@@ -162,10 +162,10 @@ class StoreService {
   async getMostReviewedStoresByCategory(category, limit = 4) {
     console.log(`📝 Fetching top ${limit} most reviewed stores in ${category} category`);
     const endpoint = `/stores?sortBy=Most Reviewed&category=${encodeURIComponent(category)}&limit=${limit}`;
-    
+
     try {
       const data = await this.fetchData(endpoint);
-      
+
       if (data.success) {
         console.log(`✅ Successfully fetched ${data.stores?.length || 0} most reviewed ${category} stores`);
         return data;
@@ -181,11 +181,11 @@ class StoreService {
   // NEW: Get trending stores (high ratings + recent activity)
   async getTrendingStores(limit = 8) {
     console.log(`📈 Fetching ${limit} trending stores`);
-    
+
     try {
       // First try to get popular stores, then filter for trending characteristics
       const data = await this.getTopRatedStores(limit * 2); // Get more to filter from
-      
+
       if (data.success && data.stores) {
         // Filter for stores with good ratings and recent reviews
         const trendingStores = data.stores
@@ -195,9 +195,9 @@ class StoreService {
             return rating >= 3.5 && reviews > 0; // Basic trending criteria
           })
           .slice(0, limit);
-        
+
         console.log(`✅ Found ${trendingStores.length} trending stores`);
-        
+
         return {
           ...data,
           stores: trendingStores
@@ -216,7 +216,7 @@ class StoreService {
     if (!id) {
       throw new Error('Store ID is required');
     }
-    
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {
       throw new Error('Invalid store ID format');
@@ -224,7 +224,7 @@ class StoreService {
 
     console.log(`🏪 Fetching store with ID: ${id}`);
     const data = await this.fetchData(`/stores/${id}`);
-    
+
     // Debug social links in response
     console.log('🔍 Store data social links debug:', {
       hasSocialLinksRaw: !!(data.store?.socialLinksRaw),
@@ -233,14 +233,14 @@ class StoreService {
       socialLinksKeys: data.store?.socialLinks ? Object.keys(data.store.socialLinks).filter(key => data.store.socialLinks[key]) : [],
       firstSocialLink: data.store?.socialLinksRaw?.[0] || 'None'
     });
-    
+
     return data;
   }
 
   // Your existing methods...
   async getStores(filters = {}) {
     console.log('🏪 StoreService.getStores called with filters:', filters);
-    
+
     const queryParams = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value !== 'All' && value !== 'All Locations') {
@@ -250,9 +250,9 @@ class StoreService {
 
     const queryString = queryParams.toString();
     const endpoint = `/stores${queryString ? `?${queryString}` : ''}`;
-    
+
     console.log('📍 Final endpoint:', endpoint);
-    
+
     return this.fetchData(endpoint);
   }
 
@@ -275,12 +275,12 @@ class StoreService {
     if (!storeData) {
       throw new Error('Store data is required');
     }
-    
-    console.log('🏗️ Creating new store:', { 
-      name: storeData.name, 
-      category: storeData.category 
+
+    console.log('🏗️ Creating new store:', {
+      name: storeData.name,
+      category: storeData.category
     });
-    
+
     return this.fetchData('/stores', {
       method: 'POST',
       body: JSON.stringify(storeData),
@@ -294,9 +294,9 @@ class StoreService {
     if (!storeData) {
       throw new Error('Store data is required');
     }
-    
+
     console.log(`✏️ Updating store ${id}`);
-    
+
     return this.fetchData(`/stores/${id}`, {
       method: 'PUT',
       body: JSON.stringify(storeData),
@@ -307,9 +307,9 @@ class StoreService {
     if (!id) {
       throw new Error('Store ID is required');
     }
-    
+
     console.log(`🗑️ Deleting store ${id}`);
-    
+
     return this.fetchData(`/stores/${id}`, {
       method: 'DELETE',
     });
@@ -320,9 +320,9 @@ class StoreService {
     if (!storeId) {
       throw new Error('Store ID is required');
     }
-    
+
     console.log(`💖 Toggling follow for store ${storeId}`);
-    
+
     return this.fetchData(`/stores/${storeId}/follow`, {
       method: 'POST'
     });
@@ -342,9 +342,9 @@ class StoreService {
     if (!reviewData || !reviewData.rating) {
       throw new Error('Review data with rating is required');
     }
-    
+
     console.log(`📝 Submitting review for store ${storeId}`);
-    
+
     return this.fetchData(`/stores/${storeId}/reviews`, {
       method: 'POST',
       body: JSON.stringify(reviewData)
@@ -382,12 +382,12 @@ class StoreService {
 
   async debugConnectivity() {
     console.log('🐛 Running connectivity debug...');
-    
+
     try {
       // Test 1: Health check
       const isHealthy = await this.healthCheck();
       console.log('🐛 Health check:', isHealthy ? 'PASS' : 'FAIL');
-      
+
       // Test 2: Categories endpoint
       try {
         const categories = await this.getCategories();
@@ -395,7 +395,7 @@ class StoreService {
       } catch (error) {
         console.log('🐛 Categories endpoint:', 'FAIL', error.message);
       }
-      
+
       // Test 3: Most reviewed stores endpoint
       try {
         const mostReviewedStores = await this.getMostReviewedStores(5);
@@ -403,7 +403,7 @@ class StoreService {
       } catch (error) {
         console.log('🐛 Most reviewed stores endpoint:', 'FAIL', error.message);
       }
-      
+
       // Test 4: Stores endpoint
       try {
         const stores = await this.getStores({ limit: 1 });
@@ -411,7 +411,7 @@ class StoreService {
       } catch (error) {
         console.log('🐛 Stores endpoint:', 'FAIL', error.message);
       }
-      
+
     } catch (error) {
       console.error('🐛 Debug connectivity failed:', error);
     }
@@ -421,10 +421,10 @@ class StoreService {
   async testAuthentication() {
     try {
       console.log('🔐 Testing authentication...');
-      
+
       const token = this.getAuthToken();
       console.log('🎫 Token available:', !!token);
-      
+
       if (!token) {
         return { authenticated: false, reason: 'No token found' };
       }
@@ -434,7 +434,7 @@ class StoreService {
       });
 
       console.log('🔐 Auth test response:', response.status);
-      
+
       return {
         authenticated: response.ok,
         status: response.status,

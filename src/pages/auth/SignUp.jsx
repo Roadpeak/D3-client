@@ -92,11 +92,10 @@ const SignUp = () => {
       });
 
       if (result.success) {
-        // Registration successful
-        navigate('/accounts/verify-otp', { 
+        // Registration successful - redirect to dashboard/home instead of OTP verification
+        navigate('/', { 
           state: { 
-            phone: formData.phoneNumber,
-            message: 'Registration successful! Please verify your phone number.'
+            message: 'Registration successful! Welcome to D3 Deals!'
           } 
         });
       } else {

@@ -160,6 +160,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // User and authentication state
   const [user, setUser] = useState(null);
@@ -215,13 +216,13 @@ const Navbar = () => {
     if (!isAuthenticated) return;
 
     try {
-      console.log('🔔 Loading comprehensive notifications...');
+      console.log('Loading comprehensive notifications...');
 
       // Load notification counts first
       const countsResponse = await notificationService.getNotificationCounts();
       if (countsResponse.success) {
         setNotificationCounts(countsResponse.data);
-        console.log('📊 Notification counts loaded:', countsResponse.data);
+        console.log('Notification counts loaded:', countsResponse.data);
       }
 
       // Load recent notifications
@@ -235,11 +236,11 @@ const Navbar = () => {
           notification => notificationService.formatNotification(notification)
         );
         setNotifications(formattedNotifications);
-        console.log('📋 Notifications loaded:', formattedNotifications.length);
+        console.log('Notifications loaded:', formattedNotifications.length);
       }
 
     } catch (error) {
-      console.error('❌ Error loading notifications:', error);
+      console.error('Error loading notifications:', error);
       // Set fallback sample data if API fails
       setNotifications([
         {
@@ -298,11 +299,11 @@ const Navbar = () => {
         return;
       }
 
-      console.log('📨 Loading unread chat messages count...');
+      console.log('Loading unread chat messages count...');
 
       const chatToken = chatService.getAuthToken();
       if (!chatToken) {
-        console.log('❌ No chat token available');
+        console.log('No chat token available');
         setUnreadChatCount(0);
         return;
       }
@@ -314,14 +315,14 @@ const Navbar = () => {
           return total + (chat.unreadCount || 0);
         }, 0);
 
-        console.log(`📊 Total unread chat messages: ${totalUnreadCount}`);
+        console.log(`Total unread chat messages: ${totalUnreadCount}`);
         setUnreadChatCount(totalUnreadCount);
       } else {
-        console.log('⚠️ Failed to load chat conversations:', response.message);
+        console.log('Failed to load chat conversations:', response.message);
         setUnreadChatCount(0);
       }
     } catch (error) {
-      console.error('❌ Error loading unread chat messages:', error);
+      console.error('Error loading unread chat messages:', error);
       setUnreadChatCount(0);
     }
   };
@@ -379,6 +380,7 @@ const Navbar = () => {
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const toggleNotifications = () => setIsNotificationOpen(!isNotificationOpen);
   const toggleLocation = () => setIsLocationOpen(!isLocationOpen);
+  const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
 
   // Search handlers for the RealTimeSearch component
   const handleSearchNavigate = (path) => {
@@ -396,7 +398,7 @@ const Navbar = () => {
   // Location handlers
   const handleLocationSelect = async (selectedLocation) => {
     try {
-      console.log('📍 Navbar: Changing location to:', selectedLocation.name);
+      console.log('Navbar: Changing location to:', selectedLocation.name);
 
       await changeLocation(selectedLocation.name);
       setIsLocationOpen(false);
@@ -409,11 +411,11 @@ const Navbar = () => {
         }
       });
 
-      console.log('📍 Navbar: Dispatching locationChanged event');
+      console.log('Navbar: Dispatching locationChanged event');
       window.dispatchEvent(locationChangeEvent);
 
     } catch (error) {
-      console.error('❌ Navbar: Error changing location:', error);
+      console.error('Navbar: Error changing location:', error);
     }
   };
 
@@ -428,7 +430,7 @@ const Navbar = () => {
 
   // ENHANCED: Notification handlers
   const handleNotificationClick = async (notification) => {
-    console.log('🔔 Clicked notification:', notification);
+    console.log('Clicked notification:', notification);
 
     // Close notification dropdown
     setIsNotificationOpen(false);
@@ -567,6 +569,14 @@ const Navbar = () => {
 
               {/* Right Icons */}
               <div className="flex items-center space-x-3">
+                {/* Search Toggle Button */}
+                <button 
+                  onClick={toggleSearch}
+                  className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50"
+                >
+                  <Search className="w-5 h-5 text-slate-600" />
+                </button>
+
                 {/* Location Icon */}
                 <div className="relative">
                   <button onClick={toggleLocation} className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50">
@@ -630,7 +640,7 @@ const Navbar = () => {
                   )}
                 </div>
 
-                {/* ENHANCED: Comprehensive Notifications */}
+                {/* Notifications */}
                 <div className="relative">
                   <button onClick={toggleNotifications} className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50">
                     <NotificationIcon className="w-5 h-5 text-slate-600" />
@@ -641,7 +651,7 @@ const Navbar = () => {
                     )}
                   </button>
 
-                  {/* ENHANCED: Comprehensive Notification Popup */}
+                  {/* Notification Popup */}
                   {isNotificationOpen && (
                     <div className="absolute right-0 top-12 w-96 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50 max-h-[80vh] overflow-hidden flex flex-col">
                       {/* Header */}
@@ -831,14 +841,18 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Mobile Search Bar */}
-            <div className="pb-4">
-              <RealTimeSearch
-                placeholder="Search for deals, coupons & stores..."
-                onNavigate={handleSearchNavigate}
-                onStoreClick={handleStoreClick}
-                onOfferClick={handleOfferClick}
-              />
+            {/* Collapsible Mobile Search Bar */}
+            <div className={`transition-all duration-300 ease-in-out ${
+              isSearchOpen ? 'pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0 overflow-hidden'
+            }`}>
+              <div className="px-2">
+                <RealTimeSearch
+                  placeholder="Search for deals, coupons & stores..."
+                  onNavigate={handleSearchNavigate}
+                  onStoreClick={handleStoreClick}
+                  onOfferClick={handleOfferClick}
+                />
+              </div>
             </div>
           </div>
 
@@ -928,14 +942,22 @@ const Navbar = () => {
               </div>
 
               <div className="flex items-center space-x-4 text-sm">
-                <button className="flex items-center space-x-2 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200/50">
+                <a
+                  href="https://merchants.discoun3ree.com/accounts/sign-up"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200/50"
+                >
                   <span>🏪</span>
                   <span className="font-medium">List Your Business</span>
-                </button>
-                <button className="flex items-center space-x-2 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200/50">
+                </a>
+                <Link
+                  to="/contact-us"
+                  className="flex items-center space-x-2 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200/50"
+                >
                   <span>🎧</span>
                   <span className="font-medium">24/7 Support</span>
-                </button>
+                </Link>
 
                 {/* Authentication Section */}
                 {isAuthenticated && user ? (
@@ -1188,71 +1210,81 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Fixed Bottom Mobile Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/50 shadow-xl z-50">
-        <div className="grid grid-cols-5 gap-1 p-2">
-          <Link
-            to="/"
-            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/'
-              ? 'text-indigo-600 bg-indigo-50'
-              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+      {/* Fixed Bottom Mobile Navigation - Floating Design */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-3">
+        {/* Floating Navigation Container */}
+        <div className="bg-white backdrop-blur-sm rounded-full shadow-2xl border border-slate-200/50 mx-3 px-3 py-2">
+          <div className="grid grid-cols-5 gap-1">
+            <Link
+              to="/"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                location.pathname === '/'
+                  ? 'text-blue-600 bg-blue-50/80'
+                  : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50/50'
               }`}
-          >
-            <HomeIcon className="w-5 h-5" />
-            <span className="text-xs font-medium">Home</span>
-          </Link>
+            >
+              <HomeIcon className="w-5 h-5" />
+              <span className="text-xs font-semibold">Home</span>
+            </Link>
 
-          <Link
-            to="/hotdeals"
-            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 relative ${location.pathname === '/hotdeals'
-              ? 'text-indigo-600 bg-indigo-50'
-              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+            <Link
+              to="/hotdeals"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                location.pathname === '/hotdeals'
+                  ? 'text-blue-600 bg-blue-50/80'
+                  : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50/50'
               }`}
-          >
-            <FireIcon className="w-5 h-5" />
-            <span className="text-xs font-medium">Deals</span>
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
-          </Link>
+            >
+              <div className="relative">
+                <FireIcon className="w-5 h-5" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-full shadow-md"></div>
+              </div>
+              <span className="text-xs font-semibold">Deals</span>
+            </Link>
 
-          <Link
-            to="/stores"
-            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/stores'
-              ? 'text-indigo-600 bg-indigo-50'
-              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+            <Link
+              to="/stores"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                location.pathname === '/stores'
+                  ? 'text-blue-600 bg-blue-50/80'
+                  : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50/50'
               }`}
-          >
-            <StoreIcon className="w-5 h-5" />
-            <span className="text-xs font-medium">Stores</span>
-          </Link>
+            >
+              <StoreIcon className="w-5 h-5" />
+              <span className="text-xs font-semibold">Stores</span>
+            </Link>
 
-          <Link
-            to="/requestservice"
-            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 ${location.pathname === '/requestservice'
-              ? 'text-indigo-600 bg-indigo-50'
-              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+            <Link
+              to="/requestservice"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                location.pathname === '/requestservice'
+                  ? 'text-blue-600 bg-blue-50/80'
+                  : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50/50'
               }`}
-          >
-            <ServiceIcon className="w-5 h-5" />
-            <span className="text-xs font-medium">Service</span>
-          </Link>
+            >
+              <ServiceIcon className="w-5 h-5" />
+              <span className="text-xs font-semibold">Service</span>
+            </Link>
 
-          <Link
-            to="/chat"
-            className={`flex flex-col items-center space-y-1 px-2 py-3 rounded-xl transition-all duration-200 relative ${location.pathname === '/chat'
-              ? 'text-indigo-600 bg-indigo-50'
-              : 'text-slate-600 hover:text-indigo-600 hover:bg-slate-50'
+            <Link
+              to="/chat"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                location.pathname === '/chat'
+                  ? 'text-blue-600 bg-blue-50/80'
+                  : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50/50'
               }`}
-          >
-            <div className="relative">
-              <ChatIcon className="w-5 h-5" />
-              {unreadChatCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center shadow-lg">
-                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
-                </span>
-              )}
-            </div>
-            <span className="text-xs font-medium">Chat</span>
-          </Link>
+            >
+              <div className="relative">
+                <ChatIcon className="w-5 h-5" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center shadow-lg border-2 border-white font-bold">
+                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs font-semibold">Chat</span>
+            </Link>
+          </div>
         </div>
       </div>
     </>

@@ -97,24 +97,24 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Our Location */}
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-4">Our Location</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Support</h3>
             <div className="space-y-3 text-sm text-gray-600">
-              <p className="flex items-start">
+              {/* <p className="flex items-start">
                 <LocationIcon />
                 <span className="ml-2">NAIROBI (K)</span>
-              </p>
+              </p> */}
               <p className="flex items-start">
                 <EmailIcon />
                 <span className="ml-2">support@discoun3.com</span>
               </p>
-              <p className="flex items-start">
+              {/* <p className="flex items-start">
                 <PhoneIcon />
                 <span className="ml-2">1300 271 3365</span>
               </p>
               <p className="flex items-start">
                 <PhoneIcon />
                 <span className="ml-2">0401 271 3365</span>
-              </p>
+              </p> */}
             </div>
           </div>
 
@@ -160,10 +160,10 @@ const Footer = () => {
           <div>
             <h3 className="text-sm font-medium text-gray-900 mb-4">Business</h3>
             <div className="space-y-3 text-sm text-gray-600">
-              <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <a href="https://merchants.discoun3ree.com/accounts/sign-up" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <AddBusinessIcon />
                 <span className="ml-2">Add your business</span>
-              </Link>
+              </a>
               <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <AdvertiseIcon />
                 <span className="ml-2">Advertise with us</span>
@@ -174,11 +174,11 @@ const Footer = () => {
             <div className="space-y-3 text-sm text-gray-600">
               <Link to="/stores" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <CompanyIcon />
-                <span className="ml-2">Browse Company</span>
+                <span className="ml-2">Browse Stores</span>
               </Link>
-              <Link to="/stores" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/hotdeals" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <DirectoryIcon />
-                <span className="ml-2">Browse Directory</span>
+                <span className="ml-2">Browse Deals</span>
               </Link>
               <Link to="/profile" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <LoginIcon />
@@ -192,21 +192,21 @@ const Footer = () => {
             <h3 className="text-sm font-medium text-gray-900 mb-4">Follow Us</h3>
             <div className="flex gap-3 mb-6">
               {/* Facebook */}
-              <a href="#" className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center transition-transform hover:scale-110">
+              <a href="https://www.facebook.com/discoun3/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center transition-transform hover:scale-110">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M18 2H15C13.6739 2 12.4021 2.52678 11.4645 3.46447C10.5268 4.40215 10 5.67392 10 7V10H7V14H10V22H14V14H17L18 10H14V7C14 6.73478 14.1054 6.48043 14.2929 6.29289C14.4804 6.10536 14.7348 6 15 6H18V2Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </a>
 
-              {/* Twitter */}
-              <a href="#" className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 text-white flex items-center justify-center transition-transform hover:scale-110">
+              {/* Twitter/X */}
+              <a href="https://x.com/discoun3_" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 text-white flex items-center justify-center transition-transform hover:scale-110">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22 4.01C21 4.5 20.02 4.69 19 5C17.879 3.735 16.217 3.665 14.62 4.263C13.023 4.861 11.977 6.323 12 8.01V9.01C8.755 9.083 5.865 7.605 4 5.01C4 5.01 0 13.01 8 17.01C6.214 18.169 4.122 18.85 2 19.01C10 24.01 20 19.01 20 8.01C19.9991 7.71851 19.9723 7.42784 19.92 7.14C20.94 6.14 21.62 4.86 22 4.01Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </a>
 
               {/* Instagram */}
-              <a href="#" className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white flex items-center justify-center transition-transform hover:scale-110">
+              <a href="https://www.instagram.com/discoun3/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white flex items-center justify-center transition-transform hover:scale-110">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M17.5 6.5H17.51M7 22H17C19.2091 22 21 20.2091 21 18V6C21 3.79086 19.2091 2 17 2H7C4.79086 2 3 3.79086 3 6V18C3 20.2091 4.79086 22 7 22Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -219,14 +219,25 @@ const Footer = () => {
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="email"
+                  id="newsletter-email"
                   placeholder="Enter Email"
+                  required
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-r-none text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 />
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg sm:rounded-l-none transition-colors text-sm font-medium whitespace-nowrap">
+                <button
+                  onClick={() => {
+                    const email = document.getElementById('newsletter-email').value;
+                    if (email) {
+                      window.location.href = `mailto:info@discoun3ree.com?subject=Newsletter Subscription&body=Please subscribe this email: ${email}`;
+                    }
+                  }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg sm:rounded-l-none transition-colors text-sm font-medium whitespace-nowrap"
+                >
                   Subscribe
                 </button>
               </div>
             </div>
+
             <p className="text-xs text-gray-500 mt-2">
               Note: We do not spam. Your email is secure with us.
             </p>

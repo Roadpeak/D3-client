@@ -14,7 +14,7 @@ class AuthService {
       });
 
       const { access_token, user } = response.data;
-      
+
       if (access_token) {
         setTokenToCookie(access_token);
       }
@@ -38,7 +38,7 @@ class AuthService {
       });
 
       const { access_token } = response.data;
-      
+
       if (access_token) {
         setTokenToCookie(access_token);
       }
@@ -53,7 +53,7 @@ class AuthService {
     }
   }
 
-  
+
 
   // Merchant Registration
   async registerMerchant(merchantData) {
@@ -67,7 +67,7 @@ class AuthService {
       });
 
       const { access_token, merchant } = response.data;
-      
+
       if (access_token) {
         setTokenToCookie(access_token);
       }
@@ -91,7 +91,7 @@ class AuthService {
       });
 
       const { access_token } = response.data;
-      
+
       if (access_token) {
         setTokenToCookie(access_token);
       }
@@ -107,45 +107,45 @@ class AuthService {
   }
 
   // Updated getCurrentUser function in authService.js
-async getCurrentUser() {
-  try {
-    const token = getTokenFromCookie();
-    console.log('🎫 Token from cookie:', token ? `Exists (${token.substring(0, 20)}...)` : 'No token');
-    console.log('🎫 Token length:', token?.length);
-    
-    if (!token) {
-      return { success: false, message: 'No authentication token found' };
-    }
-
-    // Try to decode token to see what's in it (for debugging)
+  async getCurrentUser() {
     try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        console.log('🔍 Token payload:', payload);
-      }
-    } catch (e) {
-      console.log('❌ Could not decode token for inspection');
-    }
+      const token = getTokenFromCookie();
+      console.log('🎫 Token from cookie:', token ? `Exists (${token.substring(0, 20)}...)` : 'No token');
+      console.log('🎫 Token length:', token?.length);
 
-    console.log('📡 API Endpoint:', API_ENDPOINTS.user.profile);
-    console.log('📡 Expected result: ${process.env.REACT_APP_API_BASE_URL}/api/v1/users/profile');
-    
-    const response = await api.get(API_ENDPOINTS.user.profile);
-    console.log('✅ Profile request successful');
-    return {
-      success: true,
-      data: response.data,
-    };
-  } catch (error) {
-    console.error('❌ getCurrentUser error:');
-    console.error('   - Status:', error.response?.status);
-    console.error('   - Data:', error.response?.data);
-    console.error('   - Headers sent:', error.config?.headers);
-    console.error('   - URL:', error.config?.url);
-    return this.handleAuthError(error);
+      if (!token) {
+        return { success: false, message: 'No authentication token found' };
+      }
+
+      // Try to decode token to see what's in it (for debugging)
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          console.log('🔍 Token payload:', payload);
+        }
+      } catch (e) {
+        console.log('❌ Could not decode token for inspection');
+      }
+
+      console.log('📡 API Endpoint:', API_ENDPOINTS.user.profile);
+      console.log('📡 Expected result: http://localhost:4000/api/v1/users/profile');
+
+      const response = await api.get(API_ENDPOINTS.user.profile);
+      console.log('✅ Profile request successful');
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error) {
+      console.error('❌ getCurrentUser error:');
+      console.error('   - Status:', error.response?.status);
+      console.error('   - Data:', error.response?.data);
+      console.error('   - Headers sent:', error.config?.headers);
+      console.error('   - URL:', error.config?.url);
+      return this.handleAuthError(error);
+    }
   }
-}
 
   // Logout
   logout() {
@@ -199,10 +199,10 @@ async getCurrentUser() {
   // Request Password Reset
   async requestPasswordReset(email, userType = 'user') {
     try {
-      const endpoint = userType === 'merchant' 
-        ? API_ENDPOINTS.merchant.requestPasswordReset 
+      const endpoint = userType === 'merchant'
+        ? API_ENDPOINTS.merchant.requestPasswordReset
         : API_ENDPOINTS.user.requestPasswordReset;
-      
+
       const response = await api.post(endpoint, { email });
 
       return {
@@ -218,10 +218,10 @@ async getCurrentUser() {
   // Reset Password
   async resetPassword(email, otp, newPassword, userType = 'user') {
     try {
-      const endpoint = userType === 'merchant' 
-        ? API_ENDPOINTS.merchant.resetPassword 
+      const endpoint = userType === 'merchant'
+        ? API_ENDPOINTS.merchant.resetPassword
         : API_ENDPOINTS.user.resetPassword;
-      
+
       const response = await api.post(endpoint, {
         email,
         otp,
@@ -245,7 +245,7 @@ async getCurrentUser() {
 
     if (error.response) {
       const { status, data } = error.response;
-      
+
       // Handle different error formats from your backend
       if (data.message) {
         errorMessage = data.message;

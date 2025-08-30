@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
-const BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -16,26 +16,26 @@ const api = axios.create({
 api.interceptors.request.use(
     (config) => {
         // Try multiple token sources
-        const token = localStorage.getItem('token') || 
-                     localStorage.getItem('authToken') || 
-                     localStorage.getItem('access_token') ||
-                     getTokenFromCookie();
-        
+        const token = localStorage.getItem('token') ||
+            localStorage.getItem('authToken') ||
+            localStorage.getItem('access_token') ||
+            getTokenFromCookie();
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        
+
         // Add API key if available
         const apiKey = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
         if (apiKey) {
             config.headers['api-key'] = apiKey;
         }
-        
+
         // Log requests in development
         if (process.env.NODE_ENV === 'development') {
             console.log(`🔄 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
         }
-        
+
         return config;
     },
     (error) => {
@@ -47,7 +47,7 @@ api.interceptors.request.use(
 // Helper to get token from cookie
 function getTokenFromCookie() {
     const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => 
+    const tokenCookie = cookies.find(cookie =>
         cookie.trim().startsWith('access_token=')
     );
     return tokenCookie ? tokenCookie.split('=')[1] : null;
@@ -59,7 +59,7 @@ function setTokenToCookie(token) {
     const cookieString = isProduction
         ? `access_token=${token}; path=/; domain=.discoun3ree.com; secure; SameSite=None; max-age=${30 * 24 * 60 * 60}`
         : `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}`;
-    
+
     document.cookie = cookieString;
 }
 
@@ -69,7 +69,7 @@ function removeTokenFromCookie() {
     const cookieString = isProduction
         ? `access_token=; path=/; domain=.discoun3ree.com; secure; SameSite=None; expires=Thu, 01 Jan 1970 00:00:00 GMT`
         : `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-    
+
     document.cookie = cookieString;
 }
 
@@ -172,23 +172,23 @@ api.interceptors.response.use(
                 message: error.message
             });
         }
-        
+
         // Handle specific error cases
         if (error.response?.status === 401) {
             // Clear all possible token storage locations
             localStorage.removeItem('token');
             localStorage.removeItem('authToken');
             localStorage.removeItem('access_token');
-            
+
             // Remove cookie
             document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-            
+
             // Only redirect if not already on login page
             if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/sign-in')) {
                 window.location.href = '/accounts/sign-in';
             }
         }
-        
+
         return Promise.reject(error);
     }
 );
@@ -213,11 +213,11 @@ export const locationAPI = {
     // Get all available locations from stores and offers
     getAvailableLocations: async () => {
         console.log('📍 Fetching available locations from API...');
-        
+
         try {
             const response = await api.get(API_ENDPOINTS.locations.available);
             console.log('✅ Available locations response:', response.data);
-            
+
             return {
                 success: true,
                 locations: response.data.locations || [],
@@ -225,7 +225,7 @@ export const locationAPI = {
             };
         } catch (error) {
             console.error('❌ Error fetching available locations:', error);
-            
+
             // Fallback: Try to get locations from stores endpoint
             try {
                 const storeResponse = await api.get(API_ENDPOINTS.stores.locations);
@@ -269,13 +269,13 @@ export const locationAPI = {
         }
 
         console.log(`🌍 Reverse geocoding: ${latitude}, ${longitude}`);
-        
+
         try {
             const response = await api.post(API_ENDPOINTS.locations.reverseGeocode, {
                 latitude,
                 longitude
             });
-            
+
             return {
                 success: true,
                 location: response.data.location,
@@ -284,7 +284,7 @@ export const locationAPI = {
             };
         } catch (error) {
             console.error('❌ Backend reverse geocoding failed:', error);
-            
+
             // Fallback to client-side reverse geocoding
             return await locationAPI.clientReverseGeocode(latitude, longitude);
         }
@@ -294,7 +294,7 @@ export const locationAPI = {
     clientReverseGeocode: async (latitude, longitude) => {
         try {
             console.log('🔄 Using client-side reverse geocoding...');
-            
+
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=en`,
                 {
@@ -303,39 +303,39 @@ export const locationAPI = {
                     }
                 }
             );
-            
+
             if (!response.ok) {
                 throw new Error('Geocoding request failed');
             }
-            
+
             const data = await response.json();
-            
+
             if (data && data.address) {
-                const area = data.address.suburb || 
-                             data.address.neighbourhood || 
-                             data.address.residential || 
-                             data.address.commercial ||
-                             data.address.city_district ||
-                             'Unknown Area';
-                             
-                const city = data.address.city || 
-                             data.address.town || 
-                             data.address.municipality ||
-                             'Unknown City';
-                
+                const area = data.address.suburb ||
+                    data.address.neighbourhood ||
+                    data.address.residential ||
+                    data.address.commercial ||
+                    data.address.city_district ||
+                    'Unknown Area';
+
+                const city = data.address.city ||
+                    data.address.town ||
+                    data.address.municipality ||
+                    'Unknown City';
+
                 const locationName = `${area}, ${city}`;
-                
+
                 return {
                     success: true,
                     location: locationName,
                     coordinates: { latitude, longitude }
                 };
             }
-            
+
             throw new Error('No address found in geocoding response');
         } catch (error) {
             console.error('❌ Client-side reverse geocoding failed:', error);
-            
+
             // Ultimate fallback for Kenya coordinates
             if (latitude >= -4.7 && latitude <= 4.6 && longitude >= 33.9 && longitude <= 41.9) {
                 return {
@@ -344,7 +344,7 @@ export const locationAPI = {
                     isApproximate: true
                 };
             }
-            
+
             return {
                 success: false,
                 error: error.message
@@ -380,16 +380,16 @@ export const offerAPI = {
         if (!id || id.trim() === '') {
             throw new Error('Offer ID is required');
         }
-        
+
         console.log('🔍 Fetching offer by ID:', id);
-        
+
         try {
             const response = await api.get(API_ENDPOINTS.offers.get(id));
             console.log('✅ Offer API response:', response.data);
             return response.data;
         } catch (error) {
             console.error('❌ Offer API error:', error);
-            
+
             if (error.response?.status === 404) {
                 throw new Error('Offer not found. It may have been removed or expired.');
             } else if (error.response?.status === 401) {
@@ -512,19 +512,19 @@ export const favoritesAPI = {
     // Get user's favorite offers
     getFavorites: async (params = {}) => {
         console.log('🔍 Fetching user favorites with params:', params);
-        
+
         try {
             const queryParams = new URLSearchParams();
             if (params.page) queryParams.append('page', params.page);
             if (params.limit) queryParams.append('limit', params.limit);
             if (params.category) queryParams.append('category', params.category);
-            
+
             const url = API_ENDPOINTS.user.favorites + (queryParams.toString() ? `?${queryParams.toString()}` : '');
             console.log('📡 Request URL:', url);
-            
+
             const response = await api.get(url);
             console.log('✅ Favorites response:', response.data);
-            
+
             return {
                 success: true,
                 favorites: response.data.favorites || response.data.data || [],
@@ -546,13 +546,13 @@ export const favoritesAPI = {
         if (!offerId) {
             throw new Error('Offer ID is required');
         }
-        
+
         console.log('💖 Adding offer to favorites:', offerId);
-        
+
         try {
             const response = await api.post(API_ENDPOINTS.offers.addToFavorites(offerId));
             console.log('✅ Added to favorites:', response.data);
-            
+
             return {
                 success: true,
                 message: response.data.message || 'Added to favorites',
@@ -572,13 +572,13 @@ export const favoritesAPI = {
         if (!offerId) {
             throw new Error('Offer ID is required');
         }
-        
+
         console.log('💔 Removing offer from favorites:', offerId);
-        
+
         try {
             const response = await api.delete(API_ENDPOINTS.offers.removeFromFavorites(offerId));
             console.log('✅ Removed from favorites:', response.data);
-            
+
             return {
                 success: true,
                 message: response.data.message || 'Removed from favorites',
@@ -598,13 +598,13 @@ export const favoritesAPI = {
         if (!offerId) {
             throw new Error('Offer ID is required');
         }
-        
+
         console.log('🔄 Toggling favorite status for offer:', offerId);
-        
+
         try {
             const response = await api.post(API_ENDPOINTS.offers.toggleFavorite(offerId));
             console.log('✅ Toggled favorite:', response.data);
-            
+
             return {
                 success: true,
                 action: response.data.action, // 'added' or 'removed'
@@ -625,7 +625,7 @@ export const favoritesAPI = {
         if (!offerId) {
             return { success: false, isFavorite: false };
         }
-        
+
         try {
             const response = await api.get(API_ENDPOINTS.offers.favoriteStatus(offerId));
             return {
@@ -663,19 +663,19 @@ export const favoritesAPI = {
         if (!Array.isArray(offerIds) || offerIds.length === 0) {
             return { success: true, favorites: {} };
         }
-        
+
         try {
             // Check each offer individually (can be optimized with a batch endpoint later)
             const results = {};
-            
+
             for (const offerId of offerIds) {
                 const result = await this.isFavorite(offerId);
                 results[offerId] = result.isFavorite;
-                
+
                 // Small delay to prevent overwhelming the server
                 await new Promise(resolve => setTimeout(resolve, 50));
             }
-            
+
             return {
                 success: true,
                 favorites: results
@@ -735,7 +735,7 @@ export const testConnection = async () => {
 // API test function specifically for favorites
 export const testFavoritesAPI = async () => {
     console.log('🧪 Testing Favorites API endpoints...');
-    
+
     const tests = [
         {
             name: 'Get Favorites',
@@ -746,9 +746,9 @@ export const testFavoritesAPI = async () => {
             test: () => favoritesAPI.getFavoritesCount()
         }
     ];
-    
+
     const results = {};
-    
+
     for (const test of tests) {
         try {
             console.log(`🔄 Testing: ${test.name}`);
@@ -766,7 +766,7 @@ export const testFavoritesAPI = async () => {
             console.log(`❌ ${test.name}: FAILED - ${error.message}`);
         }
     }
-    
+
     return results;
 };
 

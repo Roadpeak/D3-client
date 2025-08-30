@@ -50,7 +50,7 @@ const SMALL_LOGO_FALLBACK = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhla
 const offerAPI = {
   getOffersByStore: async (storeId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/offers/store/${storeId}`, {
+      const response = await fetch(`http://localhost:4000/api/v1/offers/store/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -70,7 +70,7 @@ const branchAPI = {
   getBranchesByStore: async (storeId) => {
     try {
       // Try public endpoint first (for store view)
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${storeId}/branches`, {
+      const response = await fetch(`http://localhost:4000/api/v1/stores/${storeId}/branches`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -83,7 +83,7 @@ const branchAPI = {
       }
 
       // If public endpoint doesn't exist, try the protected one without auth
-      const protectedResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/branches/store/${storeId}`, {
+      const protectedResponse = await fetch(`http://localhost:4000/api/v1/branches/store/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -125,13 +125,13 @@ const StoreViewPage = () => {
   const [startingChat, setStartingChat] = useState(false);
 
   // FIXED: Enhanced Image Component with stable error handling
-  const StableImage = React.memo(({ 
-    src, 
-    fallbackSrc, 
-    alt, 
-    className, 
+  const StableImage = React.memo(({
+    src,
+    fallbackSrc,
+    alt,
+    className,
     onError: customOnError,
-    ...props 
+    ...props
   }) => {
     const [imageError, setImageError] = useState(false);
     const [currentSrc, setCurrentSrc] = useState(src);
@@ -149,12 +149,12 @@ const StoreViewPage = () => {
       if (!imageError) {
         console.log('Image failed to load:', src);
         setImageError(true);
-        
+
         // Set to fallback immediately
         if (fallbackSrc && e.target.src !== fallbackSrc) {
           e.target.src = fallbackSrc;
         }
-        
+
         // Call custom error handler if provided
         if (customOnError) {
           customOnError(e);
@@ -275,7 +275,7 @@ const StoreViewPage = () => {
     try {
       const isAuthenticated = authService.isAuthenticated();
       const token = getTokenFromCookie() || localStorage.getItem('access_token') || localStorage.getItem('authToken');
-      
+
       return {
         isAuthenticated: isAuthenticated && !!token,
         hasToken: !!token,
@@ -332,13 +332,13 @@ const StoreViewPage = () => {
     try {
       setOffersLoading(true);
       const response = await offerAPI.getOffersByStore(id);
-      
+
       // Filter out expired offers for customer-facing store view
       const allOffers = response.offers || [];
       const activeOffers = allOffers.filter(offer => !isOfferExpired(offer.expiration_date));
-      
+
       console.log(`Store offers - Total: ${allOffers.length}, Active: ${activeOffers.length}`);
-      
+
       setOffers(activeOffers);
     } catch (err) {
       console.error('Error fetching offers:', err);
@@ -635,7 +635,7 @@ const StoreViewPage = () => {
     try {
       setToggleFollowLoading(true);
 
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${id}/toggle-follow`, {
+      const response = await fetch(`http://localhost:4000/api/v1/stores/${id}/toggle-follow`, {
         method: 'POST',
         headers: StoreService.getHeaders()
       });
@@ -709,7 +709,7 @@ const StoreViewPage = () => {
     try {
       console.log('Frontend: Fetching social links for store:', storeId);
 
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/socials/store/${storeId}`, {
+      const response = await fetch(`http://localhost:4000/api/v1/socials/store/${storeId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -773,7 +773,7 @@ const StoreViewPage = () => {
   const OfferCard = React.memo(({ offer, isListView = false }) => {
     // Check if offer is expired (shouldn't happen since we filter, but good to have)
     const expired = isOfferExpired(offer.expiration_date);
-    
+
     // Skip rendering if expired (extra safety)
     if (expired) {
       return null;

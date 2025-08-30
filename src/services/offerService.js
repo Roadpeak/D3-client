@@ -1,7 +1,7 @@
 // services/api.js
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -18,12 +18,12 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-        
+
         // Log requests in development
         if (process.env.NODE_ENV === 'development') {
             console.log(`🔄 ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data);
         }
-        
+
         return config;
     },
     (error) => {
@@ -51,7 +51,7 @@ api.interceptors.response.use(
                 message: error.message
             });
         }
-        
+
         // Handle specific error cases
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
@@ -60,7 +60,7 @@ api.interceptors.response.use(
                 window.location.href = '/login';
             }
         }
-        
+
         return Promise.reject(error);
     }
 );

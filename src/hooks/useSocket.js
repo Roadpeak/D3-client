@@ -8,7 +8,7 @@ const useSocket = (user) => {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [typingUsers, setTypingUsers] = useState(new Map());
   const [connectionError, setConnectionError] = useState(null);
-  
+
   const eventHandlers = useRef(new Map());
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
@@ -17,7 +17,7 @@ const useSocket = (user) => {
   // Enhanced token retrieval with better error handling
   const getAuthToken = useCallback(() => {
     console.log('🔍 Getting auth token...');
-    
+
     const getLocalStorage = (key) => {
       try {
         return localStorage.getItem(key);
@@ -28,7 +28,7 @@ const useSocket = (user) => {
 
     const getCookieValue = (name) => {
       if (typeof document === 'undefined') return null;
-      
+
       try {
         const cookies = document.cookie.split(';');
         for (const cookie of cookies) {
@@ -53,11 +53,11 @@ const useSocket = (user) => {
     console.log('🔍 Token sources found:', Object.keys(tokenSources).filter(key => tokenSources[key]));
 
     const token = tokenSources.localStorage_access_token ||
-                  tokenSources.localStorage_authToken ||
-                  tokenSources.localStorage_token ||
-                  tokenSources.cookie_authToken ||
-                  tokenSources.cookie_access_token ||
-                  tokenSources.cookie_token;
+      tokenSources.localStorage_authToken ||
+      tokenSources.localStorage_token ||
+      tokenSources.cookie_authToken ||
+      tokenSources.cookie_access_token ||
+      tokenSources.cookie_token;
 
     if (token) {
       console.log('✅ Token found:', token.substring(0, 20) + '...');
@@ -71,14 +71,14 @@ const useSocket = (user) => {
   // Validate token format with better error handling
   const validateToken = useCallback((token) => {
     if (!token) return false;
-    
+
     try {
       const parts = token.split('.');
       if (parts.length !== 3) {
         console.warn('⚠️ Token does not appear to be a valid JWT format');
         return false;
       }
-      
+
       const payload = JSON.parse(atob(parts[1]));
       console.log('🔍 Token payload preview:', {
         userId: payload.userId,
@@ -88,12 +88,12 @@ const useSocket = (user) => {
         exp: payload.exp ? new Date(payload.exp * 1000) : 'No expiration',
         isExpired: payload.exp ? Date.now() >= payload.exp * 1000 : false
       });
-      
+
       if (payload.exp && Date.now() >= payload.exp * 1000) {
         console.error('❌ Token is expired');
         return false;
       }
-      
+
       return true;
     } catch (error) {
       console.error('❌ Error validating token:', error);
@@ -106,7 +106,7 @@ const useSocket = (user) => {
     ['access_token', 'authToken', 'token'].forEach(key => {
       localStorage.removeItem(key);
     });
-    
+
     ['authToken', 'access_token', 'token'].forEach(key => {
       document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     });
@@ -136,7 +136,7 @@ const useSocket = (user) => {
 
     const socketUrl = process.env.NODE_ENV === 'production'
       ? window.location.origin
-      : '${process.env.REACT_APP_API_BASE_URL}';
+      : 'http://localhost:4000';
 
     console.log('🌐 Connecting to socket server:', socketUrl);
 
@@ -166,7 +166,7 @@ const useSocket = (user) => {
       setIsConnected(true);
       setConnectionError(null);
       reconnectAttempts.current = 0;
-      
+
       newSocket.emit('user_join', {
         id: user.id,
         name: user.name,
@@ -178,7 +178,7 @@ const useSocket = (user) => {
     newSocket.on('disconnect', (reason) => {
       console.log('❌ Socket disconnected:', reason);
       setIsConnected(false);
-      
+
       if (reason === 'io server disconnect') {
         console.log('🔄 Server disconnected client, attempting manual reconnect...');
         setTimeout(() => {
@@ -193,19 +193,19 @@ const useSocket = (user) => {
       console.error('❌ Socket connection error:', error);
       setConnectionError(error.message);
       reconnectAttempts.current++;
-      
+
       if (error.message.includes('Authentication error')) {
         console.error('🔐 Authentication failed - token may be invalid or expired');
         clearTokens();
         setConnectionError('Authentication failed - please log in again');
-        
+
         setTimeout(() => {
           window.location.href = '/accounts/sign-in';
         }, 2000);
-        
+
         return;
       }
-      
+
       if (reconnectAttempts.current >= maxReconnectAttempts) {
         console.error('❌ Max reconnection attempts reached');
         setConnectionError('Failed to connect after multiple attempts');
@@ -250,7 +250,7 @@ const useSocket = (user) => {
       if (eventHandlers.current.has('new_message')) {
         eventHandlers.current.get('new_message')(messageData);
       }
-      
+
       if (eventHandlers.current.has('new_merchant_message')) {
         eventHandlers.current.get('new_merchant_message')(messageData);
       }
@@ -269,7 +269,7 @@ const useSocket = (user) => {
       if (eventHandlers.current.has('new_message')) {
         eventHandlers.current.get('new_message')(messageData);
       }
-      
+
       if (eventHandlers.current.has('new_customer_message')) {
         eventHandlers.current.get('new_customer_message')(messageData);
       }
@@ -343,7 +343,7 @@ const useSocket = (user) => {
           return newSet;
         });
       }
-      
+
       if (eventHandlers.current.has('merchant_status_update')) {
         eventHandlers.current.get('merchant_status_update')(statusData);
       }
@@ -381,7 +381,7 @@ const useSocket = (user) => {
       // Clear any typing timeouts
       typingTimeouts.current.forEach(timeout => clearTimeout(timeout));
       typingTimeouts.current.clear();
-      
+
       newSocket.disconnect();
     };
   }, [user, getAuthToken, validateToken, clearTokens]);
@@ -417,15 +417,15 @@ const useSocket = (user) => {
 
     if (action === 'start') {
       socket.emit('typing_start', { conversationId, userId: user.id });
-      
+
       // Set timeout to automatically stop typing
       const timeout = setTimeout(() => {
         socket.emit('typing_stop', { conversationId, userId: user.id });
         typingTimeouts.current.delete(conversationId);
       }, 2000);
-      
+
       typingTimeouts.current.set(conversationId, timeout);
-      
+
       // Return cleanup function
       return () => {
         clearTimeout(timeout);
@@ -441,7 +441,7 @@ const useSocket = (user) => {
   const on = useCallback((event, handler) => {
     console.log(`📡 Subscribing to event: ${event}`);
     eventHandlers.current.set(event, handler);
-    
+
     if (socket) {
       socket.on(event, handler);
     }
@@ -460,7 +460,7 @@ const useSocket = (user) => {
   const off = useCallback((event, handler) => {
     console.log(`📡 Unsubscribing from event: ${event}`);
     eventHandlers.current.delete(event);
-    
+
     if (socket) {
       socket.off(event, handler);
     }
@@ -528,25 +528,25 @@ const useSocket = (user) => {
     socket,
     isConnected,
     connectionError,
-    
+
     // User management
     onlineUsers,
     isUserOnline,
     updateUserStatus,
-    
+
     // Conversation management
     joinConversation,
     leaveConversation,
-    
+
     // Typing functionality
     handleTyping,
     getTypingUsers,
-    
+
     // Event handling
     on,
     off,
     emit,
-    
+
     // Utility functions
     getConnectionStatus,
     forceReconnect

@@ -18,7 +18,7 @@ export const useRealTimeNotifications = (isAuthenticated) => {
   });
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
-  
+
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
 
@@ -32,7 +32,7 @@ export const useRealTimeNotifications = (isAuthenticated) => {
     console.log('Connecting to WebSocket for real-time notifications...');
 
     // Create socket connection
-    socketRef.current = io(process.env.REACT_APP_WS_URL || '${process.env.REACT_APP_API_BASE_URL}', {
+    socketRef.current = io(process.env.REACT_APP_WS_URL || 'http://localhost:4000', {
       auth: {
         token: token
       },
@@ -46,7 +46,7 @@ export const useRealTimeNotifications = (isAuthenticated) => {
     socket.on('connect', () => {
       console.log('WebSocket connected for notifications');
       setIsConnected(true);
-      
+
       // Join user's notification room
       socket.emit('join_notifications', { token });
     });
@@ -54,12 +54,12 @@ export const useRealTimeNotifications = (isAuthenticated) => {
     socket.on('disconnect', () => {
       console.log('WebSocket disconnected');
       setIsConnected(false);
-      
+
       // Attempt to reconnect after 3 seconds
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      
+
       reconnectTimeoutRef.current = setTimeout(() => {
         if (isAuthenticated && !socketRef.current?.connected) {
           console.log('Attempting to reconnect WebSocket...');
@@ -71,12 +71,12 @@ export const useRealTimeNotifications = (isAuthenticated) => {
     // Real-time notification events
     socket.on('new_notification', (notification) => {
       console.log('New real-time notification received:', notification);
-      
+
       const formattedNotification = notificationService.formatNotification(notification);
-      
+
       // Add to notifications list
       setNotifications(prev => [formattedNotification, ...prev.slice(0, 9)]);
-      
+
       // Update counts
       setNotificationCounts(prev => ({
         total: prev.total + 1,
@@ -160,12 +160,12 @@ export const useRealTimeNotifications = (isAuthenticated) => {
       // This would integrate with your existing chat service
       const chatService = (await import('../services/chatService')).default;
       const response = await chatService.getConversations('customer');
-      
+
       if (response.success && response.data) {
         const totalUnreadCount = response.data.reduce((total, chat) => {
           return total + (chat.unreadCount || 0);
         }, 0);
-        
+
         setUnreadChatCount(totalUnreadCount);
       }
     } catch (error) {
@@ -220,12 +220,12 @@ export const useRealTimeNotifications = (isAuthenticated) => {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
-    
+
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-    
+
     setIsConnected(false);
   };
 
@@ -236,10 +236,10 @@ export const useRealTimeNotifications = (isAuthenticated) => {
       loadNotificationCounts();
       loadNotifications();
       loadUnreadChatCount();
-      
+
       // Initialize WebSocket for real-time updates
       initializeSocket();
-      
+
       // Request browser notification permission
       requestNotificationPermission();
     } else {

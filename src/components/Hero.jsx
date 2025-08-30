@@ -44,7 +44,7 @@ export default function Hero() {
   const [error, setError] = useState(null);
 
   // API base URL - adjust according to your backend setup
-  const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1/';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1/';
 
   // Fetch offers from backend
   useEffect(() => {
@@ -217,7 +217,7 @@ export default function Hero() {
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
-                    
+
                     {/* Content */}
                     <div className="absolute inset-0 flex flex-col justify-center px-8 lg:px-12">
                       <div className="max-w-lg">
@@ -228,17 +228,17 @@ export default function Hero() {
                             {offer.store}
                           </div>
                         )}
-                        
+
                         {/* Title */}
                         <h2 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
                           {offer.title}
                         </h2>
-                        
+
                         {/* Description */}
                         <p className="text-lg text-gray-200 mb-6 leading-relaxed">
                           {offer.description}
                         </p>
-                        
+
                         {/* Discount Badge */}
                         {offer.discountPercentage && (
                           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-6 py-3 rounded-full text-xl font-black mb-6 shadow-lg">
@@ -246,7 +246,7 @@ export default function Hero() {
                             {offer.discountPercentage}% OFF
                           </div>
                         )}
-                        
+
                         {/* Price Section */}
                         <div className="flex items-center gap-4 mb-6">
                           <span className="text-2xl font-bold text-white">
@@ -258,7 +258,7 @@ export default function Hero() {
                             </span>
                           )}
                         </div>
-                        
+
                         {/* Time Left */}
                         {offer.timeLeft && (
                           <div className="flex items-center gap-2 text-yellow-400 mb-6">
@@ -266,15 +266,15 @@ export default function Hero() {
                             <span className="text-md font-semibold">{offer.timeLeft}</span>
                           </div>
                         )}
-                        
+
                         {/* CTA Button */}
                         <button
                           onClick={() => handleOfferClick(offer.id)}
                           className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-6 py-3 rounded-xl text-md font-bold hover:shadow-2xl transform hover:scale-105 transition-all duration-300 hover:from-pink-600 hover:to-red-600"
                         >
-                          Grab This Deal Now! 
+                          Grab This Deal Now!
                         </button>
-                        
+
                         {/* Rating & Deals Count */}
                         {offer.rating && (
                           <div className="flex items-center gap-4 mt-4 text-gray-300">
@@ -318,11 +318,10 @@ export default function Hero() {
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                        index === currentSlide
+                      className={`w-3 h-3 rounded-full transition-all duration-200 ${index === currentSlide
                           ? 'bg-white scale-125'
                           : 'bg-white/50 hover:bg-white/75'
-                      }`}
+                        }`}
                     />
                   ))}
                 </div>
@@ -344,7 +343,7 @@ export default function Hero() {
                     e.target.src = '/images/default.jpg';
                   }}
                 />
-                
+
                 {/* Badges */}
                 <div className="absolute top-2 left-2 flex gap-2">
                   {offer.isHot && (
@@ -359,16 +358,16 @@ export default function Hero() {
                     </span>
                   )}
                 </div>
-                
+
                 {/* Discount Badge */}
                 <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-2 py-1 rounded-full text-xs font-bold">
                   {offer.discountPercentage}% OFF
                 </div>
               </div>
-              
+
               <div className="p-6 flex-1 flex flex-col">
                 <h4 className="font-bold text-lg mb-2 text-gray-800">{offer.title}</h4>
-                
+
                 {/* Price */}
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-xl font-bold text-black">
@@ -380,24 +379,24 @@ export default function Hero() {
                     </span>
                   )}
                 </div>
-                
+
                 {/* Store */}
                 {offer.store && (
                   <p className="text-sm text-gray-500 mb-3">at {offer.store}</p>
                 )}
-                
+
                 {/* Time Left */}
                 <div className="flex items-center gap-2 text-orange-600 mb-5">
                   <TimerIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">{offer.timeLeft}</span>
                 </div>
-                
+
                 {/* CTA Button */}
                 <button
                   onClick={() => handleOfferClick(offer.id)}
                   className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl text-sm font-bold hover:shadow-lg transform hover:scale-105 transition-all duration-200 mt-auto"
                 >
-                  Get Deal 
+                  Get Deal
                 </button>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { Link } from 'react-router-dom';
 
 const FAQ = () => {
   const [openItems, setOpenItems] = useState({});
@@ -169,11 +170,11 @@ const FAQ = () => {
                 placeholder="Search FAQ..."
                 className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <svg 
-                width="20" 
-                height="20" 
-                viewBox="0 0 24 24" 
-                fill="none" 
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
                 xmlns="http://www.w3.org/2000/svg"
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
               >
@@ -189,12 +190,12 @@ const FAQ = () => {
                 <div className="bg-gray-50 px-6 py-4 border-b">
                   <h2 className="text-xl font-semibold text-gray-900">{category.category}</h2>
                 </div>
-                
+
                 <div className="divide-y divide-gray-200">
                   {category.questions.map((item, questionIndex) => {
                     const itemKey = `${categoryIndex}-${questionIndex}`;
                     const isOpen = openItems[itemKey];
-                    
+
                     return (
                       <div key={questionIndex}>
                         <button
@@ -217,7 +218,7 @@ const FAQ = () => {
                             </svg>
                           </div>
                         </button>
-                        
+
                         {isOpen && (
                           <div className="px-6 pb-4">
                             <p className="text-gray-600 leading-relaxed">
@@ -240,17 +241,16 @@ const FAQ = () => {
               Can't find the answer you're looking for? Our friendly support team is here to help you with D3.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+              <Link to="/contact-us" className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-block">
                 Contact Support
-              </button>
-              <button className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors">
+              </Link>
+              <Link to="/contact-us" className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors inline-block">
                 Send Feedback
-              </button>
+              </Link>
             </div>
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-sm text-gray-500">
-                Email: <a href="mailto:support@d3deals.com" className="text-blue-500 hover:text-blue-600">support@d3deals.com</a> | 
-                Phone: <a href="tel:1300271336" className="text-blue-500 hover:text-blue-600">1300 271 3365</a>
+                Email: <a href="mailto:support@discoun3ree.com" className="text-blue-500 hover:text-blue-600">support@discoun3ree.com</a>
               </p>
             </div>
           </div>
