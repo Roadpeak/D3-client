@@ -44,7 +44,7 @@ export default function Hero() {
   const [error, setError] = useState(null);
 
   // API base URL - adjust according to your backend setup
-  const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1/';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1/';
 
   // Fetch offers from backend
   useEffect(() => {

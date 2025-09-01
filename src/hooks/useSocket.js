@@ -136,7 +136,7 @@ const useSocket = (user) => {
 
     const socketUrl = process.env.NODE_ENV === 'production'
       ? window.location.origin
-      : '${process.env.REACT_APP_API_BASE_URL}';
+      : 'http://localhost:4000';
 
     console.log('🌐 Connecting to socket server:', socketUrl);
 

@@ -42,6 +42,7 @@ import Careers from './components/Careers'
 import TermsConditions from './components/TermsConditions'
 import PrivacyPolicy from './components/PrivacyPolicy'
 import AboutUs from './components/AboutUs'
+import SearchResultsPage from './components/SearchResultsPage'
 
 // Route Change Handler Component
 const RouteChangeHandler = ({ children }) => {
@@ -187,7 +188,9 @@ const AppRoutes = () => {
           {/* ==================== SEARCH AND DISCOVERY ==================== */}
 
           {/* Search */}
+          <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/search" element={<SearchResults />} />
+          
 
           {/* Hot Deals */}
           <Route path='/hotdeals' element={<Hotdeals />} />

@@ -69,7 +69,7 @@ const ViewService = () => {
 
       try {
         // Try individual service endpoint first
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services/${id}`, {
+        const response = await fetch(`http://localhost:4000/api/v1/services/${id}`, {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -88,7 +88,7 @@ const ViewService = () => {
 
         // Fallback: try to get from services list
         try {
-          const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/api/v1/services', {
+          const response = await fetch('http://localhost:4000/api/v1/services', {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
@@ -114,7 +114,7 @@ const ViewService = () => {
       // Fetch store information if we have store_id
       if (serviceData && serviceData.store_id) {
         try {
-          const storeResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${serviceData.store_id}`, {
+          const storeResponse = await fetch(`http://localhost:4000/api/v1/stores/${serviceData.store_id}`, {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
@@ -155,7 +155,7 @@ const ViewService = () => {
 
   const fetchRelatedServices = async (category) => {
     try {
-      const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/api/v1/services', {
+      const response = await fetch('http://localhost:4000/api/v1/services', {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'

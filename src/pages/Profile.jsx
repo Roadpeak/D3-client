@@ -466,7 +466,7 @@ const CouponProfilePage = () => {
                 <div className="text-center py-8 text-gray-500">
                   <p className="text-sm mb-2">No recent activity</p>
                   <button 
-                    onClick={() => navigate('/offers')}
+                    onClick={() => navigate('/hotdeals')}
                     className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                   >
                     Start exploring offers

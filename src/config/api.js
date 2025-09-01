@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
-const BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}/api/v1';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
 
 const api = axios.create({
     baseURL: BASE_URL,

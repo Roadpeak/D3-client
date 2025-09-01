@@ -20,6 +20,52 @@ const RealTimeSearch = ({
   const resultsRef = useRef(null);
   const navigate = useNavigate();
 
+  // Helper function to get initials from name
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const words = name.trim().split(' ');
+    if (words.length === 1) {
+      return words[0].charAt(0).toUpperCase();
+    }
+    return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+  };
+
+  // Helper function to render initials fallback
+  const renderInitials = (name, className, isOffer = false) => {
+    const initials = getInitials(name);
+    return (
+      <div className={`${className} bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold`}>
+        <span className={`${isOffer ? 'text-sm' : 'text-xs'}`}>
+          {initials}
+        </span>
+      </div>
+    );
+  };
+
+  // Image component with fallback to initials
+  const ImageWithFallback = ({ src, name, className, isOffer = false }) => {
+    const [imageError, setImageError] = useState(false);
+    
+    if (imageError || !src) {
+      return renderInitials(name, className, isOffer);
+    }
+
+    return (
+      <img
+        src={src}
+        alt={name}
+        className={className}
+        onError={() => setImageError(true)}
+      />
+    );
+  };
+
+  // Function to check if offer is expired (same as hotdeals page)
+  const isOfferExpired = useCallback((expirationDate) => {
+    if (!expirationDate) return false;
+    return new Date(expirationDate) < new Date();
+  }, []);
+
   // Helper function to get short location name
   const getShortLocationName = () => {
     if (!currentLocation || currentLocation === 'All Locations') {
@@ -61,7 +107,7 @@ const RealTimeSearch = ({
         name: store.name,
         category: store.category || 'Store',
         location: store.location,
-        logo: store.logo || store.logo_url || '/images/default-store.png',
+        logo: store.logo || store.logo_url || null, // Don't set placeholder here
         cashback: store.cashback || store.discount || 'Available'
       }));
     } catch (error) {
@@ -70,12 +116,13 @@ const RealTimeSearch = ({
     }
   };
 
-  // Search offers using your API with optional location support
+  // Search offers using your API with optional location support and expired filter
   const searchOffers = async (searchQuery) => {
     try {
       const searchParams = {
         search: searchQuery,
-        limit: 5
+        limit: 5,
+        status: 'active' // Only get active offers like in hotdeals
       };
       
       // Add location parameter if current location is set and not "All Locations"
@@ -85,8 +132,8 @@ const RealTimeSearch = ({
 
       const response = await offerAPI.getOffers(searchParams);
       
-      // Transform offer data to match component expectations
-      return (response.offers || []).map(offer => ({
+      // Transform offer data to match component expectations (same structure as hotdeals)
+      const transformedOffers = (response.offers || []).map(offer => ({
         id: offer.id,
         title: offer.title || offer.service?.name || 'Special Offer',
         description: offer.description || offer.service?.description || 'Great deal available',
@@ -94,8 +141,16 @@ const RealTimeSearch = ({
         store: offer.store?.name || offer.service?.store?.name || 'Store',
         location: offer.store?.location || offer.service?.store?.location || 'Location',
         category: offer.category || offer.service?.category || 'General',
-        image: offer.image || offer.service?.image_url || '/images/default-offer.png'
+        image: offer.image || offer.service?.image_url || null, // Don't set placeholder here
+        expiration_date: offer.expiration_date // Include expiration date for filtering
       }));
+
+      // Filter out expired offers (same logic as hotdeals page)
+      const activeOffers = transformedOffers.filter(offer => !isOfferExpired(offer.expiration_date));
+      
+      console.log(`RealTimeSearch - Total offers: ${transformedOffers.length}, Active: ${activeOffers.length}`);
+      
+      return activeOffers;
     } catch (error) {
       console.error('Error searching offers:', error);
       return [];
@@ -131,7 +186,7 @@ const RealTimeSearch = ({
         setIsLoading(false);
       }
     }, 300),
-    [currentLocation] // Re-create debounced function when location changes
+    [currentLocation, isOfferExpired] // Add isOfferExpired to dependencies
   );
 
   // Re-search when location changes and there's an active query
@@ -384,13 +439,10 @@ const RealTimeSearch = ({
                           activeIndex === globalIndex ? 'bg-red-50 border border-red-200' : ''
                         }`}
                       >
-                        <img
+                        <ImageWithFallback
                           src={store.logo}
-                          alt={store.name}
+                          name={store.name}
                           className="w-10 h-10 rounded-2xl object-cover border border-gray-200"
-                          onError={(e) => {
-                            e.target.src = '/images/default-store.png';
-                          }}
                         />
                         <div className="flex-1 text-left">
                           <p className="font-medium text-gray-900">{store.name}</p>
@@ -430,13 +482,11 @@ const RealTimeSearch = ({
                           activeIndex === globalIndex ? 'bg-red-50 border border-red-200' : ''
                         }`}
                       >
-                        <img
+                        <ImageWithFallback
                           src={offer.image}
-                          alt={offer.title}
+                          name={offer.title}
                           className="w-12 h-12 rounded-2xl object-cover border border-gray-200"
-                          onError={(e) => {
-                            e.target.src = '/images/default-offer.png';
-                          }}
+                          isOffer={true}
                         />
                         <div className="flex-1 text-left">
                           <p className="font-medium text-gray-900 truncate">{offer.title}</p>

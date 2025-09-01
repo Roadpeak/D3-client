@@ -9,9 +9,9 @@ import { useFavorites } from '../hooks/useFavorites';
 import authService from '../services/authService';
 
 // Store Logo Component with fallback to initials
-const StoreLogo = ({ 
-  logoUrl, 
-  storeName, 
+const StoreLogo = ({
+  logoUrl,
+  storeName,
   className = "w-5 h-5",
   containerClassName = "w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200"
 }) => {
@@ -55,7 +55,7 @@ const StoreLogo = ({
           </span>
         </div>
       ) : (
-        <img 
+        <img
           src={logoUrl}
           alt={`${storeName} logo`}
           className={className}
@@ -75,12 +75,12 @@ export default function Hotdeals() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
-  
+
   // Data states
   const [offers, setOffers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [pagination, setPagination] = useState({});
-  
+
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('latest');
@@ -112,13 +112,13 @@ export default function Hotdeals() {
   // Calculate category counts from current offers (excluding expired)
   const calculateCategoryCounts = useCallback((offers) => {
     const counts = {};
-    
+
     // Only count non-expired offers
     offers.filter(offer => !isOfferExpired(offer.expiration_date)).forEach(offer => {
       const category = offer.category || offer.service?.category || 'General';
       counts[category] = (counts[category] || 0) + 1;
     });
-    
+
     return counts;
   }, [isOfferExpired]);
 
@@ -146,13 +146,13 @@ export default function Hotdeals() {
       console.log('HOTDEALS - Fetching with params:', params);
 
       const response = await offerAPI.getOffers(params);
-      
+
       console.log('HOTDEALS - API Response:', {
         offersReceived: response.offers?.length || 0,
         totalItems: response.pagination?.totalItems || 0,
         appliedLocation: params.location || 'All Locations'
       });
-      
+
       // Transform offers to match frontend expectations
       const transformedOffers = response.offers?.map(offer => ({
         id: offer.id,
@@ -176,7 +176,7 @@ export default function Hotdeals() {
 
       // Filter out expired offers for customer-facing page
       const activeOffers = transformedOffers.filter(offer => !isOfferExpired(offer.expiration_date));
-      
+
       console.log(`HOTDEALS - Total offers: ${transformedOffers.length}, Active: ${activeOffers.length}, Location: ${currentLocation}`);
 
       setOffers(activeOffers);
@@ -185,27 +185,27 @@ export default function Hotdeals() {
 
       // Update categories based on active (non-expired) offers only
       const counts = calculateCategoryCounts(activeOffers);
-      const offerCategories = [...new Set(activeOffers.map(offer => 
+      const offerCategories = [...new Set(activeOffers.map(offer =>
         offer.category || offer.service?.category || 'General'
       ))];
-      
+
       const updatedCategories = offerCategories.map(categoryName => ({
         name: categoryName,
         count: counts[categoryName] || 0
       }));
-      
+
       updatedCategories.sort((a, b) => {
         if (a.count > 0 && b.count === 0) return -1;
         if (a.count === 0 && b.count > 0) return 1;
         return a.name.localeCompare(b.name);
       });
-      
+
       setCategories(updatedCategories);
-      
+
     } catch (err) {
       console.error('HOTDEALS - Error fetching offers:', err);
       setError(`Failed to fetch offers: ${err.message || 'Unknown error'}`);
-      
+
       // Add retry logic for network errors
       if (retryCount < 3 && (err.code === 'NETWORK_ERROR' || err.code === 'ECONNABORTED')) {
         setTimeout(() => {
@@ -220,12 +220,12 @@ export default function Hotdeals() {
   // Enhanced favorite handling
   const handleFavoriteClick = useCallback(async (e, offer) => {
     e.stopPropagation();
-    
+
     if (!isAuthenticated) {
       const shouldLogin = window.confirm('Please log in to add favorites. Would you like to log in now?');
       if (shouldLogin) {
-        navigate('/accounts/sign-in', { 
-          state: { returnUrl: window.location.pathname } 
+        navigate('/accounts/sign-in', {
+          state: { returnUrl: window.location.pathname }
         });
       }
       return;
@@ -287,7 +287,7 @@ export default function Hotdeals() {
       const authStatus = authService.isAuthenticated();
       setIsAuthenticated(authStatus);
     };
-    
+
     checkAuth();
 
     const handleStorageChange = () => {
@@ -353,15 +353,15 @@ export default function Hotdeals() {
             <div className="flex items-center space-x-8">
               <a href='/' className="text-gray-600 hover:text-red-500">Home</a>
               <span className="text-blue-500 font-medium">
-                {currentLocation && currentLocation !== 'All Locations' 
-                  ? `Hot Deals - ${getShortLocationName()}` 
+                {currentLocation && currentLocation !== 'All Locations'
+                  ? `Hot Deals - ${getShortLocationName()}`
                   : 'Hot Deals - All Locations'
                 }
               </span>
             </div>
-            
+
             {/* Mobile Filter Button */}
-            <button 
+            <button
               className="md:hidden bg-red-500 text-white px-3 py-1 rounded text-sm"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             >
@@ -385,8 +385,8 @@ export default function Hotdeals() {
               </div>
             </div>
             <div className="flex gap-2">
-              <button 
-                onClick={handleRetry} 
+              <button
+                onClick={handleRetry}
                 className="ml-4 flex items-center gap-1 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
                 disabled={loading}
               >
@@ -406,8 +406,8 @@ export default function Hotdeals() {
               <AlertCircle className="w-4 h-4 mr-2" />
               <span className="text-sm">{favoritesError}</span>
             </div>
-            <button 
-              onClick={clearFavoritesError} 
+            <button
+              onClick={clearFavoritesError}
               className="ml-4 text-yellow-800 hover:text-yellow-900"
             >
               <X className="w-4 h-4" />
@@ -419,11 +419,9 @@ export default function Hotdeals() {
       <div className="container mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
           {/* Sidebar - keeping original structure */}
-          <div className={`${
-            isSidebarOpen ? 'block' : 'hidden'
-          } md:block w-full md:w-80 flex-shrink-0 ${
-            isSidebarOpen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''
-          }`}>
+          <div className={`${isSidebarOpen ? 'block' : 'hidden'
+            } md:block w-full md:w-80 flex-shrink-0 ${isSidebarOpen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''
+            }`}>
             {/* Mobile Close Button */}
             {isSidebarOpen && (
               <div className="md:hidden flex justify-between items-center p-4 border-b">
@@ -484,7 +482,7 @@ export default function Hotdeals() {
                   )}
                 </ul>
                 {(selectedCategory || sortBy !== 'latest') && (
-                  <button 
+                  <button
                     onClick={clearFilters}
                     className="mt-4 text-xs text-blue-600 hover:underline"
                   >
@@ -497,8 +495,8 @@ export default function Hotdeals() {
               <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-6 text-white text-center">
                 <h3 className="text-xl font-bold mb-2">Special Deals</h3>
                 <div className="bg-yellow-400 text-purple-800 px-4 py-2 rounded-lg font-bold text-lg mb-3">
-                  SALE
-                  <div className="text-sm">Get 20% Off</div>
+                  BOOK NOW
+                  <div className="text-sm">Get upto 90% Off</div>
                 </div>
                 <p className="text-sm mb-2">Limited Time Offers</p>
                 <p className="text-lg font-bold">Amazing Savings</p>
@@ -513,7 +511,7 @@ export default function Hotdeals() {
 
           {/* Sidebar Overlay */}
           {isSidebarOpen && (
-            <div 
+            <div
               className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
               onClick={() => setIsSidebarOpen(false)}
             />
@@ -524,13 +522,13 @@ export default function Hotdeals() {
             {/* View Controls - keeping original structure */}
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
               <div className="flex items-center space-x-4">
-                <button 
+                <button
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
                 >
                   <List size={16} />
                 </button>
-                <button 
+                <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
                 >
@@ -547,7 +545,7 @@ export default function Hotdeals() {
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600 hidden sm:inline">Sort By:</span>
-                <select 
+                <select
                   className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   value={sortBy}
                   onChange={(e) => handleSortChange(e.target.value)}
@@ -571,44 +569,39 @@ export default function Hotdeals() {
             )}
 
             {/* Deals Grid - UPDATED WITH NEW STORE LOGO COMPONENT */}
-            <div className={`grid gap-4 sm:gap-6 mb-8 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+            <div className={`grid gap-4 sm:gap-6 mb-8 ${viewMode === 'grid'
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                 : 'grid-cols-1'
-            }`}>
+              }`}>
               {offers.map((offer) => {
                 const isOfferFavorited = favoritesInitialized && isFavorite(offer.id);
-                
+
                 return (
-                  <div 
-                    key={offer.id} 
-                    className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
-                      viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
-                    }`}
+                  <div
+                    key={offer.id}
+                    className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
+                      }`}
                     onClick={() => handleOfferClick(offer.id)}
                   >
                     <div className={`relative ${viewMode === 'list' ? 'sm:w-1/3' : ''}`}>
-                      <img 
-                        src={offer.image} 
+                      <img
+                        src={offer.image}
                         alt={offer.title}
-                        className={`w-full object-cover ${
-                          viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
-                        }`}
+                        className={`w-full object-cover ${viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
+                          }`}
                         onError={(e) => {
                           e.target.src = '/api/placeholder/300/200';
                         }}
                       />
-                      
-                      <button 
-                        className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${
-                          isOfferFavorited
-                            ? 'bg-red-500 text-white shadow-red-200' 
+
+                      <button
+                        className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${isOfferFavorited
+                            ? 'bg-red-500 text-white shadow-red-200'
                             : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-                        } ${
-                          !isAuthenticated || !favoritesInitialized
-                            ? 'cursor-not-allowed opacity-50' 
+                          } ${!isAuthenticated || !favoritesInitialized
+                            ? 'cursor-not-allowed opacity-50'
                             : 'cursor-pointer'
-                        }`}
+                          }`}
                         onClick={(e) => handleFavoriteClick(e, offer)}
                         disabled={!isAuthenticated || !favoritesInitialized}
                         title={
@@ -616,21 +609,20 @@ export default function Hotdeals() {
                             ? 'Login to add favorites'
                             : !favoritesInitialized
                               ? 'Loading favorites...'
-                              : isOfferFavorited 
-                                ? 'Remove from favorites' 
+                              : isOfferFavorited
+                                ? 'Remove from favorites'
                                 : 'Add to favorites'
                         }
                       >
-                        <Heart 
-                          size={16} 
-                          className={isOfferFavorited ? 'fill-current' : ''} 
+                        <Heart
+                          size={16}
+                          className={isOfferFavorited ? 'fill-current' : ''}
                         />
                       </button>
 
                       <div className="absolute bottom-3 left-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium text-white ${
-                          offer.featured ? 'bg-red-500' : 'bg-blue-500'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium text-white ${offer.featured ? 'bg-red-500' : 'bg-blue-500'
+                          }`}>
                           {offer.category}
                         </span>
                       </div>
@@ -643,22 +635,22 @@ export default function Hotdeals() {
                       )}
                     </div>
                     <div className={`p-4 ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
-                      
+
                       <div className="flex items-center gap-2 mb-3">
                         {/* UPDATED: Using the new StoreLogo component */}
-                        <StoreLogo 
+                        <StoreLogo
                           logoUrl={offer.store?.googleLogo}
                           storeName={offer.store?.name || 'Store'}
                         />
-                        
+
                         <div className="flex items-center bg-gradient-to-r from-blue-900 to-blue-400 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
                           <span>{offer.store?.name || 'Store name'}</span>
                         </div>
                       </div>
-                      
+
                       <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">{offer.title}</h3>
                       <p className="text-sm text-gray-600 mb-3 line-clamp-2">{offer.description}</p>
-                      
+
                       {offer.originalPrice > 0 && (
                         <div className="flex items-center space-x-2 mb-3">
                           <span className="text-lg font-bold text-blue-500">
@@ -669,16 +661,15 @@ export default function Hotdeals() {
                           </span>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
                           {offer.discount}
                         </span>
-                        
-                        <button 
-                          className={`px-8 py-4 rounded text-sm font-medium transition-colors ${
-                            offer.featured ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                          }`}
+
+                        <button
+                          className={`px-8 py-4 rounded text-sm font-medium transition-colors ${offer.featured ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            }`}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOfferClick(offer.id);
@@ -703,17 +694,17 @@ export default function Hotdeals() {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No active offers found</h3>
                   <p className="text-gray-500 mb-4">
                     {currentLocation && currentLocation !== 'All Locations' ? (
-                      selectedCategory 
+                      selectedCategory
                         ? `No active offers found in "${selectedCategory}" category for ${getShortLocationName()}.`
                         : `No active offers are currently available in ${getShortLocationName()}.`
                     ) : (
-                      selectedCategory 
+                      selectedCategory
                         ? `No active offers found in "${selectedCategory}" category.`
                         : 'No active offers are currently available.'
                     )}
                   </p>
                   {(selectedCategory || sortBy !== 'latest') && (
-                    <button 
+                    <button
                       onClick={clearFilters}
                       className="text-red-500 hover:underline mb-2"
                     >
@@ -733,7 +724,7 @@ export default function Hotdeals() {
             {pagination.totalPages > 1 && (
               <div className="flex flex-col items-center space-y-4">
                 <div className="flex items-center justify-center space-x-2 flex-wrap gap-2">
-                  <button 
+                  <button
                     className="p-2 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!pagination.hasPrevPage}
@@ -756,11 +747,10 @@ export default function Hotdeals() {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`px-3 py-2 rounded transition-colors ${
-                            currentPage === page 
-                              ? 'bg-red-500 text-white' 
+                          className={`px-3 py-2 rounded transition-colors ${currentPage === page
+                              ? 'bg-red-500 text-white'
                               : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                          }`}
+                            }`}
                         >
                           {page}
                         </button>
@@ -769,7 +759,7 @@ export default function Hotdeals() {
                     {pagination.totalPages > 5 && currentPage < pagination.totalPages - 2 && (
                       <>
                         <span className="px-3 py-2 hidden sm:inline">...</span>
-                        <button 
+                        <button
                           className="px-3 py-2 rounded bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 hidden sm:inline-block"
                           onClick={() => handlePageChange(pagination.totalPages)}
                         >
@@ -778,7 +768,7 @@ export default function Hotdeals() {
                       </>
                     )}
                   </div>
-                  <button 
+                  <button
                     className="p-2 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!pagination.hasNextPage}
@@ -786,7 +776,7 @@ export default function Hotdeals() {
                     <ChevronRight size={16} />
                   </button>
                 </div>
-                
+
                 {pagination.totalItems > 0 && (
                   <p className="text-center text-sm text-gray-500">
                     Page {currentPage} of {pagination.totalPages} • {pagination.totalItems} total results
@@ -804,7 +794,7 @@ export default function Hotdeals() {
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span>
                     {offers.length > 0 ? (
-                      currentLocation && currentLocation !== 'All Locations' 
+                      currentLocation && currentLocation !== 'All Locations'
                         ? `${offers.length} hot deals found in ${getShortLocationName()}`
                         : `${offers.length} hot deals available`
                     ) : (
@@ -817,7 +807,7 @@ export default function Hotdeals() {
                     <span className="text-xs">
                       Location: {currentLocation || 'Loading...'}
                     </span>
-                    <button 
+                    <button
                       onClick={() => window.location.reload()}
                       className="text-indigo-600 hover:text-indigo-700 font-medium"
                     >
@@ -840,12 +830,12 @@ export default function Hotdeals() {
             </div>
             <div className="text-white">
               <h2 className="text-xl sm:text-2xl font-bold mb-2">
-                Over <span className="text-yellow-300">1,51,000</span> Lists Worldwide
+                Over <span className="text-yellow-300">50,000</span> Deals Listings
               </h2>
               <p className="text-lg sm:text-xl font-bold mb-2">
-                Get <span className="text-yellow-300">$95,00,000</span> worth Coupons Savings
+                Save <span className="text-yellow-300">upto</span> 90% of your money
               </p>
-              <p className="text-blue-100 text-sm sm:text-base">The Coolest Library of Verified Lists</p>
+              <p className="text-blue-100 text-sm sm:text-base">Kenya's discount booking hub</p>
               {currentLocation && currentLocation !== 'All Locations' && (
                 <p className="text-blue-100 text-xs mt-2">
                   Now available in {getShortLocationName()}
@@ -857,12 +847,18 @@ export default function Hotdeals() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-4 sm:space-y-0">
-            <button className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 w-full sm:w-auto transition-colors">
+            <a
+              href="https://merchants.discoun3ree.com/accounts/sign-up"
+              className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 w-full sm:w-auto transition-colors text-center block"
+            >
               Add a Listing
-            </button>
-            <button className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-yellow-500 w-full sm:w-auto transition-colors">
-              Search for a Coupon
-            </button>
+            </a>
+            <a
+              href="/search"
+              className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-yellow-500 w-full sm:w-auto transition-colors text-center block"
+            >
+              Search for a Deal
+            </a>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-// src/services/authService.js
+// src/services/authService.js - Updated with Google Authentication
 import api, { API_ENDPOINTS, setTokenToCookie, removeTokenFromCookie, getTokenFromCookie } from '../config/api';
 
 class AuthService {
@@ -53,7 +53,33 @@ class AuthService {
     }
   }
 
+  // NEW: Google Sign-In
+  async googleSignIn(googleCredential, referralSlug = null) {
+    try {
+      console.log('🚀 Sending Google credential to backend...');
+      
+      const response = await api.post(API_ENDPOINTS.user.googleSignIn, {
+        credential: googleCredential,
+        referralSlug: referralSlug
+      });
 
+      const { access_token, user, isNewUser } = response.data;
+
+      if (access_token) {
+        setTokenToCookie(access_token);
+        console.log('✅ Google authentication token saved');
+      }
+
+      return {
+        success: true,
+        data: { user, token: access_token, isNewUser },
+        message: isNewUser ? 'Account created successfully with Google' : 'Google sign-in successful'
+      };
+    } catch (error) {
+      console.error('❌ Google Sign-In API error:', error);
+      return this.handleAuthError(error);
+    }
+  }
 
   // Merchant Registration
   async registerMerchant(merchantData) {
@@ -106,30 +132,15 @@ class AuthService {
     }
   }
 
-  // Updated getCurrentUser function in authService.js
+  // Updated getCurrentUser function
   async getCurrentUser() {
     try {
       const token = getTokenFromCookie();
       console.log('🎫 Token from cookie:', token ? `Exists (${token.substring(0, 20)}...)` : 'No token');
-      console.log('🎫 Token length:', token?.length);
 
       if (!token) {
         return { success: false, message: 'No authentication token found' };
       }
-
-      // Try to decode token to see what's in it (for debugging)
-      try {
-        const parts = token.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(atob(parts[1]));
-          console.log('🔍 Token payload:', payload);
-        }
-      } catch (e) {
-        console.log('❌ Could not decode token for inspection');
-      }
-
-      console.log('📡 API Endpoint:', API_ENDPOINTS.user.profile);
-      console.log('📡 Expected result: ${process.env.REACT_APP_API_BASE_URL}/api/v1/users/profile');
 
       const response = await api.get(API_ENDPOINTS.user.profile);
       console.log('✅ Profile request successful');
@@ -138,11 +149,7 @@ class AuthService {
         data: response.data,
       };
     } catch (error) {
-      console.error('❌ getCurrentUser error:');
-      console.error('   - Status:', error.response?.status);
-      console.error('   - Data:', error.response?.data);
-      console.error('   - Headers sent:', error.config?.headers);
-      console.error('   - URL:', error.config?.url);
+      console.error('❌ getCurrentUser error:', error.response?.data);
       return this.handleAuthError(error);
     }
   }
@@ -238,6 +245,38 @@ class AuthService {
     }
   }
 
+  // NEW: Link Google account to existing account
+  async linkGoogleAccount(googleCredential) {
+    try {
+      const response = await api.post(API_ENDPOINTS.user.linkGoogle, {
+        credential: googleCredential
+      });
+
+      return {
+        success: true,
+        data: response.data,
+        message: 'Google account linked successfully'
+      };
+    } catch (error) {
+      return this.handleAuthError(error);
+    }
+  }
+
+  // NEW: Unlink Google account
+  async unlinkGoogleAccount() {
+    try {
+      const response = await api.delete(API_ENDPOINTS.user.unlinkGoogle);
+
+      return {
+        success: true,
+        data: response.data,
+        message: 'Google account unlinked successfully'
+      };
+    } catch (error) {
+      return this.handleAuthError(error);
+    }
+  }
+
   // Handle authentication errors
   handleAuthError(error) {
     let errorMessage = 'An unexpected error occurred';
@@ -276,6 +315,9 @@ class AuthService {
           break;
         case 409:
           errorMessage = errorMessage || 'User already exists';
+          break;
+        case 422:
+          errorMessage = errorMessage || 'Google authentication failed';
           break;
         case 500:
           errorMessage = 'Server error. Please try again later.';
