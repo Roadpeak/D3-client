@@ -53,7 +53,36 @@ class AuthService {
     }
   }
 
-  
+  // NEW: Google Sign-In for Users
+  async googleSignIn(credential, referralSlug = null) {
+    try {
+      const response = await api.post('/users/google-signin', {
+        credential,
+        referralSlug
+      });
+
+      const { access_token, user, isNewUser, referralInfo } = response.data;
+      
+      if (access_token) {
+        setTokenToCookie(access_token);
+        // Also store in localStorage as backup
+        localStorage.setItem('access_token', access_token);
+      }
+
+      return {
+        success: true,
+        data: { 
+          user, 
+          token: access_token, 
+          isNewUser,
+          referralInfo 
+        },
+        message: isNewUser ? 'Account created with Google successfully' : 'Google sign-in successful'
+      };
+    } catch (error) {
+      return this.handleAuthError(error);
+    }
+  }
 
   // Merchant Registration
   async registerMerchant(merchantData) {
@@ -106,50 +135,51 @@ class AuthService {
     }
   }
 
-  // Updated getCurrentUser function in authService.js
-async getCurrentUser() {
-  try {
-    const token = getTokenFromCookie();
-    console.log('🎫 Token from cookie:', token ? `Exists (${token.substring(0, 20)}...)` : 'No token');
-    console.log('🎫 Token length:', token?.length);
-    
-    if (!token) {
-      return { success: false, message: 'No authentication token found' };
-    }
-
-    // Try to decode token to see what's in it (for debugging)
+  // Get Current User
+  async getCurrentUser() {
     try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        console.log('🔍 Token payload:', payload);
+      const token = getTokenFromCookie();
+      console.log('🎫 Token from cookie:', token ? `Exists (${token.substring(0, 20)}...)` : 'No token');
+      console.log('🎫 Token length:', token?.length);
+      
+      if (!token) {
+        return { success: false, message: 'No authentication token found' };
       }
-    } catch (e) {
-      console.log('❌ Could not decode token for inspection');
-    }
 
-    console.log('📡 API Endpoint:', API_ENDPOINTS.user.profile);
-    console.log('📡 Expected result: http://localhost:4000/api/v1/users/profile');
-    
-    const response = await api.get(API_ENDPOINTS.user.profile);
-    console.log('✅ Profile request successful');
-    return {
-      success: true,
-      data: response.data,
-    };
-  } catch (error) {
-    console.error('❌ getCurrentUser error:');
-    console.error('   - Status:', error.response?.status);
-    console.error('   - Data:', error.response?.data);
-    console.error('   - Headers sent:', error.config?.headers);
-    console.error('   - URL:', error.config?.url);
-    return this.handleAuthError(error);
+      // Try to decode token to see what's in it (for debugging)
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1]));
+          console.log('🔍 Token payload:', payload);
+        }
+      } catch (e) {
+        console.log('❌ Could not decode token for inspection');
+      }
+
+      console.log('📡 API Endpoint:', API_ENDPOINTS.user.profile);
+      console.log('📡 Expected result: http://localhost:4000/api/v1/users/profile');
+      
+      const response = await api.get(API_ENDPOINTS.user.profile);
+      console.log('✅ Profile request successful');
+      return {
+        success: true,
+        data: response.data,
+      };
+    } catch (error) {
+      console.error('❌ getCurrentUser error:');
+      console.error('   - Status:', error.response?.status);
+      console.error('   - Data:', error.response?.data);
+      console.error('   - Headers sent:', error.config?.headers);
+      console.error('   - URL:', error.config?.url);
+      return this.handleAuthError(error);
+    }
   }
-}
 
   // Logout
   logout() {
     removeTokenFromCookie();
+    localStorage.removeItem('access_token');
     return {
       success: true,
       message: 'Logged out successfully'
