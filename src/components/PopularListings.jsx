@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { offerAPI } from '../services/api'; // Import the proper API service
-import { favoritesAPI } from '../services/favoritesService'; // Import favorites service
+import { offerAPI } from '../services/api';
+import { useFavorites } from '../hooks/useFavorites'; // Import the favorites hook
+import authService from '../services/authService'; // Import auth service
 
 const Star = ({ className }) => (
   <svg className={className} fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
@@ -26,43 +27,42 @@ const PopularListings = () => {
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [favorites, setFavorites] = useState(new Set());
-  const [favoritesLoading, setFavoritesLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const navigate = useNavigate();
 
-  // ADDED: Function to check if offer is expired
+  // Use the favorites hook like in Hotdeals
+  const {
+    error: favoritesError,
+    toggleFavorite,
+    isFavorite,
+    clearError: clearFavoritesError,
+    initialized: favoritesInitialized
+  } = useFavorites();
+
+  // Function to check if offer is expired
   const isOfferExpired = useCallback((expirationDate) => {
     if (!expirationDate) return false;
     return new Date(expirationDate) < new Date();
   }, []);
 
-  // Load user's existing favorites
+  // Check authentication status
   useEffect(() => {
-    const loadFavorites = async () => {
-      try {
-        setFavoritesLoading(true);
-        const response = await favoritesAPI.getFavorites();
-        
-        if (response.success) {
-          // Extract offer IDs from favorites and add to Set
-          const favoriteIds = new Set(
-            (response.favorites || []).map(favorite => 
-              favorite.offer_id || favorite.id
-            )
-          );
-          setFavorites(favoriteIds);
-        } else {
-          console.warn('Failed to load favorites:', response.message);
-        }
-      } catch (error) {
-        console.error('Error loading favorites:', error);
-      } finally {
-        setFavoritesLoading(false);
-      }
+    const checkAuth = () => {
+      const authStatus = authService.isAuthenticated();
+      setIsAuthenticated(authStatus);
     };
 
-    loadFavorites();
+    checkAuth();
+
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Fetch deals with highest discounts from backend
@@ -72,20 +72,17 @@ const PopularListings = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch offers sorted by discount (highest first) with limit of 12 to account for potential expired offers
         const response = await offerAPI.getOffers({
-          limit: 12, // Fetch more to account for expired ones
+          limit: 12,
           sortBy: 'discount',
           sortOrder: 'desc',
-          status: 'active' // Only get active offers
+          status: 'active'
         });
         
         console.log('API Response:', response);
         
         if (response.success) {
-          // Transform the API response to match the expected deal structure
           const transformedDeals = (response.offers || response.data || []).map(offer => {
-            // Calculate savings and prices
             const originalPrice = offer.service?.price || 100;
             const discountAmount = (originalPrice * (offer.discount || 0)) / 100;
             const salePrice = originalPrice - discountAmount;
@@ -104,8 +101,8 @@ const PopularListings = () => {
               discount: `${offer.discount || 0}%`,
               originalPrice: `KES ${originalPrice.toFixed(2)}`,
               salePrice: `KES ${salePrice.toFixed(2)}`,
-              rating: '4.5', // You might want to add this to your API
-              reviews: Math.floor(Math.random() * 200) + 10, // Placeholder
+              rating: '4.5',
+              reviews: Math.floor(Math.random() * 200) + 10,
               timeLeft: offer.expiration_date ? 
                        calculateTimeLeft(offer.expiration_date) : 
                        null,
@@ -113,14 +110,13 @@ const PopularListings = () => {
               serviceId: offer.service?.id,
               offer_type: offer.offer_type,
               status: offer.status,
-              expiration_date: offer.expiration_date // ADDED: Include expiration date
+              expiration_date: offer.expiration_date,
+              service: offer.service,
+              store_info: offer.store
             };
           });
           
-          // ADDED: Filter out expired offers for customer-facing page
           const activeDeals = transformedDeals.filter(deal => !isOfferExpired(deal.expiration_date));
-          
-          // Take only 8 active deals for display
           const displayDeals = activeDeals.slice(0, 8);
           
           console.log(`📋 Total deals received: ${transformedDeals.length}, Active deals: ${activeDeals.length}, Displaying: ${displayDeals.length}`);
@@ -156,82 +152,62 @@ const PopularListings = () => {
     return 'Ending soon';
   };
 
-  // Handle deal click - navigate to deal details using the same pattern as hotdeals
+  // Handle deal click
   const handleDealClick = useCallback((dealId) => {
     navigate(`/offer/${dealId}`);
   }, [navigate]);
 
-  // Handle view all deals - navigate to hotdeals page
+  // Handle view all deals
   const handleViewAllDeals = useCallback(() => {
     navigate('/hotdeals');
   }, [navigate]);
 
-  // Toggle favorite
-  const toggleFavorite = async (dealId, event) => {
-    event.stopPropagation(); // Prevent deal click when clicking heart
-    
-    try {
-      // Optimistic update - update UI immediately
-      const wasAlreadyFavorited = favorites.has(dealId);
-      setFavorites(prev => {
-        const newFavorites = new Set(prev);
-        if (newFavorites.has(dealId)) {
-          newFavorites.delete(dealId);
-        } else {
-          newFavorites.add(dealId);
-        }
-        return newFavorites;
-      });
+  // Enhanced favorite handling - matching Hotdeals implementation
+  const handleFavoriteClick = useCallback(async (e, offer) => {
+    e.stopPropagation();
 
-      // Call the API to update on backend
-      const result = await favoritesAPI.toggleFavorite(dealId);
-      
-      if (!result.success) {
-        // Revert optimistic update on API failure
-        setFavorites(prev => {
-          const newFavorites = new Set(prev);
-          if (wasAlreadyFavorited) {
-            newFavorites.add(dealId);
-          } else {
-            newFavorites.delete(dealId);
-          }
-          return newFavorites;
+    if (!isAuthenticated) {
+      const shouldLogin = window.confirm('Please log in to add favorites. Would you like to log in now?');
+      if (shouldLogin) {
+        navigate('/accounts/sign-in', {
+          state: { returnUrl: window.location.pathname }
         });
-        
-        console.error('Failed to toggle favorite:', result.message);
-        // You might want to show a toast notification here
-      } else {
-        console.log('Favorite toggled successfully:', result.action);
       }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      
-      // Revert optimistic update on error
-      setFavorites(prev => {
-        const newFavorites = new Set(prev);
-        if (favorites.has(dealId)) {
-          newFavorites.delete(dealId);
-        } else {
-          newFavorites.add(dealId);
-        }
-        return newFavorites;
-      });
+      return;
     }
-  };
+
+    if (!favoritesInitialized) {
+      return;
+    }
+
+    if (favoritesError) {
+      clearFavoritesError();
+    }
+
+    const offerData = {
+      id: offer.id,
+      title: offer.title,
+      description: offer.description || "Get exclusive offers with these amazing deals",
+      service: offer.service,
+      store: offer.store_info
+    };
+
+    await toggleFavorite(offer.id, offerData);
+  }, [isAuthenticated, favoritesInitialized, favoritesError, navigate, clearFavoritesError, toggleFavorite]);
 
   // Get deal tag color based on discount percentage
   const getTagColor = (tag, discount) => {
     const discountValue = parseInt(discount?.replace('%', '') || '0');
     
-    if (discountValue >= 50) return 'bg-red-500'; // Hot Deal
-    if (discountValue >= 30) return 'bg-green-500'; // Bestseller
+    if (discountValue >= 50) return 'bg-red-500';
+    if (discountValue >= 30) return 'bg-green-500';
     if (tag?.toLowerCase() === 'featured') return 'bg-blue-500';
     if (tag?.toLowerCase() === 'premium') return 'bg-purple-500';
-    return 'bg-orange-500'; // Limited Time
+    return 'bg-orange-500';
   };
 
   const renderDealCard = (deal) => {
-    // REMOVED: isExpired check since we already filter expired offers
+    const isOfferFavorited = favoritesInitialized && isFavorite(deal.id);
     
     return (
       <div 
@@ -254,12 +230,30 @@ const PopularListings = () => {
             </div>
           )}
           <button 
-            className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-sm hover:bg-gray-50 transition-colors"
-            onClick={(e) => toggleFavorite(deal.id, e)}
+            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${
+              isOfferFavorited
+                ? 'bg-red-500 text-white shadow-red-200'
+                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+            } ${
+              !isAuthenticated || !favoritesInitialized
+                ? 'cursor-not-allowed opacity-50'
+                : 'cursor-pointer'
+            }`}
+            onClick={(e) => handleFavoriteClick(e, deal)}
+            disabled={!isAuthenticated || !favoritesInitialized}
+            title={
+              !isAuthenticated
+                ? 'Login to add favorites'
+                : !favoritesInitialized
+                  ? 'Loading favorites...'
+                  : isOfferFavorited
+                    ? 'Remove from favorites'
+                    : 'Add to favorites'
+            }
           >
             <Heart 
-              className={`w-4 h-4 ${favorites.has(deal.id) ? 'text-red-500' : 'text-gray-400'}`}
-              filled={favorites.has(deal.id)}
+              className="w-4 h-4"
+              filled={isOfferFavorited}
             />
           </button>
           <div className="absolute bottom-3 right-3 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-bold text-red-600">
@@ -307,7 +301,7 @@ const PopularListings = () => {
   };
 
   // Loading state
-  if (loading || favoritesLoading) {
+  if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
@@ -375,6 +369,19 @@ const PopularListings = () => {
           <p className="text-xs text-green-600 font-medium">Sorted by highest discount</p>
         </div>
       </div>
+
+      {/* Favorites Error */}
+      {favoritesError && (
+        <div className="mb-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded flex items-center justify-between">
+          <span className="text-sm">{favoritesError}</span>
+          <button
+            onClick={clearFavoritesError}
+            className="ml-4 text-yellow-800 hover:text-yellow-900"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* First row of deals */}
       <div className="grid md:grid-cols-4 gap-6 mb-8">

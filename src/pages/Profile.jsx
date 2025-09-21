@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { User, Gift, Store, MapPin, Settings, LogOut, Heart } from 'lucide-react';
+import { 
+  User, Gift, Store, Settings, LogOut, Heart, Calendar, 
+  Award, Target, Users, 
+  Moon, Sun, Star, CheckCircle, Trophy, Bookmark, MessageCircle
+} from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -7,8 +11,8 @@ import authService from '../services/authService';
 import api from '../config/api';
 import { useFavorites } from '../hooks/useFavorites';
 
-// Main Profile Page Component - Dashboard Only
-const CouponProfilePage = () => {
+// Enhanced Profile Page Component with all original functionality
+const EnhancedCouponProfilePage = () => {
   const [user, setUser] = useState(null);
   const [userStats, setUserStats] = useState({
     totalBookings: 0,
@@ -19,13 +23,25 @@ const CouponProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+  
   const navigate = useNavigate();
   const location = useLocation();
 
   // Use favorites hook to get real-time favorites count
   const { getFavoritesCount, loading: favoritesLoading } = useFavorites();
 
-  // Fetch user profile data
+  // Calculate user badges based on activity
+  const getUserBadges = () => {
+    const badges = [];
+    if (userStats.totalBookings >= 10) badges.push({ label: 'Regular Customer', color: 'blue', icon: Star });
+    if (userStats.totalFavorites >= 5) badges.push({ label: 'Deal Hunter', color: 'red', icon: Heart });
+    if (userStats.followedStores >= 10) badges.push({ label: 'Explorer', color: 'yellow', icon: Trophy });
+    if (userStats.rewardPoints >= 100) badges.push({ label: 'Point Collector', color: 'green', icon: Award });
+    return badges;
+  };
+
+  // Fetch user profile data (original functionality)
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -59,7 +75,7 @@ const CouponProfilePage = () => {
     checkAuth();
   }, [navigate, location.pathname]);
 
-  // Fetch user statistics
+  // Fetch user statistics (original functionality)
   useEffect(() => {
     const fetchUserStats = async () => {
       if (!authService.isAuthenticated()) return;
@@ -75,10 +91,52 @@ const CouponProfilePage = () => {
         // Get real-time favorites count from the hook
         const favoritesCount = getFavoritesCount();
 
-        // You can add more API calls here for other stats
-        // For now, I'll use mock data for other stats since their endpoints aren't implemented
-        const bookingsCount = 0; // await api.get('/users/bookings') when implemented
-        const rewardPoints = 0; // await api.get('/users/rewards') when implemented
+        // Fetch bookings count - try multiple endpoints
+        let bookingsCount = 0;
+        try {
+          // Try user bookings endpoint first
+          const userBookingsResponse = await api.get('/bookings/user');
+          if (userBookingsResponse.data.success && userBookingsResponse.data.bookings) {
+            bookingsCount = userBookingsResponse.data.bookings.length;
+          } else if (userBookingsResponse.data.data) {
+            // Handle different response structure
+            bookingsCount = Array.isArray(userBookingsResponse.data.data) ? 
+              userBookingsResponse.data.data.length : 0;
+          }
+        } catch (bookingsError) {
+          console.warn('Primary bookings endpoint failed, trying alternative:', bookingsError.message);
+          try {
+            // Try alternative endpoint
+            const altBookingsResponse = await api.get('/users/bookings');
+            if (altBookingsResponse.data.success && altBookingsResponse.data.bookings) {
+              bookingsCount = altBookingsResponse.data.bookings.length;
+            }
+          } catch (altError) {
+            console.warn('Alternative bookings endpoint also failed:', altError.message);
+            // Keep bookingsCount as 0
+          }
+        }
+
+        // Fetch reward points - try multiple endpoints
+        let rewardPoints = 0;
+        try {
+          const rewardsResponse = await api.get('/users/rewards');
+          if (rewardsResponse.data.success) {
+            rewardPoints = rewardsResponse.data.points || rewardsResponse.data.rewardPoints || 0;
+          }
+        } catch (rewardsError) {
+          console.warn('Rewards endpoint failed:', rewardsError.message);
+          try {
+            // Try alternative endpoint
+            const altRewardsResponse = await api.get('/users/points');
+            if (altRewardsResponse.data.success) {
+              rewardPoints = altRewardsResponse.data.points || 0;
+            }
+          } catch (altError) {
+            console.warn('Alternative rewards endpoint also failed:', altError.message);
+            // Keep rewardPoints as 0
+          }
+        }
 
         setUserStats({
           totalBookings: bookingsCount,
@@ -89,16 +147,17 @@ const CouponProfilePage = () => {
 
         console.log('✅ User stats loaded:', {
           followedStores: followedStoresCount,
-          favorites: favoritesCount
+          favorites: favoritesCount,
+          bookings: bookingsCount,
+          points: rewardPoints
         });
 
       } catch (error) {
         console.error('❌ Error fetching user stats:', error);
-        // Don't show error for stats, just keep default values
         setUserStats(prevStats => ({
           ...prevStats,
           totalBookings: 0,
-          totalFavorites: getFavoritesCount(), // Still use real favorites count
+          totalFavorites: getFavoritesCount(),
           followedStores: 0,
           rewardPoints: 0
         }));
@@ -107,13 +166,12 @@ const CouponProfilePage = () => {
       }
     };
 
-    // Only fetch stats after user is loaded and favorites are not loading
     if (user && !favoritesLoading) {
       fetchUserStats();
     }
   }, [user, favoritesLoading, getFavoritesCount]);
 
-  // Update favorites count when it changes
+  // Update favorites count when it changes (original functionality)
   useEffect(() => {
     if (!favoritesLoading) {
       setUserStats(prevStats => ({
@@ -134,15 +192,29 @@ const CouponProfilePage = () => {
     }
   };
 
-  // Show loading state
+  const getVerificationBadges = () => {
+    const badges = [];
+    if (user?.isEmailVerified) {
+      badges.push({ label: 'Email Verified', color: 'green' });
+    }
+    if (user?.isPhoneVerified) {
+      badges.push({ label: 'Phone Verified', color: 'blue' });
+    }
+    if (user?.isKYCVerified) {
+      badges.push({ label: 'ID Verified', color: 'orange' });
+    }
+    return badges;
+  };
+
+  // Show loading state (original functionality)
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <Navbar />
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your profile...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Loading your profile...</p>
           </div>
         </div>
         <Footer />
@@ -150,21 +222,21 @@ const CouponProfilePage = () => {
     );
   }
 
-  // Show error state
+  // Show error state (original functionality)
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <Navbar />
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-red-600 text-2xl">⚠️</span>
+            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-red-600 text-lg">!</span>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <h2 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>Something went wrong</h2>
+            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-4 text-sm`}>{error}</p>
             <button 
               onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
             >
               Try Again
             </button>
@@ -175,356 +247,279 @@ const CouponProfilePage = () => {
     );
   }
 
-  const getVerificationBadges = () => {
-    const badges = [];
-    if (user?.isEmailVerified) {
-      badges.push({ label: 'Email Verified', color: 'green' });
-    }
-    if (user?.isPhoneVerified) {
-      badges.push({ label: 'Phone Verified', color: 'blue' });
-    }
-    if (user?.isKYCVerified) {
-      badges.push({ label: 'ID Verified', color: 'purple' });
-    }
-    return badges;
-  };
-
-  // Stats display component with loading state
-  const StatCard = ({ 
-    icon: Icon, 
-    count, 
-    title, 
-    description, 
-    bgGradient, 
-    iconColor, 
-    textColor, 
-    onClick,
-    isLoading = false
-  }) => (
-    <div 
-      onClick={onClick}
-      className={`${bgGradient} rounded-xl p-6 text-white cursor-pointer hover:scale-105 transition-all transform`}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <Icon className={`w-8 h-8 ${iconColor}`} />
-        <span className="text-2xl font-bold">
-          {isLoading ? (
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            count
-          )}
-        </span>
-      </div>
-      <h3 className="font-semibold mb-1">{title}</h3>
-      <p className={`${textColor} text-sm`}>{description}</p>
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <Navbar />
       
-      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
-        {/* Profile Header Section */}
-        <div className="flex flex-col md:flex-row items-center gap-6 mb-8">
-          {/* Profile Avatar & Info */}
-          <div className="text-center md:text-left">
-            <div className="relative w-24 h-24 mx-auto md:mx-0 mb-4">
-              <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                {user?.avatar ? (
-                  <img 
-                    src={user.avatar} 
-                    alt="Profile" 
-                    className="w-full h-full rounded-full object-cover" 
-                  />
-                ) : (
-                  <User className="w-12 h-12 text-blue-600" />
-                )}
-              </div>
-              <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
+      {/* Enhanced Header with Dark Mode Toggle */}
+      <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} border-b transition-colors duration-300`}>
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className={`text-2xl font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
+              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-500'} text-sm mt-1`}>Welcome back, {user?.firstName || 'User'}</p>
             </div>
-
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">
-              {user?.firstName || 'User'} {user?.lastName || ''}
-            </h1>
-            <p className="text-gray-600 mb-2">{user?.email}</p>
-            {user?.phoneNumber && (
-              <p className="text-gray-600 text-sm mb-3">{user.phoneNumber}</p>
-            )}
-            
-            {/* Verification Badges */}
-            <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
-              {getVerificationBadges().map((badge, index) => (
-                <span 
-                  key={index}
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    badge.color === 'green' ? 'bg-green-100 text-green-700' :
-                    badge.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                    'bg-purple-100 text-purple-700'
-                  }`}
-                >
-                  {badge.label}
-                </span>
-              ))}
-              {getVerificationBadges().length === 0 && (
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                  Verify your account
-                </span>
-              )}
+            <div className="flex items-center gap-3">
+              {/* Dark Mode Toggle */}
+              <button 
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2 ${darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              
+              <button 
+                onClick={() => navigate('/profile/settings')}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              >
+                Edit Profile
+              </button>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Quick Stats */}
-            <div className="flex justify-center md:justify-start gap-8 text-center">
-              <div>
-                <div className="text-xl font-bold text-gray-900">
-                  {statsLoading ? (
-                    <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+      <div className="max-w-6xl mx-auto px-6 pb-20 md:pb-0">
+        {/* Enhanced Profile Card with Gradient Background */}
+        <div className="py-4 md:py-8">
+          <div className={`${darkMode ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700' : 'bg-gradient-to-br from-blue-50 to-indigo-100 border-gray-200'} border rounded-2xl p-4 md:p-8 transition-colors duration-300 relative`}>
+            <div className="flex flex-col md:flex-row items-start gap-4 md:gap-8">
+              {/* Enhanced Profile Picture */}
+              <div className="relative mx-auto md:mx-0">
+                <div className="w-24 md:w-32 h-24 md:h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center relative overflow-hidden">
+                  {user?.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover" 
+                    />
                   ) : (
-                    userStats.totalBookings
+                    <User className="w-12 md:w-16 h-12 md:h-16 text-white" />
                   )}
                 </div>
-                <div className="text-sm text-gray-600">Bookings</div>
               </div>
-              <div>
-                <div className="text-xl font-bold text-gray-900">
-                  {favoritesLoading ? (
-                    <div className="w-6 h-6 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin mx-auto"></div>
-                  ) : (
-                    userStats.totalFavorites
-                  )}
-                </div>
-                <div className="text-sm text-gray-600">Saved</div>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-gray-900">
-                  {statsLoading ? (
-                    <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-                  ) : (
-                    userStats.rewardPoints
-                  )}
-                </div>
-                <div className="text-sm text-gray-600">Points</div>
-              </div>
-            </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-3 md:ml-auto">
-            <button 
-              onClick={() => navigate('/profile/settings')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <Settings className="w-4 h-4" />
-              Edit Profile
-            </button>
-            
-            <button 
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Logout
-            </button>
-          </div>
-        </div>
-
-        {/* Welcome Message */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.firstName || 'User'}! 👋
-          </h2>
-          <p className="text-gray-600">
-            Manage your account, view your bookings, and discover amazing deals.
-          </p>
-        </div>
-
-        {/* Quick Stats Cards with Real Data */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            icon={Store}
-            count={userStats.totalBookings}
-            title="My Bookings"
-            description="View and manage your bookings"
-            bgGradient="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-            iconColor="text-blue-200"
-            textColor="text-blue-100"
-            onClick={() => navigate('/profile/bookings')}
-            isLoading={statsLoading}
-          />
-
-          <StatCard
-            icon={Heart}
-            count={userStats.totalFavorites}
-            title="Favourites"
-            description="Your saved services and offers"
-            bgGradient="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-            iconColor="text-red-200"
-            textColor="text-red-100"
-            onClick={() => navigate('/profile/favourites')}
-            isLoading={favoritesLoading}
-          />
-
-          <StatCard
-            icon={MapPin}
-            count={userStats.followedStores}
-            title="Followed Stores"
-            description="Stores you follow for updates"
-            bgGradient="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-            iconColor="text-green-200"
-            textColor="text-green-100"
-            onClick={() => navigate('/profile/followed-stores')}
-            isLoading={statsLoading}
-          />
-
-          <StatCard
-            icon={Gift}
-            count={userStats.rewardPoints}
-            title="Reward Points"
-            description="Referrals and reward programs"
-            bgGradient="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
-            iconColor="text-purple-200"
-            textColor="text-purple-100"
-            onClick={() => navigate('/profile/earn')}
-            isLoading={statsLoading}
-          />
-        </div>
-
-        {/* Stats Loading Message */}
-        {(statsLoading || favoritesLoading) && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-2 text-blue-700">
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-sm">Loading your statistics...</span>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <button 
-              onClick={() => navigate('/Hotdeals')}
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Gift className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="text-left">
-                <div className="font-medium text-gray-900">Browse Offers</div>
-                <div className="text-sm text-gray-500">Discover amazing deals</div>
-              </div>
-            </button>
-            
-            <button 
-              onClick={() => navigate('/stores')}
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Store className="w-5 h-5 text-green-600" />
-              </div>
-              <div className="text-left">
-                <div className="font-medium text-gray-900">Find Stores</div>
-                <div className="text-sm text-gray-500">Explore new businesses</div>
-              </div>
-            </button>
-            
-            <button 
-              onClick={() => navigate('/my-vouchers')}
-              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Gift className="w-5 h-5 text-orange-600" />
-              </div>
-              <div className="text-left">
-                <div className="font-medium text-gray-900">My Vouchers</div>
-                <div className="text-sm text-gray-500">View your vouchers</div>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Recent Activity & Recommended Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activity */}
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-            <div className="space-y-3">
-              {user?.recentActivity?.length > 0 ? (
-                user.recentActivity.slice(0, 3).map((activity, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Store className="w-5 h-5 text-blue-600" />
+              {/* Enhanced Profile Info */}
+              <div className="flex-1 text-center md:text-left w-full">
+                <div className="flex flex-col items-center md:items-start mb-4 md:mb-6">
+                  <div className="mb-4 md:mb-0 text-center md:text-left w-full">
+                    <h2 className={`text-xl md:text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                      {user?.firstName || 'User'} {user?.lastName || ''}
+                    </h2>
+                    <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-sm mb-1`}>{user?.email}</p>
+                    {user?.phoneNumber && (
+                      <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-4`}>{user.phoneNumber}</p>
+                    )}
+                    
+                    {/* Enhanced Verification Status */}
+                    <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+                      {getVerificationBadges().map((badge, index) => (
+                        <span 
+                          key={index}
+                          className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 ${
+                            badge.color === 'green' ? 'bg-green-100 text-green-700' :
+                            badge.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                            'bg-orange-100 text-orange-700'
+                          }`}
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                          {badge.label}
+                        </span>
+                      ))}
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm text-gray-900">{activity.title}</p>
-                      <p className="text-xs text-gray-500">{activity.date}</p>
+
+                    {/* User Badges */}
+                    <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                      {getUserBadges().map((badge, index) => {
+                        const IconComponent = badge.icon;
+                        return (
+                          <span 
+                            key={index}
+                            className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 ${
+                              badge.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                              badge.color === 'red' ? 'bg-red-100 text-red-700' :
+                              badge.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-green-100 text-green-700'
+                            }`}
+                          >
+                            <IconComponent className="w-3 h-3" />
+                            {badge.label}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="text-sm mb-2">No recent activity</p>
+
                   <button 
-                    onClick={() => navigate('/hotdeals')}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    onClick={handleLogout}
+                    className={`${darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'} text-sm font-medium transition-colors flex items-center gap-1 mt-4 md:mt-0 md:absolute md:top-4 md:right-4`}
                   >
-                    Start exploring offers
+                    <LogOut className="w-4 h-4" />
+                    Sign out
                   </button>
                 </div>
-              )}
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Recommended Actions */}
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recommended for You</h3>
-            <div className="space-y-3">
-              <button
-                onClick={() => navigate('/Hotdeals')}
-                className="w-full text-left p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                    <Gift className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm text-gray-900">Browse New Offers</p>
-                    <p className="text-xs text-gray-500">Discover amazing deals near you</p>
-                  </div>
-                </div>
-              </button>
+        {/* Enhanced Stats Grid with Icons and Colors */}
+        <div className="pb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <button 
+              onClick={() => navigate('/profile/bookings')}
+              className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-blue-500' : 'bg-white border-gray-200 hover:border-blue-300'} border rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1`}
+            >
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                {statsLoading ? (
+                  <div className={`w-8 h-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded mx-auto animate-pulse`}></div>
+                ) : (
+                  userStats.totalBookings
+                )}
+              </div>
+              <div className="text-sm text-blue-600 font-medium">Bookings</div>
+            </button>
 
-              <button
-                onClick={() => navigate('/profile/earn')}
-                className="w-full text-left p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <Gift className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm text-gray-900">Refer Friends</p>
-                    <p className="text-xs text-gray-500">Earn rewards for every referral</p>
-                  </div>
-                </div>
-              </button>
+            <button 
+              onClick={() => navigate('/profile/favourites')}
+              className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-red-500' : 'bg-white border-gray-200 hover:border-red-300'} border rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1`}
+            >
+              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Heart className="w-6 h-6 text-red-600" />
+              </div>
+              <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                {favoritesLoading ? (
+                  <div className={`w-8 h-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded mx-auto animate-pulse`}></div>
+                ) : (
+                  userStats.totalFavorites
+                )}
+              </div>
+              <div className="text-sm text-red-600 font-medium">Favourites</div>
+            </button>
 
-              <button
-                onClick={() => navigate('/stores')}
-                className="w-full text-left p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Store className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm text-gray-900">Explore Stores</p>
-                    <p className="text-xs text-gray-500">Find new services and businesses</p>
-                  </div>
-                </div>
-              </button>
-            </div>
+            <button 
+              onClick={() => navigate('/profile/followed-stores')}
+              className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-yellow-500' : 'bg-white border-gray-200 hover:border-yellow-300'} border rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1`}
+            >
+              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Users className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                {statsLoading ? (
+                  <div className={`w-8 h-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded mx-auto animate-pulse`}></div>
+                ) : (
+                  userStats.followedStores
+                )}
+              </div>
+              <div className="text-sm text-yellow-600 font-medium">Following</div>
+            </button>
+
+            <button 
+              onClick={() => navigate('/profile/earn')}
+              className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-green-500' : 'bg-white border-gray-200 hover:border-green-300'} border rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1`}
+            >
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Target className="w-6 h-6 text-green-600" />
+              </div>
+              <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
+                {statsLoading ? (
+                  <div className={`w-8 h-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded mx-auto animate-pulse`}></div>
+                ) : (
+                  userStats.rewardPoints.toLocaleString()
+                )}
+              </div>
+              <div className="text-sm text-green-600 font-medium">KSH</div>
+            </button>
+          </div>
+        </div>
+
+        {/* Enhanced Quick Actions with More Options */}
+        <div className="pb-8">
+          <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-6`}>Quick Actions</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <button 
+              onClick={() => navigate('/Hotdeals')}
+              className={`text-left p-6 ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-blue-500' : 'bg-white border-gray-200 hover:border-blue-300'} border rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1`}
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4">
+                <Gift className="w-6 h-6 text-white" />
+              </div>
+              <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>Browse Offers</h4>
+              <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Discover amazing deals</p>
+            </button>
+
+            <button 
+              onClick={() => navigate('/stores')}
+              className={`text-left p-6 ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-green-500' : 'bg-white border-gray-200 hover:border-green-300'} border rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1`}
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4">
+                <Store className="w-6 h-6 text-white" />
+              </div>
+              <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>Find Stores</h4>
+              <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Explore businesses</p>
+            </button>
+
+            <button 
+              onClick={() => navigate('/service-requests')}
+              className={`text-left p-6 ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-orange-500' : 'bg-white border-gray-200 hover:border-orange-300'} border rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1`}
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                <MessageCircle className="w-6 h-6 text-white" />
+              </div>
+              <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>Service Requests</h4>
+              <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Manage requests & offers</p>
+            </button>
+
+            <button 
+              onClick={() => navigate('/profile/settings')}
+              className={`text-left p-6 ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-purple-500' : 'bg-white border-gray-200 hover:border-purple-300'} border rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1`}
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
+                <Settings className="w-6 h-6 text-white" />
+              </div>
+              <h4 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>Settings</h4>
+              <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Account settings</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile-Friendly Bottom Actions Bar */}
+        <div 
+          className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 px-6 py-4 z-40" 
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
+          <div className="flex justify-around">
+            <button 
+              onClick={() => navigate('/Hotdeals')}
+              className="flex flex-col items-center gap-1"
+            >
+              <Gift className="w-6 h-6 text-blue-600" />
+              <span className="text-xs text-gray-600 dark:text-gray-300">Offers</span>
+            </button>
+            <button 
+              onClick={() => navigate('/stores')}
+              className="flex flex-col items-center gap-1"
+            >
+              <Store className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+              <span className="text-xs text-gray-600 dark:text-gray-300">Stores</span>
+            </button>
+            <button 
+              onClick={() => navigate('/service-requests')}
+              className="flex flex-col items-center gap-1"
+            >
+              <MessageCircle className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+              <span className="text-xs text-gray-600 dark:text-gray-300">Requests</span>
+            </button>
+            <button 
+              onClick={() => navigate('/profile/settings')}
+              className="flex flex-col items-center gap-1"
+            >
+              <Settings className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+              <span className="text-xs text-gray-600 dark:text-gray-300">Settings</span>
+            </button>
           </div>
         </div>
       </div>
@@ -534,4 +529,4 @@ const CouponProfilePage = () => {
   );
 };
 
-export default CouponProfilePage;
+export default EnhancedCouponProfilePage;

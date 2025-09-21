@@ -1,4 +1,4 @@
-// MyBookingsEnhanced.js - Fully integrated with enhanced booking system
+// MyBookingsEnhanced.js - Updated with enhanced service booking features
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -7,7 +7,7 @@ import {
   Filter, Search, RefreshCw, Edit3, X, AlertTriangle,
   CheckCircle, XCircle, Clock4, Loader2, Eye, MoreVertical,
   CreditCard, Smartphone, Zap, Building2, UserCheck,
-  AlertCircle
+  AlertCircle, Shield, Bell, Timer, Tag, Star
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -53,7 +53,8 @@ const MyBookingsEnhanced = () => {
     { value: 'confirmed', label: 'Confirmed', count: 0 },
     { value: 'pending', label: 'Pending', count: 0 },
     { value: 'completed', label: 'Completed', count: 0 },
-    { value: 'cancelled', label: 'Cancelled', count: 0 }
+    { value: 'cancelled', label: 'Cancelled', count: 0 },
+    { value: 'checked_in', label: 'Checked In', count: 0 } // NEW: Added check-in status
   ];
 
   const bookingTypeOptions = [
@@ -163,7 +164,7 @@ const MyBookingsEnhanced = () => {
       filtered = filtered.filter(booking => {
         if (activeTab === 'upcoming') {
           return new Date(booking.startTime) > new Date() && 
-                 ['confirmed', 'pending'].includes(booking.status);
+                 ['confirmed', 'pending', 'checked_in'].includes(booking.status);
         }
         return booking.status === activeTab;
       });
@@ -215,7 +216,7 @@ const MyBookingsEnhanced = () => {
     if (booking.isOfferBooking) {
       navigate(`/book-offer/${booking.offerId}?reschedule=${booking.id}`);
     } else {
-      navigate(`/book-service/${booking.serviceId}?reschedule=${booking.id}`);
+      navigate(`/booking/service/${booking.serviceId}?reschedule=${booking.id}`);
     }
   };
 
@@ -226,19 +227,38 @@ const MyBookingsEnhanced = () => {
     const now = new Date();
     const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
     
-    // Different cancellation policies for offers vs services
-    const minCancellationHours = booking.isOfferBooking ? 2 : 0.5;
+    // Use service-specific cancellation policy
+    let minCancellationHours = 2; // Default
+    if (!booking.isOfferBooking && booking.Service?.min_cancellation_hours) {
+      minCancellationHours = booking.Service.min_cancellation_hours;
+    }
+    
     return hoursUntilBooking >= minCancellationHours;
   };
 
   const canRescheduleBooking = (booking) => {
-    if (['cancelled', 'completed'].includes(booking.status)) return false;
+    if (['cancelled', 'completed', 'checked_in'].includes(booking.status)) return false;
     
     const bookingTime = new Date(booking.startTime);
     const now = new Date();
     const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
     
     return hoursUntilBooking >= 1;
+  };
+
+  // Check if early check-in is allowed
+  const canCheckInEarly = (booking) => {
+    if (booking.isOfferBooking || booking.status !== 'confirmed') return false;
+    
+    const service = booking.Service;
+    if (!service?.allow_early_checkin) return false;
+    
+    const bookingTime = new Date(booking.startTime);
+    const now = new Date();
+    const minutesUntilBooking = (bookingTime - now) / (1000 * 60);
+    const earlyCheckinWindow = service.early_checkin_minutes || 15;
+    
+    return minutesUntilBooking <= earlyCheckinWindow && minutesUntilBooking >= -5;
   };
 
   // ==================== UI COMPONENTS ====================
@@ -257,7 +277,8 @@ const MyBookingsEnhanced = () => {
       confirmed: 'bg-green-100 text-green-700 border-green-200',
       pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
       completed: 'bg-blue-100 text-blue-700 border-blue-200',
-      cancelled: 'bg-red-100 text-red-700 border-red-200'
+      cancelled: 'bg-red-100 text-red-700 border-red-200',
+      checked_in: 'bg-purple-100 text-purple-700 border-purple-200' // NEW: Check-in status
     };
 
     return (
@@ -278,13 +299,18 @@ const MyBookingsEnhanced = () => {
             ) : (
               <div className="flex items-center space-x-2">
                 <Building2 className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-600">Service Booking</span>
+                <span className="text-sm font-medium text-blue-600">
+                  {entity?.type === 'dynamic' ? 'Custom Service' : 'Service Booking'}
+                </span>
+                {entity?.featured && (
+                  <Star className="w-3 h-3 text-yellow-500" />
+                )}
               </div>
             )}
           </div>
           
           <div className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[booking.status]}`}>
-            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+            {booking.status === 'checked_in' ? 'Checked In' : booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
           </div>
         </div>
 
@@ -294,6 +320,30 @@ const MyBookingsEnhanced = () => {
             <h3 className="font-semibold text-gray-900 text-lg">
               {entity?.title || entity?.name}
             </h3>
+            
+            {/* Enhanced service information */}
+            {!isOffer && entity && (
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {entity.type === 'fixed' && entity.price && (
+                  <span className="text-sm font-medium text-blue-600">
+                    KES {entity.price.toLocaleString()}
+                  </span>
+                )}
+                {entity.type === 'dynamic' && (
+                  <span className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    {entity.price_range || 'Custom Quote'}
+                  </span>
+                )}
+                {entity.duration && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {entity.duration}min
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Offer information */}
             {isOffer && entity?.discount && (
               <div className="flex items-center space-x-2 mt-1">
                 <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
@@ -307,17 +357,42 @@ const MyBookingsEnhanced = () => {
                 </span>
               </div>
             )}
-            {!isOffer && entity?.price && (
-              <span className="text-sm text-blue-600 font-medium">
-                KES {entity.price}
-              </span>
-            )}
           </div>
 
           {/* Service info for offers */}
           {isOffer && service && (
             <div className="text-sm text-gray-600">
               Service: {service.name}
+            </div>
+          )}
+
+          {/* NEW: Enhanced service booking settings display */}
+          {!isOffer && entity && (
+            <div className="flex flex-wrap gap-1">
+              {entity.auto_confirm_bookings && (
+                <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  Auto-Confirm
+                </span>
+              )}
+              {entity.require_prepayment && (
+                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded flex items-center gap-1">
+                  <CreditCard className="w-3 h-3" />
+                  Prepaid
+                </span>
+              )}
+              {entity.allow_early_checkin && (
+                <span className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded flex items-center gap-1">
+                  <UserCheck className="w-3 h-3" />
+                  Early Check-in
+                </span>
+              )}
+              {entity.auto_complete_on_duration && (
+                <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded flex items-center gap-1">
+                  <Timer className="w-3 h-3" />
+                  Auto-Complete
+                </span>
+              )}
             </div>
           )}
 
@@ -348,7 +423,10 @@ const MyBookingsEnhanced = () => {
           {booking.Staff && (
             <div className="flex items-center space-x-1 text-sm text-gray-600">
               <UserCheck className="w-4 h-4" />
-              <span>{booking.Staff.name} ({booking.Staff.role})</span>
+              <span>{booking.Staff.name}</span>
+              {booking.Staff.role && (
+                <span className="text-gray-400">({booking.Staff.role})</span>
+              )}
             </div>
           )}
 
@@ -362,6 +440,34 @@ const MyBookingsEnhanced = () => {
               ) : (
                 <Clock4 className="w-4 h-4 text-yellow-500" />
               )}
+            </div>
+          )}
+
+          {/* NEW: Booking confirmation status for services */}
+          {!isOffer && entity && booking.status === 'pending' && !entity.auto_confirm_bookings && (
+            <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Bell className="w-4 h-4 text-yellow-600 mt-0.5" />
+                <div>
+                  <div className="text-sm font-medium text-yellow-900">Awaiting Confirmation</div>
+                  <div className="text-xs text-yellow-700">The store will review and confirm your booking within 24 hours</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* NEW: Check-in information */}
+          {!isOffer && booking.status === 'confirmed' && canCheckInEarly(booking) && (
+            <div className="p-2 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <UserCheck className="w-4 h-4 text-purple-600 mt-0.5" />
+                <div>
+                  <div className="text-sm font-medium text-purple-900">Early Check-in Available</div>
+                  <div className="text-xs text-purple-700">
+                    You can check in up to {entity?.early_checkin_minutes || 15} minutes early
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -393,8 +499,40 @@ const MyBookingsEnhanced = () => {
                     <span>Cancel</span>
                   </button>
                 )}
+
+                {/* NEW: Check-in button for services */}
+                {!isOffer && booking.status === 'confirmed' && canCheckInEarly(booking) && (
+                  <button
+                    onClick={() => {
+                      // Handle check-in logic here
+                      console.log('Check in to booking:', booking.id);
+                    }}
+                    className="flex items-center space-x-1 text-purple-600 hover:text-purple-800 text-sm font-medium"
+                  >
+                    <UserCheck className="w-4 h-4" />
+                    <span>Check In</span>
+                  </button>
+                )}
               </div>
 
+                <button
+                  onClick={() => navigate(`/booking-details/${booking.id}`)}
+                  className="text-gray-600 hover:text-gray-800 text-sm"
+                >
+                  View Details
+                </button>
+            </div>
+          </div>
+        )}
+
+        {/* Checked in status */}
+        {booking.status === 'checked_in' && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-purple-600">
+                <UserCheck className="w-4 h-4" />
+                <span className="text-sm font-medium">Checked in - Service in progress</span>
+              </div>
               <button
                 onClick={() => navigate(`/bookings/${booking.id}`)}
                 className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 text-sm"
@@ -413,9 +551,17 @@ const MyBookingsEnhanced = () => {
               <span className="text-sm text-gray-600">
                 {isOffer ? 'Enjoyed your offer?' : 'How was your service?'}
               </span>
-              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                Leave Review
-              </button>
+              <div className="flex space-x-2">
+                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                  Leave Review
+                </button>
+                <button
+                  onClick={() => navigate(`/bookings/${booking.id}`)}
+                  className="text-gray-600 hover:text-gray-800 text-sm"
+                >
+                  View Details
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -428,6 +574,8 @@ const MyBookingsEnhanced = () => {
       { id: 'all', label: 'All Bookings', count: totalBookings },
       { id: 'upcoming', label: 'Upcoming', count: filteredBookings.filter(b => new Date(b.startTime) > new Date()).length },
       { id: 'confirmed', label: 'Confirmed', count: filteredBookings.filter(b => b.status === 'confirmed').length },
+      { id: 'pending', label: 'Pending', count: filteredBookings.filter(b => b.status === 'pending').length },
+      { id: 'checked_in', label: 'Checked In', count: filteredBookings.filter(b => b.status === 'checked_in').length },
       { id: 'completed', label: 'Completed', count: filteredBookings.filter(b => b.status === 'completed').length },
       { id: 'cancelled', label: 'Cancelled', count: filteredBookings.filter(b => b.status === 'cancelled').length }
     ];
@@ -485,6 +633,12 @@ const MyBookingsEnhanced = () => {
             <div className="text-sm text-gray-600">
               {new Date(selectedBooking.startTime).toLocaleString()}
             </div>
+            {/* NEW: Show cancellation policy */}
+            {!selectedBooking.isOfferBooking && selectedBooking.Service?.cancellation_policy && (
+              <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
+                <strong>Cancellation Policy:</strong> {selectedBooking.Service.cancellation_policy}
+              </div>
+            )}
           </div>
         )}
 

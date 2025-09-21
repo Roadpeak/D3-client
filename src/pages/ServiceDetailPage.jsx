@@ -1,4 +1,3 @@
-// ServiceDetailPage.js - Fixed version with proper imports and real data fetching
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
@@ -20,7 +19,14 @@ import {
   Share2,
   Info,
   Navigation,
-  Zap
+  Zap,
+  Shield,
+  UserCheck,
+  CreditCard,
+  Timer,
+  Bell,
+  MessageSquare,
+  Tag
 } from 'lucide-react';
 
 import Navbar from '../components/Navbar';
@@ -105,7 +111,7 @@ const ServiceDetailPage = () => {
     try {
       setBookingLoading(true);
       
-      // FIXED: Use authService to check authentication instead of localStorage
+      // Check authentication using authService
       if (!authService.isAuthenticated()) {
         // Redirect to login with service booking redirect
         const redirectUrl = `/booking/service/${actualServiceId}`;
@@ -135,12 +141,25 @@ const ServiceDetailPage = () => {
   
       // For dynamic services, show information
       if (serviceData.type === 'dynamic') {
-        const confirmDynamic = window.confirm(
-          'This is a dynamic pricing service. The exact price will be determined based on your specific requirements. ' +
-          'Would you like to proceed with booking a consultation?'
-        );
+        const message = serviceData.consultation_required 
+          ? 'This service requires a consultation to determine your specific needs and pricing. Would you like to book a consultation?'
+          : 'This is a dynamic pricing service. The exact price will be determined based on your specific requirements. Would you like to proceed?';
+          
+        const confirmDynamic = window.confirm(message);
         
         if (!confirmDynamic) {
+          setBookingLoading(false);
+          return;
+        }
+      }
+
+      // Show booking confirmation info
+      if (!serviceData.auto_confirm_bookings) {
+        const confirmManual = window.confirm(
+          'This service requires manual confirmation from the provider. Your booking will be reviewed and you\'ll receive confirmation within 24 hours. Continue?'
+        );
+        
+        if (!confirmManual) {
           setBookingLoading(false);
           return;
         }
@@ -185,6 +204,17 @@ const ServiceDetailPage = () => {
         className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
       />
     ));
+  };
+
+  // Get all service images
+  const getAllImages = () => {
+    if (serviceData.images && Array.isArray(serviceData.images) && serviceData.images.length > 0) {
+      return serviceData.images.filter(img => img && typeof img === 'string' && img.trim() !== '');
+    }
+    if (serviceData.image_url && serviceData.image_url.trim() !== '') {
+      return [serviceData.image_url];
+    }
+    return [];
   };
 
   // Loading state
@@ -240,6 +270,9 @@ const ServiceDetailPage = () => {
     );
   }
 
+  const images = getAllImages();
+  const hasMultipleImages = images.length > 1;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -291,19 +324,9 @@ const ServiceDetailPage = () => {
             <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
               {/* Service Image */}
               <div className="relative h-64 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
-                {serviceData.images && serviceData.images.length > 0 ? (
+                {images.length > 0 ? (
                   <img
-                    src={serviceData.images[selectedImage]}
-                    alt={serviceData.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.parentElement.querySelector('.fallback-bg').style.display = 'flex';
-                    }}
-                  />
-                ) : serviceData.image_url ? (
-                  <img
-                    src={serviceData.image_url}
+                    src={images[selectedImage]}
                     alt={serviceData.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -314,7 +337,7 @@ const ServiceDetailPage = () => {
                 ) : null}
 
                 {/* Fallback gradient background */}
-                <div className={`fallback-bg absolute inset-0 flex items-center justify-center ${serviceData.images || serviceData.image_url ? 'hidden' : 'flex'}`}>
+                <div className={`fallback-bg absolute inset-0 flex items-center justify-center ${images.length > 0 ? 'hidden' : 'flex'}`}>
                   <div className="text-center text-white">
                     <Camera className="w-16 h-16 mx-auto mb-4 opacity-80" />
                     <div className="text-2xl font-bold opacity-90">{serviceData.name}</div>
@@ -322,7 +345,7 @@ const ServiceDetailPage = () => {
                 </div>
 
                 {/* Service Type Badge */}
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-4 flex flex-col gap-2">
                   <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
                     serviceData.type === 'fixed'
                       ? 'bg-green-100 text-green-800'
@@ -330,13 +353,19 @@ const ServiceDetailPage = () => {
                   }`}>
                     {serviceData.type === 'fixed' ? 'Fixed Price' : 'Dynamic Price'}
                   </span>
+                  {serviceData.featured && (
+                    <span className="px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                      <Star className="w-3 h-3" />
+                      Featured
+                    </span>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
                 <div className="absolute top-4 left-4 flex gap-2">
-                  <button className="bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
+                  {/* <button className="bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
                     <Heart className="w-5 h-5 text-gray-600" />
-                  </button>
+                  </button> */}
                   <button 
                     onClick={() => handleShare('facebook')}
                     className="bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
@@ -344,13 +373,34 @@ const ServiceDetailPage = () => {
                     <Share2 className="w-5 h-5 text-gray-600" />
                   </button>
                 </div>
+
+                {/* Image navigation for multiple images */}
+                {hasMultipleImages && (
+                  <>
+                    <button
+                      onClick={() => setSelectedImage((prev) => (prev - 1 + images.length) % images.length)}
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all"
+                    >
+                      <ChevronRight className="w-4 h-4 text-gray-700 rotate-180" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedImage((prev) => (prev + 1) % images.length)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all"
+                    >
+                      <ChevronRight className="w-4 h-4 text-gray-700" />
+                    </button>
+                    <div className="absolute bottom-4 right-4 bg-black bg-opacity-75 text-white text-sm px-3 py-1 rounded-full">
+                      {selectedImage + 1} / {images.length}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Thumbnail Images */}
-              {serviceData.images && serviceData.images.length > 1 && (
+              {hasMultipleImages && (
                 <div className="p-4">
                   <div className="flex space-x-2 overflow-x-auto">
-                    {serviceData.images.map((image, index) => (
+                    {images.map((image, index) => (
                       <button
                         key={index}
                         onClick={() => setSelectedImage(index)}
@@ -406,14 +456,30 @@ const ServiceDetailPage = () => {
                       </div>
                     )}
 
-                    {/* Service Category */}
-                    {serviceData.category && (
-                      <div className="mb-4">
+                    {/* Service Category and Meta */}
+                    <div className="flex items-center gap-3 mb-4 flex-wrap">
+                      {serviceData.category && (
                         <span className="inline-block bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">
                           {serviceData.category}
                         </span>
-                      </div>
-                    )}
+                      )}
+                      
+                      {/* Auto-confirm badge */}
+                      {serviceData.auto_confirm_bookings && (
+                        <span className="inline-block bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Instant Confirm
+                        </span>
+                      )}
+
+                      {/* Prepayment badge */}
+                      {serviceData.require_prepayment && (
+                        <span className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full font-medium flex items-center">
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          Prepay Required
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Price Display */}
@@ -435,7 +501,7 @@ const ServiceDetailPage = () => {
                           Custom Quote
                         </div>
                         <div className="text-sm text-gray-500">
-                          Price varies by requirements
+                          {serviceData.price_range || 'Price varies by requirements'}
                         </div>
                       </div>
                     )}
@@ -453,11 +519,27 @@ const ServiceDetailPage = () => {
                       This service offers flexible pricing based on your specific needs and requirements. 
                       The final price will be determined after consultation with our service provider.
                     </p>
-                    <p className="text-blue-700 text-sm">
-                      <strong>Consultation Required:</strong> Book a free consultation to discuss your needs and get a custom quote.
-                    </p>
+                    {serviceData.consultation_required && (
+                      <p className="text-blue-700 text-sm">
+                        <strong>Consultation Required:</strong> Book a free consultation to discuss your needs and get a custom quote.
+                      </p>
+                    )}
+                    {serviceData.pricing_factors && serviceData.pricing_factors.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-blue-800 text-sm font-medium mb-2">Pricing factors include:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {serviceData.pricing_factors.map((factor, index) => (
+                            <span key={index} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                              {factor}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
+
+
 
                 {/* Service Description */}
                 <div className="mb-6">
@@ -486,7 +568,7 @@ const ServiceDetailPage = () => {
                     </>
                   ) : (
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <Zap className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                      <Tag className="w-6 h-6 text-blue-600 mx-auto mb-2" />
                       <div className="text-sm font-medium text-gray-900">Flexible</div>
                       <div className="text-xs text-gray-600">Custom pricing</div>
                     </div>
@@ -503,6 +585,14 @@ const ServiceDetailPage = () => {
                     <div className="text-sm font-medium text-gray-900">Professional</div>
                     <div className="text-xs text-gray-600">Verified service</div>
                   </div>
+
+                  {serviceData.auto_confirm_bookings && (
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                      <div className="text-sm font-medium text-gray-900">Instant</div>
+                      <div className="text-xs text-gray-600">Auto-confirm</div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Store Location */}
@@ -539,6 +629,10 @@ const ServiceDetailPage = () => {
                         <li>• Professional service delivery</li>
                         <li>• Quality assurance guarantee</li>
                         <li>• Customer support</li>
+                        {serviceData.auto_confirm_bookings && <li>• Instant booking confirmation</li>}
+                        {serviceData.allow_early_checkin && <li>• Early check-in available</li>}
+                        {serviceData.type === 'fixed' && <li>• Transparent fixed pricing</li>}
+                        {serviceData.type === 'dynamic' && <li>• Personalized service and pricing</li>}
                       </>
                     )}
                   </ul>
@@ -598,10 +692,13 @@ const ServiceDetailPage = () => {
                   ) : (
                     <div>
                       <div className="text-lg font-bold text-blue-600 mb-1">
-                        Custom Quote Required
+                        {serviceData.price_range || 'Custom Quote Required'}
                       </div>
                       <div className="text-sm text-blue-700">
-                        Price determined after consultation
+                        {serviceData.consultation_required 
+                          ? 'Consultation required for pricing'
+                          : 'Price determined after consultation'
+                        }
                       </div>
                     </div>
                   )}
@@ -612,12 +709,23 @@ const ServiceDetailPage = () => {
                   <h4 className="font-semibold text-gray-900 mb-2">Booking Information</h4>
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
-                      <span>Instant booking confirmation</span>
+                      {serviceData.auto_confirm_bookings ? (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Bell className="w-4 h-4 text-yellow-500" />
+                      )}
+                      <span>
+                        {serviceData.auto_confirm_bookings 
+                          ? 'Instant booking confirmation'
+                          : 'Manual booking review (within 24h)'
+                        }
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-500" />
-                      <span>Free cancellation up to 24h before</span>
+                      <span>
+                        Cancellation allowed {serviceData.min_cancellation_hours || 2}h before
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-500" />
@@ -629,8 +737,29 @@ const ServiceDetailPage = () => {
                         <span>Fixed price - no hidden costs</span>
                       </div>
                     )}
+                    {serviceData.allow_early_checkin && (
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-green-500" />
+                        <span>Early check-in up to {serviceData.early_checkin_minutes || 15} minutes</span>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Payment Information */}
+                {serviceData.require_prepayment && (
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-start gap-2">
+                      <CreditCard className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <div className="font-semibold text-blue-900 text-sm">Prepayment Required</div>
+                        <div className="text-blue-700 text-xs mt-1">
+                          Payment is required to secure your booking
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Book Button */}
@@ -652,7 +781,10 @@ const ServiceDetailPage = () => {
                   <>
                     <Calendar className="w-5 h-5" />
                     <span>
-                      {serviceData.type === 'dynamic' ? 'BOOK CONSULTATION' : 'BOOK SERVICE'}
+                      {serviceData.type === 'dynamic' 
+                        ? (serviceData.consultation_required ? 'BOOK CONSULTATION' : 'GET CUSTOM QUOTE')
+                        : 'BOOK SERVICE'
+                      }
                     </span>
                   </>
                 ) : (

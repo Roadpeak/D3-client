@@ -1,4 +1,4 @@
-// services/api.js - COMPLETE UPDATED VERSION WITH LOCATION SUPPORT
+// services/api.js - COMPLETE UPDATED VERSION WITH LOCATION SUPPORT AND ENHANCED NOTIFICATIONS
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
@@ -86,6 +86,7 @@ export const API_ENDPOINTS = {
         resetPassword: '/users/reset-password',
         favorites: '/users/favorites',
         favoritesCount: '/users/favorites/count',
+        notificationSettings: '/users/notification-settings',
     },
     // Merchant endpoints
     merchant: {
@@ -130,7 +131,7 @@ export const API_ENDPOINTS = {
         favoriteStatus: (id) => `/offers/${id}/favorite/status`,
         toggleFavorite: (id) => `/offers/${id}/favorite/toggle`,
     },
-    // Location endpoints - NEW
+    // Location endpoints
     locations: {
         available: '/locations/available',
         reverseGeocode: '/locations/reverse-geocode',
@@ -143,14 +144,75 @@ export const API_ENDPOINTS = {
         get: (id) => `/bookings/${id}`,
         userBookings: '/bookings/user',
         merchantBookings: '/bookings/merchant',
+        cancel: (id) => `/bookings/${id}/cancel`,
+        confirm: (id) => `/bookings/${id}/confirm`,
+        complete: (id) => `/bookings/${id}/complete`,
     },
-    // Chat endpoints
+    // Enhanced Chat endpoints
     chats: {
         list: '/chats',
         get: (id) => `/chats/${id}`,
         messages: (id) => `/chats/${id}/messages`,
         sendMessage: (id) => `/chats/${id}/messages`,
-    }
+        // New chat endpoints from updated controller
+        userConversations: '/chat/conversations/user',
+        merchantConversations: '/chat/conversations/merchant',
+        startConversation: '/chat/start',
+        searchConversations: '/chat/search',
+        analytics: '/chat/analytics',
+        getMessages: (conversationId) => `/chat/conversations/${conversationId}/messages`,
+        sendChatMessage: '/chat/send',
+        updateMessageStatus: (messageId) => `/chat/messages/${messageId}/status`,
+        markAsRead: (conversationId) => `/chat/conversations/${conversationId}/read`,
+    },
+    // Enhanced Notification endpoints
+    notifications: {
+        // Core endpoints
+        list: '/notifications',
+        counts: '/notifications/counts',
+        analytics: '/notifications/analytics',
+        byStore: (storeId) => `/notifications/store/${storeId}`,
+        
+        // Single notification operations
+        get: (id) => `/notifications/${id}`,
+        markAsRead: (id) => `/notifications/${id}/read`,
+        delete: (id) => `/notifications/${id}`,
+        
+        // Bulk operations
+        markAllAsRead: '/notifications/mark-all-read',
+        bulkMarkRead: '/notifications/bulk/mark-read',
+        bulkDelete: '/notifications/bulk',
+        
+        // Settings
+        settings: '/notifications/settings',
+        updateSettings: '/notifications/settings',
+        
+        // Admin/System
+        broadcast: '/notifications/broadcast',
+        cleanup: '/notifications/cleanup',
+        health: '/notifications/health',
+        
+        // Create notification
+        create: '/notifications',
+    },
+    // Service Marketplace endpoints
+    marketplace: {
+        requests: {
+            list: '/marketplace/requests',
+            get: (id) => `/marketplace/requests/${id}`,
+            create: '/marketplace/requests',
+            update: (id) => `/marketplace/requests/${id}`,
+            delete: (id) => `/marketplace/requests/${id}`,
+        },
+        offers: {
+            list: '/marketplace/offers',
+            get: (id) => `/marketplace/offers/${id}`,
+            create: '/marketplace/offers',
+            accept: (id) => `/marketplace/offers/${id}/accept`,
+            reject: (id) => `/marketplace/offers/${id}/reject`,
+            withdraw: (id) => `/marketplace/offers/${id}/withdraw`,
+        },
+    },
 };
 
 // Response interceptor for error handling
@@ -208,7 +270,374 @@ const handleApiCall = async (apiCall) => {
     }
 };
 
-// NEW: Location API endpoints
+// Enhanced Notification API
+export const notificationAPI = {
+    // Get notifications with filters
+    async getNotifications(params = {}) {
+        const queryParams = new URLSearchParams({
+            page: params.page || 1,
+            limit: params.limit || 20,
+            type: params.type || 'all',
+            unreadOnly: params.unreadOnly || false,
+            storeId: params.storeId || '',
+            priority: params.priority || '',
+        }).toString();
+
+        return handleApiCall(() => api.get(`${API_ENDPOINTS.notifications.list}?${queryParams}`));
+    },
+
+    // Get notification counts
+    async getCounts(storeId = null) {
+        const url = storeId 
+            ? `${API_ENDPOINTS.notifications.counts}?storeId=${storeId}`
+            : API_ENDPOINTS.notifications.counts;
+        return handleApiCall(() => api.get(url));
+    },
+
+    // Get notification analytics
+    async getAnalytics(period = '7d', storeId = null) {
+        const params = new URLSearchParams({
+            period,
+            ...(storeId && { storeId })
+        }).toString();
+        return handleApiCall(() => api.get(`${API_ENDPOINTS.notifications.analytics}?${params}`));
+    },
+
+    // Get notifications for specific store (merchant only)
+    async getByStore(storeId, params = {}) {
+        const queryParams = new URLSearchParams({
+            page: params.page || 1,
+            limit: params.limit || 20,
+            unreadOnly: params.unreadOnly || false,
+        }).toString();
+        return handleApiCall(() => api.get(`${API_ENDPOINTS.notifications.byStore(storeId)}?${queryParams}`));
+    },
+
+    // Mark single notification as read
+    async markAsRead(notificationId) {
+        return handleApiCall(() => api.put(API_ENDPOINTS.notifications.markAsRead(notificationId)));
+    },
+
+    // Mark all notifications as read with optional filters
+    async markAllAsRead(filters = {}) {
+        const params = new URLSearchParams(filters).toString();
+        const url = params 
+            ? `${API_ENDPOINTS.notifications.markAllAsRead}?${params}`
+            : API_ENDPOINTS.notifications.markAllAsRead;
+        return handleApiCall(() => api.put(url));
+    },
+
+    // Bulk mark notifications as read
+    async bulkMarkAsRead(notificationIds) {
+        return handleApiCall(() => api.put(API_ENDPOINTS.notifications.bulkMarkRead, { notificationIds }));
+    },
+
+    // Delete single notification
+    async deleteNotification(notificationId) {
+        return handleApiCall(() => api.delete(API_ENDPOINTS.notifications.delete(notificationId)));
+    },
+
+    // Bulk delete notifications
+    async bulkDelete(notificationIds) {
+        return handleApiCall(() => api.delete(API_ENDPOINTS.notifications.bulkDelete, { 
+            data: { notificationIds } 
+        }));
+    },
+
+    // Create notification (for testing/admin)
+    async createNotification(data) {
+        return handleApiCall(() => api.post(API_ENDPOINTS.notifications.create, data));
+    },
+
+    // Get notification settings
+    async getSettings() {
+        return handleApiCall(() => api.get(API_ENDPOINTS.notifications.settings));
+    },
+
+    // Update notification settings
+    async updateSettings(settings) {
+        return handleApiCall(() => api.put(API_ENDPOINTS.notifications.updateSettings, settings));
+    },
+
+    // Broadcast notification (admin only)
+    async broadcast(data) {
+        return handleApiCall(() => api.post(API_ENDPOINTS.notifications.broadcast, data));
+    },
+
+    // Clean up old notifications (admin only)
+    async cleanup(daysOld = 30) {
+        return handleApiCall(() => api.delete(`${API_ENDPOINTS.notifications.cleanup}?daysOld=${daysOld}`));
+    },
+
+    // Health check
+    async healthCheck() {
+        return handleApiCall(() => api.get(API_ENDPOINTS.notifications.health));
+    },
+};
+
+// Enhanced Chat API
+export const chatAPI = {
+    // Get user conversations (customer view)
+    async getUserConversations() {
+        return handleApiCall(() => api.get(API_ENDPOINTS.chats.userConversations));
+    },
+
+    // Get merchant conversations (merchant view)
+    async getMerchantConversations() {
+        return handleApiCall(() => api.get(API_ENDPOINTS.chats.merchantConversations));
+    },
+
+    // Start new conversation
+    async startConversation(storeId, initialMessage = '') {
+        return handleApiCall(() => api.post(API_ENDPOINTS.chats.startConversation, {
+            storeId,
+            initialMessage
+        }));
+    },
+
+    // Get messages for a conversation
+    async getMessages(conversationId, page = 1, limit = 50) {
+        const params = new URLSearchParams({ page, limit }).toString();
+        return handleApiCall(() => api.get(`${API_ENDPOINTS.chats.getMessages(conversationId)}?${params}`));
+    },
+
+    // Send message
+    async sendMessage(conversationId, content, messageType = 'text') {
+        return handleApiCall(() => api.post(API_ENDPOINTS.chats.sendChatMessage, {
+            conversationId,
+            content,
+            messageType
+        }));
+    },
+
+    // Update message status
+    async updateMessageStatus(messageId, status) {
+        return handleApiCall(() => api.put(API_ENDPOINTS.chats.updateMessageStatus(messageId), { status }));
+    },
+
+    // Mark messages as read
+    async markAsRead(conversationId) {
+        return handleApiCall(() => api.put(API_ENDPOINTS.chats.markAsRead(conversationId)));
+    },
+
+    // Search conversations
+    async searchConversations(query, type = 'all') {
+        const params = new URLSearchParams({ query, type }).toString();
+        return handleApiCall(() => api.get(`${API_ENDPOINTS.chats.searchConversations}?${params}`));
+    },
+
+    // Get chat analytics (merchant only)
+    async getAnalytics() {
+        return handleApiCall(() => api.get(API_ENDPOINTS.chats.analytics));
+    },
+
+    // Legacy support for existing chat endpoints
+    async getChats(params = {}) {
+        return handleApiCall(() => api.get(API_ENDPOINTS.chats.list, { params }));
+    },
+
+    async getChatById(id) {
+        if (!id) {
+            throw new Error('Chat ID is required');
+        }
+        return handleApiCall(() => api.get(API_ENDPOINTS.chats.get(id)));
+    },
+
+    async getChatMessages(id, params = {}) {
+        if (!id) {
+            throw new Error('Chat ID is required');
+        }
+        return handleApiCall(() => api.get(API_ENDPOINTS.chats.messages(id), { params }));
+    },
+
+    async sendChatMessage(id, message) {
+        if (!id) {
+            throw new Error('Chat ID is required');
+        }
+        if (!message) {
+            throw new Error('Message is required');
+        }
+        return handleApiCall(() => api.post(API_ENDPOINTS.chats.sendMessage(id), { message }));
+    },
+};
+
+// Booking API with notification support
+export const bookingAPI = {
+    async getBookings(params = {}) {
+        return handleApiCall(() => api.get(API_ENDPOINTS.bookings.list, { params }));
+    },
+
+    async getBookingById(id) {
+        if (!id) {
+            throw new Error('Booking ID is required');
+        }
+        return handleApiCall(() => api.get(API_ENDPOINTS.bookings.get(id)));
+    },
+
+    async createBooking(bookingData) {
+        if (!bookingData) {
+            throw new Error('Booking data is required');
+        }
+        return handleApiCall(() => api.post(API_ENDPOINTS.bookings.create, bookingData));
+    },
+
+    async cancelBooking(id, reason = '') {
+        if (!id) {
+            throw new Error('Booking ID is required');
+        }
+        return handleApiCall(() => api.post(API_ENDPOINTS.bookings.cancel(id), { reason }));
+    },
+
+    async confirmBooking(id) {
+        if (!id) {
+            throw new Error('Booking ID is required');
+        }
+        return handleApiCall(() => api.post(API_ENDPOINTS.bookings.confirm(id)));
+    },
+
+    async completeBooking(id) {
+        if (!id) {
+            throw new Error('Booking ID is required');
+        }
+        return handleApiCall(() => api.post(API_ENDPOINTS.bookings.complete(id)));
+    },
+
+    async getUserBookings(params = {}) {
+        return handleApiCall(() => api.get(API_ENDPOINTS.bookings.userBookings, { params }));
+    },
+
+    async getMerchantBookings(params = {}) {
+        return handleApiCall(() => api.get(API_ENDPOINTS.bookings.merchantBookings, { params }));
+    },
+};
+
+// Service Marketplace API
+export const marketplaceAPI = {
+    // Service Request methods
+    requests: {
+        async list(params = {}) {
+            return handleApiCall(() => api.get(API_ENDPOINTS.marketplace.requests.list, { params }));
+        },
+
+        async get(id) {
+            if (!id) throw new Error('Request ID is required');
+            return handleApiCall(() => api.get(API_ENDPOINTS.marketplace.requests.get(id)));
+        },
+
+        async create(data) {
+            if (!data) throw new Error('Request data is required');
+            return handleApiCall(() => api.post(API_ENDPOINTS.marketplace.requests.create, data));
+        },
+
+        async update(id, data) {
+            if (!id) throw new Error('Request ID is required');
+            if (!data) throw new Error('Request data is required');
+            return handleApiCall(() => api.put(API_ENDPOINTS.marketplace.requests.update(id), data));
+        },
+
+        async delete(id) {
+            if (!id) throw new Error('Request ID is required');
+            return handleApiCall(() => api.delete(API_ENDPOINTS.marketplace.requests.delete(id)));
+        },
+    },
+
+    // Service Offer methods
+    offers: {
+        async list(params = {}) {
+            return handleApiCall(() => api.get(API_ENDPOINTS.marketplace.offers.list, { params }));
+        },
+
+        async get(id) {
+            if (!id) throw new Error('Offer ID is required');
+            return handleApiCall(() => api.get(API_ENDPOINTS.marketplace.offers.get(id)));
+        },
+
+        async create(data) {
+            if (!data) throw new Error('Offer data is required');
+            return handleApiCall(() => api.post(API_ENDPOINTS.marketplace.offers.create, data));
+        },
+
+        async accept(id) {
+            if (!id) throw new Error('Offer ID is required');
+            return handleApiCall(() => api.post(API_ENDPOINTS.marketplace.offers.accept(id)));
+        },
+
+        async reject(id, reason = '') {
+            if (!id) throw new Error('Offer ID is required');
+            return handleApiCall(() => api.post(API_ENDPOINTS.marketplace.offers.reject(id), { reason }));
+        },
+
+        async withdraw(id, reason = '') {
+            if (!id) throw new Error('Offer ID is required');
+            return handleApiCall(() => api.post(API_ENDPOINTS.marketplace.offers.withdraw(id), { reason }));
+        },
+    },
+};
+
+// WebSocket configuration for real-time updates
+export const WS_CONFIG = {
+    url: process.env.REACT_APP_WS_URL || 'http://localhost:4000',
+    
+    events: {
+        // Notification events
+        NEW_NOTIFICATION: 'new_notification',
+        NOTIFICATION_READ: 'notification_read',
+        NOTIFICATIONS_BULK_READ: 'notifications_bulk_read',
+        NOTIFICATION_DELETED: 'notification_deleted',
+        NOTIFICATIONS_BULK_DELETED: 'notifications_bulk_deleted',
+        NOTIFICATION_COUNT_UPDATE: 'notification_count_update',
+        
+        // Chat events
+        NEW_MESSAGE: 'new_message',
+        MESSAGE_READ: 'message_read',
+        MESSAGES_READ: 'messages_read',
+        MESSAGE_STATUS_UPDATE: 'message_status_update',
+        NEW_CUSTOMER_STORE_CONVERSATION: 'new_customer_store_conversation',
+        
+        // Booking events
+        BOOKING_CREATED: 'booking_created',
+        BOOKING_CONFIRMED: 'booking_confirmed',
+        BOOKING_CANCELLED: 'booking_cancelled',
+        BOOKING_COMPLETED: 'booking_completed',
+        
+        // Store events
+        STORE_ONLINE: 'store_online',
+        STORE_OFFLINE: 'store_offline',
+        STORE_FOLLOWED: 'store_followed',
+        STORE_UNFOLLOWED: 'store_unfollowed',
+        
+        // User status events
+        USER_ONLINE: 'user_online',
+        USER_OFFLINE: 'user_offline',
+        
+        // Connection events
+        CONNECT: 'connect',
+        DISCONNECT: 'disconnect',
+        CONNECT_ERROR: 'connect_error',
+        RECONNECT: 'reconnect',
+        
+        // Room events
+        JOIN_NOTIFICATIONS: 'join_notifications',
+        JOIN_CHAT: 'join_chat',
+        LEAVE_CHAT: 'leave_chat',
+        JOIN_STORE: 'join_store',
+        LEAVE_STORE: 'leave_store',
+    },
+    
+    options: {
+        transports: ['websocket', 'polling'],
+        upgrade: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
+    }
+};
+
+// [KEEP ALL EXISTING EXPORTS AND FUNCTIONS BELOW]
+
+// Location API endpoints
 export const locationAPI = {
     // Get all available locations from stores and offers
     getAvailableLocations: async () => {
@@ -353,7 +782,7 @@ export const locationAPI = {
     }
 };
 
-// UPDATED: Offer API endpoints with location support
+// Offer API endpoints
 export const offerAPI = {
     // Get all offers with pagination and filters (including location)
     getOffers: async (params = {}) => {
@@ -450,7 +879,7 @@ export const offerAPI = {
     },
 };
 
-// UPDATED: Store API endpoints with location support
+// Store API endpoints
 export const storeAPI = {
     // Get stores with location filtering
     getStores: async (params = {}) => {
@@ -669,7 +1098,7 @@ export const favoritesAPI = {
             const results = {};
 
             for (const offerId of offerIds) {
-                const result = await this.isFavorite(offerId);
+                const result = await favoritesAPI.isFavorite(offerId);
                 results[offerId] = result.isFavorite;
 
                 // Small delay to prevent overwhelming the server
@@ -706,6 +1135,15 @@ export const userAPI = {
 
     register: async (userData) => {
         return handleApiCall(() => api.post(API_ENDPOINTS.user.register, userData));
+    },
+
+    // Notification settings
+    getNotificationSettings: async () => {
+        return handleApiCall(() => api.get(API_ENDPOINTS.user.notificationSettings));
+    },
+
+    updateNotificationSettings: async (settings) => {
+        return handleApiCall(() => api.put(API_ENDPOINTS.user.notificationSettings, settings));
     },
 };
 
@@ -770,7 +1208,7 @@ export const testFavoritesAPI = async () => {
     return results;
 };
 
-// NEW: Location-aware search functionality
+// Location-aware search functionality
 export const searchAPI = {
     // Search stores with location filtering
     searchStores: async (query, location = null, params = {}) => {

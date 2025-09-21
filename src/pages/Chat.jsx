@@ -1,9 +1,8 @@
-// pages/ChatPage.jsx - Updated with NO auto-selection
+// pages/ChatPage.jsx - Updated with NO auto-selection and NO Footer
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Send, Search, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle, Store, Paperclip, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import chatService from '../services/chatService';
 import useSocket from '../hooks/useSocket';
 
@@ -545,7 +544,6 @@ const ChatPage = () => {
             <p className="text-gray-600">Loading your store conversations...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -559,7 +557,6 @@ const ChatPage = () => {
             <p className="text-gray-600">Loading customer data...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -572,7 +569,7 @@ const ChatPage = () => {
       <div className="flex-1 w-full">
         <div className="max-w-7xl mx-auto h-full bg-white shadow-sm">
           {/* Main chat layout - Constrained width */}
-          <div className="flex w-full" style={{ height: 'calc(100vh - 120px)' }}>
+          <div className="flex w-full" style={{ height: 'calc(100vh - 60px)' }}>
             {/* Store Chat List Sidebar - Fixed width */}
             <div className={`${selectedChat
               ? 'hidden xl:flex'
@@ -831,7 +828,7 @@ const ChatPage = () => {
                   </div>
 
                   {/* WhatsApp-style Message Input */}
-                  <div className="bg-white px-8 py-6 border-t border-gray-200 flex-shrink-0">
+                  <div className="bg-white px-8 py-6 border-t border-gray-200 flex-shrink-0 mb-16 lg:mb-0">
                     {/* Image Preview Area */}
                     {imagePreview && (
                       <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
@@ -975,8 +972,6 @@ const ChatPage = () => {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 };

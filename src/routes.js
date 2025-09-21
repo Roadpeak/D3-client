@@ -18,6 +18,7 @@ import ViewService from './pages/ViewService' // Keep existing for backward comp
 
 // Booking System
 import EnhancedBookingPage from './pages/Booking'
+import BookingDetails from './components/c2/BookingDetails'
 
 // Other Pages
 import Chat from './pages/Chat'
@@ -34,6 +35,7 @@ import FavouritesStandalone from './components/c2/Favourites'
 import FollowedStoresStandalone from './components/c2/FollowedStores'
 import EarnStandalone from './components/c2/Earn'
 import ProfileSettingsStandalone from './components/c2/ProfileSettings'
+import ServiceRequestsStandalone from './components/c2/ServiceRequests'
 
 // Footer Pages
 import ContactUs from './components/ContactUs'
@@ -51,10 +53,10 @@ const RouteChangeHandler = ({ children }) => {
   useEffect(() => {
     // Option 1: Soft refresh - scroll to top and clear some cached data
     window.scrollTo(0, 0);
-    
+
     // Clear any cached data if needed
     // localStorage.removeItem('cachedData'); // Example
-    
+
     // Option 2: Force full page refresh (uncomment if you really need this)
     // Note: This will slow down your app and break SPA behavior
     // if (location.pathname !== '/') {
@@ -62,10 +64,10 @@ const RouteChangeHandler = ({ children }) => {
     //     window.location.reload();
     //   }, 100);
     // }
-    
+
     // Option 3: Trigger custom refresh events
     window.dispatchEvent(new Event('routeChanged'));
-    
+
   }, [location.pathname]);
 
   return children;
@@ -190,7 +192,7 @@ const AppRoutes = () => {
           {/* Search */}
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/search" element={<SearchResults />} />
-          
+
 
           {/* Hot Deals */}
           <Route path='/hotdeals' element={<Hotdeals />} />
@@ -227,11 +229,18 @@ const AppRoutes = () => {
           <Route path='/profile/edit' element={<Navigate to="/profile/settings" replace />} />
           <Route path='/settings' element={<Navigate to="/profile/settings" replace />} />
 
+          <Route path='/profile/service-requests' element={<ServiceRequestsStandalone />} />
+          <Route path='/profile/requests' element={<Navigate to="/profile/service-requests" replace />} />
+          <Route path='/service-requests' element={<Navigate to="/profile/service-requests" replace />} />
+
+
           {/* Alternative Profile Route Patterns */}
           <Route path='/my-bookings' element={<Navigate to="/profile/bookings" replace />} />
+          <Route path="/booking-details/:bookingId" element={<BookingDetails />} />
           <Route path='/my-favourites' element={<Navigate to="/profile/favourites" replace />} />
           <Route path='/my-stores' element={<Navigate to="/profile/followed-stores" replace />} />
           <Route path='/my-earnings' element={<Navigate to="/profile/earn" replace />} />
+          <Route path='/my-service-requests' element={<Navigate to="/profile/service-requests" replace />} />
 
           {/* ==================== EXISTING USER DASHBOARD ROUTES ==================== */}
 

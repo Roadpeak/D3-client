@@ -93,6 +93,29 @@ const EnhancedBookingPage = () => {
     return `KES ${parseFloat(amount).toFixed(2)}`;
   }, []);
 
+  const parseWorkingDaysArray = (workingDays) => {
+    if (!workingDays) return [];
+    
+    if (Array.isArray(workingDays)) {
+      return workingDays.filter(day => day && typeof day === 'string');
+    }
+    
+    if (typeof workingDays === 'string') {
+      try {
+        const parsed = JSON.parse(workingDays);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(day => day && typeof day === 'string');
+        }
+      } catch (e) {
+        return workingDays.split(',').map(day => day.trim()).filter(day => day);
+      }
+    }
+    
+    return [];
+  };
+  
+  
+
   const isWorkingDay = useCallback((date, workingDays) => {
     if (!workingDays || !Array.isArray(workingDays)) {
       console.warn('Invalid working days:', workingDays);
@@ -184,13 +207,13 @@ const EnhancedBookingPage = () => {
     try {
       setLoading(true);
       setError(null);
-
+  
       if (!entityId || entityId.trim() === '') {
         throw new Error(`Invalid booking request. ${initialEntityType} ID is missing.`);
       }
-
+  
       console.log('Initializing booking:', { entityId, entityType: initialEntityType, isOfferBooking: initialIsOfferBooking });
-
+  
       // Get current user
       const userResponse = await withTimeout(authService.getCurrentUser());
       if (!userResponse || !userResponse.success) {
@@ -202,7 +225,7 @@ const EnhancedBookingPage = () => {
       const userData = userResponse.data?.user || userResponse.data;
       setUser(userData);
       setPhoneNumber(userData?.phoneNumber || userData?.phone || '');
-
+  
       // Get entity details based on type
       let entityData;
       if (initialIsOfferBooking) {
@@ -216,39 +239,116 @@ const EnhancedBookingPage = () => {
           return serviceResponse.service || serviceResponse.data || serviceResponse;
         });
       }
-
+  
       if (!entityData) {
         throw new Error(`${initialEntityType === 'offer' ? 'Offer' : 'Service'} not found`);
       }
-
+  
       setEntityType(initialEntityType);
       setIsOfferBooking(initialIsOfferBooking);
       setEntityDetails(entityData);
-
-      // Get branch (use offer endpoint since they share same store logic)
+  
+      // ENHANCED BRANCH LOADING - This is the key fix
       try {
-        const branchResponse = await retryRequest(async () => {
-          if (isOfferBooking) {
-            return await withTimeout(bookingService.getBranchForOffer(entityId));
-          } else {
-            return await withTimeout(bookingService.getBranchForService(entityId));
+        console.log('🏢 Loading branch information for:', initialEntityType, entityId);
+        
+        let branchResponse;
+        
+        if (initialIsOfferBooking) {
+          // For offers, try multiple endpoints in sequence
+          try {
+            branchResponse = await withTimeout(bookingService.getBranchForOffer(entityId));
+            console.log('✅ Got branch from offer endpoint:', branchResponse);
+          } catch (offerBranchError) {
+            console.warn('⚠️ Offer branch endpoint failed, trying fallback:', offerBranchError.message);
+            
+            // Fallback: try to get branch from the offer's service store
+            if (entityData.service?.store) {
+              branchResponse = {
+                success: true,
+                branch: {
+                  id: `store-${entityData.service.store.id}`,
+                  name: entityData.service.store.name + ' (Main Branch)',
+                  address: entityData.service.store.location,
+                  phone: entityData.service.store.phone_number,
+                  openingTime: entityData.service.store.opening_time,
+                  closingTime: entityData.service.store.closing_time,
+                  workingDays: entityData.service.store.working_days,
+                  isMainBranch: true,
+                  storeId: entityData.service.store.id
+                }
+              };
+              console.log('✅ Created branch from offer store data:', branchResponse.branch);
+            }
           }
-        });
+        } else {
+          branchResponse = await withTimeout(bookingService.getBranchForService(entityId));
+          console.log('✅ Got branch from service endpoint:', branchResponse);
+        }
         
         if (branchResponse?.branch) {
           setBranch(branchResponse.branch);
-          console.log('Branch loaded:', branchResponse.branch.name);
+          
+          // IMPORTANT: Also set branchInfo for the date validation logic
+          setBranchInfo({
+            name: branchResponse.branch.name,
+            openingTime: branchResponse.branch.openingTime,
+            closingTime: branchResponse.branch.closingTime,
+            workingDays: branchResponse.branch.workingDays
+          });
+          
+          // Set initial booking data with branch
+          setBookingData(prev => ({
+            ...prev,
+            branch: branchResponse.branch
+          }));
+          
+          console.log('✅ Branch and branchInfo set successfully');
         } else {
-          console.warn('No branch found, will use fallback');
+          console.warn('⚠️ No branch found in response');
           setBranch(null);
+          setBranchInfo(null);
         }
       } catch (branchError) {
-        console.warn('Error fetching branch:', branchError);
+        console.error('❌ Error fetching branch:', branchError);
+        
+        // Don't fail the entire initialization if branch loading fails
         setBranch(null);
+        setBranchInfo(null);
+        
+        // For offers, try to extract branch info from the offer data itself
+        if (initialIsOfferBooking && entityData.service?.store) {
+          const fallbackBranch = {
+            id: `store-${entityData.service.store.id}`,
+            name: entityData.service.store.name + ' (Main Branch)',
+            address: entityData.service.store.location,
+            phone: entityData.service.store.phone_number,
+            openingTime: entityData.service.store.opening_time,
+            closingTime: entityData.service.store.closing_time,
+            workingDays: entityData.service.store.working_days,
+            isMainBranch: true,
+            storeId: entityData.service.store.id
+          };
+          
+          setBranch(fallbackBranch);
+          setBranchInfo({
+            name: fallbackBranch.name,
+            openingTime: fallbackBranch.openingTime,
+            closingTime: fallbackBranch.closingTime,
+            workingDays: fallbackBranch.workingDays
+          });
+          
+          setBookingData(prev => ({
+            ...prev,
+            branch: fallbackBranch
+          }));
+          
+          console.log('✅ Used fallback branch from offer data');
+        }
       }
-
+  
       console.log('Booking initialization completed');
-
+  
     } catch (err) {
       console.error('Error initializing booking:', err);
       
@@ -262,12 +362,24 @@ const EnhancedBookingPage = () => {
         navigate(`/login?redirect=${window.location.pathname}`);
         return;
       }
-
+  
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }, [entityId, initialEntityType, initialIsOfferBooking, navigate, withTimeout, retryRequest]);
+
+  useEffect(() => {
+    if (currentStep === 2 && !bookingData.branch && branch) {
+      console.log('🔄 Auto-setting branch when moving to step 2');
+      setBookingData(prev => ({
+        ...prev,
+        branch: branch
+      }));
+    }
+  }, [currentStep, bookingData.branch, branch]);
+
+  
 
   // ==================== SLOT MANAGEMENT ====================
 
@@ -794,75 +906,122 @@ const EnhancedBookingPage = () => {
     </div>
   );
 
-  const SmartDatePicker = () => {
-    const availableDates = getAvailableDates();
+ const SmartDatePicker = () => {
+  const availableDates = getAvailableDates();
+  
+  // Helper function to safely parse working days
+  const parseWorkingDays = (workingDays) => {
+    if (!workingDays) return [];
     
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Select Date
-        </label>
-        
-        <input
-          type="date"
-          value={bookingData.date}
-          onChange={(e) => {
-            console.log('Date selected:', e.target.value);
-            setBookingData(prev => ({ ...prev, date: e.target.value, time: '' }));
-          }}
-          min={new Date().toISOString().split('T')[0]}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
-        />
-        
-        {availableDates.length > 0 && (
-          <div>
-            <p className="text-sm text-gray-600 mb-2">Quick select (working days only):</p>
-            <div className="grid grid-cols-2 gap-2">
-              {availableDates.slice(0, 6).map((dateObj) => (
-                <button
-                  key={dateObj.date}
-                  onClick={() => {
-                    console.log('Quick date selected:', dateObj);
-                    setBookingData(prev => ({ ...prev, date: dateObj.date, time: '' }));
-                  }}
-                  className={`p-2 text-xs rounded border transition-colors ${
-                    bookingData.date === dateObj.date
-                      ? 'bg-blue-500 text-white border-blue-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
-                  }`}
-                >
-                  <div className="font-medium">{dateObj.dayName}</div>
-                  <div className="text-xs opacity-75">{dateObj.formattedDate}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {branchInfo ? (
-          <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-sm font-medium text-gray-700">{branchInfo.name}</p>
-            <p className="text-xs text-gray-500">
-              Open: {branchInfo.openingTime} - {branchInfo.closingTime}
-            </p>
-            {branchInfo.workingDays && (
-              <p className="text-xs text-gray-500">
-                Working days: {branchInfo.workingDays.map(day => 
-                  day.charAt(0).toUpperCase() + day.slice(1).toLowerCase()
-                ).join(', ')}
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              Loading branch information...
-            </p>
-          </div>
-        )}
-      </div>
-    );
+    if (Array.isArray(workingDays)) {
+      return workingDays.filter(day => day && typeof day === 'string');
+    }
+    
+    if (typeof workingDays === 'string') {
+      try {
+        // Try parsing as JSON first
+        const parsed = JSON.parse(workingDays);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(day => day && typeof day === 'string');
+        }
+      } catch (e) {
+        // If JSON parsing fails, try comma-separated
+        return workingDays.split(',').map(day => day.trim()).filter(day => day);
+      }
+    }
+    
+    return [];
   };
+  
+  // Safely get working days for display
+  const getDisplayWorkingDays = () => {
+    if (!branchInfo || !branchInfo.workingDays) return [];
+    
+    const parsedDays = parseWorkingDays(branchInfo.workingDays);
+    return parsedDays.map(day => {
+      const dayStr = day.toString().trim();
+      return dayStr.charAt(0).toUpperCase() + dayStr.slice(1).toLowerCase();
+    });
+  };
+  
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-3">
+        Select Date
+      </label>
+      
+      <input
+        type="date"
+        value={bookingData.date}
+        onChange={(e) => {
+          console.log('Date selected:', e.target.value);
+          setBookingData(prev => ({ ...prev, date: e.target.value, time: '' }));
+        }}
+        min={new Date().toISOString().split('T')[0]}
+        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+      />
+      
+      {availableDates.length > 0 && (
+        <div>
+          <p className="text-sm text-gray-600 mb-2">Quick select (working days only):</p>
+          <div className="grid grid-cols-2 gap-2">
+            {availableDates.slice(0, 6).map((dateObj) => (
+              <button
+                key={dateObj.date}
+                onClick={() => {
+                  console.log('Quick date selected:', dateObj);
+                  setBookingData(prev => ({ ...prev, date: dateObj.date, time: '' }));
+                }}
+                className={`p-2 text-xs rounded border transition-colors ${
+                  bookingData.date === dateObj.date
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
+                }`}
+              >
+                <div className="font-medium">{dateObj.dayName}</div>
+                <div className="text-xs opacity-75">{dateObj.formattedDate}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {branchInfo ? (
+        <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <p className="text-sm font-medium text-gray-700">{branchInfo.name}</p>
+          <p className="text-xs text-gray-500">
+            Open: {branchInfo.openingTime} - {branchInfo.closingTime}
+          </p>
+          {(() => {
+            const displayWorkingDays = getDisplayWorkingDays();
+            return displayWorkingDays.length > 0 && (
+              <p className="text-xs text-gray-500">
+                Working days: {displayWorkingDays.join(', ')}
+              </p>
+            );
+          })()}
+        </div>
+      ) : (
+        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            Loading branch information...
+          </p>
+        </div>
+      )}
+      
+      {/* Debug info for development */}
+      {process.env.NODE_ENV === 'development' && branchInfo && (
+        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
+          <p><strong>Debug - Working Days:</strong></p>
+          <p>Raw: {JSON.stringify(branchInfo.workingDays)}</p>
+          <p>Type: {typeof branchInfo.workingDays}</p>
+          <p>Is Array: {Array.isArray(branchInfo.workingDays)}</p>
+          <p>Parsed: {JSON.stringify(getDisplayWorkingDays())}</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
   const ErrorDisplay = ({ error, onRetry, showDebug = false }) => (
     <div className="flex items-center justify-center h-64 border-2 border-dashed border-red-300 rounded-lg bg-red-50">
@@ -1091,7 +1250,7 @@ const EnhancedBookingPage = () => {
   const BranchSelection = () => (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Service Location & Staff</h2>
-
+  
       {bookingData.time && (
         <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center">
@@ -1110,17 +1269,49 @@ const EnhancedBookingPage = () => {
           </div>
         </div>
       )}
-
+  
       <div className="mb-8">
         <h3 className="text-lg font-semibold mb-4">Service Branch</h3>
-        {!branch ? (
+        
+        {/* Show different states based on branch loading */}
+        {!branch && loading ? (
           <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
-            <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500">Branch information loading...</p>
+            <div className="flex items-center justify-center space-x-2">
+              <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+              <span className="text-gray-500">Loading branch information...</span>
+            </div>
+          </div>
+        ) : !branch ? (
+          <div className="p-4 border-2 border-dashed border-red-300 rounded-lg">
+            <div className="text-center">
+              <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+              <p className="text-red-600 font-medium mb-2">
+                Branch information not available
+              </p>
+              <p className="text-sm text-red-500 mb-3">
+                {isOfferBooking 
+                  ? "We couldn't load the branch details for this offer. This might be a configuration issue."
+                  : "We couldn't load the branch details for this service."
+                }
+              </p>
+              <button
+                onClick={() => {
+                  console.log('Retrying branch load...');
+                  // Force re-initialization to try loading branch again
+                  initializeBooking();
+                }}
+                className="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded text-sm transition-colors"
+              >
+                Retry Loading Branch
+              </button>
+            </div>
           </div>
         ) : (
           <div
-            onClick={() => setBookingData(prev => ({ ...prev, branch, staff: null }))}
+            onClick={() => {
+              console.log('Branch selected:', branch.name);
+              setBookingData(prev => ({ ...prev, branch, staff: null }));
+            }}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
               bookingData.branch?.id === branch.id
                 ? 'border-blue-500 bg-blue-50 shadow-md'
@@ -1146,9 +1337,21 @@ const EnhancedBookingPage = () => {
                     {branch.openingTime} - {branch.closingTime}
                   </p>
                 )}
+                {branch.workingDays && Array.isArray(branch.workingDays) && branch.workingDays.length > 0 && (
+                  <p className="text-gray-600 mt-1 text-sm">
+                    Open: {branch.workingDays.map(day => 
+                      typeof day === 'string' ? day.charAt(0).toUpperCase() + day.slice(1).toLowerCase() : day
+                    ).join(', ')}
+                  </p>
+                )}
                 {branch.isMainBranch && (
                   <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mt-2">
                     Main Branch
+                  </span>
+                )}
+                {isOfferBooking && (
+                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mt-2">
+                    Offer Location
                   </span>
                 )}
               </div>
@@ -1161,9 +1364,29 @@ const EnhancedBookingPage = () => {
             </div>
           </div>
         )}
+        
+        {/* Debug info for development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-3 bg-gray-50 border rounded text-xs">
+            <p><strong>Debug Info:</strong></p>
+            <p>Entity Type: {entityType}</p>
+            <p>Is Offer: {isOfferBooking.toString()}</p>
+            <p>Branch Available: {!!branch}</p>
+            <p>Branch Selected: {!!bookingData.branch}</p>
+            <p>Entity ID: {entityId}</p>
+            {branch && (
+              <>
+                <p>Branch ID: {branch.id}</p>
+                <p>Branch Name: {branch.name}</p>
+                <p>Working Days: {JSON.stringify(branch.workingDays)}</p>
+              </>
+            )}
+          </div>
+        )}
       </div>
-
-      {bookingData.branch && (
+  
+      {/* Staff selection section - only show if branch is selected */}
+      {(bookingData.branch || branch) && (
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4">Select Staff Member (Optional)</h3>
           
@@ -1215,7 +1438,7 @@ const EnhancedBookingPage = () => {
           </div>
         </div>
       )}
-
+  
       <div className="mb-8">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Additional Notes (Optional)
@@ -1228,7 +1451,7 @@ const EnhancedBookingPage = () => {
           placeholder="Any special requests or notes..."
         />
       </div>
-
+  
       <div className="flex justify-between">
         <button
           onClick={() => setCurrentStep(1)}
@@ -1239,7 +1462,7 @@ const EnhancedBookingPage = () => {
         </button>
         <button
           onClick={() => setCurrentStep(3)}
-          disabled={!bookingData.branch}
+          disabled={!bookingData.branch && !branch}
           className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
         >
           <span>Continue</span>
@@ -1248,6 +1471,8 @@ const EnhancedBookingPage = () => {
       </div>
     </div>
   );
+
+  
 
   const ReviewStep = () => (
     <div className="space-y-6">
