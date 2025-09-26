@@ -1,5 +1,3 @@
-// EnhancedBookingPage.js - Complete updated version supporting both offers and services
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Calendar, Clock, MapPin, User, CreditCard, Smartphone, Check, 
@@ -19,15 +17,12 @@ const EnhancedBookingPage = () => {
   const { offerId, serviceId } = useParams();
   const navigate = useNavigate();
   
-  // ==================== STATE MANAGEMENT ====================
-  
   // UI States
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [retryAttempts, setRetryAttempts] = useState(0);
 
   // Data States
   const [entityDetails, setEntityDetails] = useState(null);
@@ -58,15 +53,10 @@ const EnhancedBookingPage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [accessFee, setAccessFee] = useState(0);
 
-  // Derived values from URL params
+  // Derived values
   const entityId = offerId || serviceId;
   const initialEntityType = offerId ? 'offer' : 'service';
   const initialIsOfferBooking = !!offerId;
-
-  // Constants
-  const platformFee = 5.99;
-  const MAX_RETRY_ATTEMPTS = 3;
-  const REQUEST_TIMEOUT = 15000;
 
   const steps = [
     { id: 1, title: "Date & Time", icon: Calendar, completed: currentStep > 1 },
@@ -78,17 +68,54 @@ const EnhancedBookingPage = () => {
   // ==================== UTILITY FUNCTIONS ====================
 
   const convertTo24Hour = useCallback((time12h) => {
-    const [time, modifier] = time12h.split(' ');
-    let [hours, minutes] = time.split(':');
-    if (hours === '12') {
-      hours = '00';
+    if (!time12h) {
+      console.error('convertTo24Hour: time is empty:', time12h);
+      return '09:00'; // Default fallback
     }
-    if (modifier === 'PM') {
-      hours = parseInt(hours, 10) + 12;
+  
+    const timeStr = time12h.toString().trim();
+    console.log('convertTo24Hour input:', timeStr);
+  
+    // If it's already in 24-hour format (no AM/PM), return as-is
+    if (!timeStr.includes('AM') && !timeStr.includes('PM')) {
+      // Ensure it's properly formatted
+      const parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        const hours = parts[0].padStart(2, '0');
+        const minutes = parts[1].padStart(2, '0');
+        return `${hours}:${minutes}`;
+      }
+      return timeStr;
     }
-    return `${hours}:${minutes}`;
+  
+    // Handle AM/PM format
+    const parts = timeStr.split(' ');
+    if (parts.length !== 2) {
+      console.error('convertTo24Hour: invalid format:', timeStr);
+      return '09:00'; // Fallback
+    }
+  
+    const [timePart, modifier] = parts;
+    const [hoursStr, minutesStr] = timePart.split(':');
+  
+    if (!hoursStr || !minutesStr) {
+      console.error('convertTo24Hour: missing hours or minutes:', timeStr);
+      return '09:00'; // Fallback
+    }
+  
+    let hours = parseInt(hoursStr, 10);
+    const minutes = minutesStr.padStart(2, '0');
+  
+    if (modifier.toUpperCase() === 'AM') {
+      if (hours === 12) hours = 0;
+    } else if (modifier.toUpperCase() === 'PM') {
+      if (hours !== 12) hours += 12;
+    }
+  
+    const result = `${hours.toString().padStart(2, '0')}:${minutes}`;
+    console.log('convertTo24Hour result:', result);
+    return result;
   }, []);
-
   const formatCurrency = useCallback((amount) => {
     return `KES ${parseFloat(amount).toFixed(2)}`;
   }, []);
@@ -113,25 +140,15 @@ const EnhancedBookingPage = () => {
     
     return [];
   };
-  
-  
 
   const isWorkingDay = useCallback((date, workingDays) => {
     if (!workingDays || !Array.isArray(workingDays)) {
-      console.warn('Invalid working days:', workingDays);
       return false;
     }
 
     const targetDate = new Date(date + 'T00:00:00');
     const dayName = targetDate.toLocaleDateString('en-US', { weekday: 'long' });
     
-    console.log('Working day check:', {
-      inputDate: date,
-      dayName,
-      workingDays,
-      isWorking: workingDays.some(d => d.toLowerCase() === dayName.toLowerCase())
-    });
-
     return workingDays.some(workingDay => 
       workingDay.toString().toLowerCase() === dayName.toLowerCase()
     );
@@ -139,11 +156,8 @@ const EnhancedBookingPage = () => {
 
   const getAvailableDates = useCallback(() => {
     if (!branchInfo?.workingDays || !Array.isArray(branchInfo.workingDays)) {
-      console.log('No working days available yet, branchInfo:', branchInfo);
       return [];
     }
-
-    console.log('Branch working days available:', branchInfo.workingDays);
 
     const availableDates = [];
     const today = new Date();
@@ -166,40 +180,8 @@ const EnhancedBookingPage = () => {
       }
     }
     
-    console.log('Available dates generated:', availableDates.length);
     return availableDates;
   }, [branchInfo, isWorkingDay]);
-
-  const withTimeout = useCallback((promise, timeoutMs = REQUEST_TIMEOUT) => {
-    return Promise.race([
-      promise,
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
-      )
-    ]);
-  }, []);
-
-  const retryRequest = useCallback(async (requestFn, maxRetries = MAX_RETRY_ATTEMPTS) => {
-    let lastError;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`Retry attempt ${attempt}/${maxRetries}`);
-        return await requestFn();
-      } catch (error) {
-        lastError = error;
-        console.warn(`Attempt ${attempt} failed:`, error.message);
-        
-        if (attempt < maxRetries) {
-          const delay = Math.pow(2, attempt - 1) * 1000;
-          console.log(`Waiting ${delay}ms before retry...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    }
-    
-    throw lastError;
-  }, []);
 
   // ==================== INITIALIZATION ====================
 
@@ -212,12 +194,9 @@ const EnhancedBookingPage = () => {
         throw new Error(`Invalid booking request. ${initialEntityType} ID is missing.`);
       }
   
-      console.log('Initializing booking:', { entityId, entityType: initialEntityType, isOfferBooking: initialIsOfferBooking });
-  
       // Get current user
-      const userResponse = await withTimeout(authService.getCurrentUser());
+      const userResponse = await authService.getCurrentUser();
       if (!userResponse || !userResponse.success) {
-        console.warn('User not authenticated, redirecting to login');
         navigate(`/login?redirect=${window.location.pathname}`);
         return;
       }
@@ -229,15 +208,11 @@ const EnhancedBookingPage = () => {
       // Get entity details based on type
       let entityData;
       if (initialIsOfferBooking) {
-        entityData = await retryRequest(async () => {
-          const offerResponse = await withTimeout(offerAPI.getOfferById(entityId));
-          return offerResponse.offer || offerResponse.data || offerResponse;
-        });
+        const offerResponse = await offerAPI.getOfferById(entityId);
+        entityData = offerResponse.offer || offerResponse.data || offerResponse;
       } else {
-        entityData = await retryRequest(async () => {
-          const serviceResponse = await withTimeout(serviceAPI.getServiceById(entityId));
-          return serviceResponse.service || serviceResponse.data || serviceResponse;
-        });
+        const serviceResponse = await serviceAPI.getServiceById(entityId);
+        entityData = serviceResponse.service || serviceResponse.data || serviceResponse;
       }
   
       if (!entityData) {
@@ -248,48 +223,19 @@ const EnhancedBookingPage = () => {
       setIsOfferBooking(initialIsOfferBooking);
       setEntityDetails(entityData);
   
-      // ENHANCED BRANCH LOADING - This is the key fix
+      // Load branch information
       try {
-        console.log('🏢 Loading branch information for:', initialEntityType, entityId);
-        
         let branchResponse;
         
         if (initialIsOfferBooking) {
-          // For offers, try multiple endpoints in sequence
-          try {
-            branchResponse = await withTimeout(bookingService.getBranchForOffer(entityId));
-            console.log('✅ Got branch from offer endpoint:', branchResponse);
-          } catch (offerBranchError) {
-            console.warn('⚠️ Offer branch endpoint failed, trying fallback:', offerBranchError.message);
-            
-            // Fallback: try to get branch from the offer's service store
-            if (entityData.service?.store) {
-              branchResponse = {
-                success: true,
-                branch: {
-                  id: `store-${entityData.service.store.id}`,
-                  name: entityData.service.store.name + ' (Main Branch)',
-                  address: entityData.service.store.location,
-                  phone: entityData.service.store.phone_number,
-                  openingTime: entityData.service.store.opening_time,
-                  closingTime: entityData.service.store.closing_time,
-                  workingDays: entityData.service.store.working_days,
-                  isMainBranch: true,
-                  storeId: entityData.service.store.id
-                }
-              };
-              console.log('✅ Created branch from offer store data:', branchResponse.branch);
-            }
-          }
+          branchResponse = await bookingService.getBranchForOffer(entityId);
         } else {
-          branchResponse = await withTimeout(bookingService.getBranchForService(entityId));
-          console.log('✅ Got branch from service endpoint:', branchResponse);
+          branchResponse = await bookingService.getBranchForService(entityId);
         }
         
         if (branchResponse?.branch) {
           setBranch(branchResponse.branch);
           
-          // IMPORTANT: Also set branchInfo for the date validation logic
           setBranchInfo({
             name: branchResponse.branch.name,
             openingTime: branchResponse.branch.openingTime,
@@ -297,66 +243,73 @@ const EnhancedBookingPage = () => {
             workingDays: branchResponse.branch.workingDays
           });
           
-          // Set initial booking data with branch
           setBookingData(prev => ({
             ...prev,
             branch: branchResponse.branch
           }));
-          
-          console.log('✅ Branch and branchInfo set successfully');
         } else {
-          console.warn('⚠️ No branch found in response');
-          setBranch(null);
-          setBranchInfo(null);
+          // Fallback: extract branch from entity data
+          if (initialIsOfferBooking && entityData.service?.store) {
+            const fallbackBranch = {
+              id: `store-${entityData.service.store.id}`,
+              name: entityData.service.store.name + ' (Main Branch)',
+              address: entityData.service.store.location,
+              phone: entityData.service.store.phone_number,
+              openingTime: entityData.service.store.opening_time,
+              closingTime: entityData.service.store.closing_time,
+              workingDays: entityData.service.store.working_days,
+              isMainBranch: true,
+              storeId: entityData.service.store.id
+            };
+            
+            setBranch(fallbackBranch);
+            setBranchInfo({
+              name: fallbackBranch.name,
+              openingTime: fallbackBranch.openingTime,
+              closingTime: fallbackBranch.closingTime,
+              workingDays: fallbackBranch.workingDays
+            });
+            
+            setBookingData(prev => ({
+              ...prev,
+              branch: fallbackBranch
+            }));
+          } else if (!initialIsOfferBooking && entityData.store) {
+            const fallbackBranch = {
+              id: `store-${entityData.store.id}`,
+              name: entityData.store.name + ' (Main Branch)',
+              address: entityData.store.location,
+              phone: entityData.store.phone_number,
+              openingTime: entityData.store.opening_time,
+              closingTime: entityData.store.closing_time,
+              workingDays: entityData.store.working_days,
+              isMainBranch: true,
+              storeId: entityData.store.id
+            };
+            
+            setBranch(fallbackBranch);
+            setBranchInfo({
+              name: fallbackBranch.name,
+              openingTime: fallbackBranch.openingTime,
+              closingTime: fallbackBranch.closingTime,
+              workingDays: fallbackBranch.workingDays
+            });
+            
+            setBookingData(prev => ({
+              ...prev,
+              branch: fallbackBranch
+            }));
+          }
         }
       } catch (branchError) {
-        console.error('❌ Error fetching branch:', branchError);
-        
-        // Don't fail the entire initialization if branch loading fails
         setBranch(null);
         setBranchInfo(null);
-        
-        // For offers, try to extract branch info from the offer data itself
-        if (initialIsOfferBooking && entityData.service?.store) {
-          const fallbackBranch = {
-            id: `store-${entityData.service.store.id}`,
-            name: entityData.service.store.name + ' (Main Branch)',
-            address: entityData.service.store.location,
-            phone: entityData.service.store.phone_number,
-            openingTime: entityData.service.store.opening_time,
-            closingTime: entityData.service.store.closing_time,
-            workingDays: entityData.service.store.working_days,
-            isMainBranch: true,
-            storeId: entityData.service.store.id
-          };
-          
-          setBranch(fallbackBranch);
-          setBranchInfo({
-            name: fallbackBranch.name,
-            openingTime: fallbackBranch.openingTime,
-            closingTime: fallbackBranch.closingTime,
-            workingDays: fallbackBranch.workingDays
-          });
-          
-          setBookingData(prev => ({
-            ...prev,
-            branch: fallbackBranch
-          }));
-          
-          console.log('✅ Used fallback branch from offer data');
-        }
       }
   
-      console.log('Booking initialization completed');
-  
     } catch (err) {
-      console.error('Error initializing booking:', err);
-      
       let errorMessage = `Failed to load ${initialEntityType} booking information`;
       
-      if (err.message.includes('timeout')) {
-        errorMessage = 'The request is taking too long. Please check your connection and try again.';
-      } else if (err.message.includes('not found')) {
+      if (err.message.includes('not found')) {
         errorMessage = `This ${initialEntityType} is no longer available.`;
       } else if (err.status === 401) {
         navigate(`/login?redirect=${window.location.pathname}`);
@@ -367,19 +320,16 @@ const EnhancedBookingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [entityId, initialEntityType, initialIsOfferBooking, navigate, withTimeout, retryRequest]);
+  }, [entityId, initialEntityType, initialIsOfferBooking, navigate]);
 
   useEffect(() => {
     if (currentStep === 2 && !bookingData.branch && branch) {
-      console.log('🔄 Auto-setting branch when moving to step 2');
       setBookingData(prev => ({
         ...prev,
         branch: branch
       }));
     }
   }, [currentStep, bookingData.branch, branch]);
-
-  
 
   // ==================== SLOT MANAGEMENT ====================
 
@@ -389,83 +339,22 @@ const EnhancedBookingPage = () => {
     try {
       if (forceRefresh) {
         setRefreshing(true);
-        setRetryAttempts(prev => prev + 1);
       }
-  
-      console.log('⏰ Fetching slots for:', { entityId, entityType, date: bookingData.date });
       
       let response;
       
-      // FIXED: Use different endpoints based on entity type, matching original logic
       if (isOfferBooking) {
-        // For offers, use the original offer slots endpoint
-        try {
-          response = await retryRequest(async () => {
-            return await withTimeout(
-              bookingService.getAvailableSlotsForOffer(entityId, bookingData.date)
-            );
-          });
-        } catch (error) {
-          console.warn('⚠️ Offer slots endpoint failed, trying legacy method');
-          
-          // Fallback to direct API call with original parameters
-          response = await retryRequest(async () => {
-            return await withTimeout(
-              bookingService.api.get('/bookings/slots', {
-                params: { 
-                  offerId: entityId, 
-                  date: bookingData.date, 
-                  bookingType: 'offer' 
-                }
-              })
-            );
-          });
-          
-          // Transform response to expected format
-          if (response.data) {
-            response = response.data;
-          }
-        }
+        response = await bookingService.getAvailableSlotsForOffer(entityId, bookingData.date);
       } else {
-        // For services, use service-specific endpoint or fallback
-        try {
-          response = await retryRequest(async () => {
-            return await withTimeout(
-              bookingService.getAvailableSlotsForService(entityId, bookingData.date)
-            );
-          });
-        } catch (error) {
-          console.warn('⚠️ Service slots endpoint failed, trying legacy method');
-          
-          // Fallback for services
-          response = await retryRequest(async () => {
-            return await withTimeout(
-              bookingService.api.get('/bookings/slots', {
-                params: { 
-                  serviceId: entityId, 
-                  date: bookingData.date, 
-                  bookingType: 'service' 
-                }
-              })
-            );
-          });
-          
-          if (response.data) {
-            response = response.data;
-          }
-        }
+        response = await bookingService.getAvailableSlotsForService(entityId, bookingData.date);
       }
       
-      console.log('📡 API Response:', response);
-      
-      // Handle business rule violations properly
+      // Handle business rule violations
       if (response?.businessRuleViolation || (!response?.success && response?.message)) {
         setAvailableSlots([]);
         setDetailedSlots([]);
         
-        // Update branchInfo from response if available
         if (response.storeInfo || response.branchInfo) {
-          console.log('🏪 Updating branchInfo from error response:', response.storeInfo || response.branchInfo);
           setBranchInfo(response.storeInfo || response.branchInfo);
         }
         
@@ -478,83 +367,36 @@ const EnhancedBookingPage = () => {
         setDetailedSlots(response.detailedSlots || []);
         setBookingRules(response.bookingRules);
         
-        // Update branchInfo from successful response
         if (response.storeInfo || response.branchInfo) {
-          console.log('🏪 Updating branchInfo from success response:', response.storeInfo || response.branchInfo);
           setBranchInfo(response.storeInfo || response.branchInfo);
         }
         
-        // Set access fee based on booking type
-        setAccessFee(isOfferBooking ? (response.accessFee || platformFee) : 0);
+        setAccessFee(isOfferBooking ? (response.accessFee || 5.99) : 0);
         setError(null);
-        
-        console.log('✅ Slots loaded successfully:', response.availableSlots?.length || 0);
         return;
       }
   
-      // If we get here, no slots were found
       setAvailableSlots([]);
       setDetailedSlots([]);
       setError('No available time slots for this date. Please try a different date.');
       
     } catch (err) {
-      console.error('❌ Error fetching slots:', err);
       setAvailableSlots([]);
       setDetailedSlots([]);
       
-      // Enhanced error handling
       if (err.response?.data?.message) {
         setError(err.response.data.message);
         
-        // Update branchInfo if provided in error response
         if (err.response.data.storeInfo || err.response.data.branchInfo) {
-          console.log('🏪 Updating branchInfo from error:', err.response.data.storeInfo || err.response.data.branchInfo);
           setBranchInfo(err.response.data.storeInfo || err.response.data.branchInfo);
         }
-      } else if (err.message.includes('timeout')) {
-        setError('Request timed out. Please check your connection and try again.');
-      } else if (err.message.includes('closed')) {
-        setError('Branch is closed on the selected date. Please choose a different date.');
       } else {
         setError('Failed to load available time slots. Please try again.');
       }
     } finally {
       if (forceRefresh) setRefreshing(false);
     }
-  }, [bookingData.date, entityId, entityType, isOfferBooking, retryRequest, withTimeout]);
-  
-  // ALSO ADD: Debug function to check what's happening
-  const debugSlotGeneration = useCallback(async () => {
-    console.log('🐛 DEBUG: Slot generation details');
-    console.log('Entity ID:', entityId);
-    console.log('Entity Type:', entityType);
-    console.log('Is Offer Booking:', isOfferBooking);
-    console.log('Selected Date:', bookingData.date);
-    console.log('Branch Info:', branchInfo);
-    
-    // Check what day of week the selected date is
-    if (bookingData.date) {
-      const selectedDate = new Date(bookingData.date + 'T00:00:00');
-      const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
-      console.log('Selected day name:', dayName);
-      console.log('Day index:', selectedDate.getDay());
-    }
-    
-    // Test API call directly
-    try {
-      const testResponse = await bookingService.api.get('/bookings/slots', {
-        params: { 
-          [isOfferBooking ? 'offerId' : 'serviceId']: entityId, 
-          date: bookingData.date, 
-          bookingType: entityType 
-        }
-      });
-      console.log('🧪 Direct API test response:', testResponse.data);
-    } catch (testError) {
-      console.log('🧪 Direct API test failed:', testError);
-    }
-  }, [entityId, entityType, isOfferBooking, bookingData.date, branchInfo]);
-  
+  }, [bookingData.date, entityId, entityType, isOfferBooking]);
 
   const getSlotDetails = useCallback((selectedTime) => {
     return detailedSlots.find(slot => 
@@ -572,12 +414,6 @@ const EnhancedBookingPage = () => {
     if (!entityId) return;
 
     try {
-      console.log('Fetching staff for service/offer:', {
-        entityId,
-        entityType: isOfferBooking ? 'offer' : 'service',
-        branchId: branch?.id
-      });
-      
       let response;
       
       if (isOfferBooking) {
@@ -588,32 +424,16 @@ const EnhancedBookingPage = () => {
       
       if (response?.staff && Array.isArray(response.staff)) {
         setStaff(response.staff);
-        console.log('Staff loaded:', {
-          count: response.staff.length,
-          branchId: response.serviceInfo?.branchId,
-          serviceName: response.serviceInfo?.name
-        });
       } else {
         setStaff([]);
-        console.log('No staff in response - may still be loading');
       }
       
     } catch (err) {
-      console.error('Error fetching staff:', err);
       setStaff([]);
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('Staff fetch failed but booking can continue:', {
-          entityId,
-          entityType: isOfferBooking ? 'offer' : 'service',
-          error: err.message,
-          status: err.response?.status
-        });
-      }
     }
   }, [entityId, isOfferBooking, branch]);
 
-  // ==================== OTHER HANDLERS ====================
+  // ==================== HANDLERS ====================
 
   const handleStepNavigation = useCallback((step) => {
     if (step === 1) {
@@ -625,106 +445,102 @@ const EnhancedBookingPage = () => {
     }
   }, [bookingData.date, bookingData.time, bookingData.branch]);
 
- // Replace the handleBookingSubmit function in your EnhancedBookingPage.js
-
- const handleBookingSubmit = useCallback(async () => {
-  // FIXED: Declare processedBookingData outside try block to avoid scope issues
-  let processedBookingData = {
-    userId: user.id,
-    startTime: `${bookingData.date}T${convertTo24Hour(bookingData.time)}:00`, // FIXED: Add seconds
-    staffId: bookingData.staff?.id,
-    notes: bookingData.notes,
-    bookingType: entityType,
-    clientInfo: {
-      name: `${user.firstName} ${user.lastName}`,
-      email: user.email,
-      phone: user.phoneNumber || user.phone || phoneNumber
-    }
-  };
-
-  // FIXED: Handle branch ID that might be a store fallback
-  if (bookingData.branch) {
-    if (bookingData.branch.id && bookingData.branch.id.startsWith('store-')) {
-      // Extract actual store ID from store-prefixed ID
-      const actualStoreId = bookingData.branch.id.replace('store-', '');
-      processedBookingData.storeId = actualStoreId;
-      console.log('🔧 Using storeId instead of branchId:', actualStoreId);
-    } else if (bookingData.branch.isMainBranch) {
-      // For main branches that are actually stores
-      processedBookingData.storeId = bookingData.branch.storeId || bookingData.branch.id;
-      console.log('🔧 Using storeId for main branch:', processedBookingData.storeId);
-    } else {
-      // Real branch ID
-      processedBookingData.branchId = bookingData.branch.id;
-      console.log('🔧 Using branchId:', processedBookingData.branchId);
-    }
-  }
-
-  // Add correct ID field based on booking type
-  if (isOfferBooking) {
-    processedBookingData.offerId = entityId;
-  } else {
-    processedBookingData.serviceId = entityId;
-  }
-
-  // Only add payment data for offer bookings (platform access fee)
-  if (isOfferBooking && accessFee > 0) {
-    processedBookingData.paymentData = {
-      amount: accessFee,
-      currency: 'KES',
-      method: paymentMethod,
-      phoneNumber: phoneNumber
-    };
-  }
-
-  try {
-    setSubmitting(true);
-    setError(null);
-
-    console.log('📝 Final booking payload:', processedBookingData);
-
-    const result = await withTimeout(bookingService.createBooking(processedBookingData));
-
-    if (result.success) {
-      setCurrentStep(4);
-    } else {
-      throw new Error(result.message || 'Failed to create booking');
-    }
-
-  } catch (err) {
-    console.error('Error creating booking:', err);
+  const handleBookingSubmit = useCallback(async () => {
+    console.log('=== BOOKING SUBMIT DEBUG ===');
+    console.log('bookingData.time:', bookingData.time);
+    console.log('bookingData.date:', bookingData.date);
     
-    // Enhanced error handling for branch/store issues
-    if (err.message && err.message.includes('Branch not found')) {
-      console.log('🔧 Branch not found, trying fallback approach...');
-      
-      // Retry with just storeId if we had a branch issue
-      try {
-        const fallbackData = {
-          ...processedBookingData,
-          storeId: bookingData.branch?.id?.replace('store-', '') || bookingData.branch?.storeId
-        };
-        delete fallbackData.branchId; // Remove branchId
-        
-        console.log('🔄 Retrying with fallback data:', fallbackData);
-        
-        const retryResult = await withTimeout(bookingService.createBooking(fallbackData));
-        
-        if (retryResult.success) {
-          setCurrentStep(4);
-          return;
-        }
-      } catch (retryError) {
-        console.error('❌ Retry also failed:', retryError);
+    const convertedTime = convertTo24Hour(bookingData.time);
+    console.log('converted time:', convertedTime);
+    
+    const fullDateTime = `${bookingData.date}T${convertedTime}:00`;
+    console.log('full datetime string:', fullDateTime);
+    
+    // Test if the datetime is valid
+    const testDate = new Date(fullDateTime);
+    console.log('parsed date object:', testDate);
+    console.log('is valid date:', !isNaN(testDate.getTime()));
+    console.log('=== END SUBMIT DEBUG ===');
+  
+    let processedBookingData = {
+      userId: user.id,
+      startTime: fullDateTime,
+      staffId: bookingData.staff?.id,
+      notes: bookingData.notes,
+      bookingType: entityType,
+      clientInfo: {
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        phone: user.phoneNumber || user.phone || phoneNumber
+      }
+    };
+    // Handle branch ID that might be a store fallback
+    if (bookingData.branch) {
+      if (bookingData.branch.id && bookingData.branch.id.startsWith('store-')) {
+        const actualStoreId = bookingData.branch.id.replace('store-', '');
+        processedBookingData.storeId = actualStoreId;
+      } else if (bookingData.branch.isMainBranch) {
+        processedBookingData.storeId = bookingData.branch.storeId || bookingData.branch.id;
+      } else {
+        processedBookingData.branchId = bookingData.branch.id;
       }
     }
-    
-    setError(err.message || 'Failed to create booking');
-  } finally {
-    setSubmitting(false);
-  }
-}, [bookingData, user, entityId, entityType, isOfferBooking, accessFee, paymentMethod, phoneNumber, convertTo24Hour, withTimeout]);
 
+    // Add correct ID field based on booking type
+    if (isOfferBooking) {
+      processedBookingData.offerId = entityId;
+    } else {
+      processedBookingData.serviceId = entityId;
+    }
+
+    // Only add payment data for offer bookings
+    if (isOfferBooking && accessFee > 0) {
+      processedBookingData.paymentData = {
+        amount: accessFee,
+        currency: 'KES',
+        method: paymentMethod,
+        phoneNumber: phoneNumber
+      };
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const result = await bookingService.createBooking(processedBookingData);
+
+      if (result.success) {
+        setCurrentStep(4);
+      } else {
+        throw new Error(result.message || 'Failed to create booking');
+      }
+
+    } catch (err) {
+      // Enhanced error handling for branch/store issues
+      if (err.message && err.message.includes('Branch not found')) {
+        try {
+          const fallbackData = {
+            ...processedBookingData,
+            storeId: bookingData.branch?.id?.replace('store-', '') || bookingData.branch?.storeId
+          };
+          delete fallbackData.branchId;
+          
+          const retryResult = await bookingService.createBooking(fallbackData);
+          
+          if (retryResult.success) {
+            setCurrentStep(4);
+            return;
+          }
+        } catch (retryError) {
+          // Ignore retry error
+        }
+      }
+      
+      setError(err.message || 'Failed to create booking');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [bookingData, user, entityId, entityType, isOfferBooking, accessFee, paymentMethod, phoneNumber, convertTo24Hour]);
 
   const handleMpesaPayment = useCallback(async () => {
     try {
@@ -732,45 +548,106 @@ const EnhancedBookingPage = () => {
         setError('Please enter a valid phone number');
         return;
       }
-
+  
       setSubmitting(true);
       setError(null);
       
-      const result = await bookingService.processMpesaPayment(
+      // Step 1: Initiate M-Pesa payment first
+      const paymentResult = await bookingService.processMpesaPayment(
         phoneNumber,
         accessFee,
-        'temp-booking-id'
+        null, // No booking ID yet
+        {
+          // Include booking data for later processing
+          bookingData: {
+            userId: user.id,
+            offerId: entityId,
+            startTime: `${bookingData.date}T${convertTo24Hour(bookingData.time)}:00`,
+            staffId: bookingData.staff?.id,
+            notes: bookingData.notes,
+            storeId: bookingData.branch?.storeId || bookingData.branch?.id?.replace('store-', ''),
+            branchId: bookingData.branch?.isMainBranch ? null : bookingData.branch?.id,
+            clientInfo: {
+              name: `${user.firstName} ${user.lastName}`,
+              email: user.email,
+              phone: user.phoneNumber || user.phone || phoneNumber
+            }
+          }
+        }
       );
-
-      if (result.success) {
+  
+      if (paymentResult.success) {
         setShowPaymentModal(false);
-        await handleBookingSubmit();
+        
+        // Show payment pending state
+        setCurrentStep('payment-pending');
+        
+        // Start polling for payment confirmation
+        pollPaymentStatus(paymentResult.payment.id);
+        
+      } else {
+        setError('Payment initiation failed. Please try again.');
       }
-
+  
     } catch (err) {
-      console.error('M-Pesa payment error:', err);
       setError(err.message || 'Payment failed');
     } finally {
       setSubmitting(false);
     }
-  }, [phoneNumber, accessFee, handleBookingSubmit]);
+  }, [phoneNumber, accessFee, bookingData, user, entityId]);
+
+  const pollPaymentStatus = useCallback(async (paymentId) => {
+    const maxAttempts = 60; // 5 minutes (5 second intervals)
+    let attempts = 0;
+    
+    const checkPayment = async () => {
+      try {
+        const status = await bookingService.checkPaymentStatus(paymentId);
+        
+        if (status.payment?.status === 'completed') {
+          // Payment successful - booking should be created automatically
+          setCurrentStep(4);
+          return;
+        } else if (status.payment?.status === 'failed') {
+          setError('Payment failed. Please try again.');
+          setCurrentStep(3); // Go back to payment step
+          return;
+        } else if (attempts >= maxAttempts) {
+          setError('Payment confirmation timeout. Please check your M-Pesa messages.');
+          setCurrentStep(3);
+          return;
+        }
+        
+        attempts++;
+        setTimeout(checkPayment, 5000); // Check again in 5 seconds
+        
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(checkPayment, 5000);
+        } else {
+          setError('Unable to confirm payment status. Please contact support.');
+          setCurrentStep(3);
+        }
+      }
+    };
+    
+    checkPayment();
+  }, []);
 
   // ==================== EFFECTS ====================
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (entityId && entityId.trim() !== '' && entityId !== 'undefined') {
-        initializeBooking();
-      } else {
-        const errorMessage = initialIsOfferBooking 
-          ? 'Invalid booking request. Please select a valid offer.'
-          : 'Invalid booking request. Please select a valid service.';
-        setError(errorMessage);
-        setLoading(false);
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
+    if (entityId && entityId.trim() !== '' && entityId !== 'undefined') {
+      initializeBooking();
+    } else {
+      const errorMessage = initialIsOfferBooking 
+        ? 'Invalid booking request. Please select a valid offer.'
+        : 'Invalid booking request. Please select a valid service.';
+      setError(errorMessage);
+      setLoading(false);
+    }
   }, [entityId, initializeBooking]);
 
   useEffect(() => {
@@ -796,17 +673,6 @@ const EnhancedBookingPage = () => {
       setBookingData(prev => ({ ...prev, staff: null }));
     }
   }, [bookingData.branch]);
-
-  useEffect(() => {
-    if (branchInfo) {
-      console.log('BranchInfo updated:', {
-        name: branchInfo.name,
-        workingDays: branchInfo.workingDays,
-        openingTime: branchInfo.openingTime,
-        closingTime: branchInfo.closingTime
-      });
-    }
-  }, [branchInfo]);
 
   // ==================== UI COMPONENTS ====================
 
@@ -906,134 +772,90 @@ const EnhancedBookingPage = () => {
     </div>
   );
 
- const SmartDatePicker = () => {
-  const availableDates = getAvailableDates();
-  
-  // Helper function to safely parse working days
-  const parseWorkingDays = (workingDays) => {
-    if (!workingDays) return [];
+  const SmartDatePicker = () => {
+    const availableDates = getAvailableDates();
     
-    if (Array.isArray(workingDays)) {
-      return workingDays.filter(day => day && typeof day === 'string');
-    }
-    
-    if (typeof workingDays === 'string') {
-      try {
-        // Try parsing as JSON first
-        const parsed = JSON.parse(workingDays);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(day => day && typeof day === 'string');
-        }
-      } catch (e) {
-        // If JSON parsing fails, try comma-separated
-        return workingDays.split(',').map(day => day.trim()).filter(day => day);
-      }
-    }
-    
-    return [];
-  };
-  
-  // Safely get working days for display
-  const getDisplayWorkingDays = () => {
-    if (!branchInfo || !branchInfo.workingDays) return [];
-    
-    const parsedDays = parseWorkingDays(branchInfo.workingDays);
-    return parsedDays.map(day => {
-      const dayStr = day.toString().trim();
-      return dayStr.charAt(0).toUpperCase() + dayStr.slice(1).toLowerCase();
-    });
-  };
-  
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-3">
-        Select Date
-      </label>
+    const getDisplayWorkingDays = () => {
+      if (!branchInfo || !branchInfo.workingDays) return [];
       
-      <input
-        type="date"
-        value={bookingData.date}
-        onChange={(e) => {
-          console.log('Date selected:', e.target.value);
-          setBookingData(prev => ({ ...prev, date: e.target.value, time: '' }));
-        }}
-        min={new Date().toISOString().split('T')[0]}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
-      />
-      
-      {availableDates.length > 0 && (
-        <div>
-          <p className="text-sm text-gray-600 mb-2">Quick select (working days only):</p>
-          <div className="grid grid-cols-2 gap-2">
-            {availableDates.slice(0, 6).map((dateObj) => (
-              <button
-                key={dateObj.date}
-                onClick={() => {
-                  console.log('Quick date selected:', dateObj);
-                  setBookingData(prev => ({ ...prev, date: dateObj.date, time: '' }));
-                }}
-                className={`p-2 text-xs rounded border transition-colors ${
-                  bookingData.date === dateObj.date
-                    ? 'bg-blue-500 text-white border-blue-500'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
-                }`}
-              >
-                <div className="font-medium">{dateObj.dayName}</div>
-                <div className="text-xs opacity-75">{dateObj.formattedDate}</div>
-              </button>
-            ))}
+      const parsedDays = parseWorkingDaysArray(branchInfo.workingDays);
+      return parsedDays.map(day => {
+        const dayStr = day.toString().trim();
+        return dayStr.charAt(0).toUpperCase() + dayStr.slice(1).toLowerCase();
+      });
+    };
+    
+    return (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          Select Date
+        </label>
+        
+        <input
+          type="date"
+          value={bookingData.date}
+          onChange={(e) => {
+            setBookingData(prev => ({ ...prev, date: e.target.value, time: '' }));
+          }}
+          min={new Date().toISOString().split('T')[0]}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+        />
+        
+        {availableDates.length > 0 && (
+          <div>
+            <p className="text-sm text-gray-600 mb-2">Quick select (working days only):</p>
+            <div className="grid grid-cols-2 gap-2">
+              {availableDates.slice(0, 6).map((dateObj) => (
+                <button
+                  key={dateObj.date}
+                  onClick={() => {
+                    setBookingData(prev => ({ ...prev, date: dateObj.date, time: '' }));
+                  }}
+                  className={`p-2 text-xs rounded border transition-colors ${
+                    bookingData.date === dateObj.date
+                      ? 'bg-blue-500 text-white border-blue-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="font-medium">{dateObj.dayName}</div>
+                  <div className="text-xs opacity-75">{dateObj.formattedDate}</div>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      
-      {branchInfo ? (
-        <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-          <p className="text-sm font-medium text-gray-700">{branchInfo.name}</p>
-          <p className="text-xs text-gray-500">
-            Open: {branchInfo.openingTime} - {branchInfo.closingTime}
-          </p>
-          {(() => {
-            const displayWorkingDays = getDisplayWorkingDays();
-            return displayWorkingDays.length > 0 && (
-              <p className="text-xs text-gray-500">
-                Working days: {displayWorkingDays.join(', ')}
-              </p>
-            );
-          })()}
-        </div>
-      ) : (
-        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            Loading branch information...
-          </p>
-        </div>
-      )}
-      
-      {/* Debug info for development */}
-      {process.env.NODE_ENV === 'development' && branchInfo && (
-        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs">
-          <p><strong>Debug - Working Days:</strong></p>
-          <p>Raw: {JSON.stringify(branchInfo.workingDays)}</p>
-          <p>Type: {typeof branchInfo.workingDays}</p>
-          <p>Is Array: {Array.isArray(branchInfo.workingDays)}</p>
-          <p>Parsed: {JSON.stringify(getDisplayWorkingDays())}</p>
-        </div>
-      )}
-    </div>
-  );
-};
+        )}
+        
+        {branchInfo ? (
+          <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-sm font-medium text-gray-700">{branchInfo.name}</p>
+            <p className="text-xs text-gray-500">
+              Open: {branchInfo.openingTime} - {branchInfo.closingTime}
+            </p>
+            {(() => {
+              const displayWorkingDays = getDisplayWorkingDays();
+              return displayWorkingDays.length > 0 && (
+                <p className="text-xs text-gray-500">
+                  Working days: {displayWorkingDays.join(', ')}
+                </p>
+              );
+            })()}
+          </div>
+        ) : (
+          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              Loading branch information...
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
 
-  const ErrorDisplay = ({ error, onRetry, showDebug = false }) => (
+  const ErrorDisplay = ({ error, onRetry }) => (
     <div className="flex items-center justify-center h-64 border-2 border-dashed border-red-300 rounded-lg bg-red-50">
       <div className="text-center max-w-md">
         <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-2" />
         <p className="text-red-600 font-medium mb-2">{error}</p>
-        
-        {retryAttempts > 0 && (
-          <p className="text-sm text-red-500 mb-2">
-            Attempted {retryAttempts} time(s)
-          </p>
-        )}
         
         <div className="space-y-2">
           <button
@@ -1112,14 +934,6 @@ const EnhancedBookingPage = () => {
         )}
       </div>
 
-      {retryAttempts > 0 && !error && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            Had some connection issues, but we're working through them. Retry #{retryAttempts}
-          </p>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <SmartDatePicker />
 
@@ -1148,11 +962,7 @@ const EnhancedBookingPage = () => {
               </div>
             </div>
           ) : error ? (
-            <ErrorDisplay 
-              error={error} 
-              onRetry={refreshSlots}
-              showDebug={error.includes('closed') || error.includes('working')}
-            />
+            <ErrorDisplay error={error} onRetry={refreshSlots} />
           ) : availableSlots.length === 0 ? (
             <div className="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-lg">
               <div className="text-center">
@@ -1246,7 +1056,6 @@ const EnhancedBookingPage = () => {
       </div>
     </div>
   );
-
   const BranchSelection = () => (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Service Location & Staff</h2>
@@ -1273,7 +1082,6 @@ const EnhancedBookingPage = () => {
       <div className="mb-8">
         <h3 className="text-lg font-semibold mb-4">Service Branch</h3>
         
-        {/* Show different states based on branch loading */}
         {!branch && loading ? (
           <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
             <div className="flex items-center justify-center space-x-2">
@@ -1295,11 +1103,7 @@ const EnhancedBookingPage = () => {
                 }
               </p>
               <button
-                onClick={() => {
-                  console.log('Retrying branch load...');
-                  // Force re-initialization to try loading branch again
-                  initializeBooking();
-                }}
+                onClick={initializeBooking}
                 className="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded text-sm transition-colors"
               >
                 Retry Loading Branch
@@ -1309,7 +1113,6 @@ const EnhancedBookingPage = () => {
         ) : (
           <div
             onClick={() => {
-              console.log('Branch selected:', branch.name);
               setBookingData(prev => ({ ...prev, branch, staff: null }));
             }}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
@@ -1364,28 +1167,8 @@ const EnhancedBookingPage = () => {
             </div>
           </div>
         )}
-        
-        {/* Debug info for development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-3 bg-gray-50 border rounded text-xs">
-            <p><strong>Debug Info:</strong></p>
-            <p>Entity Type: {entityType}</p>
-            <p>Is Offer: {isOfferBooking.toString()}</p>
-            <p>Branch Available: {!!branch}</p>
-            <p>Branch Selected: {!!bookingData.branch}</p>
-            <p>Entity ID: {entityId}</p>
-            {branch && (
-              <>
-                <p>Branch ID: {branch.id}</p>
-                <p>Branch Name: {branch.name}</p>
-                <p>Working Days: {JSON.stringify(branch.workingDays)}</p>
-              </>
-            )}
-          </div>
-        )}
       </div>
   
-      {/* Staff selection section - only show if branch is selected */}
       {(bookingData.branch || branch) && (
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4">Select Staff Member (Optional)</h3>
@@ -1471,8 +1254,6 @@ const EnhancedBookingPage = () => {
       </div>
     </div>
   );
-
-  
 
   const ReviewStep = () => (
     <div className="space-y-6">
@@ -1740,78 +1521,122 @@ const EnhancedBookingPage = () => {
     </div>
   );
 
-  const PaymentModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">Complete Payment</h3>
-          <button
-            onClick={() => setShowPaymentModal(false)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <div className="mb-6">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center space-x-2">
-              <Smartphone className="w-5 h-5 text-green-600" />
-              <span className="font-medium text-green-800">Platform Access Fee</span>
-            </div>
-            <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(accessFee)}</p>
+  const PaymentModal = () => {
+    // Move phone number state to local component state to prevent re-renders
+    const [localPhoneNumber, setLocalPhoneNumber] = useState(phoneNumber);
+    
+    // Only update parent state on blur or form submit
+    const handlePhoneChange = (e) => {
+      setLocalPhoneNumber(e.target.value);
+    };
+    
+    const handlePhoneBlur = () => {
+      setPhoneNumber(localPhoneNumber);
+    };
+  
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-900">Complete Payment</h3>
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
-
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Enter your M-Pesa phone number
-          </label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="e.g. 0712345678"
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          {error && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+  
+          <div className="mb-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <p className="text-sm text-red-600">{error}</p>
+                <Smartphone className="w-5 h-5 text-green-600" />
+                <span className="font-medium text-green-800">Platform Access Fee</span>
               </div>
+              <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(accessFee)}</p>
             </div>
-          )}
-        </div>
-
-        <div className="flex space-x-3">
-          <button
-            onClick={() => setShowPaymentModal(false)}
-            disabled={submitting}
-            className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleMpesaPayment}
-            disabled={phoneNumber.length < 10 || submitting}
-            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="animate-spin w-4 h-4" />
-                <span>Processing...</span>
-              </>
-            ) : (
-              <span>Pay Now</span>
+  
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Enter your M-Pesa phone number
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="tel"
+                value={localPhoneNumber} // Use local state
+                onChange={handlePhoneChange} // Use local handler
+                onBlur={handlePhoneBlur} // Update parent state on blur
+                placeholder="e.g. 0712345678"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                maxLength={13}
+                autoComplete="tel"
+              />
+            </div>
+  
+            {error && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              </div>
             )}
-          </button>
+          </div>
+  
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              disabled={submitting}
+              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                setPhoneNumber(localPhoneNumber); // Ensure parent state is updated
+                handleMpesaPayment();
+              }}
+              disabled={localPhoneNumber.length < 10 || submitting}
+              className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="animate-spin w-4 h-4" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <span>Pay Now</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const PaymentPendingStep = () => (
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Processing Payment</h2>
+        <p className="text-gray-600 mb-6">
+          Please complete the M-Pesa payment on your phone. Your booking will be created automatically once payment is confirmed.
+        </p>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800">
+            <strong>Next steps:</strong>
+          </p>
+          <ul className="text-sm text-blue-700 mt-2 space-y-1">
+            <li>• Check your phone for M-Pesa prompt</li>
+            <li>• Enter your M-Pesa PIN</li>
+            <li>• Wait for confirmation (this may take up to 2 minutes)</li>
+          </ul>
         </div>
       </div>
     </div>
   );
+  
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -1821,6 +1646,8 @@ const EnhancedBookingPage = () => {
         return <BranchSelection />;
       case 3:
         return <ReviewStep />;
+      case 'payment-pending':
+        return <PaymentPendingStep />;
       case 4:
         return <ConfirmationStep />;
       default:
@@ -1853,7 +1680,6 @@ const EnhancedBookingPage = () => {
             <button
               onClick={() => {
                 setError(null);
-                setRetryAttempts(0);
                 initializeBooking();
               }}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"

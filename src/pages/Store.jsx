@@ -1674,12 +1674,12 @@ const StoreViewPage = () => {
       </div>
 
       {/* Fixed Chat Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* <div className="fixed bottom-6 right-6 z-50">
         <ChatButton
           size="large"
           className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:bg-red-600"
         />
-      </div>
+      </div> */}
       <Footer />
     </div>
   );

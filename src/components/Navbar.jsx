@@ -1,4 +1,4 @@
-// components/Navbar.jsx - Complete updated navbar with extracted notification component
+// components/Navbar.jsx - Complete updated navbar with new react-icons
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
@@ -6,6 +6,12 @@ import RealTimeSearch from './RealTimeSearch';
 import NotificationButton from './NotificationButton';
 import { useLocation } from '../contexts/LocationContext';
 import chatService from '../services/chatService';
+
+// Import the new icons from react-icons
+import { FaStore, FaFire } from "react-icons/fa6";
+import { HiHome } from "react-icons/hi2";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
+import { CiDiscount1 } from "react-icons/ci";
 
 // SVG Icons
 const Search = ({ className }) => (
@@ -33,47 +39,9 @@ const ChevronDown = ({ className }) => (
   </svg>
 );
 
-const StoreIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"></path>
-    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-    <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"></path>
-    <path d="M2 7h20"></path>
-    <path d="M22 7v3a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V7"></path>
-    <path d="M18 7v3a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V7"></path>
-    <path d="M10 7v3a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V7"></path>
-    <path d="M6 7v3a2 2 0 0 1-2 2v0a2 2 0 0 1-2-2V7"></path>
-  </svg>
-);
-
-const HomeIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-  </svg>
-);
-
-const FireIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
-  </svg>
-);
-
 const TagIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-  </svg>
-);
-
-const ChatIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
-  </svg>
-);
-
-const ServiceIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
 
@@ -640,7 +608,7 @@ const Navbar = () => {
                 : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50'
             }`}
           >
-            <HomeIcon className="w-5 h-5" />
+            <HiHome className="w-5 h-5" />
             <span className="text-xs font-semibold">Home</span>
           </Link>
 
@@ -653,7 +621,7 @@ const Navbar = () => {
             }`}
           >
             <div className="relative">
-              <FireIcon className="w-5 h-5" />
+              <CiDiscount1 className="w-5 h-5" />
               <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-full shadow-md"></div>
             </div>
             <span className="text-xs font-semibold">Deals</span>
@@ -667,7 +635,7 @@ const Navbar = () => {
                 : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50'
             }`}
           >
-            <StoreIcon className="w-5 h-5" />
+            <FaStore className="w-5 h-5" />
             <span className="text-xs font-semibold">Stores</span>
           </Link>
 
@@ -679,8 +647,8 @@ const Navbar = () => {
                 : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50'
             }`}
           >
-            <ServiceIcon className="w-5 h-5" />
-            <span className="text-xs font-semibold">Service</span>
+            <FaFire className="w-5 h-5" />
+            <span className="text-xs font-semibold">SR</span>
           </Link>
 
           <Link
@@ -692,7 +660,7 @@ const Navbar = () => {
             }`}
           >
             <div className="relative">
-              <ChatIcon className="w-5 h-5" />
+              <IoChatbubbleEllipsesOutline className="w-5 h-5" />
               {unreadChatCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center shadow-lg border-2 border-white font-bold">
                   {unreadChatCount > 9 ? '9+' : unreadChatCount}

@@ -23,11 +23,16 @@ const ChatIcon = ({ className }) => (
   </svg>
 );
 
+const OfferIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+  </svg>
+);
+
 const StoreIcon = ({ src, className, fallback = false }) => {
   const [error, setError] = useState(false);
   
   if (error || !src || fallback) {
-    // Display a fallback store icon
     return (
       <div className={`flex items-center justify-center bg-blue-500 text-white rounded-full ${className}`}>
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,24 +109,19 @@ const NotificationButton = ({
         console.log('Notifications loaded:', formattedNotifications.length);
         console.log('Raw notifications data:', notificationsResponse.data);
         
-        // Process normal notifications, but don't set state yet - we'll combine with chat notifications
-        // Wait for chat notifications to load before setting state
         loadUnreadChatMessages(formattedNotifications);
       } else {
-        // Even if notification API returns empty, still try loading chat notifications
         loadUnreadChatMessages([]);
       }
 
     } catch (error) {
       console.error('Error loading notifications:', error);
       setHasError(true);
-      
-      // Even on error, try to load chat notifications
       loadUnreadChatMessages([]);
     }
   }, [isAuthenticated]);
 
-  // Load chat message counts and generate notifications - FIXED VERSION
+  // Load chat message counts and generate notifications
   const loadUnreadChatMessages = useCallback(async (existingNotifications = []) => {
     try {
       if (!isAuthenticated) {
@@ -131,46 +131,36 @@ const NotificationButton = ({
         return;
       }
 
-      console.log('🔄 Loading unread chat messages...');
+      console.log('Loading unread chat messages...');
       const response = await chatService.getConversations('customer');
-      console.log('📩 Chat conversations response:', response);
+      console.log('Chat conversations response:', response);
 
       if (response.success && response.data && Array.isArray(response.data)) {
-        // Calculate total unread messages - don't double count
         const chatsWithUnread = response.data.filter(chat => (chat.unreadCount || 0) > 0);
-        
-        // Use actual count of chats with unread messages, not sum of unreadCount
-        // This prevents showing "2" when there's only 1 chat with messages
         const totalUnreadCount = chatsWithUnread.length;
 
-        console.log(`📊 Found ${chatsWithUnread.length} chats with unread messages`);
+        console.log(`Found ${chatsWithUnread.length} chats with unread messages`);
         setUnreadChatCount(totalUnreadCount);
         
-        // Generate synthetic notifications from unread chats
         let chatNotifications = [];
         if (totalUnreadCount > 0 && chatsWithUnread.length > 0) {
-          console.log('🔔 Creating synthetic chat notifications');
+          console.log('Creating synthetic chat notifications');
           
           const timestamp = Date.now();
           chatNotifications = chatsWithUnread.map((chat, index) => {
-            // Ensure we have a valid date for the notification
             let messageDate;
             try {
               messageDate = chat.lastMessageTime ? new Date(chat.lastMessageTime) : new Date();
-              // Validate the date - if invalid, use current date
               if (isNaN(messageDate.getTime())) {
-                console.log('⚠️ Invalid date detected, using current date instead');
+                console.log('Invalid date detected, using current date instead');
                 messageDate = new Date();
               }
             } catch (e) {
-              console.log('⚠️ Error parsing date:', e);
+              console.log('Error parsing date:', e);
               messageDate = new Date();
             }
             
-            // Format the time properly
             const formattedTime = chatService.formatTime(messageDate);
-            
-            // Ensure we have a valid chat ID for navigation
             const chatId = chat.id || '';
             
             return {
@@ -199,10 +189,9 @@ const NotificationButton = ({
             };
           });
           
-          console.log(`🔔 Created ${chatNotifications.length} synthetic chat notifications`);
+          console.log(`Created ${chatNotifications.length} synthetic chat notifications`);
         }
         
-        // Filter out any existing chat notifications from the API
         const nonChatNotifs = existingNotifications.filter(notif => 
           notif.type !== 'new_message' && 
           notif.type !== 'chat_started' && 
@@ -210,19 +199,17 @@ const NotificationButton = ({
           !notif.id?.startsWith('chat-')
         );
         
-        // Combine notifications, putting chat notifications first
         const combinedNotifications = [...chatNotifications, ...nonChatNotifs];
-        console.log(`⚙️ Combined ${chatNotifications.length} chat + ${nonChatNotifs.length} regular = ${combinedNotifications.length} total notifications`);
+        console.log(`Combined ${chatNotifications.length} chat + ${nonChatNotifs.length} regular = ${combinedNotifications.length} total notifications`);
         
-        // Set final notifications state
         setNotifications(combinedNotifications);
       } else {
-        console.log('⚠️ Invalid chat response or no data');
+        console.log('Invalid chat response or no data');
         setUnreadChatCount(0);
         setNotifications(existingNotifications);
       }
     } catch (error) {
-      console.error('❌ Error loading unread chat messages:', error);
+      console.error('Error loading unread chat messages:', error);
       setUnreadChatCount(0);
       setNotifications(existingNotifications);
     } finally {
@@ -275,7 +262,6 @@ const NotificationButton = ({
     };
 
     const handleChatUpdate = () => {
-      // Only load chat messages, not regular notifications
       loadUnreadChatMessages(notifications);
     };
 
@@ -295,32 +281,51 @@ const NotificationButton = ({
 
   // Event handlers
   const toggleNotifications = () => setIsNotificationOpen(!isNotificationOpen);
+  
   const handleNotificationClick = async (notification) => {
     setIsNotificationOpen(false);
     
-    // For chat notifications, use custom handling
+    // Handle service offer notifications - redirect to request-service
+    if (notification.type === 'service_request_offer' || notification.type === 'offer_received') {
+      if (!notification.isRead) {
+        await notificationService.markAsRead(notification.id).catch(console.error);
+      }
+      
+      setNotifications(prev =>
+        prev.map(notif =>
+          notif.id === notification.id ? { ...notif, isRead: true } : notif
+        )
+      );
+      
+      setNotificationCounts(prev => ({
+        ...prev,
+        unread: Math.max(0, prev.unread - 1)
+      }));
+
+      console.log('Navigating to request-service for offer notification');
+      navigate('/request-service');
+      return;
+    }
+    
+    // For chat notifications
     if (notification.type === 'new_message' || notification.type === 'chat_started' || notification.id?.startsWith('chat-')) {
       const chatId = notification.data?.chatId || notification.metadata?.chatId;
       if (chatId) {
-        // Mark the notification as read
         if (!notification.isRead) {
           if (notification.id && !notification.id.startsWith('chat-')) {
             await notificationService.markAsRead(notification.id).catch(console.error);
           }
         }
         
-        // Update chat counts
         const unreadCount = notification.data?.unreadCount || 1;
         setUnreadChatCount(prev => Math.max(0, prev - unreadCount));
         
-        // Update UI state
         setNotifications(prev =>
           prev.map(notif =>
             notif.id === notification.id ? { ...notif, isRead: true } : notif
           )
         );
         
-        // Update notification counts
         setNotificationCounts(prev => ({
           ...prev,
           unread: Math.max(0, prev.unread - 1),
@@ -330,29 +335,21 @@ const NotificationButton = ({
           }
         }));
 
-        console.log(`🔗 Navigating to chat ID: ${chatId}`);
-        
-        // Based on the AppRoutes.jsx file, the correct URL would be /chat
-        // For specific chats, it might be /chat/Store/:id or simply /chat
-        // Try the standard format first - note that some routes may be redirects
-        
-        // Different potential chat URL patterns based on AppRoutes.jsx
+        console.log(`Navigating to chat ID: ${chatId}`);
         navigate('/chat');
         return;
       }
     }
     
-    // For other notifications, use the default handler
+    // For other notifications
     notificationService.handleNotificationClick(notification, navigate);
 
-    // Update local state to mark as read
     setNotifications(prev =>
       prev.map(notif =>
         notif.id === notification.id ? { ...notif, isRead: true } : notif
       )
     );
 
-    // Update counts
     setNotificationCounts(prev => ({
       ...prev,
       unread: Math.max(0, prev.unread - 1)
@@ -361,57 +358,10 @@ const NotificationButton = ({
     window.dispatchEvent(new CustomEvent('notificationUpdate'));
   };
 
-  const markNotificationAsRead = async (notificationId) => {
-    try {
-      // For synthetic chat notifications, just update state
-      if (notificationId.startsWith('chat-')) {
-        setNotifications(prev =>
-          prev.map(notif =>
-            notif.id === notificationId ? { ...notif, isRead: true } : notif
-          )
-        );
-        
-        const notification = notifications.find(n => n.id === notificationId);
-        if (notification && !notification.isRead) {
-          const unreadCount = notification.data?.unreadCount || 1;
-          setUnreadChatCount(prev => Math.max(0, prev - unreadCount));
-        }
-      } else {
-        // For regular notifications, call API
-        await notificationService.markAsRead(notificationId);
-        
-        setNotifications(prev =>
-          prev.map(notif =>
-            notif.id === notificationId ? { ...notif, isRead: true } : notif
-          )
-        );
-
-        const notification = notifications.find(n => n.id === notificationId);
-        if (notification && !notification.isRead) {
-          // Update overall counts
-          setNotificationCounts(prev => ({
-            ...prev,
-            unread: Math.max(0, prev.unread - 1)
-          }));
-          
-          // If it's a chat notification, also update unread chat count
-          if (notification.type === 'new_message' || notification.type === 'chat_started') {
-            const unreadCount = notification.data?.unreadCount || 1;
-            setUnreadChatCount(prev => Math.max(0, prev - unreadCount));
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
-  };
-
   const markAllNotificationsAsRead = async () => {
     try {
-      // First handle regular notifications
       await notificationService.markAllAsRead();
 
-      // Then mark chat notifications as read in state
       setNotifications(prev =>
         prev.map(notif => ({ ...notif, isRead: true }))
       );
@@ -433,27 +383,17 @@ const NotificationButton = ({
     }
   };
 
-  const handleActionApprove = (notificationId) => {
-    console.log('Approved notification:', notificationId);
-    markNotificationAsRead(notificationId);
-  };
-
-  const handleActionDeny = (notificationId) => {
-    console.log('Denied notification:', notificationId);
-    markNotificationAsRead(notificationId);
-  };
-
-  const totalUnreadCount = notificationCounts.unread + unreadChatCount;
+  // Calculate total unread count from actual notifications to avoid double counting
+  const totalUnreadCount = notifications.filter(n => !n.isRead).length;
 
   if (!isAuthenticated) {
     return null;
   }
 
-  // Render notification item with enhanced chat handling
+  // Render notification item
   const renderNotificationItem = (notification) => {
     // Special rendering for chat notifications
     if (notification.type === 'new_message' || notification.type === 'chat_started' || notification.id?.startsWith('chat-')) {
-      const chatId = notification.data?.chatId || notification.metadata?.chatId;
       const storeName = notification.store?.name || notification.data?.storeName || 'Store';
       const storeAvatar = notification.store?.logo_url || notification.avatar || notification.data?.storeAvatar;
       const unreadCount = notification.data?.unreadCount || 1;
@@ -468,7 +408,6 @@ const NotificationButton = ({
           onClick={() => handleNotificationClick(notification)}
         >
           <div className="flex items-start space-x-3">
-            {/* Store Avatar */}
             <div className="relative flex-shrink-0">
               <StoreIcon 
                 src={storeAvatar} 
@@ -480,7 +419,6 @@ const NotificationButton = ({
               </div>
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -521,7 +459,6 @@ const NotificationButton = ({
         onClick={() => handleNotificationClick(notification)}
       >
         <div className="flex items-start space-x-3">
-          {/* Avatar */}
           <div className="relative flex-shrink-0">
             <img
               src={notification.avatar || 'https://via.placeholder.com/40'}
@@ -540,9 +477,13 @@ const NotificationButton = ({
             {notification.type === 'file' && (
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full border-2 border-white"></div>
             )}
+            {(notification.type === 'service_request_offer' || notification.type === 'offer_received') && (
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center">
+                <OfferIcon className="w-2 h-2 text-white" />
+              </div>
+            )}
           </div>
 
-          {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
@@ -562,30 +503,8 @@ const NotificationButton = ({
                   )}
                 </div>
                 {notification.description && (
-                  <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-600">
+                  <div className="mt-2 text-xs text-gray-600">
                     {notification.description}
-                  </div>
-                )}
-                {notification.hasActions && (
-                  <div className="flex space-x-2 mt-3">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleActionApprove(notification.id);
-                      }}
-                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleActionDeny(notification.id);
-                      }}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-md hover:bg-gray-300 transition-colors"
-                    >
-                      Deny
-                    </button>
                   </div>
                 )}
               </div>
@@ -622,7 +541,6 @@ const NotificationButton = ({
         )}
       </button>
 
-      {/* Notification Popup */}
       {isNotificationOpen && (
         <div className={`
           absolute bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden
@@ -636,11 +554,10 @@ const NotificationButton = ({
             transform: 'translateX(0)'
           } : {}}
         >
-          {/* Header */}
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
-              {notifications.length > 0 && (
+              {/* {notifications.length > 0 && (
                 <button
                   onClick={markAllNotificationsAsRead}
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 transition-colors"
@@ -648,13 +565,10 @@ const NotificationButton = ({
                   <CheckIcon className="w-4 h-4" />
                   <span>Mark all as read</span>
                 </button>
-              )}
+              )} */}
             </div>
           </div>
 
-          {/* No Tab Navigation - completely removed */}
-
-          {/* Notifications List */}
           <div className="max-h-96 overflow-y-auto">
             {isLoading ? (
               <div className="p-8 text-center">

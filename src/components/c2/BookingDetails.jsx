@@ -1,4 +1,4 @@
-// BookingDetails.jsx - Enhanced with better error handling and retry mechanism
+// BookingDetails.jsx - Fixed with working reschedule functionality
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -25,13 +25,103 @@ const BookingDetails = () => {
   const [retrying, setRetrying] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [errorType, setErrorType] = useState(null); // 'network', 'server', 'notFound', 'permission'
+  const [errorType, setErrorType] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [rescheduleData, setRescheduleData] = useState({
+    newStartTime: '',
+    newStaffId: '',
+    reason: ''
+  });
   const [copySuccess, setCopySuccess] = useState('');
 
-  // Enhanced fetch booking details with retry logic
+  // ==================== HELPER FUNCTIONS ====================
+  
+  // Enhanced function to determine if booking is an offer booking
+  const isOfferBooking = (bookingData) => {
+    if (!bookingData) return false;
+    
+    return !!(
+      bookingData.isOfferBooking ||
+      bookingData.offerId ||
+      bookingData.Offer ||
+      bookingData.offer ||
+      bookingData.bookingType === 'offer' ||
+      bookingData.type === 'offer'
+    );
+  };
+
+  // Get entity (offer or service) from booking
+  const getBookingEntity = (bookingData) => {
+    if (!bookingData) return null;
+    
+    const isOffer = isOfferBooking(bookingData);
+    
+    if (isOffer) {
+      return bookingData.Offer || bookingData.offer || null;
+    } else {
+      return bookingData.Service || bookingData.service || null;
+    }
+  };
+
+  // Get store information from booking
+  const getBookingStore = (bookingData) => {
+    if (!bookingData) return null;
+    
+    const entity = getBookingEntity(bookingData);
+    if (!entity) return null;
+    
+    const isOffer = isOfferBooking(bookingData);
+    
+    if (isOffer) {
+      return entity.service?.store || entity.service?.Store || entity.Service?.store || null;
+    } else {
+      return entity.store || entity.Store || null;
+    }
+  };
+
+  // Get service information (for both offers and direct services)
+  const getBookingService = (bookingData) => {
+    if (!bookingData) return null;
+    
+    if (isOfferBooking(bookingData)) {
+      const offer = getBookingEntity(bookingData);
+      return offer?.service || offer?.Service || null;
+    } else {
+      return getBookingEntity(bookingData);
+    }
+  };
+
+  // Format booking data for consistent display
+  const formatBookingData = (bookingData) => {
+    if (!bookingData) return null;
+
+    const isOffer = isOfferBooking(bookingData);
+    const entity = getBookingEntity(bookingData);
+    const store = getBookingStore(bookingData);
+    const service = getBookingService(bookingData);
+
+    return {
+      ...bookingData,
+      isOfferBooking: isOffer,
+      entity,
+      store,
+      service,
+      startTime: bookingData.startTime || bookingData.start_time || bookingData.date,
+      endTime: bookingData.endTime || bookingData.end_time,
+      status: bookingData.status || 'pending',
+      staff: bookingData.Staff || bookingData.staff || null,
+      branch: bookingData.Branch || bookingData.branch || null,
+      accessFee: bookingData.accessFee || bookingData.access_fee || 0,
+      accessFeePaid: bookingData.accessFeePaid || bookingData.access_fee_paid || false,
+      payment: bookingData.Payment || bookingData.payment || null
+    };
+  };
+
+  // ==================== DATA FETCHING ====================
+
   const fetchBookingDetails = useCallback(async (showRetryUI = false) => {
     try {
       if (showRetryUI) {
@@ -46,15 +136,13 @@ const BookingDetails = () => {
         throw new Error('Invalid booking ID');
       }
 
-      console.log('Fetching booking details for:', bookingId);
       const result = await enhancedBookingService.getBookingById(bookingId);
-      
+
       if (result.success && result.booking) {
-        setBooking(result.booking);
+        const formattedBooking = formatBookingData(result.booking);
+        setBooking(formattedBooking);
         setRetryCount(0);
-        console.log('Booking loaded successfully:', result.booking.id);
       } else {
-        // Handle different error types
         if (result.notFound) {
           setErrorType('notFound');
           setError(result.message || 'Booking not found');
@@ -71,8 +159,7 @@ const BookingDetails = () => {
       }
     } catch (error) {
       console.error('Error fetching booking details:', error);
-      
-      // Categorize error types
+
       if (error.message?.includes('Network Error') || error.code === 'NETWORK_ERROR') {
         setErrorType('network');
         setError('Network connection error. Please check your internet connection.');
@@ -89,7 +176,7 @@ const BookingDetails = () => {
         setErrorType('general');
         setError(error.message || 'An unexpected error occurred');
       }
-      
+
       setBooking(null);
     } finally {
       setLoading(false);
@@ -103,7 +190,7 @@ const BookingDetails = () => {
       const timer = setTimeout(() => {
         setRetryCount(prev => prev + 1);
         fetchBookingDetails(true);
-      }, Math.pow(2, retryCount) * 1000); // Exponential backoff: 1s, 2s, 4s
+      }, Math.pow(2, retryCount) * 1000);
 
       return () => clearTimeout(timer);
     }
@@ -116,25 +203,24 @@ const BookingDetails = () => {
     }
   }, [bookingId, fetchBookingDetails]);
 
-  // Manual retry function
+  // ==================== ACTION HANDLERS ====================
+
   const handleRetry = () => {
     setRetryCount(0);
     fetchBookingDetails(true);
   };
 
-  // Navigate to booking list
   const handleGoToBookings = () => {
-    navigate('/bookings');
+    navigate('/profile/bookings');
   };
 
-  // Cancel booking handler
   const handleCancelBooking = async () => {
     try {
       setActionLoading(true);
       setError(null);
 
       const result = await enhancedBookingService.cancelBooking(
-        booking.id, 
+        booking.id,
         cancelReason,
         booking.isOfferBooking && booking.accessFeePaid
       );
@@ -142,7 +228,6 @@ const BookingDetails = () => {
       if (result.success) {
         setShowCancelModal(false);
         setCancelReason('');
-        // Refresh booking data
         await fetchBookingDetails();
       } else {
         throw new Error(result.message || 'Failed to cancel booking');
@@ -155,7 +240,37 @@ const BookingDetails = () => {
     }
   };
 
-  // Copy booking ID to clipboard
+  const handleRescheduleBooking = async () => {
+    if (!rescheduleData.newStartTime) return;
+
+    try {
+      setActionLoading(true);
+      setError(null);
+
+      const result = await enhancedBookingService.rescheduleBooking(
+        booking.id,
+        rescheduleData
+      );
+
+      if (result.success) {
+        setShowRescheduleModal(false);
+        setRescheduleData({
+          newStartTime: '',
+          newStaffId: '',
+          reason: ''
+        });
+        await fetchBookingDetails();
+      } else {
+        throw new Error(result.message || 'Failed to reschedule booking');
+      }
+    } catch (error) {
+      console.error('Error rescheduling booking:', error);
+      setError(error.message || 'Failed to reschedule booking');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const copyBookingId = async () => {
     try {
       await navigator.clipboard.writeText(booking.id);
@@ -166,12 +281,12 @@ const BookingDetails = () => {
     }
   };
 
-  // Share booking details
   const shareBooking = async () => {
     if (navigator.share && booking) {
       try {
+        const entityName = booking.entity?.title || booking.entity?.name || 'Service';
         await navigator.share({
-          title: `Booking: ${booking.isOfferBooking ? booking.Offer?.title : booking.Service?.name}`,
+          title: `Booking: ${entityName}`,
           text: `My booking for ${new Date(booking.startTime).toLocaleDateString()}`,
           url: window.location.href
         });
@@ -181,35 +296,31 @@ const BookingDetails = () => {
     }
   };
 
-  // Check if booking can be cancelled
   const canCancelBooking = () => {
     if (!booking || ['cancelled', 'completed'].includes(booking.status)) return false;
-    
+
     const bookingTime = new Date(booking.startTime);
     const now = new Date();
     const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
-    
-    // Use service-specific cancellation policy
-    let minCancellationHours = 2; // Default
-    if (!booking.isOfferBooking && booking.Service?.min_cancellation_hours) {
-      minCancellationHours = booking.Service.min_cancellation_hours;
+
+    let minCancellationHours = 2;
+    if (!booking.isOfferBooking && booking.entity?.min_cancellation_hours) {
+      minCancellationHours = booking.entity.min_cancellation_hours;
     }
-    
+
     return hoursUntilBooking >= minCancellationHours;
   };
 
-  // Check if booking can be rescheduled
   const canRescheduleBooking = () => {
     if (!booking || ['cancelled', 'completed', 'checked_in'].includes(booking.status)) return false;
-    
+
     const bookingTime = new Date(booking.startTime);
     const now = new Date();
     const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
-    
+
     return hoursUntilBooking >= 1;
   };
 
-  // Status color mapping
   const getStatusColor = (status) => {
     const colors = {
       confirmed: 'bg-green-100 text-green-700 border-green-200',
@@ -221,7 +332,8 @@ const BookingDetails = () => {
     return colors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
-  // Error display component
+  // ==================== UI COMPONENTS ====================
+
   const ErrorDisplay = () => {
     const getErrorIcon = () => {
       switch (errorType) {
@@ -347,7 +459,245 @@ const BookingDetails = () => {
     );
   };
 
-  // Loading state
+  const CancelModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-gray-900">Cancel Booking</h3>
+          <button
+            onClick={() => {
+              setShowCancelModal(false);
+              setCancelReason('');
+            }}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <div className="font-medium">
+            {booking.entity?.title || booking.entity?.name || 'Booking'}
+          </div>
+          <div className="text-sm text-gray-600">
+            {new Date(booking.startTime).toLocaleString()}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Reason for cancellation (optional)
+          </label>
+          <textarea
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            placeholder="Let us know why you're cancelling..."
+          />
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-red-600">{error}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="flex space-x-3">
+          <button
+            onClick={() => {
+              setShowCancelModal(false);
+              setCancelReason('');
+            }}
+            disabled={actionLoading}
+            className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+          >
+            Keep Booking
+          </button>
+          <button
+            onClick={handleCancelBooking}
+            disabled={actionLoading}
+            className="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 disabled:bg-gray-300 transition-colors flex items-center justify-center space-x-2"
+          >
+            {actionLoading ? (
+              <>
+                <Loader2 className="animate-spin w-4 h-4" />
+                <span>Cancelling...</span>
+              </>
+            ) : (
+              <span>Cancel Booking</span>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const RescheduleModal = () => {
+    const generateTimeSlots = () => {
+      const slots = [];
+      const now = new Date();
+      
+      for (let day = 1; day <= 7; day++) {
+        const date = new Date(now);
+        date.setDate(now.getDate() + day);
+        
+        for (let hour = 9; hour <= 18; hour++) {
+          const slotDate = new Date(date);
+          slotDate.setHours(hour, 0, 0, 0);
+          
+          slots.push({
+            value: slotDate.toISOString().slice(0, 19),
+            label: `${slotDate.toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            })} at ${slotDate.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: true 
+            })}`
+          });
+        }
+      }
+      
+      return slots;
+    };
+
+    const timeSlots = generateTimeSlots();
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-gray-900">Reschedule Booking</h3>
+            <button
+              onClick={() => {
+                setShowRescheduleModal(false);
+                setRescheduleData({
+                  newStartTime: '',
+                  newStaffId: '',
+                  reason: ''
+                });
+                setError(null);
+              }}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+            <div className="font-medium">
+              {booking.entity?.title || booking.entity?.name || 'Booking'}
+            </div>
+            <div className="text-sm text-gray-600">
+              Current: {new Date(booking.startTime).toLocaleString()}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Date & Time *
+              </label>
+              <select
+                value={rescheduleData.newStartTime}
+                onChange={(e) => setRescheduleData(prev => ({
+                  ...prev,
+                  newStartTime: e.target.value
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">Select new time...</option>
+                {timeSlots.map((slot) => (
+                  <option key={slot.value} value={slot.value}>
+                    {slot.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason for rescheduling (optional)
+              </label>
+              <textarea
+                value={rescheduleData.reason}
+                onChange={(e) => setRescheduleData(prev => ({
+                  ...prev,
+                  reason: e.target.value
+                }))}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Let us know why you're rescheduling..."
+              />
+            </div>
+
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-blue-600 mt-0.5" />
+                <div>
+                  <div className="text-sm font-medium text-blue-900">Rescheduling Policy</div>
+                  <div className="text-xs text-blue-700">
+                    Subject to availability. Original booking terms still apply.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                <span className="text-sm text-red-600">{error}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex space-x-3 mt-6">
+            <button
+              onClick={() => {
+                setShowRescheduleModal(false);
+                setRescheduleData({
+                  newStartTime: '',
+                  newStaffId: '',
+                  reason: ''
+                });
+                setError(null);
+              }}
+              disabled={actionLoading}
+              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRescheduleBooking}
+              disabled={actionLoading || !rescheduleData.newStartTime}
+              className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 transition-colors flex items-center justify-center space-x-2"
+            >
+              {actionLoading ? (
+                <>
+                  <Loader2 className="animate-spin w-4 h-4" />
+                  <span>Rescheduling...</span>
+                </>
+              ) : (
+                <span>Reschedule Booking</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ==================== MAIN RENDER ====================
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -366,22 +716,20 @@ const BookingDetails = () => {
     );
   }
 
-  // Error state
   if (error || !booking) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <Link 
-              to="/bookings" 
+            <Link
+              to="/profile/bookings"
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to My Bookings
             </Link>
-            
+
             {retrying && (
               <div className="flex items-center space-x-2 text-blue-600">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -394,34 +742,37 @@ const BookingDetails = () => {
             <ErrorDisplay />
           </div>
         </div>
-        <Footer />  
+        <Footer />
       </div>
     );
   }
 
+  const entity = booking.entity;
+  const store = booking.store;
+  const service = booking.service;
   const isOffer = booking.isOfferBooking;
-  const entity = isOffer ? booking.Offer : booking.Service;
-  const store = isOffer ? booking.Offer?.service?.store : booking.Service?.store;
-  const service = isOffer ? booking.Offer?.service : booking.Service;
   const bookingTime = new Date(booking.startTime);
   const endTime = booking.endTime ? new Date(booking.endTime) : null;
   const isUpcoming = bookingTime > new Date();
 
+  const displayName = entity?.title || entity?.name || 'Service Booking';
+  const storeName = store?.name || 'Service Location';
+  const storeLocation = store?.location || store?.address || '';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <Link 
-            to="/bookings" 
+          <Link
+            to="/profile/bookings"
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to My Bookings
           </Link>
-          
+
           <div className="flex items-center space-x-2">
             <button
               onClick={handleRetry}
@@ -431,7 +782,7 @@ const BookingDetails = () => {
               <RefreshCw className="w-4 h-4" />
               <span>Refresh</span>
             </button>
-            
+
             <button
               onClick={shareBooking}
               className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 text-sm"
@@ -442,7 +793,6 @@ const BookingDetails = () => {
           </div>
         </div>
 
-        {/* Success message if booking was recovered */}
         {booking && retryCount > 0 && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center space-x-2">
@@ -452,9 +802,7 @@ const BookingDetails = () => {
           </div>
         )}
 
-        {/* Main Content */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          {/* Booking Header */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-8 border-b">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -476,7 +824,7 @@ const BookingDetails = () => {
                       </span>
                     </div>
                   )}
-                  
+
                   {entity?.featured && (
                     <div className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-sm">
                       <Star className="w-3 h-3" />
@@ -486,26 +834,12 @@ const BookingDetails = () => {
                 </div>
 
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {entity?.title || entity?.name}
+                  {displayName}
                 </h1>
 
                 {isOffer && service && (
                   <p className="text-gray-600 mb-3">Service: {service.name}</p>
                 )}
-
-                {/* Booking ID */}
-                <div className="flex items-center space-x-2 mb-4">
-                  <span className="text-sm text-gray-500">Booking ID:</span>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">{booking.id}</code>
-                  <button
-                    onClick={copyBookingId}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Copy booking ID"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  {copySuccess && <span className="text-green-600 text-xs">{copySuccess}</span>}
-                </div>
               </div>
 
               <div className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(booking.status)}`}>
@@ -514,16 +848,305 @@ const BookingDetails = () => {
             </div>
           </div>
 
-          {/* Rest of the component remains the same as original */}
-          {/* ... (keeping the existing booking details content) ... */}
+          <div className="p-6 space-y-6">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <Calendar className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Date & Time</h3>
+                <p className="text-gray-600">
+                  {bookingTime.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+                <p className="text-gray-600">
+                  {bookingTime.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                  {endTime && ` - ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <MapPin className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Service Location</h3>
+                <p className="text-gray-600">{storeName}</p>
+                {storeLocation && (
+                  <p className="text-gray-500 text-sm">{storeLocation}</p>
+                )}
+                {booking.branch && booking.branch.name !== storeName && (
+                  <p className="text-gray-500 text-sm">Branch: {booking.branch.name}</p>
+                )}
+              </div>
+            </div>
+
+            {booking.staff && (
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <User className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Staff Member</h3>
+                  <p className="text-gray-600">{booking.staff.name}</p>
+                  {booking.staff.role && (
+                    <p className="text-gray-500 text-sm">{booking.staff.role}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="border-t pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                {isOffer ? 'Offer Details' : 'Service Details'}
+              </h3>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-2">
+                  {displayName}
+                </h4>
+
+                {entity?.description && (
+                  <p className="text-gray-600 text-sm mb-3">{entity.description}</p>
+                )}
+
+                {isOffer && (
+                  <div className="space-y-2">
+                    {entity?.discount && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Discount:</span>
+                        <span className="text-sm font-medium text-red-600">{entity.discount}% OFF</span>
+                      </div>
+                    )}
+
+                    {booking.accessFee && booking.accessFee > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Platform Access Fee:</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium">KES {parseFloat(booking.accessFee).toLocaleString()}</span>
+                          {booking.accessFeePaid ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <Clock4 className="w-4 h-4 text-yellow-500" />
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {(entity?.offerPrice || entity?.discounted_price) && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Discounted Price:</span>
+                        <span className="text-sm font-medium text-green-600">
+                          KES {parseFloat(entity.offerPrice || entity.discounted_price).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    {(entity?.originalPrice || entity?.original_price) && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Original Price:</span>
+                        <span className="text-sm text-gray-400 line-through">
+                          KES {parseFloat(entity.originalPrice || entity.original_price).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!isOffer && entity && (
+                  <div className="space-y-2">
+                    {entity.price && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Price:</span>
+                        <span className="text-sm font-medium">
+                          KES {parseFloat(entity.price).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    {entity.duration && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Duration:</span>
+                        <span className="text-sm">{entity.duration} minutes</span>
+                      </div>
+                    )}
+
+                    {entity.type && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Service Type:</span>
+                        <span className="text-sm capitalize">{entity.type}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {booking.payment && (
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  {booking.payment.amount && (
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600">Amount:</span>
+                      <span className="text-sm font-medium">KES {parseFloat(booking.payment.amount).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {booking.payment.method && (
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600">Method:</span>
+                      <span className="text-sm uppercase">{booking.payment.method}</span>
+                    </div>
+                  )}
+                  {booking.payment.status && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Status:</span>
+                      <span className={`text-sm px-2 py-1 rounded ${
+                        booking.payment.status === 'completed' || booking.payment.status === 'successful'
+                          ? 'bg-green-100 text-green-700'
+                          : booking.payment.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {booking.payment.status.charAt(0).toUpperCase() + booking.payment.status.slice(1)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {(booking.notes || booking.specialRequests) && (
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Additional Information</h3>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  {booking.notes && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Notes:</span>
+                      <p className="text-sm text-gray-600 mt-1">{booking.notes}</p>
+                    </div>
+                  )}
+                  {booking.specialRequests && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Special Requests:</span>
+                      <p className="text-sm text-gray-600 mt-1">{booking.specialRequests}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {(store?.phone_number || store?.phone || store?.email) && (
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  {(store.phone_number || store.phone) && (
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm text-gray-600">
+                        {store.phone_number || store.phone}
+                      </span>
+                    </div>
+                  )}
+                  {store.email && (
+                    <div className="flex items-center space-x-2">
+                      <Mail className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm text-gray-600">{store.email}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {isUpcoming && ['confirmed', 'pending'].includes(booking.status) && (
+              <div className="border-t pt-6">
+                <div className="flex space-x-4">
+                  {canCancelBooking() && (
+                    <button
+                      onClick={() => setShowCancelModal(true)}
+                      className="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Cancel Booking</span>
+                    </button>
+                  )}
+
+                  {canRescheduleBooking() && (
+                    <button
+                      onClick={() => setShowRescheduleModal(true)}
+                      className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      <span>Reschedule</span>
+                    </button>
+                  )}
+                </div>
+
+                {!canCancelBooking() && booking.status === 'confirmed' && (
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                      <div>
+                        <div className="text-sm font-medium text-yellow-900">Cancellation Not Available</div>
+                        <div className="text-xs text-yellow-700">
+                          This booking cannot be cancelled due to the cancellation policy. Contact the service provider for assistance.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {booking.status === 'completed' && (
+              <div className="border-t pt-6">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="font-medium text-green-900">Booking Completed</span>
+                  </div>
+                  <p className="text-sm text-green-700 mb-3">
+                    Thank you for using our service! We hope you had a great experience.
+                  </p>
+                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                    Leave a Review
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {booking.status === 'cancelled' && (
+              <div className="border-t pt-6">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <XCircle className="w-5 h-5 text-red-600" />
+                    <span className="font-medium text-red-900">Booking Cancelled</span>
+                  </div>
+                  <p className="text-sm text-red-700">
+                    This booking has been cancelled. If you need assistance, please contact support.
+                  </p>
+                  {booking.cancelReason && (
+                    <div className="mt-2">
+                      <span className="text-sm font-medium text-red-700">Reason:</span>
+                      <p className="text-sm text-red-600">{booking.cancelReason}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Cancel Modal remains the same */}
-        {showCancelModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            {/* ... (keeping the existing cancel modal) ... */}
-          </div>
-        )}
+        {showCancelModal && <CancelModal />}
+        {showRescheduleModal && <RescheduleModal />}
       </div>
 
       <Footer />
