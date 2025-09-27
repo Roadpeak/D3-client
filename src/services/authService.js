@@ -52,31 +52,10 @@ class AuthService {
       return this.handleAuthError(error);
     }
   }
-
-  // NEW: Google Sign-In
-  async googleSignIn(googleCredential, referralSlug = null) {
-    try {
-      console.log('🚀 Sending Google credential to backend...');
-      
-      const response = await api.post(API_ENDPOINTS.user.googleSignIn, {
-        credential: googleCredential,
-        referralSlug: referralSlug
-      });
-
-      const { access_token, user, isNewUser } = response.data;
-
-      if (access_token) {
-        setTokenToCookie(access_token);
-        console.log('✅ Google authentication token saved');
       }
 
       return {
         success: true,
-        data: { user, token: access_token, isNewUser },
-        message: isNewUser ? 'Account created successfully with Google' : 'Google sign-in successful'
-      };
-    } catch (error) {
-      console.error('❌ Google Sign-In API error:', error);
       return this.handleAuthError(error);
     }
   }
@@ -132,16 +111,13 @@ class AuthService {
     }
   }
 
-  // Updated getCurrentUser function
   async getCurrentUser() {
     try {
       const token = getTokenFromCookie();
       console.log('🎫 Token from cookie:', token ? `Exists (${token.substring(0, 20)}...)` : 'No token');
-
       if (!token) {
         return { success: false, message: 'No authentication token found' };
       }
-
       const response = await api.get(API_ENDPOINTS.user.profile);
       console.log('✅ Profile request successful');
       return {
@@ -149,7 +125,6 @@ class AuthService {
         data: response.data,
       };
     } catch (error) {
-      console.error('❌ getCurrentUser error:', error.response?.data);
       return this.handleAuthError(error);
     }
   }
@@ -157,6 +132,7 @@ class AuthService {
   // Logout
   logout() {
     removeTokenFromCookie();
+    localStorage.removeItem('access_token');
     return {
       success: true,
       message: 'Logged out successfully'
