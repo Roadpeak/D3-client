@@ -50,7 +50,7 @@ const SMALL_LOGO_FALLBACK = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhla
 const offerAPI = {
   getOffersByStore: async (storeId) => {
     try {
-      const response = await fetch(`http://${process.env.REACT_APP_API_URL}/offers/store/${storeId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offers/store/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -70,7 +70,7 @@ const branchAPI = {
   getBranchesByStore: async (storeId) => {
     try {
       // Try public endpoint first (for store view)
-      const response = await fetch(`http://${process.env.REACT_APP_API_URL}/stores/${storeId}/branches`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${storeId}/branches`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -83,7 +83,7 @@ const branchAPI = {
       }
 
       // If public endpoint doesn't exist, try the protected one without auth
-      const protectedResponse = await fetch(`http://${process.env.REACT_APP_API_URL}/branches/store/${storeId}`, {
+      const protectedResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/branches/store/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -635,7 +635,7 @@ const StoreViewPage = () => {
     try {
       setToggleFollowLoading(true);
 
-      const response = await fetch(`http://${process.env.REACT_APP_API_URL}/stores/${id}/toggle-follow`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${id}/toggle-follow`, {
         method: 'POST',
         headers: StoreService.getHeaders()
       });
@@ -709,7 +709,7 @@ const StoreViewPage = () => {
     try {
       console.log('Frontend: Fetching social links for store:', storeId);
 
-      const response = await fetch(`http://${process.env.REACT_APP_API_URL}/socials/store/${storeId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/socials/store/${storeId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

@@ -26,7 +26,7 @@ const SearchResults = () => {
     const fetchSearchResults = async (query) => {
         try {
             setLoading(true);
-            const response = await axios.get(`http://${process.env.REACT_APP_API_URL}/search?query=${query}`);
+            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/search?query=${query}`);
             setDiscounts(response.data.discounts);
             setStores(response.data.shops);
         } catch (error) {

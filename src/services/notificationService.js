@@ -4,7 +4,7 @@ class NotificationService {
   constructor() {
     this.API_BASE = process.env.NODE_ENV === 'production'
       ? `${window.location.protocol}//${window.location.hostname}/api/v1`
-      : 'http://${process.env.REACT_APP_API_URL}';
+      : '${process.env.REACT_APP_API_BASE_URL}';
 
     this.fallbackNotifications = {
       message: [],

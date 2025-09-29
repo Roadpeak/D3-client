@@ -1,5 +1,5 @@
 // services/socialsService.js
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://${process.env.REACT_APP_API_URL}';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '${process.env.REACT_APP_API_BASE_URL}';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');

@@ -24,7 +24,7 @@ const Calendar = ({ serviceId, shopId }) => {
             const fetchSlots = async () => {
                 try {
                     const response = await axios.get(
-                        `http://${process.env.REACT_APP_API_URL}/shops/${shopId}/services/${serviceId}/available-slots`,
+                        `${process.env.REACT_APP_API_BASE_URL}/shops/${shopId}/services/${serviceId}/available-slots`,
                         { params: { start_date: format(startDate, 'yyyy-MM-dd'), end_date: format(endDate, 'yyyy-MM-dd') } }
                     );
                     setSlots(response.data);
@@ -61,7 +61,7 @@ const Calendar = ({ serviceId, shopId }) => {
             const token = getCookie('access_token')
             try {
                 await axios.post(
-                    'http://${process.env.REACT_APP_API_URL}/appointments',
+                    '${process.env.REACT_APP_API_BASE_URL}/appointments',
                     {
                         service_id: serviceId,
                         appointment_time: appointmentDateTimeStart,

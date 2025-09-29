@@ -69,7 +69,7 @@
 
 //       try {
 //         // Try individual service endpoint first
-//         const response = await fetch(`http://${process.env.REACT_APP_API_URL}/services/${id}`, {
+//         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services/${id}`, {
 //           headers: {
 //             'Content-Type': 'application/json',
 //             'Accept': 'application/json'
@@ -88,7 +88,7 @@
 
 //         // Fallback: try to get from services list
 //         try {
-//           const response = await fetch('http://${process.env.REACT_APP_API_URL}/services', {
+//           const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/services', {
 //             headers: {
 //               'Content-Type': 'application/json',
 //               'Accept': 'application/json'
@@ -114,7 +114,7 @@
 //       // Fetch store information if we have store_id
 //       if (serviceData && serviceData.store_id) {
 //         try {
-//           const storeResponse = await fetch(`http://${process.env.REACT_APP_API_URL}/stores/${serviceData.store_id}`, {
+//           const storeResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${serviceData.store_id}`, {
 //             headers: {
 //               'Content-Type': 'application/json',
 //               'Accept': 'application/json'
@@ -155,7 +155,7 @@
 
 //   const fetchRelatedServices = async (category) => {
 //     try {
-//       const response = await fetch('http://${process.env.REACT_APP_API_URL}/services', {
+//       const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/services', {
 //         headers: {
 //           'Content-Type': 'application/json',
 //           'Accept': 'application/json'

@@ -13,7 +13,7 @@ const RequestPasswordReset = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.post('http://${process.env.REACT_APP_API_URL}/send-reset-link', { email });
+            const response = await axios.post('${process.env.REACT_APP_API_BASE_URL}/send-reset-link', { email });
             setMessage(response.data.message);
             setError('');
         } catch (err) {

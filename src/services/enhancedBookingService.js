@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { getTokenFromCookie } from '../config/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://${process.env.REACT_APP_API_URL}';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}';
 
 class EnhancedBookingService {
     constructor() {

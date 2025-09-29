@@ -2,8 +2,8 @@ import axios from 'axios';
 import { getCookie } from '../cookieUtils';
 import toast from 'react-hot-toast';
 
-const API_URL = 'http://${process.env.REACT_APP_API_URL}/discounts';
-const BASE_URL = 'http://${process.env.REACT_APP_API_URL}';
+const API_URL = '${process.env.REACT_APP_API_BASE_URL}/discounts';
+const BASE_URL = '${process.env.REACT_APP_API_BASE_URL}';
 
 const getToken = () => getCookie('access_token');
 

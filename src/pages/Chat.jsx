@@ -113,7 +113,7 @@ const ChatPage = () => {
 
         // Fetch from API as fallback
         try {
-          const response = await fetch('http://${process.env.REACT_APP_API_URL}/users/profile', {
+          const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/users/profile', {
             headers: {
               'Authorization': `Bearer ${userToken}`,
               'Content-Type': 'application/json'

@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
             try {
                 const token = getCookie('access_token');
                 if (token) {
-                    const response = await fetch('http://${process.env.REACT_APP_API_URL}/profile', {
+                    const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/profile', {
                         headers: {
                             Authorization: `Bearer ${token}`
                         }
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const response = await fetch('http://${process.env.REACT_APP_API_URL}/v1/auth/login', {
+            const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/v1/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -24,7 +24,7 @@ const SendMessageModal = ({ isOpen, onClose, sellerId }) => {
         const accessToken = getCookie('access_token');
 
         try {
-            const response = await axios.post('http://${process.env.REACT_APP_API_URL}/messages/send', formData, {
+            const response = await axios.post('${process.env.REACT_APP_API_BASE_URL}/messages/send', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${accessToken}`,
