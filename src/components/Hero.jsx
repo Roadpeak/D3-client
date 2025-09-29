@@ -385,7 +385,7 @@ export default function Hero() {
                         </button>
 
                         {/* Short Description */}
-                        <div className="text-white/80 text-xs space-y-1">
+                        {/* <div className="text-white/80 text-xs space-y-1">
                           <div className="flex items-center gap-2">
                             <CheckCircle className="w-3 h-3 text-green-400" />
                             <span>Full Body Massage (90 min)</span>
@@ -394,7 +394,7 @@ export default function Hero() {
                             <CheckCircle className="w-3 h-3 text-green-400" />
                             <span>Free Spa Access</span>
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   </div>

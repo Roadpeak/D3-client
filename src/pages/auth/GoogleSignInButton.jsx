@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { FaGoogle } from 'react-icons/fa';
 import authService from '../../services/authService';
 
@@ -8,11 +8,19 @@ const GoogleSignInButton = ({ buttonText = "Continue with Google", onSuccess, on
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   // Google OAuth configuration
   const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
+    // Store redirect parameter in localStorage before Google Auth (in case of popup/redirect flow)
+    const redirectParam = searchParams.get('redirect');
+    if (redirectParam) {
+      localStorage.setItem('authRedirect', redirectParam);
+      console.log('🔄 Stored redirect for Google Auth:', redirectParam);
+    }
+
     // Load Google Identity Services script
     if (!window.google && GOOGLE_CLIENT_ID) {
       const script = document.createElement('script');
@@ -24,7 +32,7 @@ const GoogleSignInButton = ({ buttonText = "Continue with Google", onSuccess, on
     } else if (window.google) {
       initializeGoogleSignIn();
     }
-  }, [GOOGLE_CLIENT_ID]);
+  }, [GOOGLE_CLIENT_ID, searchParams]);
 
   const initializeGoogleSignIn = () => {
     if (window.google && GOOGLE_CLIENT_ID) {
@@ -55,22 +63,49 @@ const GoogleSignInButton = ({ buttonText = "Continue with Google", onSuccess, on
       const result = await authService.googleSignIn(response.credential, referralSlug);
 
       if (result.success) {
-        console.log('Google authentication successful');
+        console.log('✅ Google authentication successful');
         
         // Call success callback if provided
         if (onSuccess) {
           onSuccess(result);
         }
 
-        // Navigate to intended page or home
-        const from = location.state?.from?.pathname || '/';
-        navigate(from, { replace: true });
+        // Get redirect path - check localStorage first (for popup flow), then query params, then location state
+        let redirectPath = localStorage.getItem('authRedirect');
+        
+        if (!redirectPath) {
+          const redirectParam = searchParams.get('redirect');
+          if (redirectParam) {
+            redirectPath = decodeURIComponent(redirectParam);
+          }
+        }
+        
+        if (!redirectPath) {
+          redirectPath = location.state?.from?.pathname;
+        }
+
+        // Clean up localStorage
+        if (localStorage.getItem('authRedirect')) {
+          localStorage.removeItem('authRedirect');
+        }
+
+        // Navigate to the redirect path or home
+        const finalPath = redirectPath || '/';
+        console.log('🎯 Google Auth redirecting to:', finalPath);
+        
+        // Small delay to ensure auth state is updated
+        setTimeout(() => {
+          navigate(finalPath, { replace: true });
+        }, 100);
       } else {
         console.error('Google authentication failed:', result.message);
         throw new Error(result.message || 'Google authentication failed');
       }
     } catch (error) {
       console.error('Google Sign-In error:', error);
+      
+      // Clean up localStorage on error
+      localStorage.removeItem('authRedirect');
       
       // Call error callback if provided
       if (onError) {

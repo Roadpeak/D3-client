@@ -115,7 +115,7 @@ const ServiceDetailPage = () => {
       if (!authService.isAuthenticated()) {
         // Redirect to login with service booking redirect
         const redirectUrl = `/booking/service/${actualServiceId}`;
-        navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+        navigate(`/accounts/sign-in?redirect=${encodeURIComponent(redirectUrl)}`);
         return;
       }
   
@@ -125,7 +125,7 @@ const ServiceDetailPage = () => {
         if (!userResponse.success) {
           // Token exists but is invalid/expired
           const redirectUrl = `/booking/service/${actualServiceId}`;
-          navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+          navigate(`/accounts/sign-in?redirect=${encodeURIComponent(redirectUrl)}`);
           return;
         }
       } catch (error) {

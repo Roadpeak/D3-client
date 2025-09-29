@@ -81,7 +81,7 @@ const ViewOffer = () => {
           location: response.offer.store?.location || response.offer.service?.store?.location || "Location not specified",
           platform: response.offer.store?.name || response.offer.service?.store?.name || "Store",
           region: "Nairobi",
-          purchases: "75 Bought", // You might want to track this in your API
+          // purchases: "75 Bought", // You might want to track this in your API
           originalPrice: response.offer.service?.price ? `KES ${response.offer.service.price}` : "KES 200.00",
           offerPrice: response.offer.service?.price && response.offer.discount
             ? `KES ${(response.offer.service.price * (1 - response.offer.discount / 100)).toFixed(2)}`
@@ -174,11 +174,12 @@ const ViewOffer = () => {
         // Store the current location to redirect back after login
         const redirectUrl = actualStoreId 
           ? `/store/${actualStoreId}/offer/${actualOfferId}`
-          : `/booking/offer/${actualOfferId}`;
-        navigate(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+          : `/offer/${actualOfferId}`;
+        
+        console.log('🔄 Not logged in, redirecting to login with:', redirectUrl);
+        navigate(`/accounts/sign-in?redirect=${encodeURIComponent(redirectUrl)}`);
         return;
       }
-
       // Check if offer is active and bookable
       if (!isOfferActive) {
         setError('This offer is no longer available for booking.');
@@ -533,10 +534,10 @@ const ViewOffer = () => {
                     <Tag className="w-4 h-4 mr-2" />
                     <span>{offerData.platform}</span>
                   </div>
-                  <div className="flex items-center text-gray-600">
+                  {/* <div className="flex items-center text-gray-600">
                     <Users className="w-4 h-4 mr-2" />
                     <span>{offerData.purchases}</span>
-                  </div>
+                  </div> */}
                   <div className="flex items-center text-gray-600">
                     <Calendar className="w-4 h-4 mr-2" />
                     <span>{offerData.offerDuration}</span>
@@ -783,7 +784,7 @@ const ViewOffer = () => {
         </div>
 
         {/* Reviews Section - Simplified */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
+        {/* <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
             <div className="flex items-center space-x-2">
@@ -796,7 +797,7 @@ const ViewOffer = () => {
           <div className="text-center py-8 text-gray-500">
             <p>Reviews will be displayed here when available.</p>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <Footer />

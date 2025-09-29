@@ -432,8 +432,8 @@ const SearchResultsPage = () => {
           <div className="container mx-auto px-4 py-8">
             <div className="text-center py-12">
               <Search className="w-24 h-24 text-slate-300 mx-auto mb-6" />
-              <h1 className="text-2xl font-bold text-slate-700 mb-2">Start Your Search</h1>
-              <p className="text-slate-500 mb-6">Enter a search term to find stores and offers</p>
+              <h1 className="text-2xl font-bold text-slate-700 mb-2">D3 Search</h1>
+              <p className="text-slate-500 mb-6">Find Discounted services and stores!</p>
               
               <div className="max-w-2xl mx-auto">
                 <RealTimeSearch

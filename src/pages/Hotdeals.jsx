@@ -94,7 +94,7 @@ export default function Hotdeals() {
 
   const navigate = useNavigate();
 
-  // Favorites hook - only destructure what we use
+  // Favorites hook
   const {
     error: favoritesError,
     toggleFavorite,
@@ -164,7 +164,8 @@ export default function Hotdeals() {
         featured: offer.featured || false,
         store: {
           name: offer.store?.name || 'Store',
-          googleLogo: offer.store?.logo_url || null // Don't set placeholder here
+          id: offer.store?.id,
+          googleLogo: offer.store?.logo_url || null
         },
         originalPrice: offer.service?.price || 0,
         discountedPrice: offer.service?.price ? (offer.service.price * (1 - offer.discount / 100)).toFixed(2) : 0,
@@ -267,8 +268,18 @@ export default function Hotdeals() {
     }
   }, [pagination.totalPages]);
 
-  const handleOfferClick = useCallback((offerId) => {
-    navigate(`/offer/${offerId}`);
+  // Handle offer click with store ID
+  const handleOfferClick = useCallback((offer) => {
+    // Use the new URL structure with store ID when available
+    const storeId = offer.store_info?.id || offer.store?.id;
+    
+    if (storeId) {
+      navigate(`/store/${storeId}/offer/${offer.id}`);
+    } else {
+      // Fallback to simple offer route if no store ID
+      console.warn('No store ID found for offer:', offer.id);
+      navigate(`/offer/${offer.id}`);
+    }
   }, [navigate]);
 
   const handleRetry = useCallback(() => {
@@ -304,7 +315,7 @@ export default function Hotdeals() {
   useEffect(() => {
     const handleLocationChange = (event) => {
       console.log('HOTDEALS - Received location change event:', event.detail);
-      setCurrentPage(1); // Reset pagination when location changes
+      setCurrentPage(1);
     };
 
     window.addEventListener('locationChanged', handleLocationChange);
@@ -418,10 +429,12 @@ export default function Hotdeals() {
 
       <div className="container mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
-          {/* Sidebar - keeping original structure */}
-          <div className={`${isSidebarOpen ? 'block' : 'hidden'
-            } md:block w-full md:w-80 flex-shrink-0 ${isSidebarOpen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''
-            }`}>
+          {/* Sidebar */}
+          <div className={`${
+            isSidebarOpen ? 'block' : 'hidden'
+          } md:block w-full md:w-80 flex-shrink-0 ${
+            isSidebarOpen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''
+          }`}>
             {/* Mobile Close Button */}
             {isSidebarOpen && (
               <div className="md:hidden flex justify-between items-center p-4 border-b">
@@ -519,7 +532,7 @@ export default function Hotdeals() {
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* View Controls - keeping original structure */}
+            {/* View Controls */}
             <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
               <div className="flex items-center space-x-4">
                 <button
@@ -568,40 +581,45 @@ export default function Hotdeals() {
               </div>
             )}
 
-            {/* Deals Grid - UPDATED WITH NEW STORE LOGO COMPONENT */}
-            <div className={`grid gap-4 sm:gap-6 mb-8 ${viewMode === 'grid'
+            {/* Deals Grid */}
+            <div className={`grid gap-4 sm:gap-6 mb-8 ${
+              viewMode === 'grid'
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                 : 'grid-cols-1'
-              }`}>
+            }`}>
               {offers.map((offer) => {
                 const isOfferFavorited = favoritesInitialized && isFavorite(offer.id);
 
                 return (
                   <div
                     key={offer.id}
-                    className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
-                      }`}
-                    onClick={() => handleOfferClick(offer.id)}
+                    className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+                      viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
+                    }`}
+                    onClick={() => handleOfferClick(offer)}
                   >
                     <div className={`relative ${viewMode === 'list' ? 'sm:w-1/3' : ''}`}>
                       <img
                         src={offer.image}
                         alt={offer.title}
-                        className={`w-full object-cover ${viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
-                          }`}
+                        className={`w-full object-cover ${
+                          viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
+                        }`}
                         onError={(e) => {
                           e.target.src = '/api/placeholder/300/200';
                         }}
                       />
 
                       <button
-                        className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${isOfferFavorited
+                        className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${
+                          isOfferFavorited
                             ? 'bg-red-500 text-white shadow-red-200'
                             : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-                          } ${!isAuthenticated || !favoritesInitialized
+                        } ${
+                          !isAuthenticated || !favoritesInitialized
                             ? 'cursor-not-allowed opacity-50'
                             : 'cursor-pointer'
-                          }`}
+                        }`}
                         onClick={(e) => handleFavoriteClick(e, offer)}
                         disabled={!isAuthenticated || !favoritesInitialized}
                         title={
@@ -621,8 +639,9 @@ export default function Hotdeals() {
                       </button>
 
                       <div className="absolute bottom-3 left-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium text-white ${offer.featured ? 'bg-red-500' : 'bg-blue-500'
-                          }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium text-white ${
+                          offer.featured ? 'bg-red-500' : 'bg-blue-500'
+                        }`}>
                           {offer.category}
                         </span>
                       </div>
@@ -637,7 +656,6 @@ export default function Hotdeals() {
                     <div className={`p-4 ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
 
                       <div className="flex items-center gap-2 mb-3">
-                        {/* UPDATED: Using the new StoreLogo component */}
                         <StoreLogo
                           logoUrl={offer.store?.googleLogo}
                           storeName={offer.store?.name || 'Store'}
@@ -668,11 +686,12 @@ export default function Hotdeals() {
                         </span>
 
                         <button
-                          className={`px-8 py-4 rounded text-sm font-medium transition-colors ${offer.featured ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                            }`}
+                          className={`px-8 py-4 rounded text-sm font-medium transition-colors ${
+                            offer.featured ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                          }`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleOfferClick(offer.id);
+                            handleOfferClick(offer);
                           }}
                         >
                           Get Offer
@@ -684,7 +703,7 @@ export default function Hotdeals() {
               })}
             </div>
 
-            {/* Rest of the component remains the same - No offers message, Pagination, etc. */}
+            {/* No offers message */}
             {!loading && offers.length === 0 && (
               <div className="text-center py-12">
                 <div className="max-w-md mx-auto">
@@ -747,10 +766,11 @@ export default function Hotdeals() {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`px-3 py-2 rounded transition-colors ${currentPage === page
+                          className={`px-3 py-2 rounded transition-colors ${
+                            currentPage === page
                               ? 'bg-red-500 text-white'
                               : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                            }`}
+                          }`}
                         >
                           {page}
                         </button>
@@ -821,8 +841,8 @@ export default function Hotdeals() {
         </div>
       </div>
 
-      {/* Bottom Banner */}
-      <div className="bg-gradient-to-r from-blue-400 to-blue-600 py-8 sm:py-12">
+    {/* Bottom Banner */}
+    <div className="bg-gradient-to-r from-blue-400 to-blue-600 py-8 sm:py-12">
         <div className="container mx-auto px-4 text-center">
           <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 mb-4 space-y-4 sm:space-y-0">
             <div className="bg-white p-3 rounded-lg">
@@ -847,16 +867,10 @@ export default function Hotdeals() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-4 sm:space-y-0">
-            <a
-              href="https://merchants.discoun3ree.com/accounts/sign-up"
-              className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 w-full sm:w-auto transition-colors text-center block"
-            >
+            <a href="https://merchants.discoun3ree.com/accounts/sign-up" className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 w-full sm:w-auto transition-colors text-center block">
               Add a Listing
             </a>
-            <a
-              href="/search"
-              className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-yellow-500 w-full sm:w-auto transition-colors text-center block"
-            >
+            <a href="/search" className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-yellow-500 w-full sm:w-auto transition-colors text-center block">
               Search for a Deal
             </a>
           </div>

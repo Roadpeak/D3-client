@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { FiEye, FiEyeOff, FiMail, FiLock, FiTag, FiPercent } from 'react-icons/fi';
 import GoogleSignInButton from './GoogleSignInButton';
@@ -15,9 +15,40 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
-  // Get redirect path from location state (for protected routes)
-  const from = location.state?.from?.pathname || '/';
+  // Debug: Log redirect parameters
+  useEffect(() => {
+    const redirectParam = searchParams.get('redirect');
+    console.log('🔍 Login page loaded');
+    console.log('📍 Redirect param from URL:', redirectParam);
+    console.log('📍 Location state:', location.state);
+    console.log('📍 Full URL:', window.location.href);
+  }, [searchParams, location.state]);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userResponse = await authService.getCurrentUser();
+        if (userResponse?.success) {
+          // User is already logged in, redirect them
+          const redirectParam = searchParams.get('redirect');
+          
+          if (redirectParam) {
+            const decodedPath = decodeURIComponent(redirectParam);
+            console.log('✅ Already logged in, redirecting to:', decodedPath);
+            navigate(decodedPath, { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
+        }
+      } catch (err) {
+        console.log('User not authenticated');
+      }
+    };
+    checkAuth();
+  }, [navigate, searchParams]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -68,17 +99,33 @@ const Login = () => {
       const result = await authService.loginUser(formData.email, formData.password);
 
       if (result.success) {
-        // Login successful - redirect to intended page or home
-        navigate(from, { replace: true });
+        console.log('✅ Login successful!');
         
-        // Optional: Show success message or refresh page if needed
-        // window.location.reload();
+        // Get redirect path - check query params first, then location state
+        const redirectParam = searchParams.get('redirect');
+        let redirectPath = '/';
+        
+        if (redirectParam) {
+          redirectPath = decodeURIComponent(redirectParam);
+          console.log('🎯 Redirecting to (from query param):', redirectPath);
+        } else if (location.state?.from?.pathname) {
+          redirectPath = location.state.from.pathname;
+          console.log('🎯 Redirecting to (from location state):', redirectPath);
+        } else {
+          console.log('🎯 No redirect param, going to home');
+        }
+        
+        // Small delay to ensure auth state is updated
+        setTimeout(() => {
+          navigate(redirectPath, { replace: true });
+        }, 100);
+        
       } else {
         // Handle login errors
         if (result.errors && typeof result.errors === 'object') {
           setErrors(result.errors);
         } else {
-          setErrors({ general: result.message });
+          setErrors({ general: result.message || 'Login failed. Please try again.' });
         }
       }
     } catch (error) {
@@ -91,6 +138,15 @@ const Login = () => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  // Preserve redirect parameter when navigating to sign up
+  const getSignUpLink = () => {
+    const redirectParam = searchParams.get('redirect');
+    if (redirectParam) {
+      return `/accounts/sign-up?redirect=${redirectParam}`;
+    }
+    return '/accounts/sign-up';
   };
 
   return (
@@ -139,6 +195,15 @@ const Login = () => {
           {/* Form */}
           <div className="p-8">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {/* Redirect Info Message */}
+              {searchParams.get('redirect') && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800 font-medium">
+                    Please sign in to continue with your booking
+                  </p>
+                </div>
+              )}
+
               {/* Error Messages */}
               {(errors.general || Object.keys(errors).length > 0) && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-1">
@@ -224,7 +289,7 @@ const Login = () => {
                 <p className="text-xs text-gray-600">
                   Don't have an account?{' '}
                   <Link
-                    to='/accounts/sign-up'
+                    to={getSignUpLink()}
                     className="text-purple-600 font-medium hover:text-purple-700 transition-colors"
                   >
                     Sign Up

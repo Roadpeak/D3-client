@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { FiEye, FiEyeOff, FiMail, FiLock, FiUser, FiPhone, FiTag } from 'react-icons/fi';
 import GoogleSignInButton from './GoogleSignInButton';
@@ -18,6 +18,16 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Get redirect path from query parameter or default to home
+  const getRedirectPath = () => {
+    const redirectParam = searchParams.get('redirect');
+    if (redirectParam) {
+      return decodeURIComponent(redirectParam);
+    }
+    return '/';
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,7 +35,7 @@ const SignUp = () => {
       ...prevData,
       [name]: value,
     }));
-    
+
     // Clear specific field error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -92,21 +102,23 @@ const SignUp = () => {
       });
 
       if (result.success) {
-        // Registration successful - redirect to dashboard/home instead of OTP verification
-        navigate('/', { 
-          state: { 
+        // Registration successful - redirect to intended page or home
+        const redirectPath = getRedirectPath();
+        navigate(redirectPath, {
+          replace: true,
+          state: {
             message: 'Registration successful! Welcome to D3 Deals!'
-          } 
+          }
         });
       } else {
         // Handle registration errors
         if (result.errors && typeof result.errors === 'object') {
           // Map backend field names to frontend field names
           const mappedErrors = {};
-          
+
           Object.keys(result.errors).forEach(key => {
             let frontendField = key;
-            
+
             // Map backend field names to frontend field names
             switch (key) {
               case 'first_name':
@@ -121,15 +133,15 @@ const SignUp = () => {
               default:
                 frontendField = key;
             }
-            
+
             // Handle array or string error messages
-            const errorMessage = Array.isArray(result.errors[key]) 
-              ? result.errors[key][0] 
+            const errorMessage = Array.isArray(result.errors[key])
+              ? result.errors[key][0]
               : result.errors[key];
-            
+
             mappedErrors[frontendField] = errorMessage;
           });
-          
+
           setErrors(mappedErrors);
         } else {
           // General error message
@@ -146,6 +158,15 @@ const SignUp = () => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  // Preserve redirect parameter when navigating to sign in
+  const getSignInLink = () => {
+    const redirectParam = searchParams.get('redirect');
+    if (redirectParam) {
+      return `/accounts/sign-in?redirect=${redirectParam}`;
+    }
+    return '/accounts/sign-in';
   };
 
   return (
@@ -170,6 +191,7 @@ const SignUp = () => {
             <Link
               to='https://merchants.discoun3ree.com/accounts/register'
               target='_blank'
+              rel="noopener noreferrer"
               className="px-6 py-2 bg-white text-gray-600 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
             >
               Merchant
@@ -179,6 +201,15 @@ const SignUp = () => {
           {/* Form */}
           <div className="p-8">
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              {/* Redirect Info Message */}
+              {searchParams.get('redirect') && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800 font-medium">
+                    Create an account to continue with your booking
+                  </p>
+                </div>
+              )}
+
               {/* Error Messages */}
               {(errors.general || Object.keys(errors).length > 0) && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-1">
@@ -208,9 +239,8 @@ const SignUp = () => {
                       placeholder="Enter first name"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
-                        errors.firstName ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
-                      }`}
+                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.firstName ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                        }`}
                       required
                     />
                   </div>
@@ -228,9 +258,8 @@ const SignUp = () => {
                       placeholder="Enter last name"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
-                        errors.lastName ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
-                      }`}
+                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.lastName ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                        }`}
                       required
                     />
                   </div>
@@ -251,9 +280,8 @@ const SignUp = () => {
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
-                      errors.email ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
-                    }`}
+                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.email ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      }`}
                     required
                   />
                 </div>
@@ -273,9 +301,8 @@ const SignUp = () => {
                     placeholder="Enter your phone number"
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
-                      errors.phoneNumber ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
-                    }`}
+                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.phoneNumber ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      }`}
                     required
                   />
                 </div>
@@ -296,9 +323,8 @@ const SignUp = () => {
                       placeholder="Create password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
-                        errors.password ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
-                      }`}
+                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.password ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                        }`}
                       required
                     />
                     <button
@@ -323,9 +349,8 @@ const SignUp = () => {
                       placeholder="Confirm password"
                       value={formData.password_confirmation}
                       onChange={handleChange}
-                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${
-                        errors.password_confirmation ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
-                      }`}
+                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.password_confirmation ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                        }`}
                       required
                     />
                     <button
@@ -352,27 +377,9 @@ const SignUp = () => {
                   className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500/20 focus:ring-2"
                 />
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  By signing up, you agree to our{' '}
-                  <a
-                    href="https://discoun3ree.com/terms-and-conditions"
-                    target='_blank'
-                    rel="noopener noreferrer"
-                    className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
-                  >
-                    Terms & Conditions
-                  </a>
-                  {' '}and{' '}
-                  <a
-                    href="https://discoun3ree.com/privacy-policy"
-                    target='_blank'
-                    rel="noopener noreferrer"
-                    className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
-                  >
-                    Privacy Policy
-                  </a>
+                  By signing up, you agree to our <a href="https://discoun3ree.com/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 font-medium transition-colors">Terms & Conditions</a> and <a href="https://discoun3ree.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 font-medium transition-colors">Privacy Policy</a>
                 </p>
               </div>
-
               <button
                 type="submit"
                 disabled={loading}
@@ -381,8 +388,7 @@ const SignUp = () => {
                 {loading ? (
                   <div className="flex items-center justify-center">
                     <ClipLoader color="#fff" size={20} />
-                    <span className="ml-2">Creating account...</span>
-                  </div>
+                    <span className="ml-2">Creating account...</span></div>
                 ) : (
                   'Create Account'
                 )}
@@ -396,7 +402,7 @@ const SignUp = () => {
               <p className="text-xs text-gray-600">
                 Already have an account?{' '}
                 <Link
-                  to='/accounts/sign-in'
+                  to={getSignInLink()}
                   className="text-purple-600 font-medium hover:text-purple-700 transition-colors"
                 >
                   Sign In

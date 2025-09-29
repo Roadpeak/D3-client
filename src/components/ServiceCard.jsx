@@ -8,7 +8,7 @@ const ServiceCard = ({ service, storeId }) => {
   const handleBookService = () => {
     // Use nested route if storeId is provided, otherwise use legacy route
     if (storeId) {
-      navigate(`/store/${storeId}/services/${service.id}`);
+      navigate(`/store/${storeId}/service/${service.id}`); // Changed from /services/ to /service/
     } else {
       navigate(`/service/${service.id}`);
     }

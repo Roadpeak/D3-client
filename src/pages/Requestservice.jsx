@@ -141,6 +141,11 @@ export default function UserServiceRequestPage() {
   const [loadingOffers, setLoadingOffers] = useState(false);
   const [loadingRequests, setLoadingRequests] = useState(false);
 
+  // Simplified currency formatter since backend now returns KSH
+  const formatCurrency = (value) => {
+    return value || 'KSH 0'; // Backend already formats it, just return as-is
+  };
+
   // Filter states
   const [filters, setFilters] = useState({
     category: 'all',
@@ -578,17 +583,24 @@ export default function UserServiceRequestPage() {
             </div>
 
             {/* Modern Action Bar */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center px-4 sm:px-0">
               <button
                 onClick={handleRequestFormShow}
-                className="bg-red-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
-
+                className="bg-red-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 w-full sm:w-auto text-sm sm:text-base"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Post Service Request</span>
               </button>
 
-              <div className="text-sm text-slate-500 flex items-center space-x-4">
+              <a
+                href="/search"
+                className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-xl font-medium hover:bg-yellow-500 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 w-full sm:w-auto text-sm sm:text-base"
+              >
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Browse Discounted Services</span>
+              </a>
+
+              {/* <div className="text-sm text-slate-500 flex items-center space-x-4">
                 <span className="flex items-center space-x-1">
                   <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
                   <span>{statistics.totalProviders?.toLocaleString() || '0'} verified providers</span>
@@ -597,7 +609,7 @@ export default function UserServiceRequestPage() {
                   <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                   <span>{statistics.activeRequests?.toLocaleString() || '0'} active requests</span>
                 </span>
-              </div>
+              </div> */}
             </div>
 
             {/* Auth status for development */}
@@ -664,10 +676,10 @@ export default function UserServiceRequestPage() {
                 className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-colors"
               >
                 <option value="all">All Budgets</option>
-                <option value="0-100">$0 - $100</option>
-                <option value="100-300">$100 - $300</option>
-                <option value="300-500">$300 - $500</option>
-                <option value="500+">$500+</option>
+                <option value="0-1000">KSH 0 - 1000</option>
+                <option value="1000-10000">KSH 1000 - 10000</option>
+                <option value="10000-50000">KSH 10000 - 50000</option>
+                <option value="50000+">KSH 50000+</option>
               </select>
 
               <select
@@ -903,43 +915,48 @@ export default function UserServiceRequestPage() {
             ) : (
               userOffers.map((offer) => (
                 <div key={offer.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center">
+                  <div className="p-4">
+                    {/* Mobile-optimized header */}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
+                      <div className="flex items-start space-x-3 flex-1">
+                        <div className="w-12 h-12 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
                           <MessageSquare className="w-6 h-6 text-indigo-600" />
                         </div>
-                        <div>
-                          <div className="flex items-center space-x-3 mb-1">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
                             <h3 className="text-lg font-semibold text-slate-900">{offer.storeName || offer.providerName}</h3>
                             {offer.verified && (
-                              <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                              <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full flex items-center gap-1 whitespace-nowrap">
                                 <CheckCircle className="w-3 h-3" />
                                 Verified
                               </span>
                             )}
                             {getStatusBadge(offer.status)}
                           </div>
-                          <div className="flex items-center space-x-3 text-sm text-slate-600">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
                             <div className="flex items-center">
                               <Star className="w-4 h-4 text-amber-400 mr-1" />
                               <span className="font-medium">{offer.rating || 0}</span>
-                              <span className="ml-1">({offer.reviews || 0} reviews)</span>
+                              <span className="ml-1">({offer.reviews || 0})</span>
                             </div>
-                            <span className="text-slate-400">•</span>
-                            <span>{offer.responseTime}</span>
+                            {offer.responseTime && (
+                              <>
+                                <span className="text-slate-400 hidden sm:inline">•</span>
+                                <span>{offer.responseTime}</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right flex-shrink-0">
                         <div className="text-2xl font-bold text-emerald-600">{offer.price}</div>
                         <div className="text-sm text-slate-500">Quoted Price</div>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 rounded-xl p-4 mb-4">
-                      <p className="text-slate-700 italic mb-3">"{offer.message}"</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="bg-slate-50 rounded-xl p-3 mb-3">
+                      <p className="text-slate-700 italic mb-2 text-sm">"{offer.message}"</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                         {offer.availability && (
                           <div className="flex items-center space-x-2">
                             <Calendar className="w-4 h-4 text-slate-400" />
@@ -955,59 +972,57 @@ export default function UserServiceRequestPage() {
                         {offer.includesSupplies && (
                           <div className="flex items-center space-x-2 text-emerald-600 col-span-full">
                             <CheckCircle className="w-4 h-4" />
-                            <span className="font-medium">Includes supplies and materials</span>
+                            <span className="font-medium text-sm">Includes supplies and materials</span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div className="mb-3 pt-3 border-t border-slate-100">
                       <div className="text-sm text-slate-500">
                         Offer for: <span className="font-medium text-slate-700">{offer.requestTitle}</span>
                       </div>
-                      <div className="flex space-x-3">
-                        {offer.storeDetails && (
-                          <button
-                            onClick={() => handleViewStore(offer.storeDetails)}
-                            className="px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-medium flex items-center space-x-2 transition-colors"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                            <span>View Store</span>
-                          </button>
-                        )}
+                    </div>
 
+                    {/* BUTTON LAYOUT */}
+                    <div className="space-y-2">
+                      {/* Row 1: View Store (if available) */}
+                      {offer.storeDetails && (
                         <button
-                          onClick={() => handleViewDetails(offer)}
-                          className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
+                          onClick={() => handleViewStore(offer.storeDetails)}
+                          className="w-full px-3 py-2.5 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-medium flex items-center justify-center space-x-2 transition-colors text-sm"
                         >
-                          Details
+                          <ExternalLink className="w-4 h-4" />
+                          <span>View Store</span>
                         </button>
+                      )}
 
-                        {offer.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => handleRejectOffer(offer.id, offer.requestId)}
-                              className="px-4 py-2 border border-red-500 text-red-600 rounded-lg hover:bg-red-50 font-medium transition-colors"
-                              disabled={submitting}
-                            >
-                              Reject
-                            </button>
-                            <button
-                              onClick={() => handleAcceptOffer(offer.id, offer.requestId)}
-                              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors"
-                              disabled={submitting}
-                            >
-                              {submitting ? 'Accepting...' : 'Accept'}
-                            </button>
-                          </>
-                        )}
+                      {/* Row 2: Reject + Accept (only if pending) */}
+                      {offer.status === 'pending' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => handleRejectOffer(offer.id, offer.requestId)}
+                            className="w-full px-3 py-2.5 border border-red-500 text-red-600 rounded-lg hover:bg-red-50 font-medium transition-colors text-sm"
+                            disabled={submitting}
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={() => handleAcceptOffer(offer.id, offer.requestId)}
+                            className="w-full px-3 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors text-sm"
+                            disabled={submitting}
+                          >
+                            {submitting ? 'Accepting...' : 'Accept'}
+                          </button>
+                        </div>
+                      )}
 
-                        {offer.status === 'accepted' && (
-                          <span className="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg font-medium">
-                            Accepted
-                          </span>
-                        )}
-                      </div>
+                      {/* Accepted status badge (full width if accepted) */}
+                      {offer.status === 'accepted' && (
+                        <div className="w-full px-3 py-2.5 bg-emerald-100 text-emerald-800 rounded-lg font-medium text-center text-sm">
+                          Accepted
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1015,7 +1030,6 @@ export default function UserServiceRequestPage() {
             )}
           </div>
         )}
-
         {/* Past Requests Tab - NO DUMMY DATA */}
         {activeTab === 'past' && isAuthenticated && (
           <div className="space-y-4">
@@ -1043,12 +1057,12 @@ export default function UserServiceRequestPage() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
                           <h3 className="text-xl font-semibold text-slate-900">{request.title}</h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${request.status === 'completed'
+                          {/* <span className={`px-3 py-1 rounded-full text-xs font-medium ${request.status === 'completed'
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-slate-100 text-slate-800'
                             }`}>
                             {request.status.toUpperCase()}
-                          </span>
+                          </span> */}
                         </div>
                         <p className="text-slate-600 mb-4">{request.description}</p>
 
@@ -1061,10 +1075,10 @@ export default function UserServiceRequestPage() {
                             <DollarSign className="w-4 h-4" />
                             <span>{request.budget}</span>
                           </div>
-                          <div className="flex items-center space-x-2 text-slate-500">
+                          {/* <div className="flex items-center space-x-2 text-slate-500">
                             <Calendar className="w-4 h-4" />
                             <span>Completed: {request.completedAt ? new Date(request.completedAt).toLocaleDateString() : 'N/A'}</span>
-                          </div>
+                          </div> */}
                         </div>
 
                         {request.acceptedOffer && (
@@ -1094,7 +1108,7 @@ export default function UserServiceRequestPage() {
                               {request.offers} offer{request.offers !== 1 ? 's' : ''}
                             </span>
                           </div>
-                          <div className="flex space-x-3">
+                          {/* <div className="flex space-x-3">
                             <button
                               onClick={() => handleViewDetails(request)}
                               className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
@@ -1106,7 +1120,7 @@ export default function UserServiceRequestPage() {
                                 Rate & Review
                               </button>
                             )}
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     </div>
@@ -1310,7 +1324,7 @@ export default function UserServiceRequestPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Min Budget *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Min Budget (KSH) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1323,7 +1337,7 @@ export default function UserServiceRequestPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Max Budget *</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Max Budget (KSH) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1434,7 +1448,7 @@ export default function UserServiceRequestPage() {
 
             <form onSubmit={handleOfferFormSubmit} className="p-6 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Quoted Price *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Quoted Price (KSH) *</label>
                 <input
                   type="number"
                   step="0.01"

@@ -130,18 +130,19 @@ const AppRoutes = () => {
 
           {/* ==================== OFFER ROUTES ==================== */}
 
-          {/* Individual Offer Routes - Use new enhanced OffersPage */}
-          <Route path='/offer/:id' element={<OffersPage />} />
-          <Route path='/offers/:id' element={<OffersPage />} />
+          {/* NEW: Store-specific offer route (must come first) */}
+          <Route path="/store/:storeId/offer/:offerId" element={<ViewOffer />} />
+
+          {/* Individual Offer Routes */}
+          <Route path='/offer/:id' element={<ViewOffer />} />
+          <Route path='/offers/:id' element={<ViewOffer />} />
 
           {/* Legacy offer routes - redirect to new format */}
-          <Route path='/offer' element={<Navigate to="/offers" replace />} />
-          <Route path='store/offers/:id' element={<Navigate to="/offer/$2" replace />} />
-          <Route path="/store/:storeId/offers/:offerId" element={<Navigate to="/offer/$3" replace />} />
+          <Route path='/offer' element={<Navigate to="/hotdeals" replace />} />
+          <Route path='/offers' element={<Navigate to="/hotdeals" replace />} />
 
-          {/* Backward compatibility - keep ViewOffer for any internal usage */}
+          {/* Backward compatibility */}
           <Route path='/view-offer/:id' element={<ViewOffer />} />
-
           {/* ==================== STORE ROUTES ==================== */}
 
           <Route path='/stores' element={<Stores />} />
@@ -178,9 +179,9 @@ const AppRoutes = () => {
           <Route path='/service/:id/book' element={<Navigate to="/booking/service/$2" replace />} />
           <Route path='/services/:id/book' element={<Navigate to="/booking/service/$2" replace />} />
 
-          {/* Store-specific booking routes */}
-          <Route path="/store/:storeId/service/:serviceId/book" element={<Navigate to="/booking/service/$3" replace />} />
-          <Route path="/store/:storeId/offer/:offerId/book" element={<Navigate to="/booking/offer/$3" replace />} />
+          {/* Store-specific booking routes - Direct routes without redirect */}
+          <Route path="/store/:storeId/service/:serviceId/book" element={<EnhancedBookingPage />} />
+          <Route path="/store/:storeId/offer/:offerId/book" element={<EnhancedBookingPage />} />
 
           {/* Booking Success Routes */}
           <Route path="/booking/success" element={<BookingSuccess />} />
