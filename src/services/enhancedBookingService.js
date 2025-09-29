@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { getTokenFromCookie } from '../config/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://${process.env.REACT_APP_API_URL}';
 
 class EnhancedBookingService {
     constructor() {
@@ -229,7 +229,7 @@ class EnhancedBookingService {
     // Enhanced slot error handling
     handleSlotError(error, bookingType) {
         const message = error.response?.data?.message || error.message;
-        
+
         if (this.isBusinessRuleViolation(message)) {
             return {
                 success: false,
@@ -277,7 +277,7 @@ class EnhancedBookingService {
             // No need for additional validation here
 
             let response;
-            
+
             // Try dedicated booking endpoint first
             try {
                 if (isOfferBooking) {
@@ -305,7 +305,7 @@ class EnhancedBookingService {
     validateBookingData(data) {
         const required = ['userId', 'startTime'];
         const missing = required.filter(field => !data[field]);
-        
+
         if (missing.length > 0) {
             throw new Error(`Missing required fields: ${missing.join(', ')}`);
         }
@@ -359,10 +359,10 @@ class EnhancedBookingService {
             // Final fallback: extract from offer details
             try {
                 const offerResponse = await this.api.get(`/offers/${offerId}`);
-                
+
                 if (offerResponse.data && (offerResponse.data.success || offerResponse.data.offer)) {
                     const offer = offerResponse.data.offer || offerResponse.data;
-                    
+
                     if (offer.service?.store) {
                         const extractedBranch = this.extractBranchFromEntity(offer, 'offer');
                         return extractedBranch;
@@ -424,10 +424,10 @@ class EnhancedBookingService {
             // Final fallback: extract from service details
             try {
                 const serviceResponse = await this.api.get(`/services/${serviceId}`);
-                
+
                 if (serviceResponse.data && (serviceResponse.data.success || serviceResponse.data.service)) {
                     const service = serviceResponse.data.service || serviceResponse.data;
-                    
+
                     if (service.store) {
                         const extractedBranch = this.extractBranchFromEntity(service, 'service');
                         return extractedBranch;
@@ -460,7 +460,7 @@ class EnhancedBookingService {
     extractBranchFromEntity(entity, entityType) {
         try {
             let service, store;
-            
+
             if (entityType === 'offer') {
                 service = entity.service;
                 store = service?.store;
@@ -468,7 +468,7 @@ class EnhancedBookingService {
                 service = entity;
                 store = entity.store;
             }
-            
+
             if (!store) {
                 return {
                     success: false,
@@ -610,11 +610,11 @@ class EnhancedBookingService {
 
     async getUserBookings(params = {}) {
         try {
-            const response = await this.api.get('/bookings/user', { 
+            const response = await this.api.get('/bookings/user', {
                 params,
-                timeout: 20000 
+                timeout: 20000
             });
-            
+
             if (response.data) {
                 if (response.data.success !== undefined) {
                     return response.data;
@@ -633,14 +633,14 @@ class EnhancedBookingService {
                     };
                 }
             }
-            
+
             return {
                 success: true,
                 bookings: [],
                 pagination: { total: 0, totalPages: 0 },
                 message: 'No bookings found'
             };
-            
+
         } catch (error) {
             return {
                 success: false,
@@ -697,7 +697,7 @@ class EnhancedBookingService {
                 if (error.response?.status === 500) {
                     try {
                         const userBookingsResponse = await this.api.get('/bookings/user', {
-                            params: { 
+                            params: {
                                 limit: 100,
                                 bookingId: bookingId
                             },
@@ -741,7 +741,7 @@ class EnhancedBookingService {
         if (error.response) {
             const status = error.response.status;
             const data = error.response.data;
-            
+
             switch (status) {
                 case 400:
                     return 'Invalid booking request. Please check the booking ID and try again.';
@@ -795,19 +795,19 @@ class EnhancedBookingService {
 
     async processMpesaPayment(phoneNumber, amount, bookingId = null, metadata = {}) {
         try {
-          const response = await this.api.post('/payments/mpesa', {
-            phoneNumber,
-            amount: parseFloat(amount),
-            bookingId,
-            type: 'booking_access_fee',
-            ...metadata
-          });
-      
-          return response.data;
+            const response = await this.api.post('/payments/mpesa', {
+                phoneNumber,
+                amount: parseFloat(amount),
+                bookingId,
+                type: 'booking_access_fee',
+                ...metadata
+            });
+
+            return response.data;
         } catch (error) {
-          throw this.handleError(error);
+            throw this.handleError(error);
         }
-      }
+    }
 
     async checkPaymentStatus(paymentId) {
         try {
@@ -820,97 +820,97 @@ class EnhancedBookingService {
 
     async rescheduleBooking(bookingId, rescheduleData) {
         try {
-          if (!bookingId) {
-            throw new Error('Booking ID is required');
-          }
-      
-          if (!rescheduleData.newStartTime) {
-            throw new Error('New start time is required');
-          }
-      
-          // Validate booking ID format (assuming UUID format)
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          if (!uuidRegex.test(bookingId)) {
-            throw new Error('Invalid booking ID format');
-          }
-      
-          console.log('Rescheduling booking:', { bookingId, rescheduleData });
-      
-          // Make API call to reschedule
-          const response = await this.api.put(`/bookings/${bookingId}/reschedule`, {
-            newStartTime: rescheduleData.newStartTime,
-            newStaffId: rescheduleData.newStaffId || null,
-            reason: rescheduleData.reason || 'User requested reschedule'
-          });
-      
-          if (response.data) {
-            if (response.data.success) {
-              return {
-                success: true,
-                booking: response.data.booking,
-                message: response.data.message || 'Booking rescheduled successfully'
-              };
-            } else {
-              return {
+            if (!bookingId) {
+                throw new Error('Booking ID is required');
+            }
+
+            if (!rescheduleData.newStartTime) {
+                throw new Error('New start time is required');
+            }
+
+            // Validate booking ID format (assuming UUID format)
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(bookingId)) {
+                throw new Error('Invalid booking ID format');
+            }
+
+            console.log('Rescheduling booking:', { bookingId, rescheduleData });
+
+            // Make API call to reschedule
+            const response = await this.api.put(`/bookings/${bookingId}/reschedule`, {
+                newStartTime: rescheduleData.newStartTime,
+                newStaffId: rescheduleData.newStaffId || null,
+                reason: rescheduleData.reason || 'User requested reschedule'
+            });
+
+            if (response.data) {
+                if (response.data.success) {
+                    return {
+                        success: true,
+                        booking: response.data.booking,
+                        message: response.data.message || 'Booking rescheduled successfully'
+                    };
+                } else {
+                    return {
+                        success: false,
+                        message: response.data.message || 'Failed to reschedule booking'
+                    };
+                }
+            }
+
+            return {
                 success: false,
-                message: response.data.message || 'Failed to reschedule booking'
-              };
-            }
-          }
-      
-          return {
-            success: false,
-            message: 'Unexpected response format from server'
-          };
-      
+                message: 'Unexpected response format from server'
+            };
+
         } catch (error) {
-          console.error('Error rescheduling booking:', error);
-      
-          // Handle specific error cases
-          if (error.response) {
-            const status = error.response.status;
-            const data = error.response.data;
-            
-            switch (status) {
-              case 400:
+            console.error('Error rescheduling booking:', error);
+
+            // Handle specific error cases
+            if (error.response) {
+                const status = error.response.status;
+                const data = error.response.data;
+
+                switch (status) {
+                    case 400:
+                        return {
+                            success: false,
+                            message: data?.message || 'Invalid reschedule request. Please check the new time slot.'
+                        };
+                    case 404:
+                        return {
+                            success: false,
+                            message: 'Booking not found. It may have been cancelled or deleted.'
+                        };
+                    case 409:
+                        return {
+                            success: false,
+                            message: 'The selected time slot is no longer available. Please choose a different time.'
+                        };
+                    case 429:
+                        return {
+                            success: false,
+                            message: 'Too many requests. Please wait a moment and try again.'
+                        };
+                    default:
+                        return {
+                            success: false,
+                            message: data?.message || 'Server error occurred while rescheduling. Please try again.'
+                        };
+                }
+            } else if (error.request) {
                 return {
-                  success: false,
-                  message: data?.message || 'Invalid reschedule request. Please check the new time slot.'
+                    success: false,
+                    message: 'Network error. Please check your connection and try again.'
                 };
-              case 404:
+            } else {
                 return {
-                  success: false,
-                  message: 'Booking not found. It may have been cancelled or deleted.'
-                };
-              case 409:
-                return {
-                  success: false,
-                  message: 'The selected time slot is no longer available. Please choose a different time.'
-                };
-              case 429:
-                return {
-                  success: false,
-                  message: 'Too many requests. Please wait a moment and try again.'
-                };
-              default:
-                return {
-                  success: false,
-                  message: data?.message || 'Server error occurred while rescheduling. Please try again.'
+                    success: false,
+                    message: error.message || 'An unexpected error occurred while rescheduling.'
                 };
             }
-          } else if (error.request) {
-            return {
-              success: false,
-              message: 'Network error. Please check your connection and try again.'
-            };
-          } else {
-            return {
-              success: false,
-              message: error.message || 'An unexpected error occurred while rescheduling.'
-            };
-          }
         }
-      }
+    }
 
     // ==================== UTILITY METHODS ====================
 
@@ -928,7 +928,7 @@ class EnhancedBookingService {
         if (error.response) {
             const data = error.response.data;
             let message = data?.message || data?.error || 'Server error occurred';
-            
+
             // Handle specific error cases
             switch (error.response.status) {
                 case 400:
@@ -958,7 +958,7 @@ class EnhancedBookingService {
                         message = 'Server error occurred. Please try again in a few moments.';
                     }
             }
-            
+
             const newError = new Error(message);
             newError.status = error.response.status;
             newError.response = error.response;

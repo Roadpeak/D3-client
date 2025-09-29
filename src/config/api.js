@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://${process.env.REACT_APP_API_URL}';
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -172,26 +172,26 @@ export const API_ENDPOINTS = {
         counts: '/notifications/counts',
         analytics: '/notifications/analytics',
         byStore: (storeId) => `/notifications/store/${storeId}`,
-        
+
         // Single notification operations
         get: (id) => `/notifications/${id}`,
         markAsRead: (id) => `/notifications/${id}/read`,
         delete: (id) => `/notifications/${id}`,
-        
+
         // Bulk operations
         markAllAsRead: '/notifications/mark-all-read',
         bulkMarkRead: '/notifications/bulk/mark-read',
         bulkDelete: '/notifications/bulk',
-        
+
         // Settings
         settings: '/notifications/settings',
         updateSettings: '/notifications/settings',
-        
+
         // Admin/System
         broadcast: '/notifications/broadcast',
         cleanup: '/notifications/cleanup',
         health: '/notifications/health',
-        
+
         // Create notification
         create: '/notifications',
     },
@@ -288,7 +288,7 @@ export const notificationAPI = {
 
     // Get notification counts
     async getCounts(storeId = null) {
-        const url = storeId 
+        const url = storeId
             ? `${API_ENDPOINTS.notifications.counts}?storeId=${storeId}`
             : API_ENDPOINTS.notifications.counts;
         return handleApiCall(() => api.get(url));
@@ -321,7 +321,7 @@ export const notificationAPI = {
     // Mark all notifications as read with optional filters
     async markAllAsRead(filters = {}) {
         const params = new URLSearchParams(filters).toString();
-        const url = params 
+        const url = params
             ? `${API_ENDPOINTS.notifications.markAllAsRead}?${params}`
             : API_ENDPOINTS.notifications.markAllAsRead;
         return handleApiCall(() => api.put(url));
@@ -339,8 +339,8 @@ export const notificationAPI = {
 
     // Bulk delete notifications
     async bulkDelete(notificationIds) {
-        return handleApiCall(() => api.delete(API_ENDPOINTS.notifications.bulkDelete, { 
-            data: { notificationIds } 
+        return handleApiCall(() => api.delete(API_ENDPOINTS.notifications.bulkDelete, {
+            data: { notificationIds }
         }));
     },
 
@@ -576,8 +576,8 @@ export const marketplaceAPI = {
 
 // WebSocket configuration for real-time updates
 export const WS_CONFIG = {
-    url: process.env.REACT_APP_WS_URL || 'http://localhost:4000',
-    
+    url: process.env.REACT_APP_WS_URL || 'http://${process.env.REACT_APP_API_BASE_URL}',
+
     events: {
         // Notification events
         NEW_NOTIFICATION: 'new_notification',
@@ -586,36 +586,36 @@ export const WS_CONFIG = {
         NOTIFICATION_DELETED: 'notification_deleted',
         NOTIFICATIONS_BULK_DELETED: 'notifications_bulk_deleted',
         NOTIFICATION_COUNT_UPDATE: 'notification_count_update',
-        
+
         // Chat events
         NEW_MESSAGE: 'new_message',
         MESSAGE_READ: 'message_read',
         MESSAGES_READ: 'messages_read',
         MESSAGE_STATUS_UPDATE: 'message_status_update',
         NEW_CUSTOMER_STORE_CONVERSATION: 'new_customer_store_conversation',
-        
+
         // Booking events
         BOOKING_CREATED: 'booking_created',
         BOOKING_CONFIRMED: 'booking_confirmed',
         BOOKING_CANCELLED: 'booking_cancelled',
         BOOKING_COMPLETED: 'booking_completed',
-        
+
         // Store events
         STORE_ONLINE: 'store_online',
         STORE_OFFLINE: 'store_offline',
         STORE_FOLLOWED: 'store_followed',
         STORE_UNFOLLOWED: 'store_unfollowed',
-        
+
         // User status events
         USER_ONLINE: 'user_online',
         USER_OFFLINE: 'user_offline',
-        
+
         // Connection events
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
         CONNECT_ERROR: 'connect_error',
         RECONNECT: 'reconnect',
-        
+
         // Room events
         JOIN_NOTIFICATIONS: 'join_notifications',
         JOIN_CHAT: 'join_chat',
@@ -623,7 +623,7 @@ export const WS_CONFIG = {
         JOIN_STORE: 'join_store',
         LEAVE_STORE: 'leave_store',
     },
-    
+
     options: {
         transports: ['websocket', 'polling'],
         upgrade: true,

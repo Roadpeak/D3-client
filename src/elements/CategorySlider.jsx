@@ -17,7 +17,7 @@ const CategorySlider = () => {
                     setCategories(JSON.parse(storedCategories));
                 }
 
-                const response = await axios.get('http://localhost:4000/api/v1/random-categories');
+                const response = await axios.get('http://${process.env.REACT_APP_API_URL}/random-categories');
                 setCategories(response.data);
                 localStorage.setItem('cachedCategories', JSON.stringify(response.data));
                 setLoading(false);
