@@ -2,7 +2,7 @@ name: Build and Deploy Client
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, deply ]
   workflow_dispatch:
 
 jobs:
