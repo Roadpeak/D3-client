@@ -2,7 +2,7 @@
 import authService from './authService';
 import { getTokenFromCookie } from '../config/api';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.discoun3ree.com/api/v1';
 
 // ✅ Enhanced function to get auth token
 const getAuthToken = () => {

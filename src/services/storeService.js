@@ -1,5 +1,5 @@
 // services/storeService.js - UPDATED with top-rated store methods
-const API_BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.discoun3ree.com/api/v1';
 const API_KEY = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
 
 class StoreService {

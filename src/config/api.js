@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
-const BASE_URL = process.env.REACT_APP_API_URL || '${process.env.REACT_APP_API_BASE_URL}';
+const BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3ree.com/api/v1';
 
 const api = axios.create({
     baseURL: BASE_URL,
@@ -576,7 +576,7 @@ export const marketplaceAPI = {
 
 // WebSocket configuration for real-time updates
 export const WS_CONFIG = {
-    url: process.env.REACT_APP_WS_URL || '${process.env.REACT_APP_API_BASE_URL}',
+    url: process.env.REACT_APP_WS_URL || process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3ree.com/api/v1',
 
     events: {
         // Notification events

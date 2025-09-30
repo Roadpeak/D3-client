@@ -3,7 +3,7 @@ import { getCookie } from '../cookieUtils';
 import toast from 'react-hot-toast';
 
 const API_URL = '${process.env.REACT_APP_API_BASE_URL}/discounts';
-const BASE_URL = '${process.env.REACT_APP_API_BASE_URL}';
+const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3ree.com/api/v1';
 
 const getToken = () => getCookie('access_token');
 

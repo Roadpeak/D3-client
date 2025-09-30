@@ -6,11 +6,11 @@ class ChatService {
 
     this.API_BASE = process.env.NODE_ENV === 'production'
       ? `${protocol}//${hostname}/api/v1`
-      : '${process.env.REACT_APP_API_BASE_URL}';
+      : 'https://api.discoun3ree.com/api/v1';
 
     this.SOCKET_URL = process.env.NODE_ENV === 'production'
       ? `${protocol}//${hostname}`
-      : '${process.env.REACT_APP_API_BASE_URL}';
+      : 'https://api.discoun3ree.com/api/v1';
   }
 
   // Enhanced token retrieval
