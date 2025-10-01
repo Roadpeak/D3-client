@@ -1,43 +1,31 @@
-name: Build and Deploy Client
+name: Deploy to Docker Hub
 
 on:
   push:
-    branches: [ main, master, deply ]
-  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: roadpeak/discoun3-clients:latest
-          no-cache: true
-
-      - name: Deploy to Digital Ocean
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DO_HOST }}
-          username: ${{ secrets.DO_USERNAME }}
-          key: ${{ secrets.DO_SSH_KEY }}
-          script: |
-            cd /root/discoun3-deployment
-            docker pull roadpeak/discoun3-clients:latest
-            docker-compose up -d --no-deps clients
-            docker image prune -f
+    - uses: actions/checkout@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/d3-client:latest
+        no-cache: true
+        build-args: |
+          REACT_APP_API_URL=https://api.discoun3ree.com/api/v1
+          REACT_APP_WS_URL=https://api.discoun3ree.com
+          REACT_APP_API_BASE_URL=https://api.discoun3ree.com
+          REACT_APP_API_KEY=API_KEY_12345ABCDEF!@#67890-xyZQvTPOl
