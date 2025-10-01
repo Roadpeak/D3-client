@@ -28,6 +28,7 @@ jobs:
           context: .
           push: true
           tags: roadpeak/discoun3-clients:latest
+          no-cache: true
 
       - name: Deploy to Digital Ocean
         uses: appleboy/ssh-action@master
