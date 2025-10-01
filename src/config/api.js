@@ -55,7 +55,7 @@ function getTokenFromCookie() {
 
 // Helper to set token to cookie
 function setTokenToCookie(token) {
-    const isProduction = window.location.hostname !== 'localhost';
+    const isProduction = process.env.NODE_ENV === 'production';
     const cookieString = isProduction
         ? `access_token=${token}; path=/; domain=.discoun3ree.com; secure; SameSite=None; max-age=${30 * 24 * 60 * 60}`
         : `access_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}`;
@@ -65,7 +65,7 @@ function setTokenToCookie(token) {
 
 // Helper to remove token from cookie
 function removeTokenFromCookie() {
-    const isProduction = window.location.hostname !== 'localhost';
+    const isProduction = process.env.NODE_ENV === 'production';
     const cookieString = isProduction
         ? `access_token=; path=/; domain=.discoun3ree.com; secure; SameSite=None; expires=Thu, 01 Jan 1970 00:00:00 GMT`
         : `access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
