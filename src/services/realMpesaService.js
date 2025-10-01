@@ -11,7 +11,7 @@ class RealMpesaService {
       baseURL: process.env.MPESA_BASE_URL || 'https://sandbox.safaricom.co.ke',
       shortCode: process.env.MPESA_SHORTCODE || '4137125',
       passKey: process.env.MPESA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919',
-      callbackURL: process.env.MPESA_CALLBACK_URL || '${process.env.REACT_APP_API_BASE_URL}/payments'
+      callbackURL: process.env.MPESA_CALLBACK_URL || `${process.env.REACT_APP_API_BASE_URL}/payments`
     };
 
     console.log('🔧 M-Pesa Service initialized:', {
