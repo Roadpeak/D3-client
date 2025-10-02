@@ -1,19 +1,16 @@
 import api, { API_ENDPOINTS, getTokenFromCookie } from '../config/api';
 
 class NotificationService {
-  constructor() {
-    this.API_BASE = process.env.NODE_ENV === 'production'
-      ? `${window.location.protocol}//${window.location.hostname}/api/v1`
-      : 'https://api.discoun3ree.com/api/v1';
-
-    this.fallbackNotifications = {
-      message: [],
-      offer: [],
-      unread: 0,
-      total: 0
-    };
-  }
-
+constructor() {
+  this.API_BASE = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
+  
+  this.fallbackNotifications = {
+    message: [],
+    offer: [],
+    unread: 0,
+    total: 0
+  };
+}
   // Use the same token retrieval as authService
   getAuthToken() {
     return getTokenFromCookie();
