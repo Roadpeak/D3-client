@@ -22,7 +22,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: roadpeak/d3-client:latest
+        tags: roadpeak/discoun3-clients:latest
         no-cache: true
         build-args: |
           REACT_APP_API_URL=https://api.discoun3ree.com/api/v1
