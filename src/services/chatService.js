@@ -1,7 +1,7 @@
 // services/chatService.js - FIXED: Customer↔Store Communication Model
 class ChatService {
 constructor() {
-  this.API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
+  this.API_BASE = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
   this.SOCKET_URL = process.env.REACT_APP_WS_URL || 'http://localhost:4000';
 }
   // Enhanced token retrieval
