@@ -115,14 +115,14 @@ const ChatPage = () => {
         // Fetch from API as fallback
         try {
           console.log('Fetching user profile via authService...');
-          const apiUserData = await authService.getProfile();
+          const result = await authService.getCurrentUser();
           
-          if (apiUserData && (apiUserData.user || apiUserData.data)) {
-            const userData = apiUserData.user || apiUserData.data;
+          if (result.success && result.data) {
+            const userData = result.data.user || result.data;
             
             const formattedUser = {
-              id: userData.id || userData.userId,
-              name: `${userData.firstName || userData.first_name || 'Customer'} ${userData.lastName || userData.last_name || ''}`.trim(),
+              id: userData.id,
+              name: `${userData.firstName} ${userData.lastName}`.trim(),
               email: userData.email,
               avatar: userData.avatar,
               userType: 'customer',
@@ -136,7 +136,6 @@ const ChatPage = () => {
           }
         } catch (apiError) {
           console.error('API fetch error:', apiError.message);
-         
         }
 
         console.log('❌ Could not get valid customer data, redirecting to login');
