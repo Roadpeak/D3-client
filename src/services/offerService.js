@@ -19,6 +19,12 @@ api.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
+        // Add API key
+        const apiKey = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
+        if (apiKey) {
+            config.headers['x-api-key'] = apiKey;
+        }
+
         // Log requests in development
         if (process.env.NODE_ENV === 'development') {
             console.log(`🔄 ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data);

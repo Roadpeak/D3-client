@@ -13,7 +13,8 @@ const serviceAPI = {
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
         }
       });
 
@@ -31,7 +32,8 @@ const serviceAPI = {
           const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services?storeId=${params.storeId}`, {
             headers: {
               'Content-Type': 'application/json',
-              'Accept': 'application/json'
+              'Accept': 'application/json',
+              'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
             }
           });
 
@@ -52,7 +54,8 @@ const serviceAPI = {
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services/${serviceId}`, {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
         }
       });
 
@@ -74,7 +77,8 @@ const serviceAPI = {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('authToken')}`
+          'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('authToken')}`,
+          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'      
         },
         body: JSON.stringify(bookingData)
       });

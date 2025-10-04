@@ -10,7 +10,8 @@ class EnhancedBookingService {
         this.api = axios.create({
             baseURL: API_BASE_URL,
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl',
             },
             timeout: 20000
         });

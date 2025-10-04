@@ -5,7 +5,8 @@ const getAuthHeaders = () => {
   const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    'Authorization': `Bearer ${token}`,
+    'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
   };
 };
 
@@ -64,7 +65,8 @@ const socialsService = {
     try {
       const response = await fetch(`${API_BASE_URL}/socials/store/${storeId}`, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
         }
       });
 

@@ -58,7 +58,7 @@ class StoreService {
     };
 
     if (API_KEY) {
-      headers['api-key'] = API_KEY;
+      headers['x-api-key'] = API_KEY;
       console.log('✅ API key added to store service request');
     } else {
       console.warn('⚠️ REACT_APP_API_KEY not found in environment variables');

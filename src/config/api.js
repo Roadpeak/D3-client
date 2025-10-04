@@ -28,7 +28,7 @@ api.interceptors.request.use(
         // Add API key if available
         const apiKey = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
         if (apiKey) {
-            config.headers['api-key'] = apiKey;
+            config.headers['x-api-key'] = apiKey;
         }
 
         // Log requests in development
