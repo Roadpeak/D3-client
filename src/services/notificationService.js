@@ -19,10 +19,11 @@ constructor() {
   getHeaders() {
     const token = this.getAuthToken();
     console.log('🔑 Notification service token:', token ? 'Token exists' : 'No token');
-
+  
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
+      'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl',
     };
   }
 
