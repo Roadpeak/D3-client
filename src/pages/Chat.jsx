@@ -5,6 +5,7 @@ import { Send, Search, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, S
 import Navbar from '../components/Navbar';
 import chatService from '../services/chatService';
 import useSocket from '../hooks/useSocket';
+import authService from '../services/authService';
 
 const ChatPage = () => {
   const location = useLocation();
@@ -113,36 +114,29 @@ const ChatPage = () => {
 
         // Fetch from API as fallback
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/users/profile`, {
-            headers: {
-              'Authorization': `Bearer ${userToken}`,
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-          });
-
-          if (response.ok) {
-            const apiResult = await response.json();
-            const apiUserData = apiResult.user || apiResult.data || apiResult;
-
-            if (apiUserData && (apiUserData.id || apiUserData.userId)) {
-              const userData = {
-                id: apiUserData.id || apiUserData.userId,
-                name: `${apiUserData.firstName || apiUserData.first_name || 'Customer'} ${apiUserData.lastName || apiUserData.last_name || ''}`.trim(),
-                email: apiUserData.email,
-                avatar: apiUserData.avatar,
-                userType: 'customer',
-                role: 'customer'
-              };
-
-              console.log('✅ Customer user set from API:', userData);
-              localStorage.setItem('userInfo', JSON.stringify(apiUserData));
-              setUser(userData);
-              return;
-            }
+          console.log('Fetching user profile via authService...');
+          const apiUserData = await authService.getProfile();
+          
+          if (apiUserData && (apiUserData.user || apiUserData.data)) {
+            const userData = apiUserData.user || apiUserData.data;
+            
+            const formattedUser = {
+              id: userData.id || userData.userId,
+              name: `${userData.firstName || userData.first_name || 'Customer'} ${userData.lastName || userData.last_name || ''}`.trim(),
+              email: userData.email,
+              avatar: userData.avatar,
+              userType: 'customer',
+              role: 'customer'
+            };
+        
+            console.log('✅ Customer user set from API:', formattedUser);
+            localStorage.setItem('userInfo', JSON.stringify(userData));
+            setUser(formattedUser);
+            return;
           }
         } catch (apiError) {
-          console.error('🌐 API fetch error:', apiError);
+          console.error('API fetch error:', apiError.message);
+         
         }
 
         console.log('❌ Could not get valid customer data, redirecting to login');
