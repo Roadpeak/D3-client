@@ -317,7 +317,7 @@ class StoreService {
 
   // NEW: Follow/Unfollow store
   async toggleFollowStore(storeId) {
-    return this.fetchData(`/follows/${storeId}/toggle-follow`, {
+    return this.fetchData(`/stores/${storeId}/toggle-follow`, {
       method: 'POST'
     });
   }
