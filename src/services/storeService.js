@@ -317,13 +317,7 @@ class StoreService {
 
   // NEW: Follow/Unfollow store
   async toggleFollowStore(storeId) {
-    if (!storeId) {
-      throw new Error('Store ID is required');
-    }
-
-    console.log(`💖 Toggling follow for store ${storeId}`);
-
-    return this.fetchData(`/stores/${storeId}/follow`, {
+    return this.fetchData(`/follows/${storeId}/toggle-follow`, {
       method: 'POST'
     });
   }
