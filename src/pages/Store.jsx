@@ -635,7 +635,7 @@ const StoreViewPage = () => {
     try {
       setToggleFollowLoading(true);
 
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/follows/${id}/toggle-follow`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${id}/toggle-follow`, {
         method: 'POST',
         headers: StoreService.getHeaders()
       });
