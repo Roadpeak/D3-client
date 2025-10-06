@@ -67,13 +67,16 @@ const makeUserAPIRequest = async (url, options = {}) => {
 
     let headers = {
       'Content-Type': 'application/json',
+      'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl', // ✅ Add API key for ALL requests
       ...options.headers
     };
 
-    // ✅ Always try to add auth headers if user is authenticated
+    // ✅ Add auth token only if user is authenticated
     if (authService.isAuthenticated()) {
-      const authHeaders = getAuthHeaders();
-      headers = { ...headers, ...authHeaders };
+      const token = getAuthToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
     } else if (isAuthRequired) {
       throw new Error('Authentication required but user is not logged in');
     }
