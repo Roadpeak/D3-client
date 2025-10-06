@@ -87,6 +87,9 @@ export const API_ENDPOINTS = {
         favorites: '/users/favorites',
         favoritesCount: '/users/favorites/count',
         notificationSettings: '/users/notification-settings',
+        googleSignIn: '/users/google-signin',
+        linkGoogle: '/users/link-google',
+        unlinkGoogle: '/users/unlink-google',
     },
     // Merchant endpoints
     merchant: {
