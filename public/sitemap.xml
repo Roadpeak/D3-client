@@ -30,7 +30,6 @@
     <priority>0.9</priority>
   </url>
   
-  <!-- Authentication -->
   <url>
     <loc>https://discoun3ree.com/accounts/sign-in</loc>
     <lastmod>2025-10-06</lastmod>
@@ -45,7 +44,6 @@
     <priority>0.5</priority>
   </url>
   
-  <!-- User Pages -->
   <url>
     <loc>https://discoun3ree.com/profile</loc>
     <lastmod>2025-10-06</lastmod>
@@ -102,7 +100,6 @@
     <priority>0.7</priority>
   </url>
   
-  <!-- Footer Pages -->
   <url>
     <loc>https://discoun3ree.com/about-us</loc>
     <lastmod>2025-10-06</lastmod>
