@@ -53,7 +53,8 @@ const offerAPI = {
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offers/store/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+           'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
         }
       });
       if (!response.ok) throw new Error('Failed to fetch offers');
@@ -73,7 +74,8 @@ const branchAPI = {
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${storeId}/branches`, {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
         }
       });
 
@@ -86,7 +88,8 @@ const branchAPI = {
       const protectedResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/branches/store/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
         }
       });
 
