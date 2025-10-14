@@ -5,16 +5,16 @@ const serviceAPI = {
       let url;
       if (params.storeId) {
         // First try the store-specific endpoint
-        url = `${process.env.REACT_APP_API_BASE_URL}/services/store/${params.storeId}`;
+        url = `${process.env.REACT_APP_API_BASE_URL}/api/v1/services/store/${params.storeId}`;
       } else {
-        url = `${process.env.REACT_APP_API_BASE_URL}/services`;
+        url = `${process.env.REACT_APP_API_BASE_URL}/api/v1/services`;
       }
 
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
+          'x-api-key': process.env.REACT_APP_API_KEY 
         }
       });
 
@@ -29,11 +29,11 @@ const serviceAPI = {
       // If store-specific endpoint fails, try general endpoint with filter
       if (params.storeId) {
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services?storeId=${params.storeId}`, {
+          const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services?storeId=${params.storeId}`, {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
-              'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
+              'x-api-key': process.env.REACT_APP_API_KEY
             }
           });
 
@@ -51,11 +51,11 @@ const serviceAPI = {
 
   getServiceById: async (serviceId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services/${serviceId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services/${serviceId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
+          'x-api-key': process.env.REACT_APP_API_KEY 
         }
       });
 
@@ -72,13 +72,13 @@ const serviceAPI = {
 
   bookService: async (serviceId, bookingData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services/${serviceId}/book`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services/${serviceId}/book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('authToken')}`,
-          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'      
+          'x-api-key': process.env.REACT_APP_API_KEY       
         },
         body: JSON.stringify(bookingData)
       });
