@@ -1,13 +1,19 @@
-// services/storeService.js - UPDATED with top-rated store methods
+// services/storeService.js - SECURE VERSION (No exposed API keys)
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.discoun3ree.com/api/v1';
-const API_KEY = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
 
 class StoreService {
   constructor() {
     this.baseURL = API_BASE_URL;
     console.log('🏪 StoreService initialized');
     console.log('🌐 Base URL:', this.baseURL);
-    console.log('🔑 API Key configured:', API_KEY ? 'Yes' : 'No');
+    
+    // SECURE: Only check if key exists, don't expose it
+    const hasApiKey = !!process.env.REACT_APP_API_KEY;
+    console.log('🔑 API Key configured:', hasApiKey ? 'Yes' : 'No');
+    
+    if (!hasApiKey) {
+      console.warn('⚠️ REACT_APP_API_KEY not found in environment variables');
+    }
   }
 
   // Get auth token using the same method as your auth service
@@ -51,17 +57,18 @@ class StoreService {
     }
   }
 
-  // Get headers with proper auth token inclusion
+  // SECURE: Get headers without exposing API key
   getHeaders() {
     const headers = {
       'Content-Type': 'application/json',
     };
 
-    if (API_KEY) {
-      headers['x-api-key'] = API_KEY;
+    // SECURE: Only add API key if it exists in environment
+    if (process.env.REACT_APP_API_KEY) {
+      headers['x-api-key'] = process.env.REACT_APP_API_KEY;
       console.log('✅ API key added to store service request');
     } else {
-      console.warn('⚠️ REACT_APP_API_KEY not found in environment variables');
+      console.warn('⚠️ REACT_APP_API_KEY not found - request may fail');
     }
 
     const token = this.getAuthToken();
@@ -132,7 +139,7 @@ class StoreService {
     }
   }
 
-  // NEW: Get most reviewed stores specifically
+  // Get most reviewed stores specifically
   async getMostReviewedStores(limit = 8) {
     console.log(`📝 Fetching top ${limit} most reviewed stores`);
     const endpoint = `/stores?sortBy=Most Reviewed&limit=${limit}`;
@@ -158,7 +165,7 @@ class StoreService {
     }
   }
 
-  // NEW: Get most reviewed stores by category
+  // Get most reviewed stores by category
   async getMostReviewedStoresByCategory(category, limit = 4) {
     console.log(`📝 Fetching top ${limit} most reviewed stores in ${category} category`);
     const endpoint = `/stores?sortBy=Most Reviewed&category=${encodeURIComponent(category)}&limit=${limit}`;
@@ -178,21 +185,19 @@ class StoreService {
     }
   }
 
-  // NEW: Get trending stores (high ratings + recent activity)
+  // Get trending stores (high ratings + recent activity)
   async getTrendingStores(limit = 8) {
     console.log(`📈 Fetching ${limit} trending stores`);
 
     try {
-      // First try to get popular stores, then filter for trending characteristics
-      const data = await this.getTopRatedStores(limit * 2); // Get more to filter from
+      const data = await this.getTopRatedStores(limit * 2);
 
       if (data.success && data.stores) {
-        // Filter for stores with good ratings and recent reviews
         const trendingStores = data.stores
           .filter(store => {
             const rating = parseFloat(store.rating) || 0;
             const reviews = parseInt(store.totalReviews) || 0;
-            return rating >= 3.5 && reviews > 0; // Basic trending criteria
+            return rating >= 3.5 && reviews > 0;
           })
           .slice(0, limit);
 
@@ -225,7 +230,6 @@ class StoreService {
     console.log(`🏪 Fetching store with ID: ${id}`);
     const data = await this.fetchData(`/stores/${id}`);
 
-    // Debug social links in response
     console.log('🔍 Store data social links debug:', {
       hasSocialLinksRaw: !!(data.store?.socialLinksRaw),
       socialLinksRawCount: data.store?.socialLinksRaw?.length || 0,
@@ -237,7 +241,6 @@ class StoreService {
     return data;
   }
 
-  // Your existing methods...
   async getStores(filters = {}) {
     console.log('🏪 StoreService.getStores called with filters:', filters);
 
@@ -315,20 +318,17 @@ class StoreService {
     });
   }
 
-  // NEW: Follow/Unfollow store
   async toggleFollowStore(storeId) {
     return this.fetchData(`/stores/${storeId}/toggle-follow`, {
       method: 'POST'
     });
   }
 
-  // NEW: Get followed stores
   async getFollowedStores() {
     console.log('💖 Fetching followed stores');
     return this.fetchData('/stores/followed');
   }
 
-  // NEW: Submit review
   async submitReview(storeId, reviewData) {
     if (!storeId) {
       throw new Error('Store ID is required');
@@ -378,11 +378,9 @@ class StoreService {
     console.log('🐛 Running connectivity debug...');
 
     try {
-      // Test 1: Health check
       const isHealthy = await this.healthCheck();
       console.log('🐛 Health check:', isHealthy ? 'PASS' : 'FAIL');
 
-      // Test 2: Categories endpoint
       try {
         const categories = await this.getCategories();
         console.log('🐛 Categories endpoint:', 'PASS', categories);
@@ -390,7 +388,6 @@ class StoreService {
         console.log('🐛 Categories endpoint:', 'FAIL', error.message);
       }
 
-      // Test 3: Most reviewed stores endpoint
       try {
         const mostReviewedStores = await this.getMostReviewedStores(5);
         console.log('🐛 Most reviewed stores endpoint:', 'PASS', `${mostReviewedStores.stores?.length || 0} stores`);
@@ -398,7 +395,6 @@ class StoreService {
         console.log('🐛 Most reviewed stores endpoint:', 'FAIL', error.message);
       }
 
-      // Test 4: Stores endpoint
       try {
         const stores = await this.getStores({ limit: 1 });
         console.log('🐛 Stores endpoint:', 'PASS', `${stores.stores?.length || 0} stores`);
@@ -411,7 +407,6 @@ class StoreService {
     }
   }
 
-  // Test authentication
   async testAuthentication() {
     try {
       console.log('🔐 Testing authentication...');
@@ -437,6 +432,26 @@ class StoreService {
     } catch (error) {
       console.error('🔐 Auth test failed:', error);
       return { authenticated: false, reason: error.message };
+    }
+  }
+
+  // Add missing getTopRatedStores method that's referenced in getTrendingStores
+  async getTopRatedStores(limit = 8) {
+    console.log(`⭐ Fetching top ${limit} rated stores`);
+    const endpoint = `/stores?sortBy=rating&limit=${limit}`;
+    
+    try {
+      const data = await this.fetchData(endpoint);
+      
+      if (data.success && data.stores) {
+        console.log(`✅ Successfully fetched ${data.stores.length} top rated stores`);
+        return data;
+      } else {
+        throw new Error(data.message || 'Failed to fetch top rated stores');
+      }
+    } catch (error) {
+      console.error('🔥 Error fetching top rated stores:', error);
+      throw error;
     }
   }
 }

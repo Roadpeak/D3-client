@@ -39,6 +39,29 @@ import chatService from '../services/chatService';
 import authService from '../services/authService';
 import { getTokenFromCookie } from '../config/api';
 
+
+const getApiHeaders = (includeAuth = false) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
+
+  // Only add API key if it exists in environment
+  if (process.env.REACT_APP_API_KEY) {
+    headers['x-api-key'] = process.env.REACT_APP_API_KEY;
+  }
+
+  // Add authentication token if required
+  if (includeAuth) {
+    const token = getTokenFromCookie() || localStorage.getItem('access_token') || localStorage.getItem('authToken');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+};
+
 // FIXED: Stable fallback images using data URLs (these will never fail)
 const STORE_LOGO_FALLBACK = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iOCIgZmlsbD0iIzk0QTNCOCIvPgo8cGF0aCBkPSJNMjQgMzJINTZWMzdINTZWNDRINTZ2MjJIMjRWMzJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMjQgNTZINTZWNjBIMjRWNTZaIiBmaWxsPSJ3aGl0ZSIvPgo8Y2lyY2xlIGN4PSI0MCIgY3k9IjQwIiByPSIzIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
 
@@ -51,11 +74,7 @@ const offerAPI = {
   getOffersByStore: async (storeId) => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offers/store/${storeId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-           'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
-        }
+        headers: getApiHeaders()  // CHANGED
       });
       if (!response.ok) throw new Error('Failed to fetch offers');
       return response.json();
@@ -70,13 +89,8 @@ const offerAPI = {
 const branchAPI = {
   getBranchesByStore: async (storeId) => {
     try {
-      // Try public endpoint first (for store view)
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${storeId}/branches`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
-        }
+        headers: getApiHeaders()  // CHANGED
       });
 
       if (response.ok) {
@@ -84,13 +98,8 @@ const branchAPI = {
         return data;
       }
 
-      // If public endpoint doesn't exist, try the protected one without auth
       const protectedResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/branches/store/${storeId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
-        }
+        headers: getApiHeaders()  // CHANGED
       });
 
       if (protectedResponse.ok) {
@@ -104,7 +113,6 @@ const branchAPI = {
     }
   }
 };
-
 const StoreViewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -640,7 +648,7 @@ const StoreViewPage = () => {
 
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${id}/toggle-follow`, {
         method: 'POST',
-        headers: StoreService.getHeaders()
+        headers: getApiHeaders(true)
       });
 
       if (!response.ok) {
@@ -711,15 +719,12 @@ const StoreViewPage = () => {
   const fetchSocialLinksForStore = async (storeId) => {
     try {
       console.log('Frontend: Fetching social links for store:', storeId);
-
+  
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/socials/store/${storeId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+        headers: getApiHeaders()  // CHANGED
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         console.log('Frontend: Socials response:', data);
