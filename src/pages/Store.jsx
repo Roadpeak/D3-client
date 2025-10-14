@@ -73,7 +73,7 @@ const SMALL_LOGO_FALLBACK = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhla
 const offerAPI = {
   getOffersByStore: async (storeId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offers/store/${storeId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}api/v1/offers/store/${storeId}`, {
         headers: getApiHeaders()  // CHANGED
       });
       if (!response.ok) throw new Error('Failed to fetch offers');
@@ -720,7 +720,7 @@ const StoreViewPage = () => {
     try {
       console.log('Frontend: Fetching social links for store:', storeId);
   
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/socials/store/${storeId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/socials/store/${storeId}`, {
         method: 'GET',
         headers: getApiHeaders()  // CHANGED
       });
