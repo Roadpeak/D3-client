@@ -1,4 +1,4 @@
-// components/Navbar.jsx - Complete updated navbar with new react-icons
+// components/Navbar.jsx - Compressed navbar with reduced spacing
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
@@ -45,12 +45,6 @@ const TagIcon = ({ className }) => (
   </svg>
 );
 
-const Heart = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-  </svg>
-);
-
 const Navbar = () => {
   // Location hook with fallback
   const useSafeLocation = () => {
@@ -91,7 +85,7 @@ const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Chat count state (for mobile navigation badge)
+  // Chat count state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const navigate = useNavigate();
@@ -124,7 +118,7 @@ const Navbar = () => {
     }
   };
 
-  // Load chat message counts (for mobile navigation badge)
+  // Load chat message counts
   const loadUnreadChatMessages = async () => {
     try {
       if (!authService.isAuthenticated()) {
@@ -245,16 +239,16 @@ const Navbar = () => {
     return (
       <header className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-slate-200/50 sticky top-0 z-40">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <div className="text-3xl font-bold">
+          <div className="flex items-center justify-between py-2">
+            <div className="flex items-center space-x-3">
+              <div className="text-2xl font-bold">
                 <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
                   D3
                 </span>
-                <TagIcon className="w-6 h-6 text-indigo-600 inline ml-1" />
+                <TagIcon className="w-5 h-5 text-indigo-600 inline ml-1" />
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               <div className="animate-pulse bg-slate-200 rounded-lg w-20 h-8"></div>
               <div className="animate-pulse bg-slate-200 rounded-full w-8 h-8"></div>
             </div>
@@ -270,48 +264,48 @@ const Navbar = () => {
         <div className="container mx-auto px-4">
           {/* Mobile Top Header */}
           <div className="lg:hidden">
-            <div className="flex items-center justify-between py-4">
+            <div className="flex items-center justify-between py-2.5">
               {/* Logo */}
-              <Link to="/" className="flex items-center space-x-3">
-                <div className="text-2xl font-bold">
+              <Link to="/" className="flex items-center space-x-2">
+                <div className="text-xl font-bold">
                   <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
                     D3
                   </span>
-                  <TagIcon className="w-5 h-5 text-indigo-600 inline ml-1" />
+                  <TagIcon className="w-4 h-4 text-indigo-600 inline ml-1" />
                 </div>
-                <div className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3 py-1.5 rounded-full font-semibold shadow-md">
+                <div className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-1 rounded-full font-semibold shadow-md">
                   DEALS
                 </div>
               </Link>
 
               {/* Right Icons */}
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 {/* Search Toggle Button */}
-                <button 
+                <button
                   onClick={toggleSearch}
-                  className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50"
+                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50"
                 >
-                  <Search className="w-5 h-5 text-slate-600" />
+                  <Search className="w-4 h-4 text-slate-600" />
                 </button>
 
                 {/* Location Icon */}
                 <div className="relative">
-                  <button onClick={toggleLocation} className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50">
-                    <MapPin className="w-5 h-5 text-slate-600" />
+                  <button onClick={toggleLocation} className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50">
+                    <MapPin className="w-4 h-4 text-slate-600" />
                   </button>
 
                   {/* Location Dropdown */}
                   {isLocationOpen && availableLocations.length > 0 && (
-                    <div className="absolute top-12 right-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
-                      <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
+                    <div className="absolute top-10 right-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-xl shadow-2xl z-50">
+                      <div className="p-3 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
                         <h3 className="text-sm font-semibold text-slate-800">Choose Your Location</h3>
-                        <p className="text-xs text-slate-600 mt-1">Find the best deals near you</p>
+                        <p className="text-xs text-slate-600 mt-0.5">Find the best deals near you</p>
                       </div>
                       <div className="max-h-64 overflow-y-auto">
                         {availableLocations.map((locationItem) => (
                           <button
                             key={locationItem.id}
-                            className="w-full p-4 text-left hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 border-b border-slate-100/50 last:border-b-0 transition-all duration-200"
+                            className="w-full p-3 text-left hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 border-b border-slate-100/50 last:border-b-0 transition-all duration-200"
                             onClick={() => handleLocationSelect(locationItem)}
                           >
                             <div className="flex items-center justify-between">
@@ -329,7 +323,7 @@ const Navbar = () => {
                           </button>
                         ))}
                       </div>
-                      <div className="p-4 border-t border-slate-200/50 bg-slate-50/50">
+                      <div className="p-3 border-t border-slate-200/50 bg-slate-50/50">
                         <button
                           onClick={handleUseCurrentLocation}
                           className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 transition-colors"
@@ -342,12 +336,12 @@ const Navbar = () => {
                   )}
 
                   {isLocationOpen && availableLocations.length === 0 && (
-                    <div className="absolute top-12 right-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
-                      <div className="p-5 text-center">
+                    <div className="absolute top-10 right-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-xl shadow-2xl z-50">
+                      <div className="p-4 text-center">
                         <p className="text-sm text-slate-600">Loading locations...</p>
                         <button
                           onClick={handleUseCurrentLocation}
-                          className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
+                          className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
                         >
                           <span>📍</span>
                           <span>Use My Current Location</span>
@@ -358,8 +352,8 @@ const Navbar = () => {
                 </div>
 
                 {/* Mobile Notifications */}
-                <NotificationButton 
-                  isMobile={true} 
+                <NotificationButton
+                  isMobile={true}
                   isAuthenticated={isAuthenticated}
                 />
 
@@ -367,12 +361,12 @@ const Navbar = () => {
                 {isAuthenticated && user ? (
                   <Link
                     to="/profile"
-                    className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50"
+                    className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50"
                   >
                     {user.avatar ? (
-                      <img src={user.avatar} alt="Profile" className="w-6 h-6 rounded-lg object-cover" />
+                      <img src={user.avatar} alt="Profile" className="w-5 h-5 rounded-md object-cover" />
                     ) : (
-                      <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                      <div className="w-5 h-5 rounded-md bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
                         <span className="text-white text-xs font-semibold">
                           {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
                         </span>
@@ -382,18 +376,17 @@ const Navbar = () => {
                 ) : (
                   <Link
                     to="/accounts/sign-in"
-                    className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50"
+                    className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm transition-all duration-200 border border-slate-200/50"
                   >
-                    <User className="w-5 h-5 text-slate-600" />
+                    <User className="w-4 h-4 text-slate-600" />
                   </Link>
                 )}
               </div>
             </div>
 
             {/* Collapsible Mobile Search Bar */}
-            <div className={`transition-all duration-300 ease-in-out ${
-              isSearchOpen ? 'pb-4 opacity-100' : 'max-h-0 pb-0 opacity-0 overflow-hidden'
-            }`}>
+            <div className={`transition-all duration-300 ease-in-out ${isSearchOpen ? 'pb-3 opacity-100' : 'max-h-0 pb-0 opacity-0 overflow-hidden'
+              }`}>
               <div className="px-2">
                 <RealTimeSearch
                   placeholder="Search for deals, coupons & stores..."
@@ -408,42 +401,40 @@ const Navbar = () => {
           {/* Desktop Header */}
           <div className="hidden lg:block">
             {/* Top Header */}
-            <div className="flex items-center justify-between py-4 border-b border-slate-200/50">
-              <div className="flex items-center space-x-6 lg:space-x-8">
-                <div className="flex items-center space-x-4">
-                  <Link to="/" className="flex items-center space-x-3">
-                    <div className="text-3xl font-bold">
-                      <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
-                        D3
-                      </span>
-                      <TagIcon className="w-6 h-6 text-indigo-600 inline ml-1" />
-                    </div>
-                    <div className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3 py-1.5 rounded-full font-semibold shadow-md">
-                      DEALS
-                    </div>
-                  </Link>
-                </div>
+            <div className="flex items-center justify-between py-2 border-b border-slate-200/50">
+              <div className="flex items-center space-x-4">
+                <Link to="/" className="flex items-center space-x-2">
+                  <div className="text-2xl font-bold">
+                    <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
+                      D3
+                    </span>
+                    <TagIcon className="w-5 h-5 text-indigo-600 inline ml-1" />
+                  </div>
+                  <div className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-1 rounded-full font-semibold shadow-md">
+                    DEALS
+                  </div>
+                </Link>
 
                 {/* Desktop location dropdown */}
-                <div className="flex items-center space-x-3 text-sm text-slate-600 relative">
-                  <MapPin className="w-4 h-4 text-indigo-500" />
-                  <button onClick={toggleLocation} className="flex items-center space-x-2 hover:text-indigo-600 transition-colors">
-                    <span className="font-medium">{currentLocationDisplay}</span>
-                    <ChevronDown className="w-4 h-4" />
+                <div className="flex items-center space-x-2 text-sm text-slate-600 relative">
+                  <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                  <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-indigo-600 transition-colors">
+                    <span className="font-medium text-xs">{currentLocationDisplay}</span>
+                    <ChevronDown className="w-3.5 h-3.5" />
                   </button>
 
                   {/* Desktop Location Dropdown */}
                   {isLocationOpen && availableLocations.length > 0 && (
-                    <div className="absolute top-10 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
-                      <div className="p-5 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
+                    <div className="absolute top-8 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-xl shadow-2xl z-50">
+                      <div className="p-3 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/50 to-slate-100/50">
                         <h3 className="text-sm font-semibold text-slate-800">Choose Your Location</h3>
-                        <p className="text-xs text-slate-600 mt-1">Find the best deals near you</p>
+                        <p className="text-xs text-slate-600 mt-0.5">Find the best deals near you</p>
                       </div>
                       <div className="max-h-64 overflow-y-auto">
                         {availableLocations.map((locationItem) => (
                           <button
                             key={locationItem.id}
-                            className="w-full p-4 text-left hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 border-b border-slate-100/50 last:border-b-0 transition-all duration-200"
+                            className="w-full p-3 text-left hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/50 border-b border-slate-100/50 last:border-b-0 transition-all duration-200"
                             onClick={() => handleLocationSelect(locationItem)}
                           >
                             <div className="flex items-center justify-between">
@@ -461,7 +452,7 @@ const Navbar = () => {
                           </button>
                         ))}
                       </div>
-                      <div className="p-4 border-t border-slate-200/50 bg-slate-50/50">
+                      <div className="p-3 border-t border-slate-200/50 bg-slate-50/50">
                         <button
                           onClick={handleUseCurrentLocation}
                           className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 transition-colors"
@@ -474,12 +465,12 @@ const Navbar = () => {
                   )}
 
                   {isLocationOpen && availableLocations.length === 0 && (
-                    <div className="absolute top-10 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-2xl shadow-2xl z-50">
-                      <div className="p-5 text-center">
+                    <div className="absolute top-8 left-0 w-80 bg-white/95 backdrop-blur-xl border border-slate-200/50 rounded-xl shadow-2xl z-50">
+                      <div className="p-4 text-center">
                         <p className="text-sm text-slate-600">Loading locations...</p>
                         <button
                           onClick={handleUseCurrentLocation}
-                          className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
+                          className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
                         >
                           <span>📍</span>
                           <span>Use My Current Location</span>
@@ -490,82 +481,82 @@ const Navbar = () => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4 text-sm">
+              <div className="flex items-center space-x-2 text-sm">
                 <a
                   href="https://merchants.discoun3ree.com/accounts/sign-up"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-2 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200/50"
+                  className="flex items-center space-x-1.5 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-200/50"
                 >
-                  <span>🏪</span>
-                  <span className="font-medium">List Your Business</span>
+                  <span className="text-sm">🏪</span>
+                  <span className="font-medium text-xs">List Business</span>
                 </a>
                 <Link
                   to="/contact-us"
-                  className="flex items-center space-x-2 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200/50"
+                  className="flex items-center space-x-1.5 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-200/50"
                 >
-                  <span>🎧</span>
-                  <span className="font-medium">24/7 Support</span>
+                  <span className="text-sm">🎧</span>
+                  <span className="font-medium text-xs">Support</span>
                 </Link>
 
                 {/* Authentication Section */}
                 {isAuthenticated && user ? (
                   <Link
                     to="/profile"
-                    className="flex items-center space-x-3 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200/50"
+                    className="flex items-center space-x-2 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-200/50"
                   >
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1.5">
                       {user.avatar ? (
-                        <img src={user.avatar} alt="Profile" className="w-6 h-6 rounded-lg object-cover" />
+                        <img src={user.avatar} alt="Profile" className="w-5 h-5 rounded-md object-cover" />
                       ) : (
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                        <div className="w-5 h-5 rounded-md bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
                           <span className="text-white text-xs font-semibold">
                             {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
                           </span>
                         </div>
                       )}
-                      <span className="font-medium">{user.firstName}</span>
+                      <span className="font-medium text-xs">{user.firstName}</span>
                     </div>
                   </Link>
                 ) : (
                   <Link to="/accounts/sign-in">
-                    <button className="flex items-center space-x-3 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-slate-200/50">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-5 h-5" />
-                        <span className="font-medium">Sign In</span>
+                    <button className="flex items-center space-x-2 text-slate-700 hover:text-indigo-600 transition-all duration-200 bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-slate-200/50">
+                      <div className="flex items-center space-x-1.5">
+                        <User className="w-4 h-4" />
+                        <span className="font-medium text-xs">Sign In</span>
                       </div>
                     </button>
                   </Link>
                 )}
 
                 {/* Desktop Notifications */}
-                <NotificationButton 
-                  isMobile={false} 
+                <NotificationButton
+                  isMobile={false}
                   isAuthenticated={isAuthenticated}
                 />
               </div>
             </div>
 
             {/* Main Navigation */}
-            <div className="flex items-center justify-between py-5">
-              <nav className="flex items-center space-x-4 ml-8">
-                <Link to="/" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-4 py-2.5 rounded-xl hover:bg-slate-100/60 ${location.pathname === '/' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
+            <div className="flex items-center justify-between py-2.5">
+              <nav className="flex items-center space-x-1 ml-6">
+                <Link to="/" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-slate-100/60 text-sm ${location.pathname === '/' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
                   Home
                 </Link>
-                <Link to="/hotdeals" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-4 py-2.5 rounded-xl hover:bg-slate-100/60 relative ${location.pathname === '/hotdeals' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
+                <Link to="/hotdeals" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-slate-100/60 relative text-sm ${location.pathname === '/hotdeals' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
                   Hot Deals
-                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-2 py-1 rounded-full">🔥</span>
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs px-1.5 py-0.5 rounded-full">🔥</span>
                 </Link>
-                <Link to="/stores" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-4 py-2.5 rounded-xl hover:bg-slate-100/60 ${location.pathname === '/stores' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
+                <Link to="/stores" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-slate-100/60 text-sm ${location.pathname === '/stores' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
                   Stores
                 </Link>
-                <Link to="/requestservice" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-4 py-2.5 rounded-xl hover:bg-slate-100/60 ${location.pathname === '/requestservice' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
+                <Link to="/requestservice" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-slate-100/60 text-sm ${location.pathname === '/requestservice' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
                   Request Service
                 </Link>
-                <Link to="/chat" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-4 py-2.5 rounded-xl hover:bg-slate-100/60 relative ${location.pathname === '/chat' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
+                <Link to="/chat" className={`text-slate-700 hover:text-indigo-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-slate-100/60 relative text-sm ${location.pathname === '/chat' ? 'text-indigo-600 bg-slate-100/60' : ''}`}>
                   Chat
                   {unreadChatCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-1.5 py-0.5 rounded-full shadow-lg">
+                    <span className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-1 py-0.5 rounded-full shadow-lg">
                       {unreadChatCount > 9 ? '9+' : unreadChatCount}
                     </span>
                   )}
@@ -573,7 +564,7 @@ const Navbar = () => {
               </nav>
 
               {/* Desktop Search Bar */}
-              <div className="flex-1 max-w-3xl mx-8">
+              <div className="flex-1 max-w-2xl mx-6">
                 <RealTimeSearch
                   placeholder="Search for deals, coupons & stores..."
                   onNavigate={handleSearchNavigate}
@@ -586,7 +577,7 @@ const Navbar = () => {
         </div>
 
         {/* Promotional Banner */}
-        <div className="bg-gradient-to-r from-blue-900 via-blue-600 to-blue-400 text-white py-1.5 px-4">
+        <div className="bg-gradient-to-r from-blue-900 via-blue-600 to-blue-400 text-white py-1 px-4">
           <div className="container mx-auto flex items-center justify-center text-center">
             <div className="flex items-center space-x-2">
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-ping"></div>
@@ -602,11 +593,10 @@ const Navbar = () => {
         <div className="grid grid-cols-5 gap-1 px-2 py-2">
           <Link
             to="/"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${
-              location.pathname === '/'
+            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/'
                 ? 'text-blue-600 bg-blue-50'
                 : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <HiHome className="w-5 h-5" />
             <span className="text-xs font-semibold">Home</span>
@@ -614,11 +604,10 @@ const Navbar = () => {
 
           <Link
             to="/hotdeals"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${
-              location.pathname === '/hotdeals'
+            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/hotdeals'
                 ? 'text-blue-600 bg-blue-50'
                 : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <div className="relative">
               <CiDiscount1 className="w-5 h-5" />
@@ -629,11 +618,10 @@ const Navbar = () => {
 
           <Link
             to="/stores"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${
-              location.pathname === '/stores'
+            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/stores'
                 ? 'text-blue-600 bg-blue-50'
                 : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <FaStore className="w-5 h-5" />
             <span className="text-xs font-semibold">Stores</span>
@@ -641,11 +629,10 @@ const Navbar = () => {
 
           <Link
             to="/requestservice"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${
-              location.pathname === '/requestservice'
+            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/requestservice'
                 ? 'text-blue-600 bg-blue-50'
                 : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <FaFire className="w-5 h-5" />
             <span className="text-xs font-semibold">SR</span>
@@ -653,11 +640,10 @@ const Navbar = () => {
 
           <Link
             to="/chat"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${
-              location.pathname === '/chat'
+            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/chat'
                 ? 'text-blue-600 bg-blue-50'
                 : 'text-slate-500 hover:text-blue-600 hover:bg-slate-50'
-            }`}
+              }`}
           >
             <div className="relative">
               <IoChatbubbleEllipsesOutline className="w-5 h-5" />

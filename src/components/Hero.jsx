@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { offerAPI } from '../services/offerService';
 import ApiService from '../services/storeService';
 
@@ -16,7 +17,11 @@ const ChevronRight = ({ className }) => (
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center h-64">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+    <motion.div
+      className="rounded-full h-12 w-12 border-b-2 border-pink-500"
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+    />
   </div>
 );
 
@@ -57,10 +62,80 @@ const Calendar = ({ className }) => (
   </svg>
 );
 
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5 }
+  }
+};
+
+const slideVariants = {
+  enter: (direction) => ({
+    x: direction > 0 ? '100%' : '-100%',
+    opacity: 0
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.7,
+      ease: [0.32, 0.72, 0, 1]
+    }
+  },
+  exit: (direction) => ({
+    x: direction < 0 ? '100%' : '-100%',
+    opacity: 0,
+    transition: {
+      duration: 0.7,
+      ease: [0.32, 0.72, 0, 1]
+    }
+  })
+};
+
+const badgeVariants = {
+  hidden: { scale: 0, rotate: -180 },
+  visible: {
+    scale: 1,
+    rotate: 0,
+    transition: {
+      type: "spring",
+      stiffness: 200,
+      damping: 15
+    }
+  }
+};
+
+const buttonVariants = {
+  rest: { scale: 1 },
+  hover: {
+    scale: 1.05,
+    transition: {
+      duration: 0.2,
+      ease: "easeInOut"
+    }
+  },
+  tap: { scale: 0.95 }
+};
+
 export default function Hero() {
   const [topOffers, setTopOffers] = useState([]);
   const [sideOffers, setSideOffers] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -73,7 +148,6 @@ export default function Hero() {
       const discountedPrice = originalPrice * (1 - offer.discount / 100);
       const store = offer.store || offer.service?.store || {};
 
-      // Calculate time left based on expiration date
       const getTimeLeft = (expirationDate) => {
         if (!expirationDate) return "Limited time";
         const now = new Date();
@@ -87,7 +161,6 @@ export default function Hero() {
         return "Limited time";
       };
 
-      // Fetch actual store rating from store API
       let storeRating = 0;
       if (store.id) {
         try {
@@ -123,14 +196,12 @@ export default function Hero() {
     return transformedOffers;
   };
 
-  // Fetch top discount offers from API
   useEffect(() => {
     const fetchTopDiscountOffers = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Fetch offers sorted by discount percentage
         const response = await offerAPI.getOffers({
           sortBy: 'discount',
           status: 'active',
@@ -138,43 +209,26 @@ export default function Hero() {
         });
 
         if (response.success && response.offers) {
-          // Filter out expired offers
           const activeOffers = response.offers.filter(offer => {
             if (!offer.expiration_date) return true;
             return new Date(offer.expiration_date) > new Date();
           });
 
-          // Sort by discount percentage and take top offers
           const sortedOffers = activeOffers.sort((a, b) => b.discount - a.discount);
-
-          // Transform and split offers
           const transformedOffers = await transformOfferData(sortedOffers);
 
-          // Top 2 for main carousel (highest discounts)
           const heroOffers = transformedOffers.slice(0, 2);
-
-          // Next 2 for side offers
           const sideOffersList = transformedOffers.slice(2, 4);
 
           setTopOffers(heroOffers);
           setSideOffers(sideOffersList);
-
-          console.log('Top discount offers loaded:', {
-            total: transformedOffers.length,
-            hero: heroOffers.length,
-            side: sideOffersList.length,
-            topDiscounts: heroOffers.map(o => `${o.title}: ${o.discountPercentage}%`)
-          });
-
         } else {
           throw new Error('No offers data received');
         }
-
       } catch (err) {
         console.error('Error fetching top discount offers:', err);
         setError('Failed to load top offers');
 
-        // Fallback data for development
         const fallbackOffers = [
           {
             id: 'fallback-1',
@@ -218,11 +272,11 @@ export default function Hero() {
     fetchTopDiscountOffers();
   }, []);
 
-  // Auto-slide functionality
   useEffect(() => {
     if (topOffers.length <= 1) return;
 
     const interval = setInterval(() => {
+      setDirection(1);
       setCurrentSlide((prev) => (prev + 1) % topOffers.length);
     }, 6000);
 
@@ -230,20 +284,22 @@ export default function Hero() {
   }, [topOffers.length]);
 
   const nextSlide = () => {
+    setDirection(1);
     setCurrentSlide((prev) => (prev + 1) % topOffers.length);
   };
 
   const prevSlide = () => {
+    setDirection(-1);
     setCurrentSlide((prev) => (prev - 1 + topOffers.length) % topOffers.length);
   };
 
   const goToSlide = (index) => {
+    setDirection(index > currentSlide ? 1 : -1);
     setCurrentSlide(index);
   };
 
   const handleOfferClick = async (offer) => {
     try {
-      // Use the correct routes based on your routing structure
       if (offer.id) {
         window.location.href = `/offer/${offer.id}`;
       } else {
@@ -265,37 +321,64 @@ export default function Hero() {
   if (error && topOffers.length === 0) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <div className="text-center py-12 bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl border border-red-100">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center py-12 bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl border border-red-100"
+        >
+          <motion.div
+            initial={{ rotate: 0 }}
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 0.5 }}
+            className="text-red-500 text-6xl mb-4"
+          >
+            ⚠️
+          </motion.div>
           <p className="text-red-600 mb-4 text-lg font-medium">{error}</p>
-          <button
+          <motion.button
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
             onClick={() => window.location.reload()}
-            className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+            className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
           >
             Try Again
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </section>
     );
   }
 
   return (
-    <section className="container mx-auto px-4 py-8">
+    <motion.section
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="container mx-auto px-4 py-8"
+    >
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Hero Banner with Carousel */}
-        <div className="lg:col-span-2 relative bg-white rounded-2xl overflow-hidden shadow-2xl">
+        <motion.div
+          variants={itemVariants}
+          className="lg:col-span-2 relative bg-white rounded-2xl overflow-hidden shadow-2xl"
+        >
           {topOffers.length > 0 && (
             <>
               {/* Carousel Container */}
-              <div
-                className="flex transition-transform duration-700 ease-in-out h-[480px]"
-                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-              >
-                {topOffers.map((offer, index) => (
-                  <div key={offer.id} className="w-full flex-shrink-0 relative">
+              <div className="relative h-[480px] overflow-hidden">
+                <AnimatePresence initial={false} custom={direction} mode="wait">
+                  <motion.div
+                    key={currentSlide}
+                    custom={direction}
+                    variants={slideVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="absolute inset-0"
+                  >
                     <img
-                      src={offer.image}
-                      alt={offer.title}
+                      src={topOffers[currentSlide].image}
+                      alt={topOffers[currentSlide].title}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.src = '/images/default-offer.jpg';
@@ -304,68 +387,117 @@ export default function Hero() {
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
 
                     {/* Content */}
-                    <div className="absolute inset-0 flex flex-col justify-center px-6 lg:px-8 py-6">
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                      className="absolute inset-0 flex flex-col justify-center px-6 lg:px-8 py-6"
+                    >
                       <div className="max-w-lg">
                         {/* Top Section - Business Identity */}
-                        <div className="flex items-center gap-3 mb-4">
+                        <motion.div
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.4 }}
+                          className="flex items-center gap-3 mb-4"
+                        >
                           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
                             <span className="text-green-600 font-bold text-sm">
-                              {offer.store?.charAt(0) || 'S'}
+                              {topOffers[currentSlide].store?.charAt(0) || 'S'}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-white font-semibold text-base">{offer.store}</span>
+                            <span className="text-white font-semibold text-base">
+                              {topOffers[currentSlide].store}
+                            </span>
                             <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
                               <StarIcon className="w-3 h-3 text-yellow-400" />
-                              <span className="text-white text-xs font-medium">{offer.rating?.toFixed(1)}</span>
+                              <span className="text-white text-xs font-medium">
+                                {topOffers[currentSlide].rating?.toFixed(1)}
+                              </span>
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
 
-                        {/* Middle Section - Deal Details */}
-                        <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2 leading-tight">
-                          {offer.title}
-                        </h2>
+                        {/* Title */}
+                        <motion.h2
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.5 }}
+                          className="text-2xl lg:text-3xl font-bold text-white mb-2 leading-tight"
+                        >
+                          {topOffers[currentSlide].title}
+                        </motion.h2>
 
-                        <p className="text-base text-gray-200 mb-4 leading-relaxed">
-                          Enjoy {offer.discountPercentage}% OFF this limited-time deal.
-                        </p>
+                        <motion.p
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.6 }}
+                          className="text-base text-gray-200 mb-4 leading-relaxed"
+                        >
+                          Enjoy {topOffers[currentSlide].discountPercentage}% OFF this limited-time deal.
+                        </motion.p>
 
-                        {/* Discount Badge - Clean Circular Design */}
-                        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2 rounded-full shadow-xl mb-4">
+                        {/* Discount Badge */}
+                        <motion.div
+                          variants={badgeVariants}
+                          initial="hidden"
+                          animate="visible"
+                          transition={{ delay: 0.7 }}
+                          className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 px-5 py-2 rounded-full shadow-xl mb-4"
+                        >
                           <FireIcon className="w-4 h-4 text-white" />
-                          <span className="text-white font-black text-lg">{offer.discountPercentage}% OFF</span>
-                        </div>
+                          <span className="text-white font-black text-lg">
+                            {topOffers[currentSlide].discountPercentage}% OFF
+                          </span>
+                        </motion.div>
 
-                        {/* Pricing Clarity */}
-                        <div className="mb-4">
+                        {/* Pricing */}
+                        <motion.div
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.8 }}
+                          className="mb-4"
+                        >
                           <div className="flex items-center gap-3 mb-1">
                             <span className="text-gray-400 line-through text-base">
-                              KSH {offer.originalPrice.toFixed(2)}
+                              KSH {topOffers[currentSlide].originalPrice.toFixed(2)}
                             </span>
                             <span className="text-green-400 font-bold text-2xl">
-                              KSH {offer.discountedPrice.toFixed(2)}
+                              KSH {topOffers[currentSlide].discountedPrice.toFixed(2)}
                             </span>
                           </div>
                           <div className="text-green-300 font-semibold text-sm">
-                            You save KSH {(offer.originalPrice - offer.discountedPrice).toFixed(2)}!
+                            You save KSH {(topOffers[currentSlide].originalPrice - topOffers[currentSlide].discountedPrice).toFixed(2)}!
                           </div>
-                        </div>
+                        </motion.div>
 
                         {/* Urgency & Availability */}
-                        <div className="flex items-center gap-4 text-yellow-300 mb-4">
+                        <motion.div
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.9 }}
+                          className="flex items-center gap-4 text-yellow-300 mb-4"
+                        >
                           <div className="flex items-center gap-1">
                             <TimerIcon className="w-3 h-3" />
-                            <span className="text-xs font-medium">{offer.timeLeft}</span>
+                            <span className="text-xs font-medium">
+                              {topOffers[currentSlide].timeLeft}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
                             <span className="text-xs">Nairobi, Kenya</span>
                           </div>
-                        </div>
+                        </motion.div>
 
                         {/* Trust Signals */}
-                        <div className="flex items-center gap-4 text-white/90 text-xs mb-4">
+                        <motion.div
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 1 }}
+                          className="flex items-center gap-4 text-white/90 text-xs mb-4"
+                        >
                           <div className="flex items-center gap-1">
                             <CheckCircle className="w-3 h-3 text-green-400" />
                             <span>Verified Deal</span>
@@ -374,76 +506,77 @@ export default function Hero() {
                             <Calendar className="w-3 h-3 text-blue-400" />
                             <span>Instant Booking</span>
                           </div>
-                        </div>
+                        </motion.div>
 
                         {/* Action Button */}
-                        <button
-                          onClick={() => handleOfferClick(offer)}
-                          className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl text-base font-bold shadow-2xl transform hover:scale-105 transition-all duration-300 mb-3"
+                        <motion.button
+                          variants={buttonVariants}
+                          initial="rest"
+                          whileHover="hover"
+                          whileTap="tap"
+                          onClick={() => handleOfferClick(topOffers[currentSlide])}
+                          className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl text-base font-bold shadow-2xl transition-all duration-300 mb-3"
                         >
                           Claim Deal Now
-                        </button>
-
-                        {/* Short Description */}
-                        {/* <div className="text-white/80 text-xs space-y-1">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="w-3 h-3 text-green-400" />
-                            <span>Full Body Massage (90 min)</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle className="w-3 h-3 text-green-400" />
-                            <span>Free Spa Access</span>
-                          </div>
-                        </div> */}
+                        </motion.button>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    </motion.div>
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
               {/* Navigation Arrows */}
               {topOffers.length > 1 && (
                 <>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.1, x: -5 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={prevSlide}
-                    className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200 hover:scale-110"
+                    className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200 z-10"
                   >
                     <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1, x: 5 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={nextSlide}
-                    className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200 hover:scale-110"
+                    className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200 z-10"
                   >
                     <ChevronRight className="w-6 h-6" />
-                  </button>
+                  </motion.button>
                 </>
               )}
 
               {/* Dots Indicator */}
               {topOffers.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3">
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
                   {topOffers.map((_, index) => (
-                    <button
+                    <motion.button
                       key={index}
                       onClick={() => goToSlide(index)}
-                      className={`w-3 h-3 rounded-full transition-all duration-200 ${index === currentSlide
-                        ? 'bg-white scale-125'
-                        : 'bg-white/50 hover:bg-white/75'
-                        }`}
+                      animate={{
+                        scale: index === currentSlide ? 1.25 : 1,
+                        backgroundColor: index === currentSlide ? '#ffffff' : 'rgba(255, 255, 255, 0.5)'
+                      }}
+                      whileHover={{ scale: 1.2 }}
+                      className="w-3 h-3 rounded-full transition-all duration-200"
                     />
                   ))}
                 </div>
               )}
             </>
           )}
-        </div>
+        </motion.div>
 
         {/* Side Deals */}
         <div className="flex flex-col gap-6 h-[480px]">
-          {sideOffers.slice(0, 2).map((offer) => (
-            <div
+          {sideOffers.slice(0, 2).map((offer, index) => (
+            <motion.div
               key={offer.id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100 flex-1 cursor-pointer"
+              variants={itemVariants}
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 flex-1 cursor-pointer"
               onClick={() => handleOfferClick(offer)}
             >
               <div className="relative h-36">
@@ -459,26 +592,41 @@ export default function Hero() {
                 {/* Badges */}
                 <div className="absolute top-2 left-2 flex gap-2">
                   {offer.isHot && (
-                    <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                    <motion.span
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.2 + index * 0.1, type: "spring" }}
+                      className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"
+                    >
                       <FireIcon className="w-3 h-3" />
                       HOT
-                    </span>
+                    </motion.span>
                   )}
                   {offer.featured && (
-                    <span className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
+                      className="bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-bold"
+                    >
                       FEATURED
-                    </span>
+                    </motion.span>
                   )}
                 </div>
 
                 {/* Discount Badge */}
-                <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-sm font-bold">
+                <motion.div
+                  initial={{ scale: 0, rotate: 180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.4 + index * 0.1, type: "spring" }}
+                  className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-3 py-1 rounded-full text-sm font-bold"
+                >
                   {offer.discountPercentage}% OFF
-                </div>
+                </motion.div>
               </div>
 
               <div className="p-6 flex-1 flex flex-col">
-                <h4 className="font-bold text-lg mb-2 text-gray-800">{offer.title}</h4>
+                <h4 className="font-bold text-sm mb-2 text-gray-800">{offer.title}</h4>
 
                 {/* Price */}
                 <div className="flex items-center gap-3 mb-3">
@@ -500,42 +648,61 @@ export default function Hero() {
                 </div>
 
                 {/* CTA Button */}
-                <button
+                <motion.button
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
                   onClick={() => handleOfferClick(offer)}
-                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl text-sm font-bold hover:shadow-lg transform hover:scale-105 transition-all duration-200 mt-auto"
+                  className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl text-sm font-bold hover:shadow-lg transition-all duration-200 mt-auto"
                 >
                   Get This Deal
-                </button>
+                </motion.button>
               </div>
-            </div>
+            </motion.div>
           ))}
 
           {sideOffers.length === 0 && !loading && (
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8 text-center border border-gray-200 flex-1 flex flex-col justify-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-8 text-center border border-gray-200 flex-1 flex flex-col justify-center"
+            >
               <div className="text-gray-400 text-3xl mb-3">🔍</div>
               <p className="text-gray-600 font-medium text-md">Loading more deals...</p>
               <p className="text-gray-500 text-sm mt-2">Check back soon for more offers!</p>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
 
       {/* Bottom Stats */}
       {topOffers.length > 0 && (
-        <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+        <motion.div
+          variants={itemVariants}
+          className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200"
+        >
           <div className="text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
+            <motion.h3
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-xl font-bold text-gray-900 mb-2"
+            >
               Hottest Deals of the Week!
-            </h3>
-            <p className="text-gray-600">
+            </motion.h3>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="text-gray-600"
+            >
               Featuring discounts up to <span className="font-bold text-red-600">
                 {Math.max(...topOffers.map(o => o.discountPercentage))}%
               </span> from top-rated providers
-            </p>
-
+            </motion.p>
           </div>
-        </div>
+        </motion.div>
       )}
-    </section>
+    </motion.section>
   );
 }
