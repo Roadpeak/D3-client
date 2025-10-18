@@ -4,7 +4,7 @@ const serviceAPI = {
       let url;
       if (params.storeId) {
         // REMOVE /api/v1 since it's in REACT_APP_API_BASE_URL
-        url = `${process.env.REACT_APP_API_BASE_URL}/services/store/${params.storeId}`;
+        url = `${process.env.REACT_APP_API_BASE_URL}/api/v1/services/store/${params.storeId}`;
       } else {
         url = `${process.env.REACT_APP_API_BASE_URL}/services`;
       }
@@ -27,7 +27,7 @@ const serviceAPI = {
 
       if (params.storeId) {
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services?storeId=${params.storeId}`, {
+          const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services?storeId=${params.storeId}`, {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
@@ -49,7 +49,7 @@ const serviceAPI = {
 
   getServiceById: async (serviceId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services/${serviceId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services/${serviceId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -70,7 +70,7 @@ const serviceAPI = {
 
   bookService: async (serviceId, bookingData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services/${serviceId}/book`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/services/${serviceId}/book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
