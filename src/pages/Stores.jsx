@@ -10,8 +10,8 @@ import ApiService from '../services/storeService';
 // Animation Variants
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
-  animate: { 
-    opacity: 1, 
+  animate: {
+    opacity: 1,
     y: 0,
     transition: {
       duration: 0.4,
@@ -33,8 +33,8 @@ const containerVariants = {
 };
 
 const cardVariants = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     y: 20,
     scale: 0.95
   },
@@ -84,8 +84,8 @@ const buttonVariants = {
 };
 
 const dropdownVariants = {
-  hidden: { 
-    opacity: 0, 
+  hidden: {
+    opacity: 0,
     y: -10,
     scale: 0.95
   },
@@ -137,18 +137,18 @@ const Stores = () => {
   // Store Logo Component
   const StoreLogo = ({ store, className }) => {
     const [imageError, setImageError] = useState(false);
-    
+
     const storeInitials = store.name?.charAt(0)?.toUpperCase() || 'S';
-    
-    const hasValidLogo = (store.logo && store.logo.trim() !== '') || 
-                        (store.logo_url && store.logo_url.trim() !== '');
+
+    const hasValidLogo = (store.logo && store.logo.trim() !== '') ||
+      (store.logo_url && store.logo_url.trim() !== '');
 
     if (!hasValidLogo || imageError) {
       return (
-        <motion.div 
+        <motion.div
           whileHover={{ scale: 1.1, rotate: 5 }}
           transition={{ type: "spring", stiffness: 300 }}
-          className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg ${className}`}
+          className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center border-2 border-gray-200 group-hover:border-blue-400 transition-colors duration-300 shadow-sm ${className}`}
         >
           <span className="text-white font-bold text-sm">
             {storeInitials}
@@ -179,21 +179,21 @@ const Stores = () => {
         animate="visible"
         whileHover="hover"
         layout
-        className={`bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group ${isListView ? 'p-4' : 'p-4 md:p-6'}`}
+        className={`bg-white rounded-lg border border-gray-100 hover:shadow-md transition-all duration-300 cursor-pointer group ${isListView ? 'p-4' : 'p-4 md:p-6'}`}
         onClick={() => handleStoreClick(store)}
       >
         {isListView ? (
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <StoreLogo 
+                <StoreLogo
                   store={store}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-400 transition-colors duration-300 shadow-sm"
                 />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 text-base">{store.name}</h3>
-                <motion.div 
+                <h3 className="font-medium text-gray-900 text-base">{store.name}</h3>
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
@@ -203,7 +203,7 @@ const Stores = () => {
                   <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
                 </motion.div>
                 {store.location && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
@@ -214,13 +214,13 @@ const Stores = () => {
                 )}
               </div>
             </div>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
               className="text-right"
             >
-              <div className="text-red-500 font-bold text-lg">{store.cashback || 'N/A'}</div>
+              <div className="text-blue-500 font-bold text-lg">{store.cashback || 'N/A'}</div>
               <div className="text-gray-500 text-sm font-medium">Discount</div>
               {store.wasRate && (
                 <div className="text-gray-400 text-sm mt-1">{store.wasRate}</div>
@@ -232,15 +232,15 @@ const Stores = () => {
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center space-x-3 flex-1 min-w-0">
                 <div className="relative flex-shrink-0">
-                  <StoreLogo 
+                  <StoreLogo
                     store={store}
-                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-red-400 transition-colors duration-300 shadow-lg"
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-400 transition-colors duration-300 shadow-sm"
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-gray-900 text-sm md:text-base leading-tight truncate">{store.name}</h3>
+                  <h3 className="font-medium text-gray-900 text-sm md:text-base leading-tight truncate">{store.name}</h3>
                   {store.location && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.2 }}
@@ -251,18 +251,18 @@ const Stores = () => {
                   )}
                 </div>
               </div>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, type: "spring" }}
                 className="text-right flex-shrink-0 ml-2"
               >
-                <div className="text-red-500 font-bold text-lg md:text-xl">{store.cashback || 'N/A'}</div>
+                <div className="text-blue-500 font-bold text-lg md:text-xl">{store.cashback || 'N/A'}</div>
                 <div className="text-gray-500 text-xs md:text-sm font-medium">Discount</div>
               </motion.div>
             </div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -312,23 +312,23 @@ const Stores = () => {
     const fetchCategories = async () => {
       try {
         const categoriesData = await ApiService.getCategories();
-        
+
         let apiCategories = [];
-        
+
         if (categoriesData.categories && Array.isArray(categoriesData.categories)) {
           apiCategories = categoriesData.categories;
         } else if (Array.isArray(categoriesData)) {
           apiCategories = categoriesData;
         }
-        
-        const uniqueCategories = [...new Set(apiCategories.filter(cat => 
+
+        const uniqueCategories = [...new Set(apiCategories.filter(cat =>
           cat && cat !== 'All' && cat.trim() !== ''
         ))];
-        
+
         const finalCategories = ['All', ...uniqueCategories.sort()];
-        
+
         setCategories(finalCategories);
-        
+
       } catch (err) {
         console.error('Error fetching categories:', err);
         setCategories(['All', 'Electronics', 'Fashion', 'Food & Dining', 'Beauty', 'Health', 'Home & Garden']);
@@ -343,7 +343,7 @@ const Stores = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const filters = {
           category: selectedCategory !== 'All' ? selectedCategory : undefined,
           sortBy: sortBy,
@@ -356,7 +356,7 @@ const Stores = () => {
         }
 
         const response = await ApiService.getStores(filters);
-        
+
         setStores(response.stores || []);
         setPagination(response.pagination || null);
         setError(null);
@@ -383,9 +383,9 @@ const Stores = () => {
 
   if (loading && stores.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <Navbar />
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex items-center justify-center h-64"
@@ -394,9 +394,9 @@ const Stores = () => {
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           >
-            <Loader2 className="w-8 h-8 text-red-500" />
+            <Loader2 className="w-8 h-8 text-blue-500" />
           </motion.div>
-          <span className="ml-2 text-gray-600">Loading stores...</span>
+          <span className="ml-2 text-gray-600">Loading stores</span>
         </motion.div>
         <Footer />
       </div>
@@ -404,118 +404,92 @@ const Stores = () => {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial="initial"
       animate="animate"
       exit="exit"
       variants={pageVariants}
-      className="min-h-screen bg-gray-50"
+      className="min-h-screen bg-white"
     >
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Sort and View Controls */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex items-center justify-between mb-8"
+          transition={{ delay: 0.2 }}
+          className="flex items-center justify-between mb-6"
         >
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">All Stores</h1>
-            <p className="text-gray-600 mt-1">
-              {currentLocation && currentLocation !== 'All Locations' 
-                ? `Showing stores in ${shortLocationName}`
-                : 'Showing stores from all locations'
-              }
-            </p>
-            {pagination && pagination.totalItems > 0 && (
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-sm text-gray-500 mt-1"
-              >
-                {pagination.totalItems} stores found
-              </motion.p>
-            )}
+          {/* View Toggle */}
+          <div className="flex items-center space-x-2">
+            <motion.button
+              variants={buttonVariants}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-200'}`}
+              aria-label="Grid view"
+            >
+              <Grid3X3 className="w-4 h-4" />
+            </motion.button>
+            <motion.button
+              variants={buttonVariants}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-200'}`}
+              aria-label="List view"
+            >
+              <List className="w-4 h-4" />
+            </motion.button>
           </div>
 
-          {/* Sort and View Controls */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center space-x-4"
-          >
-            {/* Mobile View Toggle */}
-            <div className="md:hidden flex items-center space-x-2">
-              <motion.button
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-red-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <motion.button
+              variants={buttonVariants}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={() => setShowSortDropdown(!showSortDropdown)}
+              className="flex items-center space-x-2 px-3 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
+            >
+              <span className="text-gray-700 text-sm hidden sm:inline">Sort by {sortBy}</span>
+              <span className="text-gray-700 text-sm sm:hidden">Sort</span>
+              <motion.div
+                animate={{ rotate: showSortDropdown ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
               >
-                <Grid3X3 className="w-4 h-4" />
-              </motion.button>
-              <motion.button
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-red-500 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
-              >
-                <List className="w-4 h-4" />
-              </motion.button>
-            </div>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </motion.div>
+            </motion.button>
 
-            {/* Sort Filter */}
-            <div className="relative">
-              <motion.button
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-                onClick={() => setShowSortDropdown(!showSortDropdown)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors"
-              >
-                <span className="text-gray-700 hidden sm:inline">Sort by {sortBy}</span>
-                <span className="text-gray-700 sm:hidden">Sort</span>
+            <AnimatePresence>
+              {showSortDropdown && (
                 <motion.div
-                  animate={{ rotate: showSortDropdown ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-md border border-gray-100 z-10 overflow-hidden"
                 >
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                  {sortOptions.map((option, index) => (
+                    <motion.button
+                      key={option}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ backgroundColor: '#f9fafb', x: 5 }}
+                      onClick={() => handleFilterChange('sort', option)}
+                      className="block w-full text-left px-4 py-2 text-sm first:rounded-t-lg last:rounded-b-lg transition-colors"
+                    >
+                      Sort by {option}
+                    </motion.button>
+                  ))}
                 </motion.div>
-              </motion.button>
-
-              <AnimatePresence>
-                {showSortDropdown && (
-                  <motion.div
-                    variants={dropdownVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 overflow-hidden"
-                  >
-                    {sortOptions.map((option, index) => (
-                      <motion.button
-                        key={option}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ backgroundColor: '#f9fafb', x: 5 }}
-                        onClick={() => handleFilterChange('sort', option)}
-                        className="block w-full text-left px-4 py-2 first:rounded-t-lg last:rounded-b-lg transition-colors"
-                      >
-                        Sort by {option}
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </motion.div>
 
         {/* Category Filter Tabs */}
@@ -523,7 +497,7 @@ const Stores = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="flex space-x-2 mb-8 overflow-x-auto pb-2"
+          className="flex space-x-2 mb-8 overflow-x-auto py-1 scrollbar-hide"
         >
           {categories.map((category, index) => (
             <motion.button
@@ -532,9 +506,9 @@ const Stores = () => {
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleFilterChange('category', category)}
-              className={`px-6 py-3 rounded-full whitespace-nowrap font-medium transition-all duration-300 ${selectedCategory === category
-                  ? 'bg-red-500 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:shadow-md'
+              className={`px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200 ${selectedCategory === category
+                  ? 'bg-blue-500 text-white shadow-sm'
+                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                 }`}
             >
               {category}
@@ -549,7 +523,7 @@ const Stores = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+              className="bg-red-50 border border-red-100 text-gray-700 px-4 py-3 rounded-lg mb-6"
             >
               {error}
             </motion.div>
@@ -569,9 +543,9 @@ const Stores = () => {
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               >
-                <Loader2 className="w-6 h-6 text-red-500" />
+                <Loader2 className="w-5 h-5 text-blue-500" />
               </motion.div>
-              <span className="ml-2 text-gray-600">Updating results...</span>
+              <span className="ml-2 text-sm text-gray-600">Updating</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -587,7 +561,7 @@ const Stores = () => {
                   initial="hidden"
                   animate="visible"
                   exit={{ opacity: 0 }}
-                  className="space-y-4 md:hidden"
+                  className="space-y-4"
                 >
                   {stores.map((store, index) => (
                     <StoreCard key={store.id || index} store={store} isListView={true} />
@@ -600,7 +574,7 @@ const Stores = () => {
                   initial="hidden"
                   animate="visible"
                   exit={{ opacity: 0 }}
-                  className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
+                  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
                 >
                   {stores.map((store, index) => (
                     <StoreCard key={store.id || index} store={store} />
@@ -623,13 +597,13 @@ const Stores = () => {
                   whileTap="tap"
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={!pagination.hasPrevPage}
-                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   Previous
                 </motion.button>
 
-                <span className="px-4 py-2 text-gray-700">
-                  Page {pagination.currentPage} of {pagination.totalPages}
+                <span className="px-4 py-2 text-sm text-gray-600">
+                  {pagination.currentPage} / {pagination.totalPages}
                 </span>
 
                 <motion.button
@@ -638,7 +612,7 @@ const Stores = () => {
                   whileTap="tap"
                   onClick={() => setCurrentPage(prev => prev + 1)}
                   disabled={!pagination.hasNextPage}
-                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
                   Next
                 </motion.button>
@@ -653,21 +627,12 @@ const Stores = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-center py-12"
+            className="text-center py-12 bg-gray-50 rounded-lg"
           >
             <motion.div
-              animate={{ 
-                scale: [1, 1.1, 1],
-                rotate: [0, 5, -5, 0]
-              }}
-              transition={{ 
-                duration: 2, 
-                repeat: Infinity,
-                repeatDelay: 1
-              }}
-              className="text-gray-500 text-lg"
+              className="text-gray-500 mb-4"
             >
-              {currentLocation && currentLocation !== 'All Locations' 
+              {currentLocation && currentLocation !== 'All Locations'
                 ? `No stores found in ${shortLocationName} for the selected filters.`
                 : 'No stores found for the selected filters.'
               }
@@ -677,7 +642,7 @@ const Stores = () => {
               whileHover="hover"
               whileTap="tap"
               onClick={clearFilters}
-              className="mt-4 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              className="px-5 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
             >
               Clear Filters
             </motion.button>
@@ -686,44 +651,6 @@ const Stores = () => {
                 Try changing location in the navbar to see more stores
               </p>
             )}
-          </motion.div>
-        )}
-
-        {/* Location Stats */}
-        {!loading && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-8 p-4 bg-white rounded-lg border border-gray-200"
-          >
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>
-                {stores.length > 0 ? (
-                  currentLocation && currentLocation !== 'All Locations' 
-                    ? `${stores.length} stores found in ${shortLocationName}`
-                    : `${stores.length} stores found`
-                ) : (
-                  currentLocation && currentLocation !== 'All Locations'
-                    ? `No stores in ${shortLocationName}`
-                    : 'No stores found'
-                )}
-              </span>
-              <div className="flex items-center space-x-4">
-                <span className="text-xs">
-                  Location: {currentLocation || 'Loading...'}
-                </span>
-                <motion.button 
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                  onClick={() => window.location.reload()}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
-                >
-                  Refresh Page
-                </motion.button>
-              </div>
-            </div>
           </motion.div>
         )}
       </div>

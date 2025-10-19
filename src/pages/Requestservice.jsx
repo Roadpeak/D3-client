@@ -4,6 +4,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import userServiceRequestService from '../services/userServiceRequestService';
 import authService from '../services/authService';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 
 // SVG Icons (keeping the same as before)
 const Search = ({ className }) => (
@@ -571,18 +573,8 @@ export default function UserServiceRequestPage() {
 
       {/* Modern Compact Hero Section */}
       <section className="bg-white border-b border-slate-200">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-6">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
-                Find Professional Services
-              </h1>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                Post your service request and get competitive quotes from verified providers in your area
-              </p>
-            </div>
-
-            {/* Modern Action Bar */}
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center px-4 sm:px-0">
               <button
                 onClick={handleRequestFormShow}
@@ -740,113 +732,124 @@ export default function UserServiceRequestPage() {
           </div>
         </div>
 
-        {/* All Requests Tab */}
+        {/* All Requests Tab - Updated with social post style */}
         {activeTab === 'all' && (
           <div className="space-y-4">
             {loadingRequests ? (
               <LoadingSpinner />
             ) : serviceRequests.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="w-8 h-8 text-slate-400" />
+              <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <MessageSquare className="w-6 h-6 text-slate-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-700 mb-2">No service requests found</h3>
-                <p className="text-slate-500 mb-6">Be the first to post a service request!</p>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">No service requests found</h3>
+                <p className="text-gray-500 mb-4 text-sm">Be the first to post a service request!</p>
                 <button
                   onClick={handleRequestFormShow}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
+                  className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-sm"
                 >
-                  Post First Request
+                  Post Request
                 </button>
               </div>
             ) : (
               serviceRequests.map((request) => (
-                <div key={request.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200 overflow-hidden">
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center flex-wrap gap-3 mb-3">
-                          <h3 className="text-xl font-semibold text-slate-900">{request.title}</h3>
-
-                          <div className="flex items-center gap-2">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${request.priority === 'urgent'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-emerald-100 text-emerald-800'
-                              }`}>
-                              {request.priority}
-                            </span>
-
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {request.status.toUpperCase()}
-                            </span>
-
-                            {request.verified && (
-                              <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-full flex items-center gap-1">
-                                <CheckCircle className="w-3 h-3" />
-                                Verified
-                              </span>
-                            )}
-
-                            <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs">
-                              {request.category}
-                            </span>
+                <div key={request.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-200">
+                  {/* Header with user info */}
+                  <div className="flex items-center gap-2 p-3 border-b border-gray-100">
+                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                      {request.postedBy?.charAt(0) || 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <h4 className="font-medium text-gray-800 text-sm truncate">{request.postedBy}</h4>
+                        {request.verified && (
+                          <div className="bg-emerald-100 text-emerald-700 text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                            <CheckCircle className="w-2.5 h-2.5" />
+                            <span className="text-[10px]">Verified</span>
                           </div>
-                        </div>
-
-                        <p className="text-slate-600 mb-4 line-clamp-2">{request.description}</p>
-
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm mb-4">
-                          <div className="flex items-center space-x-2 text-slate-500">
-                            <MapPin className="w-4 h-4" />
-                            <span>{request.location}</span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-slate-500">
-                            <DollarSign className="w-4 h-4" />
-                            <span>{request.budget}</span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-slate-500">
-                            <Clock className="w-4 h-4" />
-                            <span>{getTimelineLabel(request.timeline)}</span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-slate-500">
-                            <User className="w-4 h-4" />
-                            <span>by {request.postedBy}</span>
-                          </div>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
+                        <span>{request.postedTime}</span>
+                        <span className="w-1 h-1 bg-gray-300 rounded-full inline-block"></span>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          <span>{request.location}</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                      <div className="flex items-center space-x-4">
-                        <span className="text-sm text-slate-500">{request.postedTime}</span>
-                        <div className="flex items-center space-x-2">
-                          <MessageSquare className="w-4 h-4 text-indigo-500" />
-                          <span className="text-sm font-medium text-indigo-600">
-                            {request.offers} offer{request.offers !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                      </div>
+                    <div className="ml-auto flex items-center gap-1 flex-wrap">
+                      <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${request.priority === 'urgent'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-blue-100 text-blue-800'
+                        }`}>
+                        {request.priority}
+                      </span>
 
-                      <button
-                        onClick={() => handleViewDetails(request)}
-                        className="px-4 py-2 border border-indigo-500 text-indigo-600 rounded-lg hover:bg-indigo-50 font-medium transition-colors"
-                      >
-                        View Details
-                      </button>
+                      <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                        {request.category}
+                      </span>
                     </div>
+                  </div>
 
+                  {/* Main content */}
+                  <div className="p-3">
+                    <h3 className="text-md font-medium text-gray-900 mb-1">{request.title}</h3>
+                    <p className="text-gray-600 text-sm mb-2 line-clamp-2">{request.description}</p>
+
+                    {/* Requirements tags */}
                     {request.requirements && request.requirements.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-slate-100">
-                        <div className="flex flex-wrap gap-2">
-                          <span className="text-sm text-slate-600 mr-2">Requirements:</span>
-                          {request.requirements.map((req, index) => (
-                            <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
-                              {req}
-                            </span>
-                          ))}
-                        </div>
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {request.requirements.map((req, index) => (
+                          <span key={index} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs rounded-md flex items-center">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            {req}
+                          </span>
+                        ))}
                       </div>
                     )}
+
+                    {/* Budget and timeline info */}
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div className="bg-gray-50 p-2 rounded-md">
+                        <div className="flex items-center gap-1 text-gray-500 mb-0.5 text-xs">
+                          <DollarSign className="w-3 h-3" />
+                          <span>Budget</span>
+                        </div>
+                        <div className="font-medium text-gray-900 text-sm">{request.budget}</div>
+                      </div>
+
+                      <div className="bg-gray-50 p-2 rounded-md">
+                        <div className="flex items-center gap-1 text-gray-500 mb-0.5 text-xs">
+                          <Clock className="w-3 h-3" />
+                          <span>Timeline</span>
+                        </div>
+                        <div className="font-medium text-gray-900 text-sm">{getTimelineLabel(request.timeline)}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer with actions */}
+                  <div className="px-3 py-2 border-t border-gray-100 flex justify-between items-center bg-gray-50">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 text-blue-600">
+                        <MessageSquare className="w-3 h-3" />
+                        <span className="text-xs font-medium">{request.offers} offers</span>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-gray-500">
+                        <Star className="w-3 h-3 text-amber-400" />
+                        <span className="text-xs">{request.status}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleViewDetails(request)}
+                      className="bg-white text-gray-700 border border-gray-200 px-3 py-1 rounded-md text-xs font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Details
+                    </button>
                   </div>
                 </div>
               ))
@@ -854,39 +857,51 @@ export default function UserServiceRequestPage() {
 
             {/* Modern Pagination */}
             {pagination.totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-4 mt-8">
+              <div className="flex justify-center items-center space-x-2 mt-6">
                 <button
                   onClick={() => handleFilterChange('page', Math.max(1, filters.page - 1))}
                   disabled={!pagination.hasPrev}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Previous
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
                 </button>
 
-                <div className="flex items-center space-x-2">
-                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                    const pageNum = i + Math.max(1, pagination.currentPage - 2);
-                    return pageNum <= pagination.totalPages ? (
-                      <button
-                        key={pageNum}
-                        onClick={() => handleFilterChange('page', pageNum)}
-                        className={`px-3 py-2 rounded-lg ${pageNum === pagination.currentPage
-                          ? 'bg-indigo-600 text-white'
-                          : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
-                          } transition-colors`}
-                      >
-                        {pageNum}
-                      </button>
-                    ) : null;
-                  })}
-                </div>
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  const pageNum = i + Math.max(1, pagination.currentPage - 2);
+                  return pageNum <= pagination.totalPages ? (
+                    <button
+                      key={pageNum}
+                      onClick={() => handleFilterChange('page', pageNum)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-md text-sm transition-colors ${pageNum === pagination.currentPage
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                        }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ) : null;
+                })}
 
                 <button
                   onClick={() => handleFilterChange('page', Math.min(pagination.totalPages, filters.page + 1))}
                   disabled={!pagination.hasNext}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Next
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
             )}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, RefreshCw, Filter, MapPin, Clock, Star, Search } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +13,7 @@ const StoreLogo = ({
   logoUrl,
   storeName,
   className = "w-5 h-5",
-  containerClassName = "w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200"
+  containerClassName = "w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm"
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(!!logoUrl);
@@ -49,8 +49,8 @@ const StoreLogo = ({
   return (
     <div className={containerClassName}>
       {showFallback ? (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-400 rounded-full">
-          <span className="text-white text-sm font-bold">
+        <div className="w-full h-full flex items-center justify-center bg-blue-500 rounded-full">
+          <span className="text-white text-sm font-medium">
             {getInitial(storeName)}
           </span>
         </div>
@@ -138,20 +138,9 @@ export default function Hotdeals() {
       // Add location filter from context
       if (currentLocation && currentLocation !== 'All Locations') {
         params.location = currentLocation;
-        console.log('HOTDEALS - Adding location filter:', currentLocation);
-      } else {
-        console.log('HOTDEALS - No location filter (showing all)');
       }
 
-      console.log('HOTDEALS - Fetching with params:', params);
-
       const response = await offerAPI.getOffers(params);
-
-      console.log('HOTDEALS - API Response:', {
-        offersReceived: response.offers?.length || 0,
-        totalItems: response.pagination?.totalItems || 0,
-        appliedLocation: params.location || 'All Locations'
-      });
 
       // Transform offers to match frontend expectations
       const transformedOffers = response.offers?.map(offer => ({
@@ -178,8 +167,6 @@ export default function Hotdeals() {
       // Filter out expired offers for customer-facing page
       const activeOffers = transformedOffers.filter(offer => !isOfferExpired(offer.expiration_date));
 
-      console.log(`HOTDEALS - Total offers: ${transformedOffers.length}, Active: ${activeOffers.length}, Location: ${currentLocation}`);
-
       setOffers(activeOffers);
       setPagination(response.pagination || {});
       setRetryCount(0);
@@ -204,7 +191,7 @@ export default function Hotdeals() {
       setCategories(updatedCategories);
 
     } catch (err) {
-      console.error('HOTDEALS - Error fetching offers:', err);
+      console.error('Error fetching offers:', err);
       setError(`Failed to fetch offers: ${err.message || 'Unknown error'}`);
 
       // Add retry logic for network errors
@@ -277,7 +264,6 @@ export default function Hotdeals() {
       navigate(`/store/${storeId}/offer/${offer.id}`);
     } else {
       // Fallback to simple offer route if no store ID
-      console.warn('No store ID found for offer:', offer.id);
       navigate(`/offer/${offer.id}`);
     }
   }, [navigate]);
@@ -313,22 +299,13 @@ export default function Hotdeals() {
 
   // Listen for location changes from navbar
   useEffect(() => {
-    const handleLocationChange = (event) => {
-      console.log('HOTDEALS - Received location change event:', event.detail);
+    const handleLocationChange = () => {
       setCurrentPage(1);
     };
 
     window.addEventListener('locationChanged', handleLocationChange);
     return () => window.removeEventListener('locationChanged', handleLocationChange);
   }, []);
-
-  // Debug location changes
-  useEffect(() => {
-    console.log('HOTDEALS - Location changed:', {
-      currentLocation,
-      shortName: getShortLocationName()
-    });
-  }, [currentLocation, getShortLocationName]);
 
   // Fetch data effect
   useEffect(() => {
@@ -337,14 +314,14 @@ export default function Hotdeals() {
 
   if (loading && offers.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <Navbar />
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="flex items-center space-x-2">
-            <Loader2 className="animate-spin" size={24} />
-            <span>Loading offers...</span>
+            <Loader2 className="animate-spin text-blue-500" size={24} />
+            <span className="text-gray-600">Loading offers</span>
             {retryCount > 0 && (
-              <span className="text-sm text-gray-500">(Retry {retryCount}/3)</span>
+              <span className="text-sm text-gray-500">({retryCount}/3)</span>
             )}
           </div>
         </div>
@@ -354,72 +331,74 @@ export default function Hotdeals() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Navbar />
 
       {/* Navigation */}
-      <nav className="bg-white border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-3">
-            <div className="flex items-center space-x-8">
-              <a href='/' className="text-gray-600 hover:text-red-500">Home</a>
-              <span className="text-blue-500 font-medium">
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between py-4">
+            <div className="flex items-center space-x-4">
+              <a href='/' className="text-gray-500 hover:text-blue-500 text-sm">
+                Home
+              </a>
+              <span className="text-sm text-gray-400">/</span>
+              <span className="text-blue-500 font-medium text-sm">
                 {currentLocation && currentLocation !== 'All Locations'
-                  ? `Hot Deals - ${getShortLocationName()}`
-                  : 'Hot Deals - All Locations'
+                  ? `Deals in ${getShortLocationName()}`
+                  : 'All Deals'
                 }
               </span>
             </div>
 
             {/* Mobile Filter Button */}
             <button
-              className="md:hidden bg-red-500 text-white px-3 py-1 rounded text-sm"
+              className="md:hidden flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-lg transition-colors"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             >
+              <Filter size={14} />
               Filters
             </button>
           </div>
         </div>
-      </nav>
+      </div>
 
       {/* Main Error */}
       {error && (
-        <div className="container mx-auto px-4 py-4">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="bg-red-50 border border-red-100 rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2" />
+              <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
               <div>
-                <span className="block">{error}</span>
+                <span className="block text-gray-700">{error}</span>
                 {retryCount > 0 && (
-                  <span className="text-sm">Retry attempt {retryCount}/3</span>
+                  <span className="text-sm text-gray-500">Retry attempt {retryCount}/3</span>
                 )}
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleRetry}
-                className="ml-4 flex items-center gap-1 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                disabled={loading}
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                Retry
-              </button>
-            </div>
+            <button
+              onClick={handleRetry}
+              className="flex items-center gap-1 bg-white border border-red-200 text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Retry
+            </button>
           </div>
         </div>
       )}
 
       {/* Favorites Error */}
       {favoritesError && (
-        <div className="container mx-auto px-4 py-2">
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 flex items-center justify-between text-sm">
             <div className="flex items-center">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              <span className="text-sm">{favoritesError}</span>
+              <AlertCircle className="w-4 h-4 mr-2 text-yellow-500" />
+              <span className="text-gray-700">{favoritesError}</span>
             </div>
             <button
               onClick={clearFavoritesError}
-              className="ml-4 text-yellow-800 hover:text-yellow-900"
+              className="text-gray-400 hover:text-gray-500"
             >
               <X className="w-4 h-4" />
             </button>
@@ -427,18 +406,22 @@ export default function Hotdeals() {
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
           {/* Sidebar */}
-          <div className={`${isSidebarOpen ? 'block' : 'hidden'
-            } md:block w-full md:w-80 flex-shrink-0 ${isSidebarOpen ? 'fixed inset-0 z-50 bg-white overflow-y-auto' : ''
-            }`}>
+          <aside className={`
+            ${isSidebarOpen ? 'block fixed inset-0 z-50 bg-white overflow-y-auto' : 'hidden'}
+            md:block w-full md:w-64 flex-shrink-0
+          `}>
             {/* Mobile Close Button */}
             {isSidebarOpen && (
               <div className="md:hidden flex justify-between items-center p-4 border-b">
-                <h2 className="text-lg font-semibold">Filters</h2>
-                <button onClick={() => setIsSidebarOpen(false)}>
-                  <X size={24} />
+                <h2 className="text-lg font-medium">Filters</h2>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
                 </button>
               </div>
             )}
@@ -446,84 +429,111 @@ export default function Hotdeals() {
             <div className="p-4 md:p-0 space-y-6">
               {/* Location Info */}
               {currentLocation && currentLocation !== 'All Locations' && (
-                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-indigo-800 text-sm mb-2">CURRENT LOCATION</h3>
-                  <p className="text-indigo-600 font-medium">{getShortLocationName()}</p>
-                  <p className="text-xs text-indigo-500 mt-1">
-                    Showing deals available in your area
+                <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                  <div className="flex items-center gap-2 text-blue-600 mb-2">
+                    <MapPin size={16} />
+                    <h3 className="font-medium text-sm">Current Location</h3>
+                  </div>
+                  <p className="text-blue-800 font-medium">{getShortLocationName()}</p>
+                  <p className="text-xs text-blue-500 mt-1">
+                    Showing deals in your selected area
                   </p>
                 </div>
               )}
 
               {/* Categories */}
-              <div className="bg-white rounded-lg p-6">
+              <div className="bg-white rounded-lg">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-800 border-b border-yellow-400 pb-2">
-                    CATEGORIES
+                  <h3 className="font-medium text-gray-700 text-sm">
+                    Categories
                   </h3>
+
+                  {(selectedCategory || sortBy !== 'latest') && (
+                    <button
+                      onClick={clearFilters}
+                      className="text-xs text-blue-500 hover:text-blue-700"
+                    >
+                      Reset
+                    </button>
+                  )}
                 </div>
                 <ul className="space-y-2">
                   <li className="flex items-center justify-between">
                     <button
                       onClick={() => handleCategoryChange('')}
-                      className={`text-sm ${!selectedCategory ? 'text-red-500 font-medium' : 'text-gray-600 hover:text-red-500'}`}
+                      className={`text-sm transition-colors ${!selectedCategory ? 'text-blue-500 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                       All Categories
                     </button>
-                    <span className="text-xs text-gray-400">
-                      ({offers.length})
+                    <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                      {offers.length}
                     </span>
                   </li>
-                  {categories.length > 0 ? (
-                    categories.map((category, index) => (
-                      <li key={index} className="flex items-center justify-between">
-                        <button
-                          onClick={() => handleCategoryChange(category.name)}
-                          className={`text-sm ${selectedCategory === category.name ? 'text-red-500 font-medium' : 'text-gray-600 hover:text-red-500'}`}
-                        >
-                          {category.name}
-                        </button>
-                        <span className="text-xs text-gray-400">({category.count})</span>
-                      </li>
-                    ))
-                  ) : (
-                    <li className="text-sm text-gray-500 italic">
-                      {loading ? 'Loading categories...' : 'No categories available'}
+                  {categories.map((category, index) => (
+                    <li key={index} className="flex items-center justify-between">
+                      <button
+                        onClick={() => handleCategoryChange(category.name)}
+                        className={`text-sm transition-colors ${selectedCategory === category.name ? 'text-blue-500 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+                      >
+                        {category.name}
+                      </button>
+                      <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                        {category.count}
+                      </span>
+                    </li>
+                  ))}
+                  {categories.length === 0 && !loading && (
+                    <li className="text-sm text-gray-400 italic">
+                      No categories available
                     </li>
                   )}
                 </ul>
-                {(selectedCategory || sortBy !== 'latest') && (
-                  <button
-                    onClick={clearFilters}
-                    className="mt-4 text-xs text-blue-600 hover:underline"
-                  >
-                    Clear all filters
-                  </button>
-                )}
               </div>
 
-              {/* Promo Ad */}
-              <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-6 text-white text-center">
-                <h3 className="text-xl font-bold mb-2">Special Deals</h3>
-                <div className="bg-yellow-400 text-purple-800 px-4 py-2 rounded-lg font-bold text-lg mb-3">
-                  BOOK NOW
-                  <div className="text-sm">Get upto 90% Off</div>
+              {/* Sort By Options */}
+              <div className="bg-white rounded-lg pt-4 border-t border-gray-100">
+                <h3 className="font-medium text-gray-700 text-sm mb-4">Sort By</h3>
+                <div className="space-y-2">
+                  {[
+                    { id: 'latest', label: 'Latest Deals' },
+                    { id: 'discount', label: 'Highest Discount' },
+                    { id: 'price_low_high', label: 'Price: Low to High' },
+                    { id: 'price_high_low', label: 'Price: High to Low' }
+                  ].map(option => (
+                    <button
+                      key={option.id}
+                      onClick={() => handleSortChange(option.id)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${sortBy === option.id
+                        ? 'bg-blue-50 text-blue-500'
+                        : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
-                <p className="text-sm mb-2">Limited Time Offers</p>
-                <p className="text-lg font-bold">Amazing Savings</p>
-                {currentLocation && currentLocation !== 'All Locations' && (
-                  <p className="text-xs mt-2 text-purple-100">
-                    Available in {getShortLocationName()}
-                  </p>
-                )}
+              </div>
+
+              {/* Promo Card */}
+              <div className="mt-6 hidden md:block">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg p-5 text-white shadow-sm">
+                  <h3 className="text-lg font-medium mb-2">Special Offers</h3>
+                  <p className="text-sm text-blue-100 mb-3">Exclusive deals just for you</p>
+                  <div className="bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg text-center mb-3">
+                    <p className="font-medium">Up to 90% Off</p>
+                  </div>
+                  <button className="w-full bg-white text-blue-600 font-medium rounded-lg py-2 text-sm hover:bg-blue-50 transition-colors">
+                    Browse More
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </aside>
 
           {/* Sidebar Overlay */}
           {isSidebarOpen && (
             <div
-              className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+              className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
@@ -531,40 +541,47 @@ export default function Hotdeals() {
           {/* Main Content */}
           <div className="flex-1">
             {/* View Controls */}
-            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-              <div className="flex items-center space-x-4">
+            <div className="mb-6 flex justify-between">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                  className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  aria-label="List view"
                 >
                   <List size={16} />
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                  className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                  aria-label="Grid view"
                 >
                   <Grid size={16} />
                 </button>
-                {pagination.totalItems > 0 && (
-                  <span className="text-sm text-gray-600 hidden sm:inline">
-                    Showing {Math.min((currentPage - 1) * pagination.itemsPerPage + 1, pagination.totalItems)} - {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} results
-                    {currentLocation && currentLocation !== 'All Locations' && (
-                      <span className="ml-1">in {getShortLocationName()}</span>
-                    )}
-                  </span>
-                )}
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600 hidden sm:inline">Sort By:</span>
+
+              {pagination.totalItems > 0 && (
+                <span className="hidden md:block text-sm text-gray-500">
+                  Showing {Math.min((currentPage - 1) * pagination.itemsPerPage + 1, pagination.totalItems)} - {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} deals
+                </span>
+              )}
+
+              {/* Sort dropdown for mobile */}
+              <div className="md:hidden">
                 <select
-                  className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                   value={sortBy}
                   onChange={(e) => handleSortChange(e.target.value)}
                 >
                   <option value="latest">Latest</option>
+                  <option value="discount">Highest Discount</option>
                   <option value="price_low_high">Price: Low to High</option>
                   <option value="price_high_low">Price: High to Low</option>
-                  <option value="discount">Discount</option>
                 </select>
               </div>
             </div>
@@ -573,57 +590,54 @@ export default function Hotdeals() {
             {loading && offers.length > 0 && (
               <div className="flex justify-center mb-4">
                 <div className="flex items-center space-x-2">
-                  <Loader2 className="animate-spin" size={20} />
-                  <span className="text-sm text-gray-600">Loading...</span>
+                  <Loader2 className="animate-spin text-blue-500" size={20} />
+                  <span className="text-sm text-gray-500">Loading</span>
                 </div>
               </div>
             )}
 
-            {/* Deals Grid */}
-            <div className={`grid gap-4 sm:gap-6 mb-8 ${viewMode === 'grid'
-              ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-              : 'grid-cols-1'
-              }`}>
+            {/* Deals Grid/List */}
+            <div className={`
+              grid gap-4 mb-8 
+              ${viewMode === 'grid'
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                : 'grid-cols-1'
+              }
+            `}>
               {offers.map((offer) => {
                 const isOfferFavorited = favoritesInitialized && isFavorite(offer.id);
 
                 return (
                   <div
                     key={offer.id}
-                    className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''
-                      }`}
+                    className={`
+                      bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer
+                      ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''}
+                    `}
                     onClick={() => handleOfferClick(offer)}
                   >
                     <div className={`relative ${viewMode === 'list' ? 'sm:w-1/3' : ''}`}>
                       <img
                         src={offer.image}
                         alt={offer.title}
-                        className={`w-full object-cover ${viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'
-                          }`}
+                        className={`w-full object-cover ${viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'}`}
                         onError={(e) => {
                           e.target.src = '/api/placeholder/300/200';
                         }}
                       />
 
+                      {/* Favorite button - simplified */}
                       <button
-                        className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${isOfferFavorited
-                          ? 'bg-red-500 text-white shadow-red-200'
-                          : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-                          } ${!isAuthenticated || !favoritesInitialized
-                            ? 'cursor-not-allowed opacity-50'
-                            : 'cursor-pointer'
-                          }`}
+                        className={`
+                          absolute top-3 right-3 p-2 rounded-full transition-all duration-200
+                          ${isOfferFavorited
+                            ? 'bg-red-500 text-white'
+                            : 'bg-white/90 text-gray-400 hover:text-red-500'}
+                          ${!isAuthenticated || !favoritesInitialized ? 'opacity-50' : ''}
+                        `}
                         onClick={(e) => handleFavoriteClick(e, offer)}
                         disabled={!isAuthenticated || !favoritesInitialized}
-                        title={
-                          !isAuthenticated
-                            ? 'Login to add favorites'
-                            : !favoritesInitialized
-                              ? 'Loading favorites...'
-                              : isOfferFavorited
-                                ? 'Remove from favorites'
-                                : 'Add to favorites'
-                        }
+                        title={!isAuthenticated ? 'Login to add favorites' : (isOfferFavorited ? 'Remove from favorites' : 'Add to favorites')}
                       >
                         <Heart
                           size={16}
@@ -631,55 +645,49 @@ export default function Hotdeals() {
                         />
                       </button>
 
+                      {/* Category badge - simplified */}
                       <div className="absolute bottom-3 left-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium text-white ${offer.featured ? 'bg-red-500' : 'bg-blue-500'
-                          }`}>
+                        <span className="bg-blue-500/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs">
                           {offer.category}
                         </span>
                       </div>
-                      {offer.featured && (
-                        <div className="absolute top-3 left-3">
-                          <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
-                            FEATURED
-                          </span>
-                        </div>
-                      )}
                     </div>
-                    <div className={`p-4 ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
 
+                    <div className={`p-4 flex flex-col ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
+                      {/* Store info - simplified */}
                       <div className="flex items-center gap-2 mb-3">
                         <StoreLogo
                           logoUrl={offer.store?.googleLogo}
                           storeName={offer.store?.name || 'Store'}
                         />
-
-                        <div className="flex items-center bg-gradient-to-r from-blue-900 to-blue-400 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
-                          <span>{offer.store?.name || 'Store name'}</span>
-                        </div>
+                        <span className="text-sm font-medium text-gray-700">
+                          {offer.store?.name || 'Store name'}
+                        </span>
                       </div>
 
-                      <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">{offer.title}</h3>
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{offer.description}</p>
+                      {/* Title and description */}
+                      <h3 className="font-medium text-gray-800 mb-2 line-clamp-1">{offer.title}</h3>
+                      <p className="text-sm text-gray-500 mb-3 line-clamp-2">{offer.description}</p>
 
+                      {/* Price and discount - cleaner display */}
                       {offer.originalPrice > 0 && (
-                        <div className="flex items-center space-x-2 mb-3">
-                          <span className="text-lg font-bold text-blue-500">
-                            KSH{offer.discountedPrice}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
+                          <span className="text-lg font-medium text-gray-900">
+                            KSH {offer.discountedPrice}
                           </span>
-                          <span className="text-sm text-gray-500 line-through">
-                            KSH{offer.originalPrice}
+                          <span className="text-sm text-gray-400 line-through">
+                            KSH {offer.originalPrice}
+                          </span>
+                          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                            {offer.discount}
                           </span>
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
-                          {offer.discount}
-                        </span>
-
+                      {/* Clean CTA button */}
+                      <div className="mt-auto pt-2">
                         <button
-                          className={`px-8 py-4 rounded text-sm font-medium transition-colors ${offer.featured ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                            }`}
+                          className="w-full bg-red-500 hover:bg-gray-100 text-white font-medium py-2 rounded-lg text-sm transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOfferClick(offer);
@@ -696,52 +704,60 @@ export default function Hotdeals() {
 
             {/* No offers message */}
             {!loading && offers.length === 0 && (
-              <div className="text-center py-12">
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
                 <div className="max-w-md mx-auto">
-                  <div className="text-gray-400 mb-4">
-                    <Grid size={48} className="mx-auto" />
+                  <div className="text-gray-300 mb-4">
+                    <Search size={40} className="mx-auto" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No active offers found</h3>
-                  <p className="text-gray-500 mb-4">
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">No deals found</h3>
+                  <p className="text-sm text-gray-500 mb-4">
                     {currentLocation && currentLocation !== 'All Locations' ? (
                       selectedCategory
-                        ? `No active offers found in "${selectedCategory}" category for ${getShortLocationName()}.`
-                        : `No active offers are currently available in ${getShortLocationName()}.`
+                        ? `No active deals found in "${selectedCategory}" category for ${getShortLocationName()}.`
+                        : `No deals available in ${getShortLocationName()} right now.`
                     ) : (
                       selectedCategory
-                        ? `No active offers found in "${selectedCategory}" category.`
-                        : 'No active offers are currently available.'
+                        ? `No deals found in "${selectedCategory}" category.`
+                        : 'No deals available right now.'
                     )}
                   </p>
-                  {(selectedCategory || sortBy !== 'latest') && (
-                    <button
-                      onClick={clearFilters}
-                      className="text-red-500 hover:underline mb-2"
-                    >
-                      Clear all filters
-                    </button>
-                  )}
-                  {currentLocation && currentLocation !== 'All Locations' && (
-                    <p className="text-sm text-gray-400">
-                      Try selecting "All Locations" from the navbar dropdown for more deals
-                    </p>
-                  )}
+
+                  <div className="flex flex-wrap justify-center gap-3 mt-4">
+                    {(selectedCategory || sortBy !== 'latest') && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-blue-500 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        Clear filters
+                      </button>
+                    )}
+
+                    {currentLocation && currentLocation !== 'All Locations' && (
+                      <button
+                        className="text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        View all locations
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Pagination */}
+            {/* Pagination - Simplified and modern */}
             {pagination.totalPages > 1 && (
-              <div className="flex flex-col items-center space-y-4">
-                <div className="flex items-center justify-center space-x-2 flex-wrap gap-2">
+              <nav className="flex flex-col items-center space-y-3 mt-8">
+                <div className="flex items-center justify-center space-x-1">
                   <button
-                    className="p-2 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!pagination.hasPrevPage}
+                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+                    aria-label="Previous page"
                   >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={18} />
                   </button>
-                  <div className="flex space-x-2">
+
+                  <div className="flex space-x-1">
                     {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                       let page;
                       if (pagination.totalPages <= 5) {
@@ -757,73 +773,75 @@ export default function Hotdeals() {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`px-3 py-2 rounded transition-colors ${currentPage === page
-                            ? 'bg-red-500 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                          className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors ${currentPage === page
+                            ? 'bg-blue-500 text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
                             }`}
+                          aria-label={`Page ${page}`}
+                          aria-current={currentPage === page ? 'page' : undefined}
                         >
                           {page}
                         </button>
                       );
                     })}
+
                     {pagination.totalPages > 5 && currentPage < pagination.totalPages - 2 && (
                       <>
-                        <span className="px-3 py-2 hidden sm:inline">...</span>
+                        <span className="w-9 h-9 flex items-center justify-center text-gray-400">
+                          ...
+                        </span>
                         <button
-                          className="px-3 py-2 rounded bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 hidden sm:inline-block"
+                          className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                           onClick={() => handlePageChange(pagination.totalPages)}
+                          aria-label={`Page ${pagination.totalPages}`}
                         >
                           {pagination.totalPages}
                         </button>
                       </>
                     )}
                   </div>
+
                   <button
-                    className="p-2 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!pagination.hasNextPage}
+                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+                    aria-label="Next page"
                   >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={18} />
                   </button>
                 </div>
 
                 {pagination.totalItems > 0 && (
-                  <p className="text-center text-sm text-gray-500">
-                    Page {currentPage} of {pagination.totalPages} • {pagination.totalItems} total results
-                    {currentLocation && currentLocation !== 'All Locations' && (
-                      <span className="ml-1">in {getShortLocationName()}</span>
-                    )}
+                  <p className="text-center text-xs text-gray-500">
+                    Page {currentPage} of {pagination.totalPages}
                   </p>
                 )}
-              </div>
+              </nav>
             )}
 
-            {/* Location Stats */}
+            {/* Location Stats - Simplified */}
             {!loading && (
-              <div className="mt-8 p-4 bg-white rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>
+              <div className="mt-8 bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+                <div className="flex flex-wrap items-center justify-between gap-y-2">
+                  <div className="flex items-center gap-2">
+                    <MapPin size={14} className="text-blue-500" />
                     {offers.length > 0 ? (
                       currentLocation && currentLocation !== 'All Locations'
-                        ? `${offers.length} hot deals found in ${getShortLocationName()}`
-                        : `${offers.length} hot deals available`
+                        ? <span>{offers.length} deals in {getShortLocationName()}</span>
+                        : <span>{offers.length} deals available</span>
                     ) : (
                       currentLocation && currentLocation !== 'All Locations'
-                        ? `No hot deals in ${getShortLocationName()}`
-                        : 'No hot deals found'
+                        ? <span>No deals in {getShortLocationName()}</span>
+                        : <span>No deals available</span>
                     )}
-                  </span>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-xs">
-                      Location: {currentLocation || 'Loading...'}
-                    </span>
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="text-indigo-600 hover:text-indigo-700 font-medium"
-                    >
-                      Refresh
-                    </button>
                   </div>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                  >
+                    <RefreshCw size={14} />
+                    <span>Refresh</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -831,38 +849,29 @@ export default function Hotdeals() {
         </div>
       </div>
 
-      {/* Bottom Banner */}
-      <div className="bg-gradient-to-r from-blue-400 to-blue-600 py-8 sm:py-12">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 mb-4 space-y-4 sm:space-y-0">
-            <div className="bg-white p-3 rounded-lg">
-              🛒
-            </div>
-            <div className="text-white">
-              <h2 className="text-xl sm:text-2xl font-bold mb-2">
-                Over <span className="text-yellow-300">50,000</span> Deals Listings
+      {/* Simplified Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 py-12">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <div className="flex flex-col items-center">
+            <div className="mb-6">
+              <h2 className="text-2xl font-medium text-white mb-2">
+                Discover Amazing Deals
               </h2>
-              <p className="text-lg sm:text-xl font-bold mb-2">
-                Save <span className="text-yellow-300">upto</span> 90% of your money
+              <p className="text-blue-100">
+                Save up to 90% with thousands of exclusive offers
               </p>
-              <p className="text-blue-100 text-sm sm:text-base">Kenya's discount booking hub</p>
-              {currentLocation && currentLocation !== 'All Locations' && (
-                <p className="text-blue-100 text-xs mt-2">
-                  Now available in {getShortLocationName()}
-                </p>
-              )}
             </div>
-            <div className="bg-white p-3 rounded-lg">
-              🎁
+
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+              <a href="https://merchants.discoun3ree.com/accounts/sign-up"
+                className="flex-1 bg-white text-blue-600 font-medium px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors text-center">
+                Add a Listing
+              </a>
+              <a href="/search"
+                className="flex-1 bg-blue-500 text-white px-6 py-3 rounded-lg font-medium border border-blue-400 hover:bg-blue-400 transition-colors text-center">
+                Search Deals
+              </a>
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-4 sm:space-y-0">
-            <a href="https://merchants.discoun3ree.com/accounts/sign-up" className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 w-full sm:w-auto transition-colors text-center block">
-              Add a Listing
-            </a>
-            <a href="/search" className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-lg font-medium hover:bg-yellow-500 w-full sm:w-auto transition-colors text-center block">
-              Search for a Deal
-            </a>
           </div>
         </div>
       </div>

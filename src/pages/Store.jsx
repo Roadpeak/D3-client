@@ -26,7 +26,9 @@ import {
   ExternalLink,
   Navigation,
   Linkedin,
-  Youtube
+  Youtube,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 import Navbar from '../components/Navbar';
@@ -134,6 +136,7 @@ const StoreViewPage = () => {
   const [activeSection, setActiveSection] = useState('offers');
   const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
   // FIXED: Enhanced Image Component with stable error handling
   const StableImage = React.memo(({
@@ -719,12 +722,12 @@ const StoreViewPage = () => {
   const fetchSocialLinksForStore = async (storeId) => {
     try {
       console.log('Frontend: Fetching social links for store:', storeId);
-  
+
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/socials/store/${storeId}`, {
         method: 'GET',
         headers: getApiHeaders()  // CHANGED
       });
-  
+
       if (response.ok) {
         const data = await response.json();
         console.log('Frontend: Socials response:', data);
@@ -1441,15 +1444,9 @@ const StoreViewPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 py-4">
         {/* Back Button */}
-        <button
-          onClick={() => navigate('/stores')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Stores
-        </button>
+
 
         {/* Store Header */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
@@ -1492,9 +1489,29 @@ const StoreViewPage = () => {
                   )}
                 </div>
 
-                {/* Description */}
+                {/* Description with Show More/Less */}
                 {storeData.description && (
-                  <p className="text-gray-600 mb-4">{storeData.description}</p>
+                  <div className="mb-4">
+                    <div className={`text-gray-600 ${descriptionExpanded ? '' : 'line-clamp-1'}`}>
+                      {storeData.description}
+                    </div>
+                    {storeData.description.length > 100 && (
+                      <button
+                        onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+                        className="text-blue-500 hover:text-blue-600 text-sm font-medium mt-1 flex items-center"
+                      >
+                        {descriptionExpanded ? (
+                          <>
+                            Show less <ChevronUp className="w-4 h-4 ml-1" />
+                          </>
+                        ) : (
+                          <>
+                            Show more <ChevronDown className="w-4 h-4 ml-1" />
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* Social Links */}
