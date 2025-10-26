@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Discoun3",
+  "name": "Discoun3 - Discover Book Save",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,18 +8,31 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "icon-192x192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
-      "src": "logo512.png",
+      "src": "icon-256x256.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "256x256"
+    },
+    {
+      "src": "icon-384x384.png",
+      "type": "image/png",
+      "sizes": "384x384"
+    },
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#4F46E5",
+  "background_color": "#ffffff",
+  "orientation": "portrait"
 }

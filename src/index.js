@@ -6,6 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './utils/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -22,6 +23,7 @@ root.render(
   </React.StrictMode>
 );
 
-reportWebVitals();
+// Register service worker for PWA
+serviceWorkerRegistration.register();
 
-// Force rebuild
+reportWebVitals();
