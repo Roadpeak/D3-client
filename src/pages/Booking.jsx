@@ -542,100 +542,155 @@ const EnhancedBookingPage = () => {
     }
   }, [bookingData, user, entityId, entityType, isOfferBooking, accessFee, paymentMethod, phoneNumber, convertTo24Hour]);
 
-  const handleMpesaPayment = useCallback(async () => {
-    try {
-      if (!phoneNumber || phoneNumber.length < 10) {
-        setError('Please enter a valid phone number');
-        return;
-      }
-  
-      setSubmitting(true);
-      setError(null);
-      
-      // Step 1: Initiate M-Pesa payment first
-      const paymentResult = await bookingService.processMpesaPayment(
-        phoneNumber,
-        accessFee,
-        null, // No booking ID yet
-        {
-          // Include booking data for later processing
-          bookingData: {
-            userId: user.id,
-            offerId: entityId,
-            startTime: `${bookingData.date}T${convertTo24Hour(bookingData.time)}:00`,
-            staffId: bookingData.staff?.id,
-            notes: bookingData.notes,
-            storeId: bookingData.branch?.storeId || bookingData.branch?.id?.replace('store-', ''),
-            branchId: bookingData.branch?.isMainBranch ? null : bookingData.branch?.id,
-            clientInfo: {
-              name: `${user.firstName} ${user.lastName}`,
-              email: user.email,
-              phone: user.phoneNumber || user.phone || phoneNumber
-            }
-          }
-        }
-      );
-  
-      if (paymentResult.success) {
-        setShowPaymentModal(false);
-        
-        // Show payment pending state
-        setCurrentStep('payment-pending');
-        
-        // Start polling for payment confirmation
-        pollPaymentStatus(paymentResult.payment.id);
-        
-      } else {
-        setError('Payment initiation failed. Please try again.');
-      }
-  
-    } catch (err) {
-      setError(err.message || 'Payment failed');
-    } finally {
-      setSubmitting(false);
+const handleMpesaPayment = useCallback(async () => {
+  try {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      setError('Please enter a valid phone number');
+      return;
     }
-  }, [phoneNumber, accessFee, bookingData, user, entityId]);
 
-  const pollPaymentStatus = useCallback(async (paymentId) => {
-    const maxAttempts = 60; // 5 minutes (5 second intervals)
-    let attempts = 0;
+    setSubmitting(true);
+    setError(null);
     
-    const checkPayment = async () => {
-      try {
-        const status = await bookingService.checkPaymentStatus(paymentId);
-        
-        if (status.payment?.status === 'completed') {
-          // Payment successful - booking should be created automatically
-          setCurrentStep(4);
-          return;
-        } else if (status.payment?.status === 'failed') {
-          setError('Payment failed. Please try again.');
-          setCurrentStep(3); // Go back to payment step
-          return;
-        } else if (attempts >= maxAttempts) {
-          setError('Payment confirmation timeout. Please check your M-Pesa messages.');
-          setCurrentStep(3);
-          return;
-        }
-        
-        attempts++;
-        setTimeout(checkPayment, 5000); // Check again in 5 seconds
-        
-      } catch (error) {
-        console.error('Error checking payment status:', error);
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(checkPayment, 5000);
-        } else {
-          setError('Unable to confirm payment status. Please contact support.');
-          setCurrentStep(3);
-        }
+    // STEP 1: Create the booking FIRST (with pending status)
+    console.log('=== CREATING BOOKING FIRST ===');
+    console.log('bookingData.time:', bookingData.time);
+    console.log('bookingData.date:', bookingData.date);
+    
+    const convertedTime = convertTo24Hour(bookingData.time);
+    console.log('converted time:', convertedTime);
+    
+    const fullDateTime = `${bookingData.date}T${convertedTime}:00`;
+    console.log('full datetime string:', fullDateTime);
+
+    let bookingPayload = {
+      userId: user.id,
+      offerId: entityId,
+      startTime: fullDateTime,
+      staffId: bookingData.staff?.id,
+      notes: bookingData.notes,
+      bookingType: 'offer',
+      status: 'pending', // Important: booking starts as pending
+      clientInfo: {
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        phone: user.phoneNumber || user.phone || phoneNumber
       }
     };
-    
-    checkPayment();
-  }, []);
 
+    // Handle branch/store ID
+    if (bookingData.branch) {
+      if (bookingData.branch.id && bookingData.branch.id.startsWith('store-')) {
+        const actualStoreId = bookingData.branch.id.replace('store-', '');
+        bookingPayload.storeId = actualStoreId;
+      } else if (bookingData.branch.isMainBranch) {
+        bookingPayload.storeId = bookingData.branch.storeId || bookingData.branch.id;
+      } else {
+        bookingPayload.branchId = bookingData.branch.id;
+      }
+    }
+
+    console.log('Creating booking with payload:', bookingPayload);
+
+    // Create the booking
+    const bookingResult = await bookingService.createBooking(bookingPayload);
+    
+    if (!bookingResult.success) {
+      throw new Error(bookingResult.message || 'Failed to create booking');
+    }
+
+    const createdBooking = bookingResult.booking || bookingResult.data;
+    const bookingId = createdBooking.id;
+    
+    console.log('✅ Booking created successfully:', bookingId);
+
+    // STEP 2: Now initiate M-Pesa payment with the booking ID
+    console.log('=== INITIATING MPESA PAYMENT ===');
+    console.log('Booking ID:', bookingId);
+    console.log('Amount:', accessFee);
+    console.log('Phone:', phoneNumber);
+
+    const paymentResult = await bookingService.processMpesaPayment(
+      phoneNumber,
+      accessFee,
+      bookingId, // CRITICAL: Pass the booking ID here
+      'booking_access_fee'
+    );
+
+    console.log('Payment initiation result:', paymentResult);
+
+    if (paymentResult.success) {
+      setShowPaymentModal(false);
+      
+      // Show payment pending state
+      setCurrentStep('payment-pending');
+      
+      // Start polling for payment confirmation
+      pollPaymentStatus(paymentResult.payment.id, bookingId);
+      
+    } else {
+      // Payment initiation failed - we should keep the booking but mark it as payment_failed
+      console.error('Payment initiation failed:', paymentResult);
+      throw new Error('Payment initiation failed. Your booking has been created but payment could not be processed. Please contact support.');
+    }
+
+  } catch (err) {
+    console.error('❌ Payment/Booking error:', err);
+    setError(err.message || 'Failed to process booking and payment');
+  } finally {
+    setSubmitting(false);
+  }
+}, [phoneNumber, accessFee, bookingData, user, entityId, convertTo24Hour]);
+
+// FIXED pollPaymentStatus function
+const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
+  const maxAttempts = 60; // 5 minutes (5 second intervals)
+  let attempts = 0;
+  
+  const checkPayment = async () => {
+    try {
+      console.log(`Checking payment status (attempt ${attempts + 1}/${maxAttempts})...`);
+      
+      const status = await bookingService.checkPaymentStatus(paymentId);
+      
+      console.log('Payment status:', status.payment?.status);
+      
+      if (status.payment?.status === 'completed') {
+        // Payment successful - booking should be auto-confirmed by backend
+        console.log('✅ Payment completed! Booking should be confirmed.');
+        setCurrentStep(4);
+        return;
+        
+      } else if (status.payment?.status === 'failed') {
+        console.error('❌ Payment failed');
+        setError('Payment failed. Your booking has been created but payment was not completed. Please contact support with booking ID: ' + bookingId);
+        setCurrentStep(3); // Go back to payment step
+        return;
+        
+      } else if (attempts >= maxAttempts) {
+        console.warn('⏰ Payment confirmation timeout');
+        setError('Payment confirmation timeout. Please check your M-Pesa messages or contact support with booking ID: ' + bookingId);
+        setCurrentStep(3);
+        return;
+      }
+      
+      attempts++;
+      setTimeout(checkPayment, 5000); // Check again in 5 seconds
+      
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(checkPayment, 5000);
+      } else {
+        setError('Unable to confirm payment status. Please check your M-Pesa messages or contact support with booking ID: ' + bookingId);
+        setCurrentStep(3);
+      }
+    }
+  };
+  
+  checkPayment();
+}, []);
   // ==================== EFFECTS ====================
 
   useEffect(() => {
