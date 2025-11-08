@@ -76,7 +76,7 @@ const offerAPI = {
   getOffersByStore: async (storeId) => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/offers/store/${storeId}`, {
-        headers: getApiHeaders()  // CHANGED
+        headers: getApiHeaders()
       });
       if (!response.ok) throw new Error('Failed to fetch offers');
       return response.json();
@@ -92,7 +92,7 @@ const branchAPI = {
   getBranchesByStore: async (storeId) => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${storeId}/branches`, {
-        headers: getApiHeaders()  // CHANGED
+        headers: getApiHeaders()
       });
 
       if (response.ok) {
@@ -101,7 +101,7 @@ const branchAPI = {
       }
 
       const protectedResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/branches/store/${storeId}`, {
-        headers: getApiHeaders()  // CHANGED
+        headers: getApiHeaders()
       });
 
       if (protectedResponse.ok) {
@@ -115,12 +115,16 @@ const branchAPI = {
     }
   }
 };
+
 const StoreViewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // State management (simplified - review state moved to ReviewSection)
+  // Ref for scrolling to content section
+  const contentSectionRef = React.useRef(null);
+
+  // State management
   const [storeData, setStoreData] = useState(null);
   const [offers, setOffers] = useState([]);
   const [services, setServices] = useState([]);
@@ -150,7 +154,6 @@ const StoreViewPage = () => {
     const [imageError, setImageError] = useState(false);
     const [currentSrc, setCurrentSrc] = useState(src);
 
-    // Reset error state when src changes
     useEffect(() => {
       if (src !== currentSrc) {
         setImageError(false);
@@ -158,18 +161,15 @@ const StoreViewPage = () => {
       }
     }, [src, currentSrc]);
 
-    // FIXED: Stable error handler that only runs once per image
     const handleImageError = useCallback((e) => {
       if (!imageError) {
         console.log('Image failed to load:', src);
         setImageError(true);
 
-        // Set to fallback immediately
         if (fallbackSrc && e.target.src !== fallbackSrc) {
           e.target.src = fallbackSrc;
         }
 
-        // Call custom error handler if provided
         if (customOnError) {
           customOnError(e);
         }
@@ -180,7 +180,6 @@ const StoreViewPage = () => {
       setImageError(false);
     }, []);
 
-    // Use fallback immediately if we know there's an error
     const imageSrc = imageError ? fallbackSrc : (src || fallbackSrc);
 
     return (
@@ -214,7 +213,6 @@ const StoreViewPage = () => {
     }
 
     try {
-      // Get user info from localStorage with multiple fallback keys
       let userInfo = null;
       const possibleKeys = ['userInfo', 'user', 'userData', 'currentUser'];
 
@@ -242,7 +240,6 @@ const StoreViewPage = () => {
         };
       }
 
-      // Enhanced name formatting with multiple field name support
       let displayName = 'User';
       const firstNameCandidates = [
         userInfo.firstName,
@@ -347,7 +344,6 @@ const StoreViewPage = () => {
       setOffersLoading(true);
       const response = await offerAPI.getOffersByStore(id);
 
-      // Filter out expired offers for customer-facing store view
       const allOffers = response.offers || [];
       const activeOffers = allOffers.filter(offer => !isOfferExpired(offer.expiration_date));
 
@@ -390,7 +386,6 @@ const StoreViewPage = () => {
       } else if (data.branches && data.branches.length > 0) {
         setBranches(data.branches);
       } else {
-        // Fallback: create main branch from store data
         if (storeData) {
           const mainBranch = {
             id: `store-${storeData.id}`,
@@ -690,7 +685,6 @@ const StoreViewPage = () => {
     fetchStoreData();
   }, [id]);
 
-  // Fetch all data when store data is loaded (for stats and initial display)
   useEffect(() => {
     if (!storeData) return;
 
@@ -699,7 +693,6 @@ const StoreViewPage = () => {
     fetchBranches();
   }, [storeData]);
 
-  // Fetch specific data when section changes (if not already loaded)
   useEffect(() => {
     if (!storeData) return;
 
@@ -717,6 +710,14 @@ const StoreViewPage = () => {
       default:
         break;
     }
+
+    // Scroll to content section when tab changes
+    if (contentSectionRef.current) {
+      contentSectionRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
   }, [activeSection]);
 
   const fetchSocialLinksForStore = async (storeId) => {
@@ -725,7 +726,7 @@ const StoreViewPage = () => {
 
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/socials/store/${storeId}`, {
         method: 'GET',
-        headers: getApiHeaders()  // CHANGED
+        headers: getApiHeaders()
       });
 
       if (response.ok) {
@@ -782,15 +783,12 @@ const StoreViewPage = () => {
 
   // FIXED: Enhanced Offer Card Component with stable images
   const OfferCard = React.memo(({ offer, isListView = false }) => {
-    // Check if offer is expired (shouldn't happen since we filter, but good to have)
     const expired = isOfferExpired(offer.expiration_date);
 
-    // Skip rendering if expired (extra safety)
     if (expired) {
       return null;
     }
 
-    // Calculate prices if available
     const originalPrice = offer.service?.price || offer.original_price || 0;
     const discountValue = offer.discount_value || offer.discount || 0;
     const discountedPrice = originalPrice > 0 && discountValue > 0
@@ -800,7 +798,6 @@ const StoreViewPage = () => {
     return (
       <div className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group ${isListView ? 'flex flex-col sm:flex-row' : ''}`}>
         <div className={`relative ${isListView ? 'sm:w-1/3' : ''}`}>
-          {/* FIXED: Use StableImage component */}
           <StableImage
             src={offer.image_url || offer.service?.image_url}
             fallbackSrc={OFFER_IMAGE_FALLBACK}
@@ -808,25 +805,21 @@ const StoreViewPage = () => {
             className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${isListView ? 'h-48 sm:h-full' : 'h-48'}`}
           />
 
-          {/* Favorite Button */}
           <button
             className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              // Handle favorite logic here
             }}
           >
             <Heart size={16} className="text-gray-600" />
           </button>
 
-          {/* Category Badge */}
           <div className="absolute bottom-3 left-3">
             <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500 text-white">
               {offer.service?.category || offer.category || 'Special Offer'}
             </span>
           </div>
 
-          {/* Featured Badge */}
           {offer.featured && (
             <div className="absolute top-3 left-3">
               <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
@@ -837,10 +830,8 @@ const StoreViewPage = () => {
         </div>
 
         <div className={`p-4 ${isListView ? 'sm:flex-1' : ''}`}>
-          {/* Store Info */}
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
-              {/* FIXED: Use StableImage for small store logo */}
               <StableImage
                 src={storeData?.logo || storeData?.logo_url}
                 fallbackSrc={SMALL_LOGO_FALLBACK}
@@ -849,23 +840,19 @@ const StoreViewPage = () => {
               />
             </div>
 
-            {/* Store Pill */}
             <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
               <span>{storeData?.name || 'Store'}</span>
             </div>
           </div>
 
-          {/* Offer Title */}
           <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">
             {offer.title || offer.service?.name || offer.description || 'Special Offer'}
           </h3>
 
-          {/* Offer Description */}
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">
             {offer.description || offer.service?.description || 'Get exclusive offers with this amazing deal'}
           </p>
 
-          {/* Price Display */}
           {originalPrice > 0 && discountedPrice > 0 && (
             <div className="flex items-center space-x-2 mb-3">
               <span className="text-lg font-bold text-black">
@@ -877,7 +864,6 @@ const StoreViewPage = () => {
             </div>
           )}
 
-          {/* Action Row */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
               {offer.discount_value || offer.discount || '20'}% OFF
@@ -894,7 +880,6 @@ const StoreViewPage = () => {
             </button>
           </div>
 
-          {/* Expiry Date */}
           {offer.expiry_date && (
             <div className="mt-2 text-xs text-gray-500">
               Expires: {new Date(offer.expiry_date).toLocaleDateString()}
@@ -990,7 +975,6 @@ const StoreViewPage = () => {
   // Enhanced Outlet Card Component
   const OutletCard = React.memo(({ branch }) => (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
-      {/* Branch Header */}
       <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b">
         <h3 className="font-bold text-gray-900 text-lg mb-1">{branch.name}</h3>
         {branch.isMainBranch && (
@@ -1000,7 +984,6 @@ const StoreViewPage = () => {
         )}
       </div>
 
-      {/* Branch Details */}
       <div className="p-6">
         <div className="space-y-3 mb-6">
           <div className="flex items-start gap-3">
@@ -1032,7 +1015,6 @@ const StoreViewPage = () => {
           )}
         </div>
 
-        {/* Action Buttons */}
         <div className="flex gap-3">
           <button className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold">
             View Details
@@ -1138,7 +1120,6 @@ const StoreViewPage = () => {
 
   // Enhanced Map View Component
   const MapView = () => {
-    // Calculate center point from branches
     const getMapCenter = () => {
       if (branches.length === 0) return null;
 
@@ -1165,7 +1146,6 @@ const StoreViewPage = () => {
 
     return (
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {/* Map Header */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b">
           <h3 className="text-xl font-bold text-gray-900 mb-2">Store Locations</h3>
           <p className="text-gray-600">
@@ -1173,12 +1153,10 @@ const StoreViewPage = () => {
           </p>
         </div>
 
-        {/* Map Container */}
         <div className="p-6">
           <GoogleMap branches={branches} center={getMapCenter()} />
         </div>
 
-        {/* Locations List */}
         {branches.length > 0 ? (
           <div className="p-6 border-t">
             <h4 className="font-semibold text-gray-900 mb-4">All Locations</h4>
@@ -1445,15 +1423,11 @@ const StoreViewPage = () => {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 py-4">
-        {/* Back Button */}
-
-
         {/* Store Header */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Store Logo and Basic Info */}
             <div className="flex items-start gap-4">
-              {/* FIXED: Use StableImage for main store logo */}
               <StableImage
                 src={storeData.logo || storeData.logo_url}
                 fallbackSrc={STORE_LOGO_FALLBACK}
@@ -1531,7 +1505,6 @@ const StoreViewPage = () => {
                         </a>
                       ))}
 
-                      {/* Website link if available */}
                       {storeData.website_url && (
                         <a
                           href={storeData.website_url}
@@ -1545,7 +1518,6 @@ const StoreViewPage = () => {
                       )}
                     </>
                   ) : (
-                    /* Fallback to legacy social links if no database links exist */
                     <>
                       {storeData.socialLinks?.facebook && (
                         <a href={storeData.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200">
@@ -1580,7 +1552,6 @@ const StoreViewPage = () => {
                     </>
                   )}
 
-                  {/* Show message if no social links */}
                   {(!storeData.socialLinksRaw || storeData.socialLinksRaw.length === 0) &&
                     (!storeData.socialLinks?.facebook && !storeData.socialLinks?.twitter &&
                       !storeData.socialLinks?.instagram && !storeData.socialLinks?.linkedin &&
@@ -1623,65 +1594,78 @@ const StoreViewPage = () => {
             </div>
           </div>
 
-          {/* Store Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
-            <button
-              onClick={() => setActiveSection('offers')}
-              className={`text-center p-3 rounded-lg transition-colors ${activeSection === 'offers' ? 'bg-red-50 border border-red-200' : 'hover:bg-gray-50'}`}
-            >
-              <div className="text-sm text-gray-500">Active Offers</div>
-              <div className="text-xl font-bold text-red-500">
-                {offersLoading ? (
-                  <Loader2 className="w-5 h-5 mx-auto animate-spin" />
-                ) : (
-                  offers.length || storeData.deals?.length || 0
+          {/* Navigation Tabs */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+              <button
+                onClick={() => setActiveSection('offers')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'offers'
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Tag className="w-4 h-4" />
+                <span>Offers</span>
+                {!offersLoading && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'offers' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}>
+                    {offers.length || storeData.deals?.length || 0}
+                  </span>
                 )}
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveSection('services')}
-              className={`text-center p-3 rounded-lg transition-colors ${activeSection === 'services' ? 'bg-blue-50 border border-blue-200' : 'hover:bg-gray-50'}`}
-            >
-              <div className="text-sm text-gray-500">Services</div>
-              <div className="text-xl font-bold text-blue-500">
-                {servicesLoading ? (
-                  <Loader2 className="w-5 h-5 mx-auto animate-spin" />
-                ) : (
-                  services.length || storeData.services?.length || 0
+              </button>
+
+              <button
+                onClick={() => setActiveSection('services')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'services'
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Camera className="w-4 h-4" />
+                <span>Services</span>
+                {!servicesLoading && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'services' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}>
+                    {services.length || storeData.services?.length || 0}
+                  </span>
                 )}
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveSection('map')}
-              className={`text-center p-3 rounded-lg transition-colors ${activeSection === 'map' ? 'bg-green-50 border border-green-200' : 'hover:bg-gray-50'}`}
-            >
-              <div className="text-sm text-gray-500">Map</div>
-              <div className="text-xl font-bold text-green-500">
-                {branchesLoading ? (
-                  <Loader2 className="w-5 h-5 mx-auto animate-spin" />
-                ) : (
-                  'View'
+              </button>
+
+              <button
+                onClick={() => setActiveSection('outlets')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'outlets'
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <MapPin className="w-4 h-4" />
+                <span>Outlets</span>
+                {!branchesLoading && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'outlets' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}>
+                    {branches.length || storeData.outlets?.length || 0}
+                  </span>
                 )}
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveSection('outlets')}
-              className={`text-center p-3 rounded-lg transition-colors ${activeSection === 'outlets' ? 'bg-purple-50 border border-purple-200' : 'hover:bg-gray-50'}`}
-            >
-              <div className="text-sm text-gray-500">Outlets</div>
-              <div className="text-xl font-bold text-purple-500">
-                {branchesLoading ? (
-                  <Loader2 className="w-5 h-5 mx-auto animate-spin" />
-                ) : (
-                  branches.length || storeData.outlets?.length || 0
-                )}
-              </div>
-            </button>
+              </button>
+
+              <button
+                onClick={() => setActiveSection('map')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'map'
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Navigation className="w-4 h-4" />
+                <span>Map</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Dynamic Content Based on Active Section */}
-        {renderActiveSection()}
+        <div ref={contentSectionRef}>
+          {renderActiveSection()}
+        </div>
 
         {/* Reviews Section */}
         <ReviewSection
@@ -1698,13 +1682,6 @@ const StoreViewPage = () => {
         />
       </div>
 
-      {/* Fixed Chat Button */}
-      {/* <div className="fixed bottom-6 right-6 z-50">
-        <ChatButton
-          size="large"
-          className="bg-red-500 text-white p-4 rounded-full shadow-lg hover:bg-red-600"
-        />
-      </div> */}
       <Footer />
     </div>
   );
