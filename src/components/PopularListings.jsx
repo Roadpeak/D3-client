@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { offerAPI } from '../services/api';
-import { useFavorites } from '../hooks/useFavorites'; // Import the favorites hook
-import authService from '../services/authService'; // Import auth service
-
-const Star = ({ className }) => (
-  <svg className={className} fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-  </svg>
-);
+import { useFavorites } from '../hooks/useFavorites';
+import authService from '../services/authService';
 
 const Clock = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,10 +22,9 @@ const PopularListings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+
   const navigate = useNavigate();
 
-  // Use the favorites hook like in Hotdeals
   const {
     error: favoritesError,
     toggleFavorite,
@@ -71,41 +64,35 @@ const PopularListings = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await offerAPI.getOffers({
           limit: 12,
           sortBy: 'discount',
           sortOrder: 'desc',
           status: 'active'
         });
-        
+
         console.log('API Response:', response);
-        
+
         if (response.success) {
           const transformedDeals = (response.offers || response.data || []).map(offer => {
             const originalPrice = offer.service?.price || 100;
             const discountAmount = (originalPrice * (offer.discount || 0)) / 100;
             const salePrice = originalPrice - discountAmount;
-            
+
             return {
               id: offer.id,
               title: offer.title || offer.service?.name || 'Special Offer',
               location: offer.store?.location || offer.service?.store?.location || 'Nairobi',
-              image: offer.service?.image_url || 
-                     (offer.service?.images && offer.service.images[0]) || 
-                     '/images/placeholder-deal.png',
-              tag: offer.featured ? 'Featured' : 
-                   offer.discount >= 50 ? 'Hot Deal' : 
-                   offer.discount >= 30 ? 'Bestseller' : 
-                   'Limited Time',
+              image: offer.service?.image_url ||
+                (offer.service?.images && offer.service.images[0]) ||
+                '/images/placeholder-deal.png',
               discount: `${offer.discount || 0}%`,
               originalPrice: `KES ${originalPrice.toFixed(2)}`,
               salePrice: `KES ${salePrice.toFixed(2)}`,
-              rating: '4.5',
-              reviews: Math.floor(Math.random() * 200) + 10,
-              timeLeft: offer.expiration_date ? 
-                       calculateTimeLeft(offer.expiration_date) : 
-                       null,
+              timeLeft: offer.expiration_date ?
+                calculateTimeLeft(offer.expiration_date) :
+                null,
               storeId: offer.store?.id || offer.service?.store?.id,
               serviceId: offer.service?.id,
               offer_type: offer.offer_type,
@@ -115,12 +102,12 @@ const PopularListings = () => {
               store_info: offer.store
             };
           });
-          
+
           const activeDeals = transformedDeals.filter(deal => !isOfferExpired(deal.expiration_date));
           const displayDeals = activeDeals.slice(0, 8);
-          
+
           console.log(`📋 Total deals received: ${transformedDeals.length}, Active deals: ${activeDeals.length}, Displaying: ${displayDeals.length}`);
-          
+
           setDeals(displayDeals);
         } else {
           setError(response.message || 'Failed to fetch deals');
@@ -141,12 +128,12 @@ const PopularListings = () => {
     const now = new Date();
     const expiry = new Date(expirationDate);
     const timeDiff = expiry - now;
-    
+
     if (timeDiff <= 0) return 'Expired';
-    
+
     const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
+
     if (days > 0) return `${days}d left`;
     if (hours > 0) return `${hours}h left`;
     return 'Ending soon';
@@ -162,7 +149,7 @@ const PopularListings = () => {
     navigate('/hotdeals');
   }, [navigate]);
 
-  // Enhanced favorite handling - matching Hotdeals implementation
+  // Enhanced favorite handling
   const handleFavoriteClick = useCallback(async (e, offer) => {
     e.stopPropagation();
 
@@ -195,50 +182,34 @@ const PopularListings = () => {
     await toggleFavorite(offer.id, offerData);
   }, [isAuthenticated, favoritesInitialized, favoritesError, navigate, clearFavoritesError, toggleFavorite]);
 
-  // Get deal tag color based on discount percentage
-  const getTagColor = (tag, discount) => {
-    const discountValue = parseInt(discount?.replace('%', '') || '0');
-    
-    if (discountValue >= 50) return 'bg-red-500';
-    if (discountValue >= 30) return 'bg-green-500';
-    if (tag?.toLowerCase() === 'featured') return 'bg-blue-500';
-    if (tag?.toLowerCase() === 'premium') return 'bg-purple-500';
-    return 'bg-orange-500';
-  };
-
   const renderDealCard = (deal) => {
     const isOfferFavorited = favoritesInitialized && isFavorite(deal.id);
-    
+
     return (
-      <div 
-        key={deal.id} 
-        className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+      <div
+        key={deal.id}
+        className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
         onClick={() => handleDealClick(deal.id)}
       >
         <div className="relative">
-          <img 
-            src={deal.image} 
-            alt={deal.title} 
-            className="w-full h-48 object-cover"
+          <img
+            src={deal.image}
+            alt={deal.title}
+            className="w-full h-40 md:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
             onError={(e) => {
               e.target.src = '/images/placeholder-deal.png';
             }}
           />
-          {deal.tag && (
-            <div className={`absolute top-3 left-3 px-2 py-1 rounded text-xs font-bold text-white ${getTagColor(deal.tag, deal.discount)}`}>
-              {deal.tag}
-            </div>
-          )}
-          <button 
-            className={`absolute top-3 right-3 p-2 rounded-full transition-all duration-200 transform hover:scale-110 shadow-lg ${
-              isOfferFavorited
-                ? 'bg-red-500 text-white shadow-red-200'
-                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-            } ${
-              !isAuthenticated || !favoritesInitialized
+
+          {/* Favorite Button */}
+          <button
+            className={`absolute top-2 right-2 p-1.5 md:p-2 rounded-full transition-all duration-200 shadow-lg ${isOfferFavorited
+                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-blue-500'
+              } ${!isAuthenticated || !favoritesInitialized
                 ? 'cursor-not-allowed opacity-50'
                 : 'cursor-pointer'
-            }`}
+              }`}
             onClick={(e) => handleFavoriteClick(e, deal)}
             disabled={!isAuthenticated || !favoritesInitialized}
             title={
@@ -251,42 +222,46 @@ const PopularListings = () => {
                     : 'Add to favorites'
             }
           >
-            <Heart 
-              className="w-4 h-4"
+            <Heart
+              className="w-3.5 h-3.5 md:w-4 md:h-4"
               filled={isOfferFavorited}
             />
           </button>
-          <div className="absolute bottom-3 right-3 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-bold text-red-600">
+
+          {/* Discount Badge - Keep red for urgency */}
+          <div className="absolute bottom-2 right-2 bg-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
             {deal.discount} OFF
           </div>
         </div>
-        <div className="p-4">
-          <h3 className="font-semibold mb-2 text-sm line-clamp-2 hover:text-red-600 transition-colors">
+
+        {/* Content */}
+        <div className="p-3 md:p-4">
+          {/* Title */}
+          <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 group-hover:text-blue-600 transition-colors">
             {deal.title}
           </h3>
-          <p className="text-xs text-gray-600 mb-2">{deal.location}</p>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-1">
-              <Star className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm font-medium">{deal.rating}</span>
-              <span className="text-xs text-gray-500">({deal.reviews})</span>
+
+          {/* Location */}
+          <p className="text-xs text-gray-500 mb-2">{deal.location}</p>
+
+          {/* Time Left (if available) - Keep orange for urgency */}
+          {deal.timeLeft && deal.timeLeft !== 'Expired' && (
+            <div className="flex items-center space-x-1 text-orange-600 text-xs mb-3">
+              <Clock className="w-3 h-3" />
+              <span>{deal.timeLeft}</span>
             </div>
-            {deal.timeLeft && deal.timeLeft !== 'Expired' && (
-              <div className="flex items-center space-x-1 text-orange-600 text-xs">
-                <Clock className="w-3 h-3" />
-                <span>{deal.timeLeft}</span>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-red-600 text-lg">{deal.salePrice}</span>
+          )}
+
+          {/* Pricing */}
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex flex-col">
+              <span className="font-bold text-blue-600 text-base md:text-lg">{deal.salePrice}</span>
               {deal.originalPrice && (
-                <span className="text-gray-400 line-through text-sm">{deal.originalPrice}</span>
+                <span className="text-gray-400 line-through text-xs">{deal.originalPrice}</span>
               )}
             </div>
-            <button 
-              className="px-3 py-1 rounded text-sm font-semibold transition-colors bg-red-500 text-white hover:bg-red-600"
+            <button
+              className="px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 active:scale-95 shadow-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 handleDealClick(deal.id);
@@ -304,12 +279,12 @@ const PopularListings = () => {
   if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
-        <div className="grid md:grid-cols-4 gap-6">
+        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
           {[...Array(8)].map((_, index) => (
-            <div key={index} className="bg-gray-200 rounded-lg h-80 animate-pulse">
-              <div className="h-48 bg-gray-300 rounded-t-lg"></div>
-              <div className="p-4 space-y-2">
+            <div key={index} className="bg-gray-100 rounded-2xl overflow-hidden animate-pulse">
+              <div className="h-40 md:h-48 bg-gray-300"></div>
+              <div className="p-3 md:p-4 space-y-2">
                 <div className="h-4 bg-gray-300 rounded w-3/4"></div>
                 <div className="h-3 bg-gray-300 rounded w-1/2"></div>
                 <div className="h-4 bg-gray-300 rounded w-2/3"></div>
@@ -325,12 +300,12 @@ const PopularListings = () => {
   if (error) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl">
           <p>Error loading deals: {error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
           >
             Retry
           </button>
@@ -343,12 +318,12 @@ const PopularListings = () => {
   if (deals.length === 0) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
         <div className="text-center py-12">
           <p className="text-gray-500 mb-4">No active deals available at the moment.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600"
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
           >
             Refresh
           </button>
@@ -358,51 +333,44 @@ const PopularListings = () => {
   }
 
   return (
-    <section className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+    <section className="container mx-auto px-4 py-6 md:py-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 gap-2">
         <div>
-          <h2 className="text-2xl font-bold">TOP DEALS - HIGHEST DISCOUNTS</h2>
-          <p className="text-sm text-gray-600 mt-1">Save big with our best discount offers</p>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800">TOP DEALS</h2>
+          <p className="text-xs md:text-sm text-gray-600 mt-1">Highest Discounts Available</p>
         </div>
-        <div className="text-right">
-          <span className="text-sm text-gray-500">{deals.length} active deals available</span>
-          <p className="text-xs text-green-600 font-medium">Sorted by highest discount</p>
+        <div className="hidden md:block text-right">
+          <span className="text-sm text-gray-500">{deals.length} active deals</span>
         </div>
       </div>
 
       {/* Favorites Error */}
       {favoritesError && (
-        <div className="mb-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded flex items-center justify-between">
-          <span className="text-sm">{favoritesError}</span>
+        <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-2 rounded-xl flex items-center justify-between text-sm">
+          <span>{favoritesError}</span>
           <button
             onClick={clearFavoritesError}
-            className="ml-4 text-yellow-800 hover:text-yellow-900"
+            className="ml-4 text-yellow-800 hover:text-yellow-900 text-lg"
           >
             ×
           </button>
         </div>
       )}
 
-      {/* First row of deals */}
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
-        {deals.slice(0, 4).map((deal) => renderDealCard(deal))}
+      {/* Deals Grid - 2 columns on mobile, 4 columns on desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+        {deals.map((deal) => renderDealCard(deal))}
       </div>
 
-      {/* Second row of deals (if more than 4 deals) */}
-      {deals.length > 4 && (
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          {deals.slice(4, 8).map((deal) => renderDealCard(deal))}
-        </div>
-      )}
-
       {/* View All Button */}
-      <div className="flex justify-end mt-8">
-        <button 
+      <div className="flex justify-center md:justify-end">
+        <button
           onClick={handleViewAllDeals}
-          className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95"
         >
-          View All Active Deals
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          View All Deals
+          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
           </svg>
         </button>

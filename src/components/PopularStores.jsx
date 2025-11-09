@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import ApiService from '../services/storeService'; // Use the same service as working Stores component
+import ApiService from '../services/storeService';
 
 // Store Logo Component with fallback to initials
-const StoreLogo = ({ 
-  logoUrl, 
-  storeName, 
+const StoreLogo = ({
+  logoUrl,
+  storeName,
   className = "w-6 h-6",
   containerClassName = ""
 }) => {
@@ -55,7 +54,7 @@ const StoreLogo = ({
   }
 
   return (
-    <img 
+    <img
       src={logoUrl}
       alt={`${storeName} logo`}
       className={`${className} rounded-full object-cover ${containerClassName}`}
@@ -67,9 +66,9 @@ const StoreLogo = ({
 };
 
 // Store Image Component with fallback handling
-const StoreImage = ({ 
-  imageUrl, 
-  storeName, 
+const StoreImage = ({
+  imageUrl,
+  storeName,
   className = "w-full h-48 object-cover"
 }) => {
   const [hasError, setHasError] = useState(false);
@@ -98,7 +97,7 @@ const StoreImage = ({
   }
 
   return (
-    <img 
+    <img
       src={imageUrl}
       alt={storeName}
       className={className}
@@ -119,58 +118,56 @@ const PopularStores = () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Use the same ApiService pattern that works in Stores component
+
         const filters = {
-          sortBy: 'Popular', // Use existing sort that works, or try 'Most Reviewed' if implemented
+          sortBy: 'Popular',
           limit: 8
         };
-        
+
         console.log('Fetching stores with filters:', filters);
         const response = await ApiService.getStores(filters);
         console.log('API response:', response);
-        
+
         if (response.success && response.stores) {
           console.log('Successfully fetched stores:', response.stores.length);
-          
+
           // Sort by review count if available, otherwise by rating
           const sortedStores = response.stores
             .sort((a, b) => {
               const reviewsA = parseInt(a.totalReviews || a.reviews || 0);
               const reviewsB = parseInt(b.totalReviews || b.reviews || 0);
               if (reviewsA !== reviewsB) {
-                return reviewsB - reviewsA; // Most reviewed first
+                return reviewsB - reviewsA;
               }
-              // Fallback to rating
               const ratingA = parseFloat(a.rating || 0);
               const ratingB = parseFloat(b.rating || 0);
               return ratingB - ratingA;
             });
-          
+
           // Group stores by category
           const groupedStores = {
-            travel: sortedStores.filter(store => 
-              store.category?.toLowerCase().includes('travel') || 
+            travel: sortedStores.filter(store =>
+              store.category?.toLowerCase().includes('travel') ||
               store.category?.toLowerCase().includes('adventure') ||
               store.category?.toLowerCase().includes('hotel') ||
               store.category?.toLowerCase().includes('flight')
             ),
-            food: sortedStores.filter(store => 
-              store.category?.toLowerCase().includes('food') || 
+            food: sortedStores.filter(store =>
+              store.category?.toLowerCase().includes('food') ||
               store.category?.toLowerCase().includes('restaurant') ||
               store.category?.toLowerCase().includes('dining') ||
               store.category?.toLowerCase().includes('delivery')
             ),
             all: sortedStores
           };
-          
+
           // If no specific categories, split evenly
           if (groupedStores.travel.length === 0 && groupedStores.food.length === 0) {
             const midpoint = Math.ceil(sortedStores.length / 2);
             groupedStores.travel = sortedStores.slice(0, midpoint);
             groupedStores.food = sortedStores.slice(midpoint);
           }
-          
+
           setStores(groupedStores);
         } else {
           setError(response.message || 'Failed to fetch stores');
@@ -194,15 +191,6 @@ const PopularStores = () => {
     navigate('/stores');
   };
 
-  const getTagFromReviewCount = (reviewCount) => {
-    const numReviews = parseInt(reviewCount || 0);
-    if (numReviews >= 50) return { text: 'MOST REVIEWED', color: 'bg-green-500' };
-    if (numReviews >= 25) return { text: 'HIGHLY REVIEWED', color: 'bg-blue-500' };
-    if (numReviews >= 10) return { text: 'POPULAR', color: 'bg-orange-500' };
-    if (numReviews >= 1) return { text: 'REVIEWED', color: 'bg-purple-500' };
-    return { text: 'NEW', color: 'bg-gray-500' };
-  };
-
   const getLogoColor = (store) => {
     const colors = [
       'bg-orange-500', 'bg-red-500', 'bg-green-500', 'bg-purple-600',
@@ -213,73 +201,60 @@ const PopularStores = () => {
   };
 
   const renderStoreCard = (store, index) => {
-    const rating = parseFloat(store.rating || 0);
     const reviewCount = parseInt(store.totalReviews || store.reviews || 0);
-    const reviewTag = getTagFromReviewCount(reviewCount);
-    
+    const rating = parseFloat(store.rating || 0);
+
     return (
-      <div 
-        key={store.id} 
-        className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1 relative"
+      <div
+        key={store.id}
+        className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group flex flex-col h-full"
         onClick={() => handleStoreClick(store)}
       >
-        <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold z-10">
-          #{index + 1}
-        </div>
-        
         <div className="relative">
-          <StoreImage 
+          <StoreImage
             imageUrl={store.image || store.logo_url}
             storeName={store.name}
+            className="w-full h-40 md:h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          
-          <div className={`absolute top-3 right-3 px-2 py-1 rounded text-xs font-bold text-white ${reviewTag.color}`}>
-            {reviewTag.text}
-          </div>
-          
-          <div className="absolute bottom-3 right-3 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-bold text-red-600">
-            {store.cashback || '5%'} OFF
-          </div>
-          
-          <div className={`absolute bottom-3 left-3 ${getLogoColor(store)} rounded-full p-2 shadow-lg overflow-hidden`}>
-            <StoreLogo 
+
+          {/* Store Logo */}
+          <div className={`absolute bottom-2 left-2 ${getLogoColor(store)} rounded-full p-2 shadow-lg overflow-hidden`}>
+            <StoreLogo
               logoUrl={store.logo_url || store.logo}
               storeName={store.name}
             />
           </div>
         </div>
-        
-        <div className="p-4">
-          <h3 className="font-semibold mb-1 text-sm hover:text-red-600 transition-colors">
+
+        {/* Content */}
+        <div className="p-3 md:p-4 flex flex-col flex-grow">
+          {/* Store Name - Allow 2 lines */}
+          <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 group-hover:text-blue-600 transition-colors min-h-[2.5rem]">
             {store.name}
           </h3>
-          <p className="text-xs text-gray-600 mb-2">{store.category || 'General'}</p>
-          
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              <span className="text-sm font-medium">{rating.toFixed(1)}</span>
-              <span className="text-xs text-gray-500">({reviewCount} reviews)</span>
-            </div>
-            <div className="text-red-500 text-xs font-semibold">
-              {store.offer || store.cashback}
-            </div>
+
+          {/* Category - Allow 2 lines */}
+          <p className="text-xs text-gray-500 mb-2 line-clamp-2 min-h-[2rem]">{store.category || 'General'}</p>
+
+          {/* Rating and Reviews */}
+          <div className="flex items-center space-x-1 mb-3">
+            <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <span className="text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
+            <span className="text-xs text-gray-500">({reviewCount})</span>
           </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="text-green-600 font-bold text-sm">
-              {reviewCount > 0 ? `${reviewCount} Reviews` : 'New Store'}
-            </div>
-            <button 
-              className="bg-red-500 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-red-600 transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleStoreClick(store);
-              }}
-            >
-              Visit Store
-            </button>
-          </div>
+
+          {/* Visit Store Button - Push to bottom */}
+          <button
+            className="w-full bg-white text-blue-600 border border-blue-600 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold hover:bg-blue-50 transition-all active:scale-95 mt-auto"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStoreClick(store);
+            }}
+          >
+            Visit Store
+          </button>
         </div>
       </div>
     );
@@ -288,10 +263,17 @@ const PopularStores = () => {
   if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">TOP STORES</h2>
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP STORES</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
           {[...Array(8)].map((_, index) => (
-            <div key={`skeleton-${index}`} className="bg-gray-200 rounded-lg h-80 animate-pulse"></div>
+            <div key={`skeleton-${index}`} className="bg-gray-100 rounded-2xl overflow-hidden animate-pulse">
+              <div className="h-40 md:h-48 bg-gray-300"></div>
+              <div className="p-3 md:p-4 space-y-2">
+                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                <div className="h-8 bg-gray-300 rounded"></div>
+              </div>
+            </div>
           ))}
         </div>
       </section>
@@ -301,12 +283,12 @@ const PopularStores = () => {
   if (error) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">TOP STORES</h2>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP STORES</h2>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl">
           <p>Error: {error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
           >
             Retry
           </button>
@@ -320,12 +302,12 @@ const PopularStores = () => {
   if (totalStores === 0) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold mb-6">TOP STORES</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP STORES</h2>
         <div className="text-center py-12">
           <p className="text-gray-500 mb-4">No stores found.</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600"
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
           >
             Refresh
           </button>
@@ -335,25 +317,31 @@ const PopularStores = () => {
   }
 
   return (
-    <section className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">TOP STORES</h2>
-        <span className="text-sm text-gray-500">{totalStores} stores available</span>
-      </div>
-
-      <div className="mb-8">
-        <div className="grid md:grid-cols-4 gap-6">
-          {stores.all.slice(0, 8).map((store, index) => renderStoreCard(store, index))}
+    <section className="container mx-auto px-4 py-6 md:py-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 gap-2">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800">TOP STORES</h2>
+          <p className="text-xs md:text-sm text-gray-600 mt-1">Most Popular Stores</p>
+        </div>
+        <div className="hidden md:block text-right">
+          <span className="text-sm text-gray-500">{totalStores} stores available</span>
         </div>
       </div>
 
-      <div className="flex justify-end mt-8">
-        <button 
+      {/* Stores Grid - 2 columns on mobile, 4 columns on desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+        {stores.all.slice(0, 8).map((store, index) => renderStoreCard(store, index))}
+      </div>
+
+      {/* View All Button */}
+      <div className="flex justify-center md:justify-end">
+        <button
           onClick={handleViewAllStores}
-          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-normal transition-colors duration-200 flex items-center gap-2"
+          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95"
         >
           View All Stores
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
           </svg>
         </button>

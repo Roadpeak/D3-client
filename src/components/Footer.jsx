@@ -92,161 +92,136 @@ const LoginIcon = () => (
 
 const Footer = () => {
   return (
-    <footer className="bg-white py-12 px-4 border-t border-gray-100">
+    <footer className="bg-white py-6 px-4 border-t border-gray-100">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Our Location */}
+        {/* Main footer content - 2 columns on mobile, 4 on desktop */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
+          {/* Column 1: Support */}
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-4">Support</h3>
-            <div className="space-y-3 text-sm text-gray-600">
-              {/* <p className="flex items-start">
-                <LocationIcon />
-                <span className="ml-2">NAIROBI (K)</span>
-              </p> */}
+            <h3 className="text-xs font-semibold text-gray-900 mb-2">Support</h3>
+            <div className="space-y-1.5 text-xs text-gray-600">
               <p className="flex items-start">
                 <EmailIcon />
-                <span className="ml-2">support@discoun3.com</span>
+                <span className="ml-1.5 break-all">support@discoun3.com</span>
               </p>
-              {/* <p className="flex items-start">
-                <PhoneIcon />
-                <span className="ml-2">1300 271 3365</span>
-              </p>
-              <p className="flex items-start">
-                <PhoneIcon />
-                <span className="ml-2">0401 271 3365</span>
-              </p> */}
             </div>
           </div>
 
-          {/* D3 */}
+          {/* Column 2: D3 (Discoun3) */}
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-4">D3 (Discoun3)</h3>
-            <div className="space-y-3 text-sm text-gray-600">
+            <h3 className="text-xs font-semibold text-gray-900 mb-2">D3 (Discoun3)</h3>
+            <div className="space-y-1.5 text-xs text-gray-600">
               <Link to="/about-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
                   <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M12 16V12M12 8H12.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span className="ml-2">About Us</span>
+                <span className="ml-1.5">About Us</span>
               </Link>
               <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <ContactIcon />
-                <span className="ml-2">Contact us</span>
-              </Link>
-              <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
-                <FeedbackIcon />
-                <span className="ml-2">Feedback</span>
+                <span className="ml-1.5">Contact us</span>
               </Link>
               <Link to="/faq" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <FAQIcon />
-                <span className="ml-2">FAQ</span>
-              </Link>
-              <Link to="/careers" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
-                <CareerIcon />
-                <span className="ml-2">Careers</span>
+                <span className="ml-1.5">FAQ</span>
               </Link>
               <Link to="/terms-conditions" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <TermsIcon />
-                <span className="ml-2">Terms & Conditions</span>
+                <span className="ml-1.5">Terms</span>
               </Link>
               <Link to="/privacy-policy" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <PrivacyIcon />
-                <span className="ml-2">Privacy Policy</span>
+                <span className="ml-1.5">Privacy</span>
               </Link>
             </div>
           </div>
 
-          {/* Business */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-4">Business</h3>
-            <div className="space-y-3 text-sm text-gray-600">
+          {/* Column 3: Business */}
+          <div className="-mt-16 md:-mt-0">
+            <h3 className="text-xs font-semibold text-gray-900 mb-2">Business</h3>
+            <div className="space-y-1.5 text-xs text-gray-600">
               <a href="https://merchants.discoun3ree.com/accounts/sign-up" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <AddBusinessIcon />
-                <span className="ml-2">Add your business</span>
+                <span className="ml-1.5">Add your business</span>
               </a>
               <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <AdvertiseIcon />
-                <span className="ml-2">Advertise with us</span>
+                <span className="ml-1.5">Advertise</span>
               </Link>
             </div>
 
-            <h4 className="text-sm font-medium text-gray-900 mt-6 mb-4">Quick links</h4>
-            <div className="space-y-3 text-sm text-gray-600">
+            <h4 className="text-xs font-semibold text-gray-900 mt-3 mb-2">Quick links</h4>
+            <div className="space-y-1.5 text-xs text-gray-600">
               <Link to="/stores" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <CompanyIcon />
-                <span className="ml-2">Browse Stores</span>
+                <span className="ml-1.5">Stores</span>
               </Link>
               <Link to="/hotdeals" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <DirectoryIcon />
-                <span className="ml-2">Browse Deals</span>
+                <span className="ml-1.5">Deals</span>
               </Link>
               <Link to="/profile" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
                 <LoginIcon />
-                <span className="ml-2">Login to your account</span>
+                <span className="ml-1.5">Login</span>
               </Link>
             </div>
           </div>
 
-          {/* Follow Us & Newsletter */}
+          {/* Column 4: Follow Us & Newsletter */}
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-4">Follow Us</h3>
-            <div className="flex gap-3 mb-6">
+            <h3 className="text-xs font-semibold text-gray-900 mb-2">Follow Us</h3>
+            <div className="flex gap-2.5 mb-3">
               {/* Facebook */}
               <a href="https://www.facebook.com/discoun3/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center transition-transform hover:scale-110">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M18 2H15C13.6739 2 12.4021 2.52678 11.4645 3.46447C10.5268 4.40215 10 5.67392 10 7V10H7V14H10V22H14V14H17L18 10H14V7C14 6.73478 14.1054 6.48043 14.2929 6.29289C14.4804 6.10536 14.7348 6 15 6H18V2Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </a>
 
               {/* Twitter/X */}
               <a href="https://x.com/discoun3_" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 text-white flex items-center justify-center transition-transform hover:scale-110">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22 4.01C21 4.5 20.02 4.69 19 5C17.879 3.735 16.217 3.665 14.62 4.263C13.023 4.861 11.977 6.323 12 8.01V9.01C8.755 9.083 5.865 7.605 4 5.01C4 5.01 0 13.01 8 17.01C6.214 18.169 4.122 18.85 2 19.01C10 24.01 20 19.01 20 8.01C19.9991 7.71851 19.9723 7.42784 19.92 7.14C20.94 6.14 21.62 4.86 22 4.01Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </a>
 
               {/* Instagram */}
               <a href="https://www.instagram.com/discoun3/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white flex items-center justify-center transition-transform hover:scale-110">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M17.5 6.5H17.51M7 22H17C19.2091 22 21 20.2091 21 18V6C21 3.79086 19.2091 2 17 2H7C4.79086 2 3 3.79086 3 6V18C3 20.2091 4.79086 22 7 22Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </a>
             </div>
 
-            <h4 className="text-sm font-medium text-gray-900 mb-4">Subscribe to Newsletter</h4>
-            <div className="mb-3">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="email"
-                  id="newsletter-email"
-                  placeholder="Enter Email"
-                  required
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg sm:rounded-r-none text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <button
-                  onClick={() => {
-                    const email = document.getElementById('newsletter-email').value;
-                    if (email) {
-                      window.location.href = `mailto:info@discoun3ree.com?subject=Newsletter Subscription&body=Please subscribe this email: ${email}`;
-                    }
-                  }}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg sm:rounded-l-none transition-colors text-sm font-medium whitespace-nowrap"
-                >
-                  Subscribe
-                </button>
-              </div>
+            <h4 className="text-xs font-semibold text-gray-900 mb-2">Newsletter</h4>
+            <div className="mb-2">
+              <input
+                type="email"
+                id="newsletter-email"
+                placeholder="Enter Email"
+                required
+                className="w-full px-3 py-1.5 mb-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                onClick={() => {
+                  const email = document.getElementById('newsletter-email').value;
+                  if (email) {
+                    window.location.href = `mailto:info@discoun3ree.com?subject=Newsletter Subscription&body=Please subscribe this email: ${email}`;
+                  }
+                }}
+                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-1.5 rounded-lg transition-all text-xs font-medium"
+              >
+                Subscribe
+              </button>
             </div>
-
-            <p className="text-xs text-gray-500 mt-2">
-              Note: We do not spam. Your email is secure with us.
-            </p>
           </div>
         </div>
 
         {/* Copyright */}
-        <div className="text-center pt-8 mt-8 border-t border-gray-100">
-          <p className="text-sm text-gray-500">
+        <div className="text-center pt-4 mt-4 border-t border-gray-100">
+          <p className="text-[10px] md:text-xs text-gray-500">
             Copyright © 2025, D3 (Discoun3). All rights reserved.
           </p>
         </div>

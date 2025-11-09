@@ -4,6 +4,19 @@ import { Search, Loader2, MapPin, Tag, X, ChevronDown } from 'lucide-react';
 import { offerAPI, storeAPI } from '../services/api';
 import { useLocation } from '../contexts/LocationContext';
 
+// Debounce utility function (moved outside component)
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 const RealTimeSearch = ({
   placeholder = "What's on your list?",
   className = "",
@@ -31,6 +44,7 @@ const RealTimeSearch = ({
 
   const searchRef = useRef(null);
   const resultsRef = useRef(null);
+  const locationRef = useRef(null);
   const navigate = useNavigate();
 
   // Helper function to get initials from name
@@ -339,9 +353,14 @@ const RealTimeSearch = ({
   // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Check if click is outside search results
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsOpen(false);
         setActiveIndex(-1);
+      }
+
+      // Check if click is outside location dropdown (but allow clicks inside the search component)
+      if (locationRef.current && !locationRef.current.contains(event.target)) {
         setIsLocationOpen(false);
       }
     };
@@ -362,101 +381,140 @@ const RealTimeSearch = ({
   const showRecentSearches = !query.trim() && recentSearches.length > 0;
   const currentLocationDisplay = getShortLocationName();
 
+  // Debug: Log available locations
+  useEffect(() => {
+    console.log('RealTimeSearch - Available Locations:', availableLocations);
+    console.log('RealTimeSearch - Current Location:', currentLocation);
+  }, [availableLocations, currentLocation]);
+
   // Integrated mode for navbar
   if (integratedMode) {
     return (
       <div ref={searchRef} className={`relative ${className}`}>
         {/* Integrated Search Bar */}
-        <div className="flex items-center bg-white rounded-full shadow-lg overflow-hidden h-12">
-          {/* Location Selector */}
-          <div className="relative flex-shrink-0 border-r border-gray-200">
-            <button
-              onClick={() => setIsLocationOpen(!isLocationOpen)}
-              className="flex items-center space-x-1.5 px-3 h-12 hover:bg-gray-50 transition-colors"
-            >
-              <MapPin className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700 max-w-[70px] truncate">
-                {currentLocationDisplay}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
-            </button>
+        <div className="relative">
+          <div className="flex items-center bg-white rounded-full shadow-lg h-12">
+            {/* Location Selector */}
+            <div ref={locationRef} className="relative flex-shrink-0 border-r border-gray-200 z-20 rounded-l-full overflow-hidden">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Location button clicked! Current state:', isLocationOpen);
+                  console.log('Available locations count:', availableLocations?.length);
+                  setIsLocationOpen(!isLocationOpen);
+                }}
+                className="flex items-center space-x-1.5 px-3 h-12 hover:bg-gray-50 transition-colors cursor-pointer relative z-10"
+              >
+                <MapPin className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700 max-w-[70px] truncate">
+                  {currentLocationDisplay}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+              </button>
 
-            {/* Location Dropdown */}
-            {isLocationOpen && availableLocations.length > 0 && (
-              <div className="absolute top-14 left-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-xl shadow-lg z-50">
-                <div className="p-4 border-b border-gray-200/50 bg-gray-50/50">
-                  <h3 className="text-sm font-semibold text-gray-800">Choose Your Location</h3>
-                  <p className="text-xs text-gray-600 mt-1">Find the best deals near you</p>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {availableLocations.map((locationItem) => (
+              {/* Location Dropdown */}
+              {isLocationOpen && availableLocations.length > 0 && (
+                <div className="absolute top-14 left-0 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl z-[9999]">
+                  <div className="p-4 border-b border-gray-200/50 bg-gray-50/50">
+                    <h3 className="text-sm font-semibold text-gray-800">Choose Your Location</h3>
+                    <p className="text-xs text-gray-600 mt-1">Find the best deals near you</p>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {availableLocations.map((locationItem) => (
+                      <button
+                        key={locationItem.id}
+                        className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100/50 last:border-b-0 transition-all duration-200"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLocationSelect(locationItem);
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{locationItem.name}</p>
+                            <p className="text-xs text-gray-500">{locationItem.area}</p>
+                          </div>
+                          <div className="text-right">
+                            {locationItem.name === currentLocation && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mb-1"></div>
+                            )}
+                            <p className="text-xs text-blue-600 font-medium">{locationItem.offers}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="p-4 border-t border-gray-200/50 bg-gray-50/50">
                     <button
-                      key={locationItem.id}
-                      className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100/50 last:border-b-0 transition-all duration-200"
-                      onClick={() => handleLocationSelect(locationItem)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUseCurrentLocation();
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 transition-colors"
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{locationItem.name}</p>
-                          <p className="text-xs text-gray-500">{locationItem.area}</p>
-                        </div>
-                        <div className="text-right">
-                          {locationItem.name === currentLocation && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mb-1"></div>
-                          )}
-                          <p className="text-xs text-blue-600 font-medium">{locationItem.offers}</p>
-                        </div>
-                      </div>
+                      <MapPin className="w-4 h-4" />
+                      <span>Use My Current Location</span>
                     </button>
-                  ))}
+                  </div>
                 </div>
-                <div className="p-4 border-t border-gray-200/50 bg-gray-50/50">
-                  <button
-                    onClick={handleUseCurrentLocation}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 transition-colors"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    <span>Use My Current Location</span>
-                  </button>
+              )}
+
+              {/* Empty location state */}
+              {isLocationOpen && availableLocations.length === 0 && (
+                <div className="absolute top-14 left-0 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl z-[9999]">
+                  <div className="p-4 text-center">
+                    <p className="text-sm text-gray-600">Loading locations...</p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUseCurrentLocation();
+                      }}
+                      className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      <span>Use My Current Location</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Search Input */}
+            <form onSubmit={handleSearch} className="flex-1 min-w-0 flex items-center">
+              <input
+                type="text"
+                placeholder={placeholder}
+                value={query}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                onFocus={() => setIsOpen(true)}
+                className="w-full h-12 px-4 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 text-sm"
+              />
+            </form>
+
+            {/* Search Button */}
+            <button
+              type="submit"
+              onClick={handleSearch}
+              className="flex items-center justify-center w-14 h-12 bg-yellow-400 hover:bg-yellow-500 transition-all duration-200 flex-shrink-0 rounded-r-full"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              ) : (
+                <Search className="w-5 h-5 text-white" />
+              )}
+            </button>
           </div>
-
-          {/* Search Input */}
-          <form onSubmit={handleSearch} className="flex-1 min-w-0 flex items-center">
-            <input
-              type="text"
-              placeholder={placeholder}
-              value={query}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setIsOpen(true)}
-              className="w-full h-12 px-4 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 text-sm"
-            />
-          </form>
-
-          {/* Search Button */}
-          <button
-            type="submit"
-            onClick={handleSearch}
-            className="flex items-center justify-center w-14 h-12 bg-yellow-400 hover:bg-yellow-500 transition-all duration-200 flex-shrink-0"
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 text-white animate-spin" />
-            ) : (
-              <Search className="w-5 h-5 text-white" />
-            )}
-          </button>
         </div>
 
-        {/* Search Results Dropdown - Same as before */}
+        {/* Search Results Dropdown */}
         {isOpen && (
           <div
             ref={resultsRef}
             className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-3xl shadow-xl z-50 max-h-96 overflow-y-auto"
           >
-            {/* ... Rest of the dropdown code remains the same ... */}
             {/* Loading State */}
             {isLoading && query.trim() && (
               <div className="flex items-center justify-center py-8">
@@ -643,23 +701,31 @@ const RealTimeSearch = ({
         </button>
       </form>
 
-      {/* Original dropdown code... same as integrated mode dropdown */}
-      {/* ... rest of the code ... */}
+      {/* Search results dropdown - same structure as integrated mode */}
+      {isOpen && (
+        <div
+          ref={resultsRef}
+          className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-3xl shadow-xl z-50 max-h-96 overflow-y-auto"
+        >
+          {/* Loading, recent searches, results etc - minimal version for non-integrated mode */}
+          {isLoading && query.trim() && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+              <span className="ml-2 text-gray-600">Searching...</span>
+            </div>
+          )}
+
+          {!isLoading && !hasResults && !query.trim() && recentSearches.length === 0 && (
+            <div className="p-8 text-center">
+              <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 mb-2">Start typing to search</p>
+              <p className="text-sm text-gray-400">Search for stores, deals, or categories</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
-
-// Debounce utility function
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
 
 export default RealTimeSearch;
