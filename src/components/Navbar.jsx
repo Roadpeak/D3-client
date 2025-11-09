@@ -1,4 +1,4 @@
-// components/Navbar.jsx - Improved with Lucide icons
+// components/Navbar.jsx - Modernized with professional mobile design
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
@@ -245,140 +245,159 @@ const Navbar = () => {
   return (
     <>
       <header className="bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto lg:px-4">
           {/* Mobile Top Header */}
           <div className="lg:hidden">
-            <div className="flex items-center justify-between py-2.5">
-              {/* Logo */}
-              <Link to="/" className="flex items-center space-x-2">
-                <div className="text-xl font-bold">
-                  <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
-                    D3
-                  </span>
-                  <TagIcon className="w-4 h-4 text-blue-500 inline ml-1" />
-                </div>
-                <div className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-1 rounded-full font-medium">
-                  DEALS
-                </div>
-              </Link>
-
-              {/* Right Icons */}
-              <div className="flex items-center space-x-2">
-                {/* Search Toggle Button */}
-                <button
-                  onClick={toggleSearch}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100/80 hover:bg-gray-200/80 transition-all duration-200 border border-gray-200/50"
-                >
-                  <Search className="w-4 h-4 text-gray-600" />
-                </button>
-
-                {/* Location Icon */}
-                <div className="relative">
-                  <button onClick={toggleLocation} className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100/80 hover:bg-gray-200/80 transition-all duration-200 border border-gray-200/50">
-                    <MapPin className="w-4 h-4 text-gray-600" />
-                  </button>
-
-                  {/* Location Dropdown */}
-                  {isLocationOpen && availableLocations.length > 0 && (
-                    <div className="absolute top-10 right-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-lg shadow-md z-50">
-                      <div className="p-3 border-b border-gray-200/50 bg-gray-50/50">
-                        <h3 className="text-sm font-medium text-gray-800">Choose Your Location</h3>
-                        <p className="text-xs text-gray-600 mt-0.5">Find the best deals near you</p>
+            {/* Blue gradient section covering welcome and search - extends edge-to-edge */}
+            <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 pb-3">
+              {/* User Welcome Section */}
+              <div className="flex items-center justify-between py-2.5 px-4">
+                <div className="flex items-center space-x-3">
+                  {/* Profile Avatar */}
+                  {isAuthenticated && user ? (
+                    <Link to="/profile" className="flex-shrink-0">
+                      {user.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt="Profile"
+                          className="w-10 h-10 rounded-full object-cover ring-2 ring-white/30 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30 shadow-sm">
+                          <span className="text-white text-sm font-semibold">
+                            {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                          </span>
+                        </div>
+                      )}
+                    </Link>
+                  ) : (
+                    <Link to="/accounts/sign-in" className="flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/30 shadow-sm">
+                        <User className="w-5 h-5 text-white" />
                       </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {availableLocations.map((locationItem) => (
+                    </Link>
+                  )}
+
+                  {/* Welcome Text */}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-white/80 font-medium">
+                      {isAuthenticated ? 'Welcome Back' : 'Welcome'}
+                    </span>
+                    <span className="text-sm font-bold text-white flex items-center">
+                      {isAuthenticated && user ? (
+                        <>
+                          {user.firstName || 'User'}
+                          <span className="ml-1.5">👋</span>
+                        </>
+                      ) : (
+                        'Guest'
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right Side - Notification Icon */}
+                <div className="flex items-center">
+                  {isAuthenticated ? (
+                    <NotificationButton
+                      isMobile={true}
+                      isAuthenticated={isAuthenticated}
+                    />
+                  ) : (
+                    <Link
+                      to="/accounts/sign-in"
+                      className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 transition-all duration-200 relative shadow-sm"
+                    >
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                      </svg>
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              {/* Search Bar Section with integrated location */}
+              <div className="px-4">
+                <div className="relative flex items-center space-x-2">
+                  {/* Search Input */}
+                  <div className="flex-1">
+                    <RealTimeSearch
+                      placeholder="What's on your list?"
+                      onNavigate={handleSearchNavigate}
+                      onStoreClick={handleStoreClick}
+                      onOfferClick={handleOfferClick}
+                    />
+                  </div>
+
+                  {/* Location Button */}
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={toggleLocation}
+                      className="flex items-center justify-center w-11 h-11 rounded-full bg-pink-500 hover:bg-pink-600 transition-all duration-200 shadow-lg"
+                    >
+                      <MapPin className="w-5 h-5 text-white" />
+                    </button>
+
+                    {/* Location Dropdown */}
+                    {isLocationOpen && availableLocations.length > 0 && (
+                      <div className="absolute top-14 right-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-xl shadow-lg z-50">
+                        <div className="p-4 border-b border-gray-200/50 bg-gray-50/50">
+                          <h3 className="text-sm font-semibold text-gray-800">Choose Your Location</h3>
+                          <p className="text-xs text-gray-600 mt-1">Find the best deals near you</p>
+                        </div>
+                        <div className="max-h-64 overflow-y-auto">
+                          {availableLocations.map((locationItem) => (
+                            <button
+                              key={locationItem.id}
+                              className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100/50 last:border-b-0 transition-all duration-200"
+                              onClick={() => handleLocationSelect(locationItem)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">{locationItem.name}</p>
+                                  <p className="text-xs text-gray-500">{locationItem.area}</p>
+                                </div>
+                                <div className="text-right">
+                                  {locationItem.name === currentLocation && (
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full mb-1"></div>
+                                  )}
+                                  <p className="text-xs text-blue-600 font-medium">{locationItem.offers}</p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                        <div className="p-4 border-t border-gray-200/50 bg-gray-50/50">
                           <button
-                            key={locationItem.id}
-                            className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100/50 last:border-b-0 transition-all duration-200"
-                            onClick={() => handleLocationSelect(locationItem)}
+                            onClick={handleUseCurrentLocation}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 transition-colors"
                           >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{locationItem.name}</p>
-                                <p className="text-xs text-gray-500">{locationItem.area}</p>
-                              </div>
-                              <div className="text-right">
-                                {locationItem.name === currentLocation && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full mb-1"></div>
-                                )}
-                                <p className="text-xs text-blue-600 font-medium">{locationItem.offers}</p>
-                              </div>
-                            </div>
+                            <MapPin className="w-4 h-4" />
+                            <span>Use My Current Location</span>
                           </button>
-                        ))}
-                      </div>
-                      <div className="p-3 border-t border-gray-200/50 bg-gray-50/50">
-                        <button
-                          onClick={handleUseCurrentLocation}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 transition-colors"
-                        >
-                          <MapPin className="w-3 h-3" />
-                          <span>Use My Current Location</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {isLocationOpen && availableLocations.length === 0 && (
-                    <div className="absolute top-10 right-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-lg shadow-md z-50">
-                      <div className="p-4 text-center">
-                        <p className="text-sm text-gray-600">Loading locations...</p>
-                        <button
-                          onClick={handleUseCurrentLocation}
-                          className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
-                        >
-                          <MapPin className="w-3 h-3" />
-                          <span>Use My Current Location</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Mobile Notifications */}
-                <NotificationButton
-                  isMobile={true}
-                  isAuthenticated={isAuthenticated}
-                />
-
-                {/* Profile Button */}
-                {isAuthenticated && user ? (
-                  <Link
-                    to="/profile"
-                    className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100/80 hover:bg-gray-200/80 transition-all duration-200 border border-gray-200/50"
-                  >
-                    {user.avatar ? (
-                      <img src={user.avatar} alt="Profile" className="w-5 h-5 rounded-md object-cover" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-md bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                        <span className="text-white text-xs font-medium">
-                          {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
-                        </span>
+                        </div>
                       </div>
                     )}
-                  </Link>
-                ) : (
-                  <Link
-                    to="/accounts/sign-in"
-                    className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100/80 hover:bg-gray-200/80 transition-all duration-200 border border-gray-200/50"
-                  >
-                    <User className="w-4 h-4 text-gray-600" />
-                  </Link>
-                )}
-              </div>
-            </div>
 
-            {/* Collapsible Mobile Search Bar */}
-            <div className={`transition-all duration-300 ease-in-out ${isSearchOpen ? 'pb-3 opacity-100' : 'max-h-0 pb-0 opacity-0 overflow-hidden'}`}>
-              <div className="px-2">
-                <RealTimeSearch
-                  placeholder="Search for deals, coupons & stores..."
-                  onNavigate={handleSearchNavigate}
-                  onStoreClick={handleStoreClick}
-                  onOfferClick={handleOfferClick}
-                />
+                    {isLocationOpen && availableLocations.length === 0 && (
+                      <div className="absolute top-14 right-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-xl shadow-lg z-50">
+                        <div className="p-4 text-center">
+                          <p className="text-sm text-gray-600">Loading locations...</p>
+                          <button
+                            onClick={handleUseCurrentLocation}
+                            className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
+                          >
+                            <MapPin className="w-4 h-4" />
+                            <span>Use My Current Location</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
+            {/* End of blue gradient section */}
           </div>
 
           {/* Desktop Header */}
@@ -566,8 +585,8 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Promotional Banner */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-400 text-white py-1 px-4">
+        {/* Promotional Banner - Desktop Only */}
+        <div className="hidden lg:block bg-gradient-to-r from-blue-600 to-blue-400 text-white py-1 px-4">
           <div className="container mx-auto flex items-center justify-center text-center">
             <div className="flex items-center space-x-2">
               <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
