@@ -681,7 +681,7 @@ export default function Hotdeals() {
 
             {/* Deals Grid/List */}
             <div className={`
-              grid gap-4 mb-8 
+              grid gap-3 md:gap-6 mb-8 
               ${viewMode === 'grid'
                 ? 'grid-cols-2 lg:grid-cols-3'
                 : 'grid-cols-1'
@@ -690,11 +690,30 @@ export default function Hotdeals() {
               {offers.map((offer) => {
                 const isOfferFavorited = favoritesInitialized && isFavorite(offer.id);
 
+                // Calculate time left if expiration date exists
+                const calculateTimeLeft = (expirationDate) => {
+                  if (!expirationDate) return null;
+                  const now = new Date();
+                  const expiry = new Date(expirationDate);
+                  const timeDiff = expiry - now;
+
+                  if (timeDiff <= 0) return 'Expired';
+
+                  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+                  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+                  if (days > 0) return `${days}d left`;
+                  if (hours > 0) return `${hours}h left`;
+                  return 'Ending soon';
+                };
+
+                const timeLeft = calculateTimeLeft(offer.expiration_date);
+
                 return (
                   <div
                     key={offer.id}
                     className={`
-                      bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer
+                      bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group
                       ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''}
                     `}
                     onClick={() => handleOfferClick(offer)}
@@ -703,7 +722,7 @@ export default function Hotdeals() {
                       <img
                         src={offer.image}
                         alt={offer.title}
-                        className={`w-full object-cover ${viewMode === 'list' ? 'h-48 sm:h-full' : 'h-48'}`}
+                        className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${viewMode === 'list' ? 'h-48 sm:h-full' : 'h-40 md:h-48'}`}
                         onError={(e) => {
                           e.target.src = '/api/placeholder/300/200';
                         }}
@@ -712,72 +731,104 @@ export default function Hotdeals() {
                       {/* Favorite button */}
                       <button
                         className={`
-                          absolute top-3 right-3 p-2 rounded-full transition-all duration-200
+                          absolute top-2 right-2 p-1.5 md:p-2 rounded-full transition-all duration-200 shadow-lg
                           ${isOfferFavorited
-                            ? 'bg-red-500 text-white'
-                            : 'bg-white/90 text-gray-400 hover:text-red-500'}
-                          ${!isAuthenticated || !favoritesInitialized ? 'opacity-50' : ''}
+                            ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+                            : 'bg-white/90 text-gray-600 hover:bg-white hover:text-blue-500'}
+                          ${!isAuthenticated || !favoritesInitialized ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
                         `}
                         onClick={(e) => handleFavoriteClick(e, offer)}
                         disabled={!isAuthenticated || !favoritesInitialized}
-                        title={!isAuthenticated ? 'Login to add favorites' : (isOfferFavorited ? 'Remove from favorites' : 'Add to favorites')}
+                        title={
+                          !isAuthenticated
+                            ? 'Login to add favorites'
+                            : !favoritesInitialized
+                              ? 'Loading favorites...'
+                              : isOfferFavorited
+                                ? 'Remove from favorites'
+                                : 'Add to favorites'
+                        }
                       >
                         <Heart
                           size={16}
-                          className={isOfferFavorited ? 'fill-current' : ''}
+                          className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isOfferFavorited ? 'fill-current' : ''}`}
                         />
                       </button>
 
-                      {/* Category badge */}
-                      <div className="absolute bottom-3 left-3">
-                        <span className="bg-blue-500/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs">
-                          {offer.category}
-                        </span>
+                      {/* Discount Badge */}
+                      <div className="absolute bottom-2 right-2 bg-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
+                        {offer.discount}
                       </div>
                     </div>
 
-                    <div className={`p-4 flex flex-col ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
+                    <div className={`p-3 md:p-4 flex flex-col ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
+                      {/* Title */}
+                      <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 group-hover:text-blue-600 transition-colors">
+                        {offer.title}
+                      </h3>
+
                       {/* Store info */}
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-2 mb-2">
                         <StoreLogo
                           logoUrl={offer.store?.googleLogo}
                           storeName={offer.store?.name || 'Store'}
+                          className="w-4 h-4"
+                          containerClassName="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm"
                         />
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className="text-xs text-gray-500">
                           {offer.store?.name || 'Store name'}
                         </span>
                       </div>
 
-                      {/* Title and description */}
-                      <h3 className="font-medium text-gray-800 mb-2 line-clamp-1">{offer.title}</h3>
-                      <p className="text-sm text-gray-500 mb-3 line-clamp-2">{offer.description}</p>
-
-                      {/* Price and discount */}
-                      {offer.originalPrice > 0 && (
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
-                          <span className="text-lg font-medium text-gray-900">
-                            KSH {offer.discountedPrice}
-                          </span>
-                          <span className="text-sm text-gray-400 line-through">
-                            KSH {offer.originalPrice}
-                          </span>
-                          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
-                            {offer.discount}
+                      {/* Category Badge - Only show in list view or if no time left */}
+                      {(viewMode === 'list' || !timeLeft) && (
+                        <div className="mb-2">
+                          <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-xs">
+                            {offer.category}
                           </span>
                         </div>
                       )}
 
-                      {/* CTA button */}
-                      <div className="mt-auto pt-2">
-                        <button
-                          className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg text-sm transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOfferClick(offer);
-                          }}
-                        >
-                          Get Offer
-                        </button>
+                      {/* Time Left - Show in grid view */}
+                      {viewMode === 'grid' && timeLeft && timeLeft !== 'Expired' && (
+                        <div className="flex items-center space-x-1 text-orange-600 text-xs mb-2">
+                          <Clock className="w-3 h-3" />
+                          <span>{timeLeft}</span>
+                        </div>
+                      )}
+
+                      {/* Description - Only in list view */}
+                      {viewMode === 'list' && (
+                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{offer.description}</p>
+                      )}
+
+                      {/* Pricing */}
+                      <div className="flex flex-col mt-auto pt-2">
+                        {offer.originalPrice > 0 && (
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-blue-600 text-base md:text-lg">
+                                KSH {offer.discountedPrice}
+                              </span>
+                              <span className="text-gray-400 line-through text-xs">
+                                KSH {offer.originalPrice}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* CTA button - Only in list view */}
+                        {viewMode === 'list' && (
+                          <button
+                            className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-2 rounded-xl text-sm transition-all duration-300 shadow-md hover:shadow-lg active:scale-95"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOfferClick(offer);
+                            }}
+                          >
+                            Get Offer
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -15,16 +15,6 @@ const ViewOffer = () => {
   const actualOfferId = offerId || id;
   const actualStoreId = storeId;
 
-  // Debug logging for URL structure
-  console.log('🔍 ViewOffer URL Parameters:', {
-    id,
-    storeId,
-    offerId,
-    actualOfferId,
-    actualStoreId,
-    urlStructure: actualStoreId ? 'NEW (store/offer/id)' : 'LEGACY (offer/id)'
-  });
-
   const [copySuccess, setCopySuccess] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -41,7 +31,7 @@ const ViewOffer = () => {
         setUser(userResponse.data?.user || userResponse.user);
       }
     } catch (err) {
-      console.log('User not authenticated');
+      // User not authenticated
     }
   }, []);
 
@@ -50,11 +40,7 @@ const ViewOffer = () => {
       setLoading(true);
       setError(null);
 
-      console.log('Fetching offer with ID:', actualOfferId);
-
       const response = await offerAPI.getOfferById(actualOfferId);
-
-      console.log('API Response:', response);
 
       if (!response) {
         throw new Error('No response received from server');
@@ -159,7 +145,6 @@ const ViewOffer = () => {
           ? `/store/${actualStoreId}/offer/${actualOfferId}`
           : `/offer/${actualOfferId}`;
 
-        console.log('🔄 Not logged in, redirecting to login with:', redirectUrl);
         navigate(`/accounts/sign-in?redirect=${encodeURIComponent(redirectUrl)}`);
         return;
       }
@@ -360,23 +345,6 @@ const ViewOffer = () => {
                   }}
                 />
 
-                {/* Badges */}
-                <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                  <span className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm">
-                    {offerData.discount}% OFF
-                  </span>
-                  {offerData.featured && (
-                    <span className="bg-black text-yellow-400 px-4 py-1.5 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm border border-yellow-400">
-                      FEATURED
-                    </span>
-                  )}
-                  {offerData.offer_type === 'dynamic' && (
-                    <span className="bg-gradient-to-r from-cyan-400 to-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg backdrop-blur-sm">
-                      DYNAMIC
-                    </span>
-                  )}
-                </div>
-
                 {/* Expired Overlay */}
                 {!isOfferActive && (
                   <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
@@ -397,8 +365,8 @@ const ViewOffer = () => {
                       key={index}
                       onClick={() => setSelectedImage(index)}
                       className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-200 ${selectedImage === index
-                          ? 'border-cyan-500 ring-2 ring-cyan-200 scale-105'
-                          : 'border-gray-200 hover:border-cyan-300'
+                        ? 'border-cyan-500 ring-2 ring-cyan-200 scale-105'
+                        : 'border-gray-200 hover:border-cyan-300'
                         }`}
                     >
                       <img
@@ -428,8 +396,8 @@ const ViewOffer = () => {
                   onClick={handleBookOffer}
                   disabled={!isOfferActive || !offerData.bookingEnabled || bookingLoading}
                   className={`w-full font-bold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg ${isOfferActive && offerData.bookingEnabled
-                      ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white transform hover:scale-[1.02] active:scale-[0.98]'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white transform hover:scale-[1.02] active:scale-[0.98]'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                 >
                   {bookingLoading ? (
@@ -692,8 +660,8 @@ const ViewOffer = () => {
 
               {/* Status */}
               <div className={`p-4 rounded-xl border-2 ${isOfferActive
-                  ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300'
-                  : 'bg-gray-100 border-gray-300'
+                ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300'
+                : 'bg-gray-100 border-gray-300'
                 }`}>
                 <div className={`flex items-center justify-center ${isOfferActive ? 'text-gray-900' : 'text-gray-600'
                   }`}>

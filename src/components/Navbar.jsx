@@ -71,10 +71,6 @@ const Navbar = () => {
   // Chat count state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
-  // Scroll state for mobile navbar
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
   const navigate = useNavigate();
   const location = useRouterLocation();
 
@@ -82,30 +78,6 @@ const Navbar = () => {
   useEffect(() => {
     checkAuthStatus();
   }, []);
-
-  // Handle scroll detection for mobile navbar
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      // If scrolling down and past 50px, hide search bar
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsScrolled(true);
-      }
-      // If scrolling up, show search bar
-      else if (currentScrollY < lastScrollY) {
-        setIsScrolled(false);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY]);
 
   const checkAuthStatus = async () => {
     try {
@@ -274,7 +246,7 @@ const Navbar = () => {
           {/* Mobile Top Header */}
           <div className="lg:hidden">
             {/* Cyan-to-blue gradient section covering welcome and search - extends edge-to-edge */}
-            <div className={`bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 rounded-b-3xl shadow-lg relative transition-all duration-300 ${isScrolled ? 'pb-3' : 'pb-2'}`}>
+            <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 pb-2 rounded-b-3xl shadow-lg relative">
               {/* User Welcome Section */}
               <div className="flex items-center justify-between py-3 px-4">
                 {/* Left Side - Logo */}
@@ -342,10 +314,10 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* Integrated Search Bar - uses RealTimeSearch component with transform transition */}
-              <div className={`px-4 overflow-hidden transition-all duration-300 ${isScrolled ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-20 opacity-100'}`}>
+              {/* Integrated Search Bar - uses RealTimeSearch component */}
+              <div className="px-4">
                 <RealTimeSearch
-                  placeholder="Search for deals,stores?"
+                  placeholder="What's on your list?"
                   integratedMode={true}
                   onNavigate={handleSearchNavigate}
                   onStoreClick={handleStoreClick}
@@ -557,11 +529,11 @@ const Navbar = () => {
       {/* Fixed Bottom Mobile Navigation - Enhanced with modern design */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
         <div className="bg-white/95 backdrop-blur-md border-t border-gray-200/50 rounded-t-3xl shadow-2xl">
-          {/* Safe area padding for devices with bottom notch */}
-          <div className="grid grid-cols-5 gap-0 px-3 py-3 pb-safe">
+          {/* Reduced padding for more compact design */}
+          <div className="grid grid-cols-5 gap-0 px-2 py-2">
             <Link
               to="/"
-              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/'
+              className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/'
                   ? 'text-blue-600'
                   : 'text-gray-700 hover:text-blue-600'
                 }`}
@@ -576,7 +548,7 @@ const Navbar = () => {
 
             <Link
               to="/hotdeals"
-              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/hotdeals'
+              className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/hotdeals'
                   ? 'text-blue-600'
                   : 'text-gray-700 hover:text-blue-600'
                 }`}
@@ -592,7 +564,7 @@ const Navbar = () => {
 
             <Link
               to="/stores"
-              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/stores'
+              className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/stores'
                   ? 'text-blue-600'
                   : 'text-gray-700 hover:text-blue-600'
                 }`}
@@ -607,7 +579,7 @@ const Navbar = () => {
 
             <Link
               to="/requestservice"
-              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/requestservice'
+              className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/requestservice'
                   ? 'text-blue-600'
                   : 'text-gray-700 hover:text-blue-600'
                 }`}
@@ -622,7 +594,7 @@ const Navbar = () => {
 
             <Link
               to="/chat"
-              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/chat'
+              className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/chat'
                   ? 'text-blue-600'
                   : 'text-gray-700 hover:text-blue-600'
                 }`}
