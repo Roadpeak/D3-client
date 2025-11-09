@@ -31,15 +31,9 @@ api.interceptors.request.use(
             config.headers['x-api-key'] = apiKey;
         }
 
-        // Log requests in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`🔄 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-        }
-
         return config;
     },
     (error) => {
-        console.error('Request interceptor error:', error);
         return Promise.reject(error);
     }
 );
@@ -220,24 +214,8 @@ export const API_ENDPOINTS = {
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-    (response) => {
-        // Log successful responses in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`✅ ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
-        }
-        return response;
-    },
+    (response) => response,
     (error) => {
-        // Log errors in development
-        if (process.env.NODE_ENV === 'development') {
-            console.error(`❌ ${error.response?.status || 'NETWORK'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data,
-                message: error.message
-            });
-        }
-
         // Handle specific error cases
         if (error.response?.status === 401) {
             // Clear all possible token storage locations
@@ -638,17 +616,12 @@ export const WS_CONFIG = {
     }
 };
 
-// [KEEP ALL EXISTING EXPORTS AND FUNCTIONS BELOW]
-
 // Location API endpoints
 export const locationAPI = {
     // Get all available locations from stores and offers
     getAvailableLocations: async () => {
-        console.log('📍 Fetching available locations from API...');
-
         try {
             const response = await api.get(API_ENDPOINTS.locations.available);
-            console.log('✅ Available locations response:', response.data);
 
             return {
                 success: true,
@@ -656,8 +629,6 @@ export const locationAPI = {
                 message: response.data.message
             };
         } catch (error) {
-            console.error('❌ Error fetching available locations:', error);
-
             // Fallback: Try to get locations from stores endpoint
             try {
                 const storeResponse = await api.get(API_ENDPOINTS.stores.locations);
@@ -667,7 +638,6 @@ export const locationAPI = {
                     message: 'Fetched from stores endpoint'
                 };
             } catch (fallbackError) {
-                console.error('❌ Fallback location fetch also failed:', fallbackError);
                 return {
                     success: false,
                     locations: [],
@@ -686,7 +656,6 @@ export const locationAPI = {
                 stats: response.data.stats || {}
             };
         } catch (error) {
-            console.error('❌ Error fetching location stats:', error);
             return {
                 success: false,
                 stats: {}
@@ -699,8 +668,6 @@ export const locationAPI = {
         if (!latitude || !longitude) {
             throw new Error('Latitude and longitude are required');
         }
-
-        console.log(`🌍 Reverse geocoding: ${latitude}, ${longitude}`);
 
         try {
             const response = await api.post(API_ENDPOINTS.locations.reverseGeocode, {
@@ -715,8 +682,6 @@ export const locationAPI = {
                 coordinates: response.data.coordinates
             };
         } catch (error) {
-            console.error('❌ Backend reverse geocoding failed:', error);
-
             // Fallback to client-side reverse geocoding
             return await locationAPI.clientReverseGeocode(latitude, longitude);
         }
@@ -725,8 +690,6 @@ export const locationAPI = {
     // Client-side reverse geocoding fallback
     clientReverseGeocode: async (latitude, longitude) => {
         try {
-            console.log('🔄 Using client-side reverse geocoding...');
-
             const response = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=en`,
                 {
@@ -766,8 +729,6 @@ export const locationAPI = {
 
             throw new Error('No address found in geocoding response');
         } catch (error) {
-            console.error('❌ Client-side reverse geocoding failed:', error);
-
             // Ultimate fallback for Kenya coordinates
             if (latitude >= -4.7 && latitude <= 4.6 && longitude >= 33.9 && longitude <= 41.9) {
                 return {
@@ -813,15 +774,10 @@ export const offerAPI = {
             throw new Error('Offer ID is required');
         }
 
-        console.log('🔍 Fetching offer by ID:', id);
-
         try {
             const response = await api.get(API_ENDPOINTS.offers.get(id));
-            console.log('✅ Offer API response:', response.data);
             return response.data;
         } catch (error) {
-            console.error('❌ Offer API error:', error);
-
             if (error.response?.status === 404) {
                 throw new Error('Offer not found. It may have been removed or expired.');
             } else if (error.response?.status === 401) {
@@ -943,8 +899,6 @@ export const serviceAPI = {
 export const favoritesAPI = {
     // Get user's favorite offers
     getFavorites: async (params = {}) => {
-        console.log('🔍 Fetching user favorites with params:', params);
-
         try {
             const queryParams = new URLSearchParams();
             if (params.page) queryParams.append('page', params.page);
@@ -952,10 +906,8 @@ export const favoritesAPI = {
             if (params.category) queryParams.append('category', params.category);
 
             const url = API_ENDPOINTS.user.favorites + (queryParams.toString() ? `?${queryParams.toString()}` : '');
-            console.log('📡 Request URL:', url);
 
             const response = await api.get(url);
-            console.log('✅ Favorites response:', response.data);
 
             return {
                 success: true,
@@ -963,7 +915,6 @@ export const favoritesAPI = {
                 pagination: response.data.pagination || {}
             };
         } catch (error) {
-            console.error('❌ Error fetching favorites:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to fetch favorites',
@@ -979,11 +930,8 @@ export const favoritesAPI = {
             throw new Error('Offer ID is required');
         }
 
-        console.log('💖 Adding offer to favorites:', offerId);
-
         try {
             const response = await api.post(API_ENDPOINTS.offers.addToFavorites(offerId));
-            console.log('✅ Added to favorites:', response.data);
 
             return {
                 success: true,
@@ -991,7 +939,6 @@ export const favoritesAPI = {
                 data: response.data
             };
         } catch (error) {
-            console.error('❌ Error adding to favorites:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to add to favorites'
@@ -1005,11 +952,8 @@ export const favoritesAPI = {
             throw new Error('Offer ID is required');
         }
 
-        console.log('💔 Removing offer from favorites:', offerId);
-
         try {
             const response = await api.delete(API_ENDPOINTS.offers.removeFromFavorites(offerId));
-            console.log('✅ Removed from favorites:', response.data);
 
             return {
                 success: true,
@@ -1017,7 +961,6 @@ export const favoritesAPI = {
                 data: response.data
             };
         } catch (error) {
-            console.error('❌ Error removing from favorites:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to remove from favorites'
@@ -1031,11 +974,8 @@ export const favoritesAPI = {
             throw new Error('Offer ID is required');
         }
 
-        console.log('🔄 Toggling favorite status for offer:', offerId);
-
         try {
             const response = await api.post(API_ENDPOINTS.offers.toggleFavorite(offerId));
-            console.log('✅ Toggled favorite:', response.data);
 
             return {
                 success: true,
@@ -1044,7 +984,6 @@ export const favoritesAPI = {
                 data: response.data
             };
         } catch (error) {
-            console.error('❌ Error toggling favorite:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to update favorite'
@@ -1065,7 +1004,6 @@ export const favoritesAPI = {
                 isFavorite: response.data.isFavorite || false
             };
         } catch (error) {
-            console.error('❌ Error checking favorite status:', error);
             return {
                 success: false,
                 isFavorite: false
@@ -1082,7 +1020,6 @@ export const favoritesAPI = {
                 count: response.data.count || 0
             };
         } catch (error) {
-            console.error('❌ Error fetching favorites count:', error);
             return {
                 success: false,
                 count: 0
@@ -1113,7 +1050,6 @@ export const favoritesAPI = {
                 favorites: results
             };
         } catch (error) {
-            console.error('❌ Error batch checking favorites:', error);
             return {
                 success: false,
                 favorites: {}
@@ -1163,20 +1099,15 @@ export const healthCheck = async () => {
 // Test endpoint to verify API connection
 export const testConnection = async () => {
     try {
-        console.log('🧪 Testing API connection to:', BASE_URL);
         const response = await api.get('/cors-test');
-        console.log('✅ API connection test successful:', response.data);
         return response.data;
     } catch (error) {
-        console.error('❌ API connection test failed:', error);
         throw new Error(`Cannot connect to API at ${BASE_URL}`);
     }
 };
 
 // API test function specifically for favorites
 export const testFavoritesAPI = async () => {
-    console.log('🧪 Testing Favorites API endpoints...');
-
     const tests = [
         {
             name: 'Get Favorites',
@@ -1192,19 +1123,16 @@ export const testFavoritesAPI = async () => {
 
     for (const test of tests) {
         try {
-            console.log(`🔄 Testing: ${test.name}`);
             const result = await test.test();
             results[test.name] = {
                 success: result.success !== false,
                 data: result
             };
-            console.log(`✅ ${test.name}: ${result.success !== false ? 'PASSED' : 'FAILED'}`);
         } catch (error) {
             results[test.name] = {
                 success: false,
                 error: error.message
             };
-            console.log(`❌ ${test.name}: FAILED - ${error.message}`);
         }
     }
 

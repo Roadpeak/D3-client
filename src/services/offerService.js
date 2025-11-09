@@ -20,20 +20,14 @@ api.interceptors.request.use(
         }
 
         // Add API key
-        const apiKey = process.env.REACT_APP_API_KEY ;
+        const apiKey = process.env.REACT_APP_API_KEY;
         if (apiKey) {
             config.headers['x-api-key'] = apiKey;
-        }
-
-        // Log requests in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`🔄 ${config.method?.toUpperCase()} ${config.url}`, config.params || config.data);
         }
 
         return config;
     },
     (error) => {
-        console.error('Request interceptor error:', error);
         return Promise.reject(error);
     }
 );
@@ -41,23 +35,9 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
     (response) => {
-        // Log successful responses in development
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
-        }
         return response;
     },
     (error) => {
-        // Log errors in development
-        if (process.env.NODE_ENV === 'development') {
-            console.error(`❌ ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data,
-                message: error.message
-            });
-        }
-
         // Handle specific error cases
         if (error.response?.status === 401) {
             localStorage.removeItem('token');

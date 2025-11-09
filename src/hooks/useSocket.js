@@ -16,8 +16,6 @@ const useSocket = (user) => {
 
   // Enhanced token retrieval with better error handling
   const getAuthToken = useCallback(() => {
-    console.log('🔍 Getting auth token...');
-
     const getLocalStorage = (key) => {
       try {
         return localStorage.getItem(key);
@@ -36,7 +34,7 @@ const useSocket = (user) => {
           if (key === name) return decodeURIComponent(value || '');
         }
       } catch (error) {
-        console.error('Error reading cookie:', error);
+        // Silently handle cookie errors
       }
       return null;
     };
@@ -50,20 +48,12 @@ const useSocket = (user) => {
       cookie_token: getCookieValue('token')
     };
 
-    console.log('🔍 Token sources found:', Object.keys(tokenSources).filter(key => tokenSources[key]));
-
     const token = tokenSources.localStorage_access_token ||
       tokenSources.localStorage_authToken ||
       tokenSources.localStorage_token ||
       tokenSources.cookie_authToken ||
       tokenSources.cookie_access_token ||
       tokenSources.cookie_token;
-
-    if (token) {
-      console.log('✅ Token found:', token.substring(0, 20) + '...');
-    } else {
-      console.log('❌ No token found in any source');
-    }
 
     return token;
   }, []);
@@ -75,28 +65,17 @@ const useSocket = (user) => {
     try {
       const parts = token.split('.');
       if (parts.length !== 3) {
-        console.warn('⚠️ Token does not appear to be a valid JWT format');
         return false;
       }
 
       const payload = JSON.parse(atob(parts[1]));
-      console.log('🔍 Token payload preview:', {
-        userId: payload.userId,
-        id: payload.id,
-        type: payload.type,
-        userType: payload.userType,
-        exp: payload.exp ? new Date(payload.exp * 1000) : 'No expiration',
-        isExpired: payload.exp ? Date.now() >= payload.exp * 1000 : false
-      });
 
       if (payload.exp && Date.now() >= payload.exp * 1000) {
-        console.error('❌ Token is expired');
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('❌ Error validating token:', error);
       return false;
     }
   }, []);
@@ -115,30 +94,23 @@ const useSocket = (user) => {
   // Initialize socket connection
   useEffect(() => {
     if (!user?.id) {
-      console.log('⚠️ No user provided to socket hook');
       return;
     }
 
     const token = getAuthToken();
     if (!token) {
-      console.log('⚠️ No auth token available for socket connection');
       setConnectionError('No authentication token available');
       return;
     }
 
     if (!validateToken(token)) {
-      console.log('⚠️ Invalid token format or expired');
       setConnectionError('Invalid or expired authentication token');
       return;
     }
 
-    console.log('🔌 Initializing socket connection for user:', user.id, 'role:', user.role || user.userType);
-
     const socketUrl = process.env.NODE_ENV === 'production'
       ? window.location.origin
       : 'https://api.discoun3ree.com/api/v1';
-
-    console.log('🌐 Connecting to socket server:', socketUrl);
 
     const newSocket = io(socketUrl, {
       auth: { token },
@@ -161,8 +133,6 @@ const useSocket = (user) => {
 
     // Connection event handlers
     newSocket.on('connect', () => {
-      console.log('✅ Socket connected successfully');
-      console.log('🔗 Socket ID:', newSocket.id);
       setIsConnected(true);
       setConnectionError(null);
       reconnectAttempts.current = 0;
@@ -176,11 +146,9 @@ const useSocket = (user) => {
     });
 
     newSocket.on('disconnect', (reason) => {
-      console.log('❌ Socket disconnected:', reason);
       setIsConnected(false);
 
       if (reason === 'io server disconnect') {
-        console.log('🔄 Server disconnected client, attempting manual reconnect...');
         setTimeout(() => {
           if (!newSocket.connected) {
             newSocket.connect();
@@ -190,12 +158,10 @@ const useSocket = (user) => {
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('❌ Socket connection error:', error);
       setConnectionError(error.message);
       reconnectAttempts.current++;
 
       if (error.message.includes('Authentication error')) {
-        console.error('🔐 Authentication failed - token may be invalid or expired');
         clearTokens();
         setConnectionError('Authentication failed - please log in again');
 
@@ -207,19 +173,16 @@ const useSocket = (user) => {
       }
 
       if (reconnectAttempts.current >= maxReconnectAttempts) {
-        console.error('❌ Max reconnection attempts reached');
         setConnectionError('Failed to connect after multiple attempts');
       }
     });
 
     newSocket.on('reconnect', (attemptNumber) => {
-      console.log(`🔄 Socket reconnected after ${attemptNumber} attempts`);
       setIsConnected(true);
       setConnectionError(null);
     });
 
     newSocket.on('reconnect_failed', () => {
-      console.error('❌ Socket reconnection failed');
       setConnectionError('Reconnection failed');
     });
 
@@ -238,7 +201,6 @@ const useSocket = (user) => {
 
     // Enhanced message events
     newSocket.on('new_message', (messageData) => {
-      console.log('📨 Received new_message:', messageData);
       if (eventHandlers.current.has('new_message')) {
         eventHandlers.current.get('new_message')(messageData);
       }
@@ -246,7 +208,6 @@ const useSocket = (user) => {
 
     // Customer-specific events
     newSocket.on('new_merchant_message', (messageData) => {
-      console.log('📨 Received new merchant message:', messageData);
       if (eventHandlers.current.has('new_message')) {
         eventHandlers.current.get('new_message')(messageData);
       }
@@ -257,7 +218,6 @@ const useSocket = (user) => {
     });
 
     newSocket.on('customer_chat_update', (updateData) => {
-      console.log('📋 Received customer chat update:', updateData);
       if (eventHandlers.current.has('customer_chat_update')) {
         eventHandlers.current.get('customer_chat_update')(updateData);
       }
@@ -265,7 +225,6 @@ const useSocket = (user) => {
 
     // Merchant-specific events
     newSocket.on('new_customer_message', (messageData) => {
-      console.log('📨 Received new customer message:', messageData);
       if (eventHandlers.current.has('new_message')) {
         eventHandlers.current.get('new_message')(messageData);
       }
@@ -276,14 +235,12 @@ const useSocket = (user) => {
     });
 
     newSocket.on('merchant_chat_update', (updateData) => {
-      console.log('📋 Received merchant chat update:', updateData);
       if (eventHandlers.current.has('merchant_chat_update')) {
         eventHandlers.current.get('merchant_chat_update')(updateData);
       }
     });
 
     newSocket.on('new_conversation', (conversationData) => {
-      console.log('🆕 Received new conversation notification:', conversationData);
       if (eventHandlers.current.has('new_conversation')) {
         eventHandlers.current.get('new_conversation')(conversationData);
       }
@@ -291,7 +248,6 @@ const useSocket = (user) => {
 
     // Enhanced typing events with better state management
     newSocket.on('typing_start', ({ userId, userRole, conversationId }) => {
-      console.log(`⌨️ User ${userId} (${userRole}) started typing in ${conversationId}`);
       setTypingUsers(prev => {
         const newMap = new Map(prev);
         if (!newMap.has(conversationId)) {
@@ -303,7 +259,6 @@ const useSocket = (user) => {
     });
 
     newSocket.on('typing_stop', ({ userId, userRole, conversationId }) => {
-      console.log(`⌨️ User ${userId} (${userRole}) stopped typing in ${conversationId}`);
       setTypingUsers(prev => {
         const newMap = new Map(prev);
         if (newMap.has(conversationId)) {
@@ -318,14 +273,12 @@ const useSocket = (user) => {
 
     // Message status events
     newSocket.on('message_status_update', (statusData) => {
-      console.log('📝 Received message status update:', statusData);
       if (eventHandlers.current.has('message_status_update')) {
         eventHandlers.current.get('message_status_update')(statusData);
       }
     });
 
     newSocket.on('messages_read', (readData) => {
-      console.log('📖 Received messages read event:', readData);
       if (eventHandlers.current.has('messages_read')) {
         eventHandlers.current.get('messages_read')(readData);
       }
@@ -333,7 +286,6 @@ const useSocket = (user) => {
 
     // Enhanced user status events
     newSocket.on('merchant_status_update', (statusData) => {
-      console.log('🏪 Merchant status update:', statusData);
       if (statusData.isOnline) {
         setOnlineUsers(prev => new Set([...prev, statusData.merchantId]));
       } else {
@@ -350,7 +302,6 @@ const useSocket = (user) => {
     });
 
     newSocket.on('customer_status_update', (statusData) => {
-      console.log('👤 Customer status update:', statusData);
       if (statusData.isOnline) {
         setOnlineUsers(prev => new Set([...prev, statusData.customerId]));
       } else {
@@ -368,7 +319,6 @@ const useSocket = (user) => {
 
     // System events
     newSocket.on('system_message', (systemData) => {
-      console.log('🔔 System message:', systemData);
       if (eventHandlers.current.has('system_message')) {
         eventHandlers.current.get('system_message')(systemData);
       }
@@ -377,7 +327,6 @@ const useSocket = (user) => {
     setSocket(newSocket);
 
     return () => {
-      console.log('🧹 Cleaning up socket connection');
       // Clear any typing timeouts
       typingTimeouts.current.forEach(timeout => clearTimeout(timeout));
       typingTimeouts.current.clear();
@@ -389,17 +338,13 @@ const useSocket = (user) => {
   // Join conversation
   const joinConversation = useCallback((conversationId) => {
     if (socket && isConnected) {
-      console.log(`🏠 Joining conversation: ${conversationId}`);
       socket.emit('join_conversation', conversationId);
-    } else {
-      console.log('⚠️ Cannot join conversation - socket not connected');
     }
   }, [socket, isConnected]);
 
   // Leave conversation
   const leaveConversation = useCallback((conversationId) => {
     if (socket && isConnected) {
-      console.log(`🚪 Leaving conversation: ${conversationId}`);
       socket.emit('leave_conversation', conversationId);
     }
   }, [socket, isConnected]);
@@ -439,7 +384,6 @@ const useSocket = (user) => {
 
   // Event subscription with automatic cleanup
   const on = useCallback((event, handler) => {
-    console.log(`📡 Subscribing to event: ${event}`);
     eventHandlers.current.set(event, handler);
 
     if (socket) {
@@ -448,7 +392,6 @@ const useSocket = (user) => {
 
     // Return unsubscribe function
     return () => {
-      console.log(`📡 Auto-unsubscribing from event: ${event}`);
       eventHandlers.current.delete(event);
       if (socket) {
         socket.off(event, handler);
@@ -458,7 +401,6 @@ const useSocket = (user) => {
 
   // Event unsubscription
   const off = useCallback((event, handler) => {
-    console.log(`📡 Unsubscribing from event: ${event}`);
     eventHandlers.current.delete(event);
 
     if (socket) {
@@ -469,11 +411,9 @@ const useSocket = (user) => {
   // Emit custom event with connection check
   const emit = useCallback((event, data) => {
     if (socket && isConnected) {
-      console.log(`📤 Emitting event: ${event}`, data);
       socket.emit(event, data);
       return true;
     } else {
-      console.log(`⚠️ Cannot emit ${event} - socket not connected`);
       return false;
     }
   }, [socket, isConnected]);
@@ -504,7 +444,6 @@ const useSocket = (user) => {
   // Force reconnection
   const forceReconnect = useCallback(() => {
     if (socket) {
-      console.log('🔄 Forcing socket reconnection...');
       socket.disconnect();
       setTimeout(() => {
         socket.connect();

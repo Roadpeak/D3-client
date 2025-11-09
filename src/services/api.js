@@ -26,7 +26,7 @@ api.interceptors.request.use(
         }
 
         // Add API key if available
-        const apiKey = process.env.REACT_APP_API_KEY ;
+        const apiKey = process.env.REACT_APP_API_KEY;
         if (apiKey) {
             config.headers['x-api-key'] = apiKey;
         }
@@ -34,7 +34,6 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        console.error('Request interceptor error:', error);
         return Promise.reject(error);
     }
 );
@@ -277,14 +276,10 @@ export const favoritesAPI = {
             const url = API_ENDPOINTS.user.favorites + (queryParams.toString() ? `?${queryParams.toString()}` : '');
 
             const response = await api.get(url);
-            console.log('🔍 Raw favorites API response:', response.data);
 
             // Handle the actual API response structure
             const apiData = response.data;
             const favorites = apiData.favorites || apiData.data || [];
-
-            console.log('📋 Processed favorites:', favorites);
-            console.log('📊 Sample favorite structure:', favorites[0]);
 
             return {
                 success: true,
@@ -292,8 +287,6 @@ export const favoritesAPI = {
                 pagination: apiData.pagination || {}
             };
         } catch (error) {
-            console.error('❌ Error fetching favorites:', error);
-
             // If it's a 401 error, don't treat it as a failure
             if (error.response?.status === 401) {
                 return {
@@ -331,8 +324,6 @@ export const favoritesAPI = {
                 data: response.data
             };
         } catch (error) {
-            console.error('❌ Error adding to favorites:', error);
-
             // Check if it's already in favorites
             if (error.response?.status === 400 && error.response?.data?.message?.includes('already')) {
                 return {
@@ -367,7 +358,6 @@ export const favoritesAPI = {
                 data: response.data
             };
         } catch (error) {
-            console.error('❌ Error removing from favorites:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to remove from favorites'
@@ -394,7 +384,6 @@ export const favoritesAPI = {
                 data: response.data
             };
         } catch (error) {
-            console.error('❌ Error toggling favorite:', error);
             return {
                 success: false,
                 message: error.response?.data?.message || error.message || 'Failed to update favorite'
@@ -415,7 +404,6 @@ export const favoritesAPI = {
                 isFavorite: response.data.isFavorite || false
             };
         } catch (error) {
-            console.error('❌ Error checking favorite status:', error);
             return {
                 success: false,
                 isFavorite: false
@@ -432,7 +420,6 @@ export const favoritesAPI = {
                 count: response.data.count || 0
             };
         } catch (error) {
-            console.error('❌ Error fetching favorites count:', error);
             return {
                 success: false,
                 count: 0
