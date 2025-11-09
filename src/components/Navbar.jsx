@@ -345,7 +345,7 @@ const Navbar = () => {
               {/* Integrated Search Bar - uses RealTimeSearch component with transform transition */}
               <div className={`px-4 overflow-hidden transition-all duration-300 ${isScrolled ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-20 opacity-100'}`}>
                 <RealTimeSearch
-                  placeholder="What's on your list?"
+                  placeholder="Search for deals,stores?"
                   integratedMode={true}
                   onNavigate={handleSearchNavigate}
                   onStoreClick={handleStoreClick}

@@ -1,6 +1,7 @@
 {
   "short_name": "Discoun3",
   "name": "Discoun3 - Discover Book Save",
+  "description": "Discover amazing deals, book services, and save money with Discoun3",
   "icons": [
     {
       "src": "favicon.ico",
@@ -32,7 +33,14 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#4F46E5",
+  "theme_color": "#22D3EE",
   "background_color": "#ffffff",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": [
+    "shopping",
+    "lifestyle",
+    "business"
+  ],
+  "prefer_related_applications": false
 }

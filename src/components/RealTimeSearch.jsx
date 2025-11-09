@@ -447,7 +447,7 @@ const RealTimeSearch = ({
               </button>
             </div>
 
-            {/* Search Input */}
+            {/* Search Input - FIXED: Added fontSize 16px to prevent mobile zoom */}
             <form onSubmit={handleSearch} className="flex-1 min-w-0 flex items-center">
               <input
                 type="text"
@@ -456,7 +456,8 @@ const RealTimeSearch = ({
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setIsOpen(true)}
-                className="w-full h-12 px-4 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400 text-sm"
+                className="w-full h-12 px-4 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400"
+                style={{ fontSize: '16px' }}
               />
             </form>
 
@@ -514,7 +515,8 @@ const RealTimeSearch = ({
                   placeholder="Search locations..."
                   value={locationSearch}
                   onChange={(e) => setLocationSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             </div>
@@ -559,8 +561,8 @@ const RealTimeSearch = ({
                         <button
                           key={locationItem.id}
                           className={`w-full p-3.5 text-left rounded-xl transition-all duration-200 group ${isSelected
-                              ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 shadow-sm'
-                              : 'hover:bg-gray-50 border-2 border-transparent'
+                            ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 shadow-sm'
+                            : 'hover:bg-gray-50 border-2 border-transparent'
                             }`}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -571,8 +573,8 @@ const RealTimeSearch = ({
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                               {/* Location Icon */}
                               <div className={`p-2 rounded-lg flex-shrink-0 transition-all ${isSelected
-                                  ? 'bg-gradient-to-br from-blue-500 to-cyan-600'
-                                  : 'bg-gray-100 group-hover:bg-blue-100'
+                                ? 'bg-gradient-to-br from-blue-500 to-cyan-600'
+                                : 'bg-gray-100 group-hover:bg-blue-100'
                                 }`}>
                                 <MapPin className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-gray-600 group-hover:text-blue-600'}`} />
                               </div>
@@ -592,8 +594,8 @@ const RealTimeSearch = ({
                               {/* Offers Count */}
                               <div className="text-right">
                                 <div className={`text-xs font-bold px-2 py-1 rounded-full ${isSelected
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 group-hover:bg-blue-100 group-hover:text-blue-700'
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-100 text-gray-700 group-hover:bg-blue-100 group-hover:text-blue-700'
                                   }`}>
                                   {locationItem.offers}
                                 </div>
@@ -638,7 +640,7 @@ const RealTimeSearch = ({
           </div>
         )}
 
-        {/* Search Results Dropdown - keeping this the same */}
+        {/* Search Results Dropdown - Enhanced with live results */}
         {isOpen && (
           <div
             ref={resultsRef}
@@ -647,7 +649,7 @@ const RealTimeSearch = ({
             {/* Loading State */}
             {isLoading && query.trim() && (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
                 <span className="ml-2 text-gray-600">Searching...</span>
               </div>
             )}
@@ -660,7 +662,7 @@ const RealTimeSearch = ({
                   <button
                     key={index}
                     onClick={() => handleResultClick({ type: 'recent', item: searchTerm })}
-                    className={`flex items-center justify-between w-full p-2 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === index ? 'bg-red-50 border border-red-200' : ''
+                    className={`flex items-center justify-between w-full p-2 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === index ? 'bg-cyan-50 border border-cyan-200' : ''
                       }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -694,7 +696,7 @@ const RealTimeSearch = ({
                         <button
                           key={store.id}
                           onClick={() => handleResultClick({ type: 'store', item: store })}
-                          className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === globalIndex ? 'bg-red-50 border border-red-200' : ''
+                          className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === globalIndex ? 'bg-cyan-50 border border-cyan-200' : ''
                             }`}
                         >
                           <ImageWithFallback
@@ -714,7 +716,7 @@ const RealTimeSearch = ({
                               )}
                             </div>
                           </div>
-                          <div className="text-red-500 font-medium text-sm">
+                          <div className="text-blue-600 font-medium text-sm">
                             {store.cashback}
                           </div>
                         </button>
@@ -736,7 +738,7 @@ const RealTimeSearch = ({
                         <button
                           key={offer.id}
                           onClick={() => handleResultClick({ type: 'offer', item: offer })}
-                          className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === globalIndex ? 'bg-red-50 border border-red-200' : ''
+                          className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === globalIndex ? 'bg-cyan-50 border border-cyan-200' : ''
                             }`}
                         >
                           <ImageWithFallback
@@ -758,7 +760,7 @@ const RealTimeSearch = ({
                               )}
                             </div>
                           </div>
-                          <div className="text-red-500 font-medium text-sm">
+                          <div className="text-blue-600 font-medium text-sm">
                             {offer.discount}
                           </div>
                         </button>
@@ -772,7 +774,7 @@ const RealTimeSearch = ({
                   <div className="p-4 border-t border-gray-100">
                     <button
                       onClick={handleSearch}
-                      className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-2xl hover:from-red-600 hover:to-pink-600 transition-colors font-medium"
+                      className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-2 px-4 rounded-2xl hover:from-cyan-600 hover:to-blue-700 transition-colors font-medium shadow-md"
                     >
                       View All Results for "{query}"
                     </button>
@@ -816,11 +818,12 @@ const RealTimeSearch = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
-          className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-3xl focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-colors"
+          className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-3xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+          style={{ fontSize: '16px' }}
         />
         <button
           type="submit"
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-2xl hover:from-red-600 hover:to-pink-600 transition-colors"
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-2 rounded-2xl hover:from-cyan-600 hover:to-blue-700 transition-colors shadow-md"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -838,7 +841,7 @@ const RealTimeSearch = ({
         >
           {isLoading && query.trim() && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-red-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
               <span className="ml-2 text-gray-600">Searching...</span>
             </div>
           )}
