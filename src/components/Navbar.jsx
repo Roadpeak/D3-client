@@ -557,73 +557,105 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Fixed Bottom Mobile Navigation - Updated with rounded corners */}
+      {/* Fixed Bottom Mobile Navigation - Enhanced with modern design */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="bg-white border-t border-gray-200 rounded-t-3xl shadow-lg">
-          <div className="grid grid-cols-5 gap-1 px-2 py-2">
+        <div className="bg-white/95 backdrop-blur-md border-t border-gray-200/50 rounded-t-3xl shadow-2xl">
+          {/* Safe area padding for devices with bottom notch */}
+          <div className="grid grid-cols-5 gap-0 px-3 py-3 pb-safe">
             <Link
               to="/"
-              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/'
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/'
+                  ? 'text-blue-600 bg-blue-50 shadow-sm'
+                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
-              <HiHome className="w-5 h-5" />
-              <span className="text-xs font-medium">Home</span>
+              <div className={`relative transition-transform duration-300 ${location.pathname === '/' ? 'scale-110' : ''}`}>
+                <HiHome className="w-6 h-6" />
+                {location.pathname === '/' && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
+                )}
+              </div>
+              <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/' ? 'font-semibold' : ''}`}>
+                Home
+              </span>
             </Link>
 
             <Link
               to="/hotdeals"
-              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/hotdeals'
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/hotdeals'
+                  ? 'text-blue-600 bg-blue-50 shadow-sm'
+                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
-              <div className="relative">
-                <CiDiscount1 className="w-5 h-5" />
-                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-full"></div>
+              <div className={`relative transition-transform duration-300 ${location.pathname === '/hotdeals' ? 'scale-110' : ''}`}>
+                <CiDiscount1 className="w-6 h-6" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-full animate-pulse"></div>
+                {location.pathname === '/hotdeals' && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
+                )}
               </div>
-              <span className="text-xs font-medium">Deals</span>
+              <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/hotdeals' ? 'font-semibold' : ''}`}>
+                Deals
+              </span>
             </Link>
 
             <Link
               to="/stores"
-              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/stores'
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/stores'
+                  ? 'text-blue-600 bg-blue-50 shadow-sm'
+                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
-              <FaStore className="w-5 h-5" />
-              <span className="text-xs font-medium">Stores</span>
+              <div className={`relative transition-transform duration-300 ${location.pathname === '/stores' ? 'scale-110' : ''}`}>
+                <FaStore className="w-6 h-6" />
+                {location.pathname === '/stores' && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
+                )}
+              </div>
+              <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/stores' ? 'font-semibold' : ''}`}>
+                Stores
+              </span>
             </Link>
 
             <Link
               to="/requestservice"
-              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/requestservice'
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/requestservice'
+                  ? 'text-blue-600 bg-blue-50 shadow-sm'
+                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
-              <FaFire className="w-5 h-5" />
-              <span className="text-xs font-medium">SR</span>
+              <div className={`relative transition-transform duration-300 ${location.pathname === '/requestservice' ? 'scale-110' : ''}`}>
+                <FaFire className="w-6 h-6" />
+                {location.pathname === '/requestservice' && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
+                )}
+              </div>
+              <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/requestservice' ? 'font-semibold' : ''}`}>
+                SR
+              </span>
             </Link>
 
             <Link
               to="/chat"
-              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/chat'
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+              className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/chat'
+                  ? 'text-blue-600 bg-blue-50 shadow-sm'
+                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
                 }`}
             >
-              <div className="relative">
-                <IoChatbubbleEllipsesOutline className="w-5 h-5" />
+              <div className={`relative transition-transform duration-300 ${location.pathname === '/chat' ? 'scale-110' : ''}`}>
+                <IoChatbubbleEllipsesOutline className="w-6 h-6" />
                 {unreadChatCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
+                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-white font-semibold shadow-lg animate-pulse">
                     {unreadChatCount > 9 ? '9+' : unreadChatCount}
                   </span>
                 )}
+                {location.pathname === '/chat' && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
+                )}
               </div>
-              <span className="text-xs font-medium">Chat</span>
+              <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/chat' ? 'font-semibold' : ''}`}>
+                Chat
+              </span>
             </Link>
           </div>
         </div>
