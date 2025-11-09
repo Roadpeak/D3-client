@@ -63,9 +63,6 @@ const Navbar = () => {
   // State management
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [hideSearch, setHideSearch] = useState(false);
 
   // User and authentication state
   const [user, setUser] = useState(null);
@@ -75,6 +72,10 @@ const Navbar = () => {
   // Chat count state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
+  // Scroll state for mobile navbar
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
   const navigate = useNavigate();
   const location = useRouterLocation();
 
@@ -82,6 +83,30 @@ const Navbar = () => {
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Handle scroll detection for mobile navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // If scrolling down and past 50px, hide search bar
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsScrolled(true);
+      }
+      // If scrolling up, show search bar
+      else if (currentScrollY < lastScrollY) {
+        setIsScrolled(false);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
 
   const checkAuthStatus = async () => {
     try {
@@ -173,34 +198,6 @@ const Navbar = () => {
     };
   }, [isAuthenticated]);
 
-  // Handle scroll to hide/show search bar on mobile
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      // Only apply on mobile (screens smaller than lg breakpoint)
-      if (window.innerWidth >= 1024) {
-        setHideSearch(false);
-        return;
-      }
-
-      // If scrolling down and past 50px, hide search
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setHideSearch(true);
-      }
-      // If scrolling up, show search
-      else if (currentScrollY < lastScrollY) {
-        setHideSearch(false);
-      }
-
-      setLastScrollY(currentScrollY);
-      setIsScrolled(currentScrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
-
   // Event handlers
   const toggleLocation = () => setIsLocationOpen(!isLocationOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
@@ -280,7 +277,7 @@ const Navbar = () => {
           {/* Mobile Top Header */}
           <div className="lg:hidden">
             {/* Cyan-to-blue gradient section covering welcome and search - extends edge-to-edge */}
-            <div className={`bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 transition-all duration-300 ${hideSearch ? 'pb-0' : 'pb-4'}`}>
+            <div className={`bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 rounded-b-3xl shadow-lg relative transition-all duration-300 ${isScrolled ? 'pb-3' : 'pb-2'}`}>
               {/* User Welcome Section */}
               <div className="flex items-center justify-between py-3 px-4">
                 {/* Left Side - Logo */}
@@ -348,11 +345,8 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* Integrated Search Bar - uses RealTimeSearch component */}
-              <div className={`px-4 overflow-hidden transition-all duration-300 ${hideSearch
-                  ? 'max-h-0 opacity-0 transform -translate-y-2'
-                  : 'max-h-20 opacity-100 transform translate-y-0'
-                }`}>
+              {/* Integrated Search Bar - uses RealTimeSearch component with transform transition */}
+              <div className={`px-4 overflow-hidden transition-all duration-300 ${isScrolled ? 'max-h-0 opacity-0 pointer-events-none' : 'max-h-20 opacity-100'}`}>
                 <RealTimeSearch
                   placeholder="What's on your list?"
                   integratedMode={true}
@@ -563,73 +557,75 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Fixed Bottom Mobile Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
-        <div className="grid grid-cols-5 gap-1 px-2 py-2">
-          <Link
-            to="/"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
-              }`}
-          >
-            <HiHome className="w-5 h-5" />
-            <span className="text-xs font-medium">Home</span>
-          </Link>
+      {/* Fixed Bottom Mobile Navigation - Updated with rounded corners */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+        <div className="bg-white border-t border-gray-200 rounded-t-3xl shadow-lg">
+          <div className="grid grid-cols-5 gap-1 px-2 py-2">
+            <Link
+              to="/"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                }`}
+            >
+              <HiHome className="w-5 h-5" />
+              <span className="text-xs font-medium">Home</span>
+            </Link>
 
-          <Link
-            to="/hotdeals"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/hotdeals'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
-              }`}
-          >
-            <div className="relative">
-              <CiDiscount1 className="w-5 h-5" />
-              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-full"></div>
-            </div>
-            <span className="text-xs font-medium">Deals</span>
-          </Link>
+            <Link
+              to="/hotdeals"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/hotdeals'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                }`}
+            >
+              <div className="relative">
+                <CiDiscount1 className="w-5 h-5" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-gradient-to-r from-red-500 to-orange-500 rounded-full"></div>
+              </div>
+              <span className="text-xs font-medium">Deals</span>
+            </Link>
 
-          <Link
-            to="/stores"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/stores'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
-              }`}
-          >
-            <FaStore className="w-5 h-5" />
-            <span className="text-xs font-medium">Stores</span>
-          </Link>
+            <Link
+              to="/stores"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/stores'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                }`}
+            >
+              <FaStore className="w-5 h-5" />
+              <span className="text-xs font-medium">Stores</span>
+            </Link>
 
-          <Link
-            to="/requestservice"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/requestservice'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
-              }`}
-          >
-            <FaFire className="w-5 h-5" />
-            <span className="text-xs font-medium">SR</span>
-          </Link>
+            <Link
+              to="/requestservice"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/requestservice'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                }`}
+            >
+              <FaFire className="w-5 h-5" />
+              <span className="text-xs font-medium">SR</span>
+            </Link>
 
-          <Link
-            to="/chat"
-            className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/chat'
-              ? 'text-blue-600 bg-blue-50'
-              : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
-              }`}
-          >
-            <div className="relative">
-              <IoChatbubbleEllipsesOutline className="w-5 h-5" />
-              {unreadChatCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
-                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
-                </span>
-              )}
-            </div>
-            <span className="text-xs font-medium">Chat</span>
-          </Link>
+            <Link
+              to="/chat"
+              className={`flex flex-col items-center space-y-1 px-2 py-2 rounded-xl transition-all duration-300 ${location.pathname === '/chat'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                }`}
+            >
+              <div className="relative">
+                <IoChatbubbleEllipsesOutline className="w-5 h-5" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
+                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs font-medium">Chat</span>
+            </Link>
+          </div>
         </div>
       </div>
     </>
