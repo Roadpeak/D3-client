@@ -72,8 +72,6 @@ const PopularListings = () => {
           status: 'active'
         });
 
-        console.log('API Response:', response);
-
         if (response.success) {
           const transformedDeals = (response.offers || response.data || []).map(offer => {
             const originalPrice = offer.service?.price || 100;
@@ -106,14 +104,11 @@ const PopularListings = () => {
           const activeDeals = transformedDeals.filter(deal => !isOfferExpired(deal.expiration_date));
           const displayDeals = activeDeals.slice(0, 8);
 
-          console.log(`📋 Total deals received: ${transformedDeals.length}, Active deals: ${activeDeals.length}, Displaying: ${displayDeals.length}`);
-
           setDeals(displayDeals);
         } else {
           setError(response.message || 'Failed to fetch deals');
         }
       } catch (err) {
-        console.error('Error fetching deals:', err);
         setError(err.message || 'Network error occurred while fetching deals');
       } finally {
         setLoading(false);
@@ -204,8 +199,8 @@ const PopularListings = () => {
           {/* Favorite Button */}
           <button
             className={`absolute top-2 right-2 p-1.5 md:p-2 rounded-full transition-all duration-200 shadow-lg ${isOfferFavorited
-                ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-blue-500'
+              ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+              : 'bg-white/90 text-gray-600 hover:bg-white hover:text-blue-500'
               } ${!isAuthenticated || !favoritesInitialized
                 ? 'cursor-not-allowed opacity-50'
                 : 'cursor-pointer'
@@ -260,15 +255,6 @@ const PopularListings = () => {
                 <span className="text-gray-400 line-through text-xs">{deal.originalPrice}</span>
               )}
             </div>
-            <button
-              className="px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-semibold transition-all bg-white text-blue-600 border border-blue-600 hover:bg-blue-50 active:scale-95 shadow-sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDealClick(deal.id);
-              }}
-            >
-              Get Deal
-            </button>
           </div>
         </div>
       </div>

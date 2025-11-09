@@ -69,9 +69,10 @@ const StoreLogo = ({
 };
 
 export default function Hotdeals() {
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('grid'); // Default to grid
   const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -191,7 +192,6 @@ export default function Hotdeals() {
       setCategories(updatedCategories);
 
     } catch (err) {
-      console.error('Error fetching offers:', err);
       setError(`Failed to fetch offers: ${err.message || 'Unknown error'}`);
 
       // Add retry logic for network errors
@@ -334,8 +334,8 @@ export default function Hotdeals() {
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      {/* Navigation */}
-      <div className="bg-white border-b border-gray-100">
+      {/* Navigation - Hidden on mobile, visible on desktop */}
+      <div className="hidden md:block bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
@@ -350,15 +350,6 @@ export default function Hotdeals() {
                 }
               </span>
             </div>
-
-            {/* Mobile Filter Button */}
-            <button
-              className="md:hidden flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-lg transition-colors"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            >
-              <Filter size={14} />
-              Filters
-            </button>
           </div>
         </div>
       </div>
@@ -408,28 +399,12 @@ export default function Hotdeals() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
-          {/* Sidebar */}
-          <aside className={`
-            ${isSidebarOpen ? 'block fixed inset-0 z-50 bg-white overflow-y-auto' : 'hidden'}
-            md:block w-full md:w-64 flex-shrink-0
-          `}>
-            {/* Mobile Close Button */}
-            {isSidebarOpen && (
-              <div className="md:hidden flex justify-between items-center p-4 border-b">
-                <h2 className="text-lg font-medium">Filters</h2>
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            )}
-
-            <div className="p-4 md:p-0 space-y-6">
+          {/* Desktop Sidebar - Keep as is */}
+          <aside className="hidden md:block w-64 flex-shrink-0">
+            <div className="space-y-6">
               {/* Location Info */}
               {currentLocation && currentLocation !== 'All Locations' && (
-                <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                <div className="bg-blue-50 rounded-lg p-4">
                   <div className="flex items-center gap-2 text-blue-600 mb-2">
                     <MapPin size={16} />
                     <h3 className="font-medium text-sm">Current Location</h3>
@@ -515,7 +490,7 @@ export default function Hotdeals() {
               </div>
 
               {/* Promo Card */}
-              <div className="mt-6 hidden md:block">
+              <div className="mt-6">
                 <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg p-5 text-white shadow-sm">
                   <h3 className="text-lg font-medium mb-2">Special Offers</h3>
                   <p className="text-sm text-blue-100 mb-3">Exclusive deals just for you</p>
@@ -530,51 +505,141 @@ export default function Hotdeals() {
             </div>
           </aside>
 
-          {/* Sidebar Overlay */}
-          {isSidebarOpen && (
-            <div
-              className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
-              onClick={() => setIsSidebarOpen(false)}
-            />
+          {/* Mobile Filter Modal */}
+          {isFilterModalOpen && (
+            <>
+              {/* Overlay */}
+              <div
+                className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                onClick={() => setIsFilterModalOpen(false)}
+              />
+
+              {/* Modal */}
+              <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[80vh] overflow-y-auto">
+                {/* Modal Header */}
+                <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex justify-between items-center rounded-t-3xl">
+                  <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+                  <button
+                    onClick={() => setIsFilterModalOpen(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-4 space-y-6">
+                  {/* Location Info */}
+                  {currentLocation && currentLocation !== 'All Locations' && (
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-blue-600 mb-2">
+                        <MapPin size={16} />
+                        <h3 className="font-medium text-sm">Current Location</h3>
+                      </div>
+                      <p className="text-blue-800 font-medium">{getShortLocationName()}</p>
+                      <p className="text-xs text-blue-500 mt-1">
+                        Showing deals in your selected area
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Categories */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-gray-800">Categories</h3>
+                      {selectedCategory && (
+                        <button
+                          onClick={() => setSelectedCategory('')}
+                          className="text-sm text-blue-500 hover:text-blue-700"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          handleCategoryChange('');
+                          setIsFilterModalOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${!selectedCategory
+                          ? 'bg-blue-50 text-blue-600 font-medium'
+                          : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                          }`}
+                      >
+                        <span>All Categories</span>
+                        <span className="text-sm bg-white px-2 py-1 rounded-full">
+                          {offers.length}
+                        </span>
+                      </button>
+                      {categories.map((category, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            handleCategoryChange(category.name);
+                            setIsFilterModalOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${selectedCategory === category.name
+                            ? 'bg-blue-50 text-blue-600 font-medium'
+                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                            }`}
+                        >
+                          <span>{category.name}</span>
+                          <span className="text-sm bg-white px-2 py-1 rounded-full">
+                            {category.count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-4">
+                  <button
+                    onClick={() => setIsFilterModalOpen(false)}
+                    className="w-full bg-blue-500 text-white font-medium py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </>
           )}
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* View Controls */}
-            <div className="mb-6 flex justify-between">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg transition-colors ${viewMode === 'list'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
-                  aria-label="List view"
-                >
-                  <List size={16} />
-                </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-colors ${viewMode === 'grid'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
-                  aria-label="Grid view"
-                >
-                  <Grid size={16} />
-                </button>
-              </div>
+            {/* View Controls - Reorganized for Mobile */}
+            <div className="mb-6 flex items-center justify-between gap-2">
+              {/* Left: View Mode + Sort */}
+              <div className="flex items-center gap-2">
+                {/* View Mode Buttons */}
+                <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-md transition-colors ${viewMode === 'list'
+                      ? 'bg-white text-blue-500 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    aria-label="List view"
+                  >
+                    <List size={18} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-md transition-colors ${viewMode === 'grid'
+                      ? 'bg-white text-blue-500 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    aria-label="Grid view"
+                  >
+                    <Grid size={18} />
+                  </button>
+                </div>
 
-              {pagination.totalItems > 0 && (
-                <span className="hidden md:block text-sm text-gray-500">
-                  Showing {Math.min((currentPage - 1) * pagination.itemsPerPage + 1, pagination.totalItems)} - {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} deals
-                </span>
-              )}
-
-              {/* Sort dropdown for mobile */}
-              <div className="md:hidden">
+                {/* Sort Dropdown */}
                 <select
-                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
                   value={sortBy}
                   onChange={(e) => handleSortChange(e.target.value)}
                 >
@@ -584,7 +649,25 @@ export default function Hotdeals() {
                   <option value="price_high_low">Price: High to Low</option>
                 </select>
               </div>
+
+              {/* Right: Filter Button */}
+              <button
+                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors font-medium"
+                onClick={() => setIsFilterModalOpen(true)}
+              >
+                <Filter size={18} />
+                <span className="hidden sm:inline">Filter</span>
+              </button>
             </div>
+
+            {/* Desktop Item Count */}
+            {pagination.totalItems > 0 && (
+              <div className="hidden md:block mb-4">
+                <span className="text-sm text-gray-500">
+                  Showing {Math.min((currentPage - 1) * pagination.itemsPerPage + 1, pagination.totalItems)} - {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} deals
+                </span>
+              </div>
+            )}
 
             {/* Loading indicator for pagination */}
             {loading && offers.length > 0 && (
@@ -600,7 +683,7 @@ export default function Hotdeals() {
             <div className={`
               grid gap-4 mb-8 
               ${viewMode === 'grid'
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                ? 'grid-cols-2 lg:grid-cols-3'
                 : 'grid-cols-1'
               }
             `}>
@@ -626,7 +709,7 @@ export default function Hotdeals() {
                         }}
                       />
 
-                      {/* Favorite button - simplified */}
+                      {/* Favorite button */}
                       <button
                         className={`
                           absolute top-3 right-3 p-2 rounded-full transition-all duration-200
@@ -645,7 +728,7 @@ export default function Hotdeals() {
                         />
                       </button>
 
-                      {/* Category badge - simplified */}
+                      {/* Category badge */}
                       <div className="absolute bottom-3 left-3">
                         <span className="bg-blue-500/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs">
                           {offer.category}
@@ -654,7 +737,7 @@ export default function Hotdeals() {
                     </div>
 
                     <div className={`p-4 flex flex-col ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
-                      {/* Store info - simplified */}
+                      {/* Store info */}
                       <div className="flex items-center gap-2 mb-3">
                         <StoreLogo
                           logoUrl={offer.store?.googleLogo}
@@ -669,7 +752,7 @@ export default function Hotdeals() {
                       <h3 className="font-medium text-gray-800 mb-2 line-clamp-1">{offer.title}</h3>
                       <p className="text-sm text-gray-500 mb-3 line-clamp-2">{offer.description}</p>
 
-                      {/* Price and discount - cleaner display */}
+                      {/* Price and discount */}
                       {offer.originalPrice > 0 && (
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
                           <span className="text-lg font-medium text-gray-900">
@@ -684,10 +767,10 @@ export default function Hotdeals() {
                         </div>
                       )}
 
-                      {/* Clean CTA button */}
+                      {/* CTA button */}
                       <div className="mt-auto pt-2">
                         <button
-                          className="w-full bg-red-500 hover:bg-gray-100 text-white font-medium py-2 rounded-lg text-sm transition-colors"
+                          className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg text-sm transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOfferClick(offer);
@@ -744,7 +827,7 @@ export default function Hotdeals() {
               </div>
             )}
 
-            {/* Pagination - Simplified and modern */}
+            {/* Pagination */}
             {pagination.totalPages > 1 && (
               <nav className="flex flex-col items-center space-y-3 mt-8">
                 <div className="flex items-center justify-center space-x-1">
@@ -819,7 +902,7 @@ export default function Hotdeals() {
               </nav>
             )}
 
-            {/* Location Stats - Simplified */}
+            {/* Location Stats */}
             {!loading && (
               <div className="mt-8 bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
                 <div className="flex flex-wrap items-center justify-between gap-y-2">
@@ -849,7 +932,7 @@ export default function Hotdeals() {
         </div>
       </div>
 
-      {/* Simplified Banner */}
+      {/* Banner */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 py-12">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="flex flex-col items-center">

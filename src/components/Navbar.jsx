@@ -35,17 +35,16 @@ const Navbar = () => {
     try {
       return useLocation();
     } catch (error) {
-      console.warn('LocationProvider not found, using minimal fallback');
       return {
         currentLocation: 'All Locations',
         isLocationLoading: false,
         availableLocations: [],
         changeLocation: async (location) => {
-          console.log('Fallback: changing location to', location);
+          // Fallback: changing location
         },
         getShortLocationName: () => 'All Locations',
         getCurrentLocationFromBrowser: async () => {
-          console.log('Fallback: getting current location');
+          // Fallback: getting current location
         }
       };
     }
@@ -122,7 +121,6 @@ const Navbar = () => {
         }
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
       setIsAuthenticated(false);
       setUser(null);
     } finally {
@@ -156,7 +154,6 @@ const Navbar = () => {
         setUnreadChatCount(0);
       }
     } catch (error) {
-      console.error('Error loading unread chat messages:', error);
       setUnreadChatCount(0);
     }
   };
@@ -231,7 +228,7 @@ const Navbar = () => {
 
       window.dispatchEvent(locationChangeEvent);
     } catch (error) {
-      console.error('Navbar: Error changing location:', error);
+      // Error changing location
     }
   };
 
@@ -240,7 +237,7 @@ const Navbar = () => {
       await getCurrentLocationFromBrowser();
       setIsLocationOpen(false);
     } catch (error) {
-      console.error('Error getting current location:', error);
+      // Error getting current location
     }
   };
 
@@ -565,15 +562,12 @@ const Navbar = () => {
             <Link
               to="/"
               className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/'
-                  ? 'text-blue-600 bg-blue-50 shadow-sm'
-                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600'
+                  : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/' ? 'scale-110' : ''}`}>
                 <HiHome className="w-6 h-6" />
-                {location.pathname === '/' && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
-                )}
               </div>
               <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/' ? 'font-semibold' : ''}`}>
                 Home
@@ -583,16 +577,13 @@ const Navbar = () => {
             <Link
               to="/hotdeals"
               className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/hotdeals'
-                  ? 'text-blue-600 bg-blue-50 shadow-sm'
-                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600'
+                  : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/hotdeals' ? 'scale-110' : ''}`}>
                 <CiDiscount1 className="w-6 h-6" />
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-full animate-pulse"></div>
-                {location.pathname === '/hotdeals' && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
-                )}
               </div>
               <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/hotdeals' ? 'font-semibold' : ''}`}>
                 Deals
@@ -602,15 +593,12 @@ const Navbar = () => {
             <Link
               to="/stores"
               className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/stores'
-                  ? 'text-blue-600 bg-blue-50 shadow-sm'
-                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600'
+                  : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/stores' ? 'scale-110' : ''}`}>
                 <FaStore className="w-6 h-6" />
-                {location.pathname === '/stores' && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
-                )}
               </div>
               <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/stores' ? 'font-semibold' : ''}`}>
                 Stores
@@ -620,15 +608,12 @@ const Navbar = () => {
             <Link
               to="/requestservice"
               className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/requestservice'
-                  ? 'text-blue-600 bg-blue-50 shadow-sm'
-                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600'
+                  : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/requestservice' ? 'scale-110' : ''}`}>
                 <FaFire className="w-6 h-6" />
-                {location.pathname === '/requestservice' && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
-                )}
               </div>
               <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/requestservice' ? 'font-semibold' : ''}`}>
                 SR
@@ -638,19 +623,16 @@ const Navbar = () => {
             <Link
               to="/chat"
               className={`flex flex-col items-center justify-center space-y-1.5 px-3 py-2.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/chat'
-                  ? 'text-blue-600 bg-blue-50 shadow-sm'
-                  : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
+                  ? 'text-blue-600'
+                  : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/chat' ? 'scale-110' : ''}`}>
                 <IoChatbubbleEllipsesOutline className="w-6 h-6" />
                 {unreadChatCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-white font-semibold shadow-lg animate-pulse">
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-white font-semibold shadow-lg animate-pulse">
                     {unreadChatCount > 9 ? '9+' : unreadChatCount}
                   </span>
-                )}
-                {location.pathname === '/chat' && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-600 rounded-full"></div>
                 )}
               </div>
               <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/chat' ? 'font-semibold' : ''}`}>

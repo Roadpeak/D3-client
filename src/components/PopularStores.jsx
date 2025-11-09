@@ -124,13 +124,9 @@ const PopularStores = () => {
           limit: 8
         };
 
-        console.log('Fetching stores with filters:', filters);
         const response = await ApiService.getStores(filters);
-        console.log('API response:', response);
 
         if (response.success && response.stores) {
-          console.log('Successfully fetched stores:', response.stores.length);
-
           // Sort by review count if available, otherwise by rating
           const sortedStores = response.stores
             .sort((a, b) => {
