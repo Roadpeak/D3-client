@@ -55,7 +55,7 @@ function InstallPrompt() {
       <div className="flex gap-2 mt-4">
         <button
           onClick={handleInstall}
-          className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-2.5 rounded-xl hover:from-cyan-600 hover:to-blue-700 text-sm font-semibold shadow-md transition-all duration-200 active:scale-95"
+          className="flex-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-blue-600 text-white px-4 py-2.5 rounded-xl hover:from-cyan-500 hover:via-blue-600 hover:to-blue-700 text-sm font-semibold shadow-md transition-all duration-200 active:scale-95"
         >
           Install Now
         </button>
