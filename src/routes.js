@@ -46,27 +46,15 @@ import PrivacyPolicy from './components/PrivacyPolicy'
 import AboutUs from './components/AboutUs'
 import SearchResultsPage from './components/SearchResultsPage'
 
-// Route Change Handler Component
+// Route Change Handler Component - OPTIMIZED to prevent navbar flash
 const RouteChangeHandler = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Option 1: Soft refresh - scroll to top and clear some cached data
-    window.scrollTo(0, 0);
+    // Use instant scroll to prevent any flash
+    window.scrollTo({ top: 0, behavior: 'instant' });
 
-    // Clear any cached data if needed
-    // localStorage.removeItem('cachedData'); // Example
-
-    // Option 2: Force full page refresh (uncomment if you really need this)
-    // Note: This will slow down your app and break SPA behavior
-    // if (location.pathname !== '/') {
-    //   setTimeout(() => {
-    //     window.location.reload();
-    //   }, 100);
-    // }
-
-    // Option 3: Trigger custom refresh events
-    window.dispatchEvent(new Event('routeChanged'));
+    // Removed routeChanged event dispatch as it was causing re-renders
 
   }, [location.pathname]);
 

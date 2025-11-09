@@ -1,5 +1,5 @@
 // components/Navbar.jsx - Modernized with professional mobile design
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import RealTimeSearch from './RealTimeSearch';
@@ -215,6 +215,94 @@ const Navbar = () => {
 
   const currentLocationDisplay = getShortLocationName();
 
+  // Memoize mobile navbar to prevent re-renders
+  const mobileNavbar = useMemo(() => (
+    <div className="lg:hidden bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 rounded-b-3xl shadow-lg transition-opacity duration-200 opacity-100" style={{ willChange: 'opacity' }}>
+      {/* Cyan-to-blue gradient section covering welcome and search - extends edge-to-edge */}
+      <div className="pb-2 relative">
+        {/* User Welcome Section */}
+        <div className="flex items-center justify-between py-3 px-4">
+          {/* Left Side - Logo */}
+          <div className="flex items-center">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm p-1.5 shadow-lg flex items-center justify-center">
+              <div className="flex flex-col items-center justify-center">
+                <span className="text-white font-bold text-lg leading-none tracking-tight">D3</span>
+                <svg
+                  className="w-6 h-2 text-yellow-400 mt-0.5"
+                  viewBox="0 0 24 8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <path d="M2 2 Q 12 8, 22 2" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side - Notification Icon and Profile */}
+          <div className="flex items-center space-x-3">
+            {/* Notification Icon */}
+            {isAuthenticated ? (
+              <NotificationButton
+                isMobile={true}
+                isAuthenticated={isAuthenticated}
+              />
+            ) : (
+              <Link
+                to="/accounts/sign-in"
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 transition-all duration-200 relative shadow-md"
+              >
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </Link>
+            )}
+
+            {/* Profile Avatar */}
+            {isAuthenticated && user ? (
+              <Link to="/profile" className="flex-shrink-0">
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/20 shadow-md"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/20 shadow-md">
+                    <span className="text-white text-sm font-semibold">
+                      {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <Link to="/accounts/sign-in" className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/20 shadow-md">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+              </Link>
+            )}
+          </div>
+        </div>
+
+        {/* Integrated Search Bar - uses RealTimeSearch component */}
+        <div className="px-4">
+          <RealTimeSearch
+            placeholder="Search for Deals & Stores?"
+            integratedMode={true}
+            onNavigate={handleSearchNavigate}
+            onStoreClick={handleStoreClick}
+            onOfferClick={handleOfferClick}
+            className="w-full"
+          />
+        </div>
+      </div>
+      {/* End of blue gradient section */}
+    </div>
+  ), [isAuthenticated, user, handleSearchNavigate, handleStoreClick, handleOfferClick]);
+
   // Loading state
   if (loading || isLocationLoading) {
     return (
@@ -241,93 +329,10 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="bg-white shadow-sm sticky top-0 z-40">
+      <header className="bg-white shadow-sm sticky top-0 z-40 transition-all duration-200">
         <div className="container mx-auto lg:px-4">
           {/* Mobile Top Header */}
-          <div className="lg:hidden bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 rounded-b-3xl shadow-lg">
-            {/* Cyan-to-blue gradient section covering welcome and search - extends edge-to-edge */}
-            <div className="pb-2 relative">
-              {/* User Welcome Section */}
-              <div className="flex items-center justify-between py-3 px-4">
-                {/* Left Side - Logo */}
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm p-1.5 shadow-lg flex items-center justify-center">
-                    <div className="flex flex-col items-center justify-center">
-                      <span className="text-white font-bold text-lg leading-none tracking-tight">D3</span>
-                      <svg
-                        className="w-6 h-2 text-yellow-400 mt-0.5"
-                        viewBox="0 0 24 8"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                      >
-                        <path d="M2 2 Q 12 8, 22 2" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Side - Notification Icon and Profile */}
-                <div className="flex items-center space-x-3">
-                  {/* Notification Icon */}
-                  {isAuthenticated ? (
-                    <NotificationButton
-                      isMobile={true}
-                      isAuthenticated={isAuthenticated}
-                    />
-                  ) : (
-                    <Link
-                      to="/accounts/sign-in"
-                      className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 transition-all duration-200 relative shadow-md"
-                    >
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                    </Link>
-                  )}
-
-                  {/* Profile Avatar */}
-                  {isAuthenticated && user ? (
-                    <Link to="/profile" className="flex-shrink-0">
-                      {user.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt="Profile"
-                          className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/20 shadow-md"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/20 shadow-md">
-                          <span className="text-white text-sm font-semibold">
-                            {user.firstName?.charAt(0)?.toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      )}
-                    </Link>
-                  ) : (
-                    <Link to="/accounts/sign-in" className="flex-shrink-0">
-                      <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-2 ring-white/20 shadow-md">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                    </Link>
-                  )}
-                </div>
-              </div>
-
-              {/* Integrated Search Bar - uses RealTimeSearch component */}
-              <div className="px-4">
-                <RealTimeSearch
-                  placeholder="Search for Deals & Stores?"
-                  integratedMode={true}
-                  onNavigate={handleSearchNavigate}
-                  onStoreClick={handleStoreClick}
-                  onOfferClick={handleOfferClick}
-                  className="w-full"
-                />
-              </div>
-            </div>
-            {/* End of blue gradient section */}
-          </div>
+          {mobileNavbar}
 
           {/* Desktop Header */}
           <div className="hidden lg:block">

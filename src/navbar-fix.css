@@ -1,0 +1,63 @@
+/* Navbar Flash Prevention Styles */
+
+/* Prevent layout shift during navigation */
+header {
+    contain: layout style paint;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: auto;
+}
+
+/* Force GPU acceleration for smoother transitions */
+@media (max-width: 1023px) {
+    header>div {
+        transform: translate3d(0, 0, 0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+
+    /* Prevent mobile navbar from flashing */
+    header .lg\:hidden {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+}
+
+/* Ensure navbar is always on top and painted correctly */
+header {
+    isolation: isolate;
+    z-index: 40;
+    position: sticky;
+    top: 0;
+}
+
+/* Prevent any flickering during route changes */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Optimize rendering performance */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent white flash on navigation */
+html,
+body {
+    background-color: #ffffff;
+}
+
+/* Ensure smooth page transitions */
+#root {
+    isolation: isolate;
+}
+
+/* Force hardware acceleration on navigation links */
+a {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
