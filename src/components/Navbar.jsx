@@ -317,85 +317,16 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* Search Bar Section with integrated location */}
+              {/* Integrated Search Bar - uses RealTimeSearch component */}
               <div className="px-4">
-                <div className="relative flex items-center space-x-2">
-                  {/* Search Input */}
-                  <div className="flex-1">
-                    <RealTimeSearch
-                      placeholder="What's on your list?"
-                      onNavigate={handleSearchNavigate}
-                      onStoreClick={handleStoreClick}
-                      onOfferClick={handleOfferClick}
-                    />
-                  </div>
-
-                  {/* Location Button */}
-                  <div className="relative flex-shrink-0">
-                    <button
-                      onClick={toggleLocation}
-                      className="flex items-center justify-center w-11 h-11 rounded-full bg-white hover:bg-gray-50 transition-all duration-200 shadow-md"
-                    >
-                      <MapPin className="w-5 h-5 text-gray-700" />
-                    </button>
-
-                    {/* Location Dropdown */}
-                    {isLocationOpen && availableLocations.length > 0 && (
-                      <div className="absolute top-14 right-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-xl shadow-lg z-50">
-                        <div className="p-4 border-b border-gray-200/50 bg-gray-50/50">
-                          <h3 className="text-sm font-semibold text-gray-800">Choose Your Location</h3>
-                          <p className="text-xs text-gray-600 mt-1">Find the best deals near you</p>
-                        </div>
-                        <div className="max-h-64 overflow-y-auto">
-                          {availableLocations.map((locationItem) => (
-                            <button
-                              key={locationItem.id}
-                              className="w-full p-4 text-left hover:bg-gray-50 border-b border-gray-100/50 last:border-b-0 transition-all duration-200"
-                              onClick={() => handleLocationSelect(locationItem)}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">{locationItem.name}</p>
-                                  <p className="text-xs text-gray-500">{locationItem.area}</p>
-                                </div>
-                                <div className="text-right">
-                                  {locationItem.name === currentLocation && (
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full mb-1"></div>
-                                  )}
-                                  <p className="text-xs text-blue-600 font-medium">{locationItem.offers}</p>
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                        <div className="p-4 border-t border-gray-200/50 bg-gray-50/50">
-                          <button
-                            onClick={handleUseCurrentLocation}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 transition-colors"
-                          >
-                            <MapPin className="w-4 h-4" />
-                            <span>Use My Current Location</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {isLocationOpen && availableLocations.length === 0 && (
-                      <div className="absolute top-14 right-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-xl shadow-lg z-50">
-                        <div className="p-4 text-center">
-                          <p className="text-sm text-gray-600">Loading locations...</p>
-                          <button
-                            onClick={handleUseCurrentLocation}
-                            className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
-                          >
-                            <MapPin className="w-4 h-4" />
-                            <span>Use My Current Location</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <RealTimeSearch
+                  placeholder="What's on your list?"
+                  integratedMode={true}
+                  onNavigate={handleSearchNavigate}
+                  onStoreClick={handleStoreClick}
+                  onOfferClick={handleOfferClick}
+                  className="w-full"
+                />
               </div>
             </div>
             {/* End of blue gradient section */}
