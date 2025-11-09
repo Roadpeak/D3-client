@@ -63,6 +63,9 @@ const Navbar = () => {
   // State management
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [hideSearch, setHideSearch] = useState(false);
 
   // User and authentication state
   const [user, setUser] = useState(null);
@@ -170,6 +173,34 @@ const Navbar = () => {
     };
   }, [isAuthenticated]);
 
+  // Handle scroll to hide/show search bar on mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Only apply on mobile (screens smaller than lg breakpoint)
+      if (window.innerWidth >= 1024) {
+        setHideSearch(false);
+        return;
+      }
+
+      // If scrolling down and past 50px, hide search
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setHideSearch(true);
+      }
+      // If scrolling up, show search
+      else if (currentScrollY < lastScrollY) {
+        setHideSearch(false);
+      }
+
+      setLastScrollY(currentScrollY);
+      setIsScrolled(currentScrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   // Event handlers
   const toggleLocation = () => setIsLocationOpen(!isLocationOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
@@ -249,7 +280,7 @@ const Navbar = () => {
           {/* Mobile Top Header */}
           <div className="lg:hidden">
             {/* Cyan-to-blue gradient section covering welcome and search - extends edge-to-edge */}
-            <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 pb-4">
+            <div className={`bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 transition-all duration-300 ${hideSearch ? 'pb-0' : 'pb-4'}`}>
               {/* User Welcome Section */}
               <div className="flex items-center justify-between py-3 px-4">
                 {/* Left Side - Logo */}
@@ -318,7 +349,10 @@ const Navbar = () => {
               </div>
 
               {/* Integrated Search Bar - uses RealTimeSearch component */}
-              <div className="px-4">
+              <div className={`px-4 overflow-hidden transition-all duration-300 ${hideSearch
+                  ? 'max-h-0 opacity-0 transform -translate-y-2'
+                  : 'max-h-20 opacity-100 transform translate-y-0'
+                }`}>
                 <RealTimeSearch
                   placeholder="What's on your list?"
                   integratedMode={true}
