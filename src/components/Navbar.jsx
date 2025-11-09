@@ -218,7 +218,7 @@ const Navbar = () => {
   // Loading state
   if (loading || isLocationLoading) {
     return (
-      <header className="bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
+      <header className="bg-white shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center space-x-3">
@@ -241,12 +241,12 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
+      <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="container mx-auto lg:px-4">
           {/* Mobile Top Header */}
-          <div className="lg:hidden">
+          <div className="lg:hidden bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 rounded-b-3xl shadow-lg">
             {/* Cyan-to-blue gradient section covering welcome and search - extends edge-to-edge */}
-            <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 pb-2 rounded-b-3xl shadow-lg relative">
+            <div className="pb-2 relative">
               {/* User Welcome Section */}
               <div className="flex items-center justify-between py-3 px-4">
                 {/* Left Side - Logo */}
@@ -317,7 +317,7 @@ const Navbar = () => {
               {/* Integrated Search Bar - uses RealTimeSearch component */}
               <div className="px-4">
                 <RealTimeSearch
-                  placeholder="What's on your list?"
+                  placeholder="Search for Deals & Stores?"
                   integratedMode={true}
                   onNavigate={handleSearchNavigate}
                   onStoreClick={handleStoreClick}
@@ -331,15 +331,24 @@ const Navbar = () => {
 
           {/* Desktop Header */}
           <div className="hidden lg:block">
-            {/* Top Header */}
-            <div className="flex items-center justify-between py-2 border-b border-gray-200/50">
+            {/* Top Header - White Background */}
+            <div className="flex items-center justify-between py-3 border-b border-gray-200/50 bg-white">
               <div className="flex items-center space-x-4">
                 <Link to="/" className="flex items-center space-x-2">
-                  <div className="text-2xl font-bold">
-                    <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
-                      D3
-                    </span>
-                    <TagIcon className="w-5 h-5 text-blue-500 inline ml-1" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 p-1.5 shadow-lg flex items-center justify-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <span className="text-white font-bold text-lg leading-none tracking-tight">D3</span>
+                      <svg
+                        className="w-6 h-2 text-yellow-400 mt-0.5"
+                        viewBox="0 0 24 8"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                      >
+                        <path d="M2 2 Q 12 8, 22 2" />
+                      </svg>
+                    </div>
                   </div>
                   <div className="text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-1 rounded-full font-medium">
                     DEALS
@@ -468,59 +477,50 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Main Navigation */}
-            <div className="flex items-center justify-between py-2.5">
-              <nav className="flex items-center space-x-1 ml-6">
-                <Link to="/" className={`text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-gray-100/60 text-sm flex items-center space-x-1.5 ${location.pathname === '/' ? 'text-blue-600 bg-gray-100/60' : ''}`}>
-                  <Home className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </Link>
-                <Link to="/hotdeals" className={`text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-gray-100/60 relative text-sm flex items-center space-x-1.5 ${location.pathname === '/hotdeals' ? 'text-blue-600 bg-gray-100/60' : ''}`}>
-                  <Flame className="w-3.5 h-3.5" />
-                  <span>Hot Deals</span>
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
-                    <Flame className="w-2.5 h-2.5" />
-                  </span>
-                </Link>
-                <Link to="/stores" className={`text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-gray-100/60 text-sm flex items-center space-x-1.5 ${location.pathname === '/stores' ? 'text-blue-600 bg-gray-100/60' : ''}`}>
-                  <Store className="w-3.5 h-3.5" />
-                  <span>Stores</span>
-                </Link>
-                <Link to="/requestservice" className={`text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-gray-100/60 text-sm flex items-center space-x-1.5 ${location.pathname === '/requestservice' ? 'text-blue-600 bg-gray-100/60' : ''}`}>
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Request Service</span>
-                </Link>
-                <Link to="/chat" className={`text-gray-700 hover:text-blue-600 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-gray-100/60 relative text-sm flex items-center space-x-1.5 ${location.pathname === '/chat' ? 'text-blue-600 bg-gray-100/60' : ''}`}>
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Chat</span>
-                  {unreadChatCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-1 py-0.5 rounded-full">
-                      {unreadChatCount > 9 ? '9+' : unreadChatCount}
+            {/* Main Navigation - Blue Background - Full Width */}
+            <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600">
+              <div className="container mx-auto lg:px-4 flex items-center justify-between py-2.5">
+                <nav className="flex items-center space-x-1 ml-6">
+                  <Link to="/" className={`text-white hover:text-yellow-400 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sm flex items-center space-x-1.5 ${location.pathname === '/' ? 'text-yellow-400 bg-white/10' : ''}`}>
+                    <Home className="w-3.5 h-3.5" />
+                    <span>Home</span>
+                  </Link>
+                  <Link to="/hotdeals" className={`text-white hover:text-yellow-400 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-white/10 relative text-sm flex items-center space-x-1.5 ${location.pathname === '/hotdeals' ? 'text-yellow-400 bg-white/10' : ''}`}>
+                    <Flame className="w-3.5 h-3.5" />
+                    <span>Hot Deals</span>
+                    <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                      <Flame className="w-2.5 h-2.5" />
                     </span>
-                  )}
-                </Link>
-              </nav>
+                  </Link>
+                  <Link to="/stores" className={`text-white hover:text-yellow-400 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sm flex items-center space-x-1.5 ${location.pathname === '/stores' ? 'text-yellow-400 bg-white/10' : ''}`}>
+                    <Store className="w-3.5 h-3.5" />
+                    <span>Stores</span>
+                  </Link>
+                  <Link to="/requestservice" className={`text-white hover:text-yellow-400 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sm flex items-center space-x-1.5 ${location.pathname === '/requestservice' ? 'text-yellow-400 bg-white/10' : ''}`}>
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Request Service</span>
+                  </Link>
+                  <Link to="/chat" className={`text-white hover:text-yellow-400 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-white/10 relative text-sm flex items-center space-x-1.5 ${location.pathname === '/chat' ? 'text-yellow-400 bg-white/10' : ''}`}>
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Chat</span>
+                    {unreadChatCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs px-1 py-0.5 rounded-full">
+                        {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                      </span>
+                    )}
+                  </Link>
+                </nav>
 
-              {/* Desktop Search Bar */}
-              <div className="flex-1 max-w-2xl mx-6">
-                <RealTimeSearch
-                  placeholder="Search for deals, coupons & stores..."
-                  onNavigate={handleSearchNavigate}
-                  onStoreClick={handleStoreClick}
-                  onOfferClick={handleOfferClick}
-                />
+                {/* Desktop Search Bar */}
+                <div className="flex-1 max-w-2xl mx-6">
+                  <RealTimeSearch
+                    placeholder="Search for deals, coupons & stores..."
+                    onNavigate={handleSearchNavigate}
+                    onStoreClick={handleStoreClick}
+                    onOfferClick={handleOfferClick}
+                  />
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Promotional Banner - Desktop Only */}
-        <div className="hidden lg:block bg-gradient-to-r from-blue-600 to-blue-400 text-white py-1 px-4">
-          <div className="container mx-auto flex items-center justify-center text-center">
-            <div className="flex items-center space-x-2">
-              <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium tracking-wide">Get up to 90% OFF from your favourite service providers</span>
-              <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -534,8 +534,8 @@ const Navbar = () => {
             <Link
               to="/"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/'
-                  ? 'text-blue-600'
-                  : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600'
+                : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/' ? 'scale-110' : ''}`}>
@@ -549,8 +549,8 @@ const Navbar = () => {
             <Link
               to="/hotdeals"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/hotdeals'
-                  ? 'text-blue-600'
-                  : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600'
+                : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/hotdeals' ? 'scale-110' : ''}`}>
@@ -565,8 +565,8 @@ const Navbar = () => {
             <Link
               to="/stores"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/stores'
-                  ? 'text-blue-600'
-                  : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600'
+                : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/stores' ? 'scale-110' : ''}`}>
@@ -580,8 +580,8 @@ const Navbar = () => {
             <Link
               to="/requestservice"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/requestservice'
-                  ? 'text-blue-600'
-                  : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600'
+                : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/requestservice' ? 'scale-110' : ''}`}>
@@ -595,8 +595,8 @@ const Navbar = () => {
             <Link
               to="/chat"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/chat'
-                  ? 'text-blue-600'
-                  : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600'
+                : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/chat' ? 'scale-110' : ''}`}>

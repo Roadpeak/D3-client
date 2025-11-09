@@ -18,7 +18,7 @@ function debounce(func, wait) {
 }
 
 const RealTimeSearch = ({
-  placeholder = "What's on your list?",
+  placeholder = "Search for Deals & Stores?",
   className = "",
   integratedMode = false,
   onNavigate,
