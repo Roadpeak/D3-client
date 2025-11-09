@@ -1,16 +1,16 @@
 import api, { API_ENDPOINTS, getTokenFromCookie } from '../config/api';
 
 class NotificationService {
-constructor() {
-  this.API_BASE = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
-  
-  this.fallbackNotifications = {
-    message: [],
-    offer: [],
-    unread: 0,
-    total: 0
-  };
-}
+  constructor() {
+    this.API_BASE = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
+
+    this.fallbackNotifications = {
+      message: [],
+      offer: [],
+      unread: 0,
+      total: 0
+    };
+  }
   // Use the same token retrieval as authService
   getAuthToken() {
     return getTokenFromCookie();
@@ -18,12 +18,11 @@ constructor() {
 
   getHeaders() {
     const token = this.getAuthToken();
-    console.log('🔑 Notification service token:', token ? 'Token exists' : 'No token');
-  
+
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
-      'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl',
+      'x-api-key': process.env.REACT_APP_API_KEY || '',
     };
   }
 
@@ -44,8 +43,6 @@ constructor() {
         type: params.type || 'all',
         unreadOnly: params.unreadOnly || false
       });
-
-      console.log('📡 Fetching notifications from:', `${this.API_BASE}/notifications?${queryParams}`);
 
       const response = await fetch(`${this.API_BASE}/notifications?${queryParams}`, {
         headers: this.getHeaders(),
@@ -69,8 +66,6 @@ constructor() {
 
       return result;
     } catch (error) {
-      console.error('Error fetching notifications:', error);
-
       // Try to get service offer notifications as fallback
       try {
         const offerNotifications = await this.getServiceOfferNotifications(params);
@@ -88,7 +83,7 @@ constructor() {
           };
         }
       } catch (offerError) {
-        console.error('Error fetching offer notifications fallback:', offerError);
+        // Silent error handling
       }
 
       // Return fallback data on error
@@ -109,8 +104,6 @@ constructor() {
   // NEW: Get service offer notifications specifically
   async getServiceOfferNotifications(params = {}) {
     try {
-      console.log('📤 Fetching service offer notifications...');
-
       // Import the service request service to get user's offers
       const userServiceRequestService = await import('./userServiceRequestService')
         .then(module => module.default);
@@ -122,12 +115,10 @@ constructor() {
       });
 
       if (!offersResponse.success || !offersResponse.data?.offers) {
-        console.log('No service offers found for notifications');
         return [];
       }
 
       const offers = offersResponse.data.offers;
-      console.log(`Found ${offers.length} service offers for notification processing`);
 
       // Convert offers to notification format
       const offerNotifications = offers
@@ -135,11 +126,8 @@ constructor() {
         .map(offer => this.createOfferNotification(offer))
         .filter(Boolean);
 
-      console.log(`Created ${offerNotifications.length} offer notifications`);
-
       return offerNotifications;
     } catch (error) {
-      console.error('Error fetching service offer notifications:', error);
       return [];
     }
   }
@@ -147,9 +135,6 @@ constructor() {
   // Get notification counts by type with service offers
   async getNotificationCounts() {
     try {
-      console.log('📊 Fetching notification counts from:', `${this.API_BASE}/notifications/counts`);
-      console.log('📊 Headers being sent:', this.getHeaders());
-
       const response = await fetch(`${this.API_BASE}/notifications/counts`, {
         headers: this.getHeaders(),
         credentials: 'include'
@@ -184,14 +169,12 @@ constructor() {
             result.data.total += (unreadOfferCount + unreadChatCount);
           }
         } catch (enhancementError) {
-          console.error('Error enhancing notification counts:', enhancementError);
+          // Silent error handling
         }
       }
 
       return result;
     } catch (error) {
-      console.error('Error fetching notification counts:', error);
-
       // Get fallback counts from service offers and chats
       try {
         const offerNotifications = await this.getServiceOfferNotifications();
@@ -222,7 +205,7 @@ constructor() {
           }
         };
       } catch (fallbackError) {
-        console.error('Error fetching fallback counts:', fallbackError);
+        // Silent error handling
       }
 
       // Return default counts on error
@@ -269,7 +252,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error marking notification as read:', error);
       throw error;
     }
   }
@@ -289,7 +271,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
       throw error;
     }
   }
@@ -306,7 +287,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error creating notification:', error);
       throw error;
     }
   }
@@ -322,7 +302,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error deleting notification:', error);
       throw error;
     }
   }
@@ -337,7 +316,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error fetching notification settings:', error);
       return {
         success: true,
         data: {
@@ -364,7 +342,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error updating notification settings:', error);
       throw error;
     }
   }
@@ -619,7 +596,7 @@ constructor() {
   handleNotificationClick(notification, navigate) {
     // Mark as read (if not already)
     if (!notification.isRead) {
-      this.markAsRead(notification.id).catch(console.error);
+      this.markAsRead(notification.id).catch(() => { });
     }
 
     // Get appropriate URL
@@ -708,7 +685,6 @@ constructor() {
       }
       return [];
     } catch (error) {
-      console.error('Error generating chat notifications:', error);
       return [];
     }
   }
@@ -735,7 +711,6 @@ constructor() {
       }
       return [];
     } catch (error) {
-      console.error('Error generating offer notifications:', error);
       return [];
     }
   }
@@ -752,7 +727,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error registering push subscription:', error);
       throw error;
     }
   }
@@ -768,7 +742,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error unregistering push subscription:', error);
       throw error;
     }
   }
@@ -776,7 +749,6 @@ constructor() {
   // Request browser notifications permission
   async requestNotificationPermission() {
     if (!('Notification' in window)) {
-      console.log('This browser does not support notifications');
       return false;
     }
 
@@ -826,7 +798,7 @@ constructor() {
         browserNotification.close();
       }, 5000);
     } catch (error) {
-      console.error('Error showing browser notification:', error);
+      // Silent error handling
     }
   }
 
@@ -841,7 +813,6 @@ constructor() {
 
       return formattedNotification;
     } catch (error) {
-      console.error('Error processing realtime notification:', error);
       return null;
     }
   }
@@ -850,11 +821,8 @@ constructor() {
   subscribeToRealtimeNotifications(socketInstance, onNotificationReceived) {
     if (!socketInstance) return;
 
-    console.log('Subscribing to realtime notifications...');
-
     // Listen for notification events
     socketInstance.on('new_notification', (data) => {
-      console.log('Received realtime notification:', data);
       const notification = this.processRealtimeNotification(data);
       if (notification && onNotificationReceived) {
         onNotificationReceived(notification);
@@ -862,7 +830,6 @@ constructor() {
     });
 
     socketInstance.on('service_offer_received', (data) => {
-      console.log('Received service offer notification:', data);
       // Create offer notification from service offer data
       const offerNotification = this.createOfferNotification(data);
       if (offerNotification && onNotificationReceived) {
@@ -872,12 +839,10 @@ constructor() {
     });
 
     socketInstance.on('notification_read', (data) => {
-      console.log('Notification marked as read:', data);
       // You can handle this event if needed
     });
 
     socketInstance.on('notification_count_update', () => {
-      console.log('Notification count updated');
       // You can trigger a refresh here if needed
     });
 
@@ -903,7 +868,6 @@ constructor() {
         return this.getNotificationCounts();
       }
     } catch (error) {
-      console.error('Error fetching notification counts via API:', error);
       return {
         success: true,
         data: {
@@ -932,12 +896,10 @@ constructor() {
       if (cachedData && cacheTime) {
         const timeDiff = Date.now() - parseInt(cacheTime);
         if (timeDiff < 5 * 60 * 1000) { // 5 minutes cache
-          console.log('Using cached service offers for notifications');
           return JSON.parse(cachedData);
         }
       }
 
-      console.log('Fetching fresh service offers for notifications...');
       const userServiceRequestService = await import('./userServiceRequestService')
         .then(module => module.default);
 
@@ -957,7 +919,6 @@ constructor() {
 
       return [];
     } catch (error) {
-      console.error('Error fetching service offers for notifications:', error);
       return [];
     }
   }
@@ -976,7 +937,6 @@ constructor() {
 
       if (!lastCheck) {
         // First time checking, don't show notifications for existing offers
-        console.log('First time checking offers, skipping notifications');
         return [];
       }
 
@@ -988,19 +948,14 @@ constructor() {
         return offerTime > lastCheckTime;
       });
 
-      console.log(`Found ${newOffers.length} new offers since last check`);
-
       return newOffers.map(offer => this.createOfferNotification(offer));
     } catch (error) {
-      console.error('Error checking for new offers:', error);
       return [];
     }
   }
 
   // NEW: Poll for service offer updates
   startServiceOfferPolling(onNewOffer, intervalMs = 60000) {
-    console.log('Starting service offer polling...');
-
     // Clear any existing interval
     if (this.offerPollingInterval) {
       clearInterval(this.offerPollingInterval);
@@ -1021,7 +976,7 @@ constructor() {
           });
         }
       } catch (error) {
-        console.error('Error during offer polling:', error);
+        // Silent error handling
       }
     }, intervalMs);
 
@@ -1031,7 +986,6 @@ constructor() {
   // NEW: Stop service offer polling
   stopServiceOfferPolling() {
     if (this.offerPollingInterval) {
-      console.log('Stopping service offer polling...');
       clearInterval(this.offerPollingInterval);
       this.offerPollingInterval = null;
     }
@@ -1049,7 +1003,6 @@ constructor() {
 
       return null;
     } catch (error) {
-      console.error('Error getting offer notification by ID:', error);
       return null;
     }
   }
@@ -1065,7 +1018,7 @@ constructor() {
         localStorage.setItem(viewedOffersKey, JSON.stringify(viewedOffers));
       }
     } catch (error) {
-      console.error('Error marking offer as viewed:', error);
+      // Silent error handling
     }
   }
 
@@ -1076,7 +1029,6 @@ constructor() {
       const viewedOffers = JSON.parse(localStorage.getItem(viewedOffersKey) || '[]');
       return viewedOffers.includes(offerId);
     } catch (error) {
-      console.error('Error checking if offer viewed:', error);
       return false;
     }
   }

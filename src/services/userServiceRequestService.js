@@ -50,7 +50,7 @@ const getAuthHeaders = () => {
   const token = getAuthToken();
   const headers = {
     'Content-Type': 'application/json',
-    'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
+    'x-api-key': process.env.REACT_APP_API_KEY || ''
   };
 
   if (token) {
@@ -67,7 +67,7 @@ const makeUserAPIRequest = async (url, options = {}) => {
 
     let headers = {
       'Content-Type': 'application/json',
-      'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl', // ✅ Add API key for ALL requests
+      'x-api-key': process.env.REACT_APP_API_KEY || '', // ✅ Add API key for ALL requests
       ...options.headers
     };
 
@@ -86,16 +86,7 @@ const makeUserAPIRequest = async (url, options = {}) => {
       headers
     };
 
-    console.log('🌐 User API Request:', {
-      url: url.replace(API_BASE_URL, ''),
-      method: config.method || 'GET',
-      authenticated: !!headers.Authorization,
-      requireAuth: isAuthRequired
-    });
-
     const response = await fetch(url, config);
-
-    console.log(`📡 User API Response: ${response.status}`);
 
     // Handle different response types
     let data;
@@ -115,8 +106,6 @@ const makeUserAPIRequest = async (url, options = {}) => {
 
       // Handle authentication errors
       if (response.status === 401) {
-        console.warn('🔒 User authentication failed (401)');
-
         // Clear user auth data
         localStorage.removeItem('authToken');
         localStorage.removeItem('currentUser');
@@ -150,12 +139,9 @@ const makeUserAPIRequest = async (url, options = {}) => {
       throw error;
     }
 
-    console.log('✅ User API request successful');
     return data;
 
   } catch (error) {
-    console.error(`❌ User API request failed:`, error);
-
     // Handle network errors
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       throw new Error('Network error. Please check your internet connection.');
@@ -186,7 +172,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error fetching public service requests:', error);
       throw error;
     }
   }
@@ -203,7 +188,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error fetching service categories:', error);
       throw error;
     }
   }
@@ -220,7 +204,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error fetching platform statistics:', error);
       throw error;
     }
   }
@@ -250,12 +233,6 @@ class UserServiceRequestService {
 
       const url = `${API_BASE_URL}/request-service`;
 
-      console.log('🚀 Creating service request with data:', {
-        title: requestData.title,
-        category: requestData.category,
-        hasAuth: !!getAuthToken()
-      });
-
       const response = await makeUserAPIRequest(url, {
         method: 'POST',
         body: JSON.stringify(requestData),
@@ -268,7 +245,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error creating service request:', error);
       throw error;
     }
   }
@@ -294,7 +270,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error fetching user offers:', error);
       throw error;
     }
   }
@@ -320,7 +295,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error fetching user past requests:', error);
       throw error;
     }
   }
@@ -346,7 +320,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error accepting offer:', error);
       throw error;
     }
   }
@@ -373,7 +346,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error rejecting offer:', error);
       throw error;
     }
   }
@@ -407,12 +379,6 @@ class UserServiceRequestService {
 
       const url = `${API_BASE_URL}/request-service/${requestId}/offers`;
 
-      console.log('🚀 Creating individual offer with data:', {
-        requestId,
-        quotedPrice: offerData.quotedPrice,
-        hasAuth: !!getAuthToken()
-      });
-
       const response = await makeUserAPIRequest(url, {
         method: 'POST',
         body: JSON.stringify({
@@ -429,7 +395,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error creating individual offer:', error);
       throw error;
     }
   }
@@ -450,7 +415,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error fetching service request details:', error);
       throw error;
     }
   }
@@ -484,7 +448,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error rating and reviewing service:', error);
       throw error;
     }
   }
@@ -509,7 +472,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error searching service requests:', error);
       throw error;
     }
   }
@@ -528,7 +490,6 @@ class UserServiceRequestService {
 
       return response;
     } catch (error) {
-      console.error('Error fetching user statistics:', error);
       throw error;
     }
   }
@@ -543,7 +504,6 @@ class UserServiceRequestService {
       const userStr = localStorage.getItem('currentUser');
       return userStr ? JSON.parse(userStr) : null;
     } catch (error) {
-      console.error('Error getting current user:', error);
       return null;
     }
   }
@@ -554,18 +514,6 @@ class UserServiceRequestService {
     const cookieToken = getTokenFromCookie();
     const isAuth = authService.isAuthenticated();
     const user = this.getCurrentUser();
-
-    console.log('🔍 Auth Debug:', {
-      hasToken: !!token,
-      tokenLength: token ? token.length : 0,
-      cookieToken: !!cookieToken,
-      cookieTokenLength: cookieToken ? cookieToken.length : 0,
-      tokensMatch: token === cookieToken,
-      isAuthenticated: isAuth,
-      hasUser: !!user,
-      userEmail: user?.email,
-      allCookies: document.cookie
-    });
 
     return {
       hasToken: !!token,

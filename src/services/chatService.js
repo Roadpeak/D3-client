@@ -1,9 +1,9 @@
 // services/chatService.js - FIXED: Customer↔Store Communication Model
 class ChatService {
-constructor() {
-  this.API_BASE = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
-  this.SOCKET_URL = process.env.REACT_APP_WS_URL || 'http://localhost:4000';
-}
+  constructor() {
+    this.API_BASE = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
+    this.SOCKET_URL = process.env.REACT_APP_WS_URL || 'http://localhost:4000';
+  }
   // Enhanced token retrieval
   getAuthToken() {
     const getTokenFromCookie = () => {
@@ -41,7 +41,6 @@ constructor() {
       tokenSources.cookie_access_token ||
       tokenSources.cookie_token;
 
-    console.log('🔍 ChatService token check:', token ? `Found (${token.substring(0, 20)}...)` : 'Not found');
     return token;
   }
 
@@ -55,7 +54,7 @@ constructor() {
         if (key === name) return decodeURIComponent(value || '');
       }
     } catch (error) {
-      console.error('Error reading cookie:', error);
+      // Silent error handling
     }
     return '';
   }
@@ -65,18 +64,13 @@ constructor() {
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
-      'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl',
+      'x-api-key': process.env.REACT_APP_API_KEY || '',
     };
   }
 
   async handleResponse(response) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('API Error:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorData
-      });
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
     return response.json();
@@ -92,7 +86,6 @@ constructor() {
 
     for (const endpoint of endpoints) {
       try {
-        console.log(`🔍 Trying to fetch user from: ${endpoint}`);
         const response = await fetch(endpoint, {
           headers: this.getHeaders(),
           credentials: 'include'
@@ -100,11 +93,9 @@ constructor() {
 
         if (response.ok) {
           const result = await this.handleResponse(response);
-          console.log('✅ User fetched successfully from:', endpoint);
           return result;
         }
       } catch (error) {
-        console.log(`❌ Failed to fetch from ${endpoint}:`, error.message);
         continue;
       }
     }
@@ -119,14 +110,10 @@ constructor() {
     if (userRole === 'merchant') {
       // Merchant getting customer↔store conversations for their stores
       endpoint = `${this.API_BASE}/chat/merchant/conversations`;
-      console.log('🏪 Fetching merchant store conversations (customer↔store chats)');
     } else {
       // Customer getting their conversations with stores
       endpoint = `${this.API_BASE}/chat/user/conversations`;
-      console.log('👤 Fetching customer store conversations (customer↔store chats)');
     }
-
-    console.log(`📋 Using endpoint: ${endpoint}`);
 
     try {
       const response = await fetch(endpoint, {
@@ -136,15 +123,8 @@ constructor() {
 
       const result = await this.handleResponse(response);
 
-      if (userRole === 'merchant') {
-        console.log(`✅ Loaded ${result.data?.length || 0} customer↔store conversations for merchant`);
-      } else {
-        console.log(`✅ Loaded ${result.data?.length || 0} customer↔store conversations`);
-      }
-
       return result;
     } catch (error) {
-      console.error(`Error fetching ${userRole} conversations:`, error);
       throw error;
     }
   }
@@ -154,8 +134,6 @@ constructor() {
     const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/messages`;
     const url = `${endpoint}?page=${page}&limit=${limit}`;
 
-    console.log('📨 Fetching customer↔store messages from:', url);
-
     try {
       const response = await fetch(url, {
         headers: this.getHeaders(),
@@ -164,7 +142,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error fetching messages:', error);
       throw error;
     }
   }
@@ -185,12 +162,6 @@ constructor() {
       messageType
     };
 
-    console.log('📤 Sending customer↔store message:', {
-      endpoint,
-      conversationId,
-      contentLength: content.length
-    });
-
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -200,10 +171,8 @@ constructor() {
       });
 
       const result = await this.handleResponse(response);
-      console.log('✅ Customer↔store message sent successfully');
       return result;
     } catch (error) {
-      console.error('Error sending customer↔store message:', error);
       throw error;
     }
   }
@@ -217,11 +186,6 @@ constructor() {
       initialMessage: initialMessage.trim()
     };
 
-    console.log('🆕 Starting customer↔store conversation:', {
-      storeId,
-      hasInitialMessage: !!initialMessage.trim()
-    });
-
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -231,10 +195,8 @@ constructor() {
       });
 
       const result = await this.handleResponse(response);
-      console.log('✅ Customer↔store conversation started:', result.data?.conversationId);
       return result;
     } catch (error) {
-      console.error('Error starting customer↔store conversation:', error);
       throw error;
     }
   }
@@ -242,8 +204,6 @@ constructor() {
   // Mark messages as read in customer↔store conversation
   async markMessagesAsRead(conversationId) {
     const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/read`;
-
-    console.log('📖 Marking customer↔store messages as read:', conversationId);
 
     try {
       const response = await fetch(endpoint, {
@@ -253,13 +213,11 @@ constructor() {
       });
 
       if (response.status === 404) {
-        console.log('⚠️ Read endpoint not implemented, skipping');
         return { success: true, message: 'Read status updated via other means' };
       }
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error marking messages as read:', error);
       return { success: false, error: error.message };
     }
   }
@@ -267,8 +225,6 @@ constructor() {
   // Update message status
   async updateMessageStatus(messageId, status) {
     const endpoint = `${this.API_BASE}/chat/messages/${messageId}/status`;
-
-    console.log('📝 Updating message status:', { messageId, status });
 
     try {
       const response = await fetch(endpoint, {
@@ -280,7 +236,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error updating message status:', error);
       throw error;
     }
   }
@@ -290,8 +245,6 @@ constructor() {
     const endpoint = `${this.API_BASE}/chat/search`;
     const url = `${endpoint}?query=${encodeURIComponent(query)}&type=${type}`;
 
-    console.log('🔍 Searching customer↔store conversations:', url);
-
     try {
       const response = await fetch(url, {
         headers: this.getHeaders(),
@@ -300,7 +253,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error searching conversations:', error);
       throw error;
     }
   }
@@ -310,8 +262,6 @@ constructor() {
     const endpoint = `${this.API_BASE}/chat/analytics`;
     const url = `${endpoint}?period=${period}`;
 
-    console.log('📊 Fetching customer↔store analytics:', url);
-
     try {
       const response = await fetch(url, {
         headers: this.getHeaders(),
@@ -320,7 +270,6 @@ constructor() {
 
       return this.handleResponse(response);
     } catch (error) {
-      console.error('Error fetching analytics:', error);
       throw error;
     }
   }
@@ -341,7 +290,6 @@ constructor() {
         user: userResponse.user || userResponse.data || userResponse
       };
     } catch (error) {
-      console.error('Auth check failed:', error);
       return { isAuthenticated: false, user: null };
     }
   }
@@ -360,7 +308,6 @@ constructor() {
         return { success: false, status: 'unhealthy', error: response.statusText };
       }
     } catch (error) {
-      console.error('Health check failed:', error);
       return { success: false, status: 'unhealthy', error: error.message };
     }
   }
@@ -441,8 +388,6 @@ constructor() {
       try {
         return await requestFn();
       } catch (error) {
-        console.log(`Request attempt ${attempt} failed:`, error.message);
-
         if (attempt === maxRetries) {
           throw error;
         }
@@ -468,19 +413,15 @@ constructor() {
       `${this.API_BASE}/users/profile`
     ];
 
-    console.log('🔍 Debugging ChatService endpoints:');
-
     for (const endpoint of endpoints) {
       try {
-        const response = await fetch(endpoint, {
+        await fetch(endpoint, {
           method: 'HEAD',
           headers: this.getHeaders(),
           credentials: 'include'
         });
-
-        console.log(`✅ ${endpoint}: ${response.status}`);
       } catch (error) {
-        console.log(`❌ ${endpoint}: ${error.message}`);
+        // Silent error handling
       }
     }
   }
