@@ -31,7 +31,7 @@ const OfferIcon = ({ className }) => (
 
 const StoreIcon = ({ src, className, fallback = false }) => {
   const [error, setError] = useState(false);
-  
+
   if (error || !src || fallback) {
     return (
       <div className={`flex items-center justify-center bg-blue-500 text-white rounded-full ${className}`}>
@@ -52,13 +52,13 @@ const StoreIcon = ({ src, className, fallback = false }) => {
   );
 };
 
-const NotificationButton = ({ 
-  isMobile = false, 
+const NotificationButton = ({
+  isMobile = false,
   isAuthenticated = false,
-  className = "" 
+  className = ""
 }) => {
   const navigate = useNavigate();
-  
+
   // State management
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -86,13 +86,11 @@ const NotificationButton = ({
     try {
       setIsLoading(true);
       setHasError(false);
-      console.log('Loading comprehensive notifications...');
 
       // Load notification counts first
       const countsResponse = await notificationService.getNotificationCounts();
       if (countsResponse.success) {
         setNotificationCounts(countsResponse.data);
-        console.log('Notification counts loaded:', countsResponse.data);
       }
 
       // Load recent notifications
@@ -105,17 +103,13 @@ const NotificationButton = ({
         const formattedNotifications = notificationsResponse.data.notifications?.map(
           notification => notificationService.formatNotification(notification)
         ) || [];
-        
-        console.log('Notifications loaded:', formattedNotifications.length);
-        console.log('Raw notifications data:', notificationsResponse.data);
-        
+
         loadUnreadChatMessages(formattedNotifications);
       } else {
         loadUnreadChatMessages([]);
       }
 
     } catch (error) {
-      console.error('Error loading notifications:', error);
       setHasError(true);
       loadUnreadChatMessages([]);
     }
@@ -131,38 +125,31 @@ const NotificationButton = ({
         return;
       }
 
-      console.log('Loading unread chat messages...');
       const response = await chatService.getConversations('customer');
-      console.log('Chat conversations response:', response);
 
       if (response.success && response.data && Array.isArray(response.data)) {
         const chatsWithUnread = response.data.filter(chat => (chat.unreadCount || 0) > 0);
         const totalUnreadCount = chatsWithUnread.length;
 
-        console.log(`Found ${chatsWithUnread.length} chats with unread messages`);
         setUnreadChatCount(totalUnreadCount);
-        
+
         let chatNotifications = [];
         if (totalUnreadCount > 0 && chatsWithUnread.length > 0) {
-          console.log('Creating synthetic chat notifications');
-          
           const timestamp = Date.now();
           chatNotifications = chatsWithUnread.map((chat, index) => {
             let messageDate;
             try {
               messageDate = chat.lastMessageTime ? new Date(chat.lastMessageTime) : new Date();
               if (isNaN(messageDate.getTime())) {
-                console.log('Invalid date detected, using current date instead');
                 messageDate = new Date();
               }
             } catch (e) {
-              console.log('Error parsing date:', e);
               messageDate = new Date();
             }
-            
+
             const formattedTime = chatService.formatTime(messageDate);
             const chatId = chat.id || '';
-            
+
             return {
               id: `chat-${chatId}-${timestamp}-${index}`,
               type: 'new_message',
@@ -188,28 +175,23 @@ const NotificationButton = ({
               timeAgo: formattedTime
             };
           });
-          
-          console.log(`Created ${chatNotifications.length} synthetic chat notifications`);
         }
-        
-        const nonChatNotifs = existingNotifications.filter(notif => 
-          notif.type !== 'new_message' && 
-          notif.type !== 'chat_started' && 
+
+        const nonChatNotifs = existingNotifications.filter(notif =>
+          notif.type !== 'new_message' &&
+          notif.type !== 'chat_started' &&
           notif.type !== 'message_read' &&
           !notif.id?.startsWith('chat-')
         );
-        
+
         const combinedNotifications = [...chatNotifications, ...nonChatNotifs];
-        console.log(`Combined ${chatNotifications.length} chat + ${nonChatNotifs.length} regular = ${combinedNotifications.length} total notifications`);
-        
+
         setNotifications(combinedNotifications);
       } else {
-        console.log('Invalid chat response or no data');
         setUnreadChatCount(0);
         setNotifications(existingNotifications);
       }
     } catch (error) {
-      console.error('Error loading unread chat messages:', error);
       setUnreadChatCount(0);
       setNotifications(existingNotifications);
     } finally {
@@ -281,51 +263,50 @@ const NotificationButton = ({
 
   // Event handlers
   const toggleNotifications = () => setIsNotificationOpen(!isNotificationOpen);
-  
+
   const handleNotificationClick = async (notification) => {
     setIsNotificationOpen(false);
-    
+
     // Handle service offer notifications - redirect to request-service
     if (notification.type === 'service_request_offer' || notification.type === 'offer_received') {
       if (!notification.isRead) {
-        await notificationService.markAsRead(notification.id).catch(console.error);
+        await notificationService.markAsRead(notification.id).catch(() => { });
       }
-      
+
       setNotifications(prev =>
         prev.map(notif =>
           notif.id === notification.id ? { ...notif, isRead: true } : notif
         )
       );
-      
+
       setNotificationCounts(prev => ({
         ...prev,
         unread: Math.max(0, prev.unread - 1)
       }));
 
-      console.log('Navigating to request-service for offer notification');
       navigate('/request-service');
       return;
     }
-    
+
     // For chat notifications
     if (notification.type === 'new_message' || notification.type === 'chat_started' || notification.id?.startsWith('chat-')) {
       const chatId = notification.data?.chatId || notification.metadata?.chatId;
       if (chatId) {
         if (!notification.isRead) {
           if (notification.id && !notification.id.startsWith('chat-')) {
-            await notificationService.markAsRead(notification.id).catch(console.error);
+            await notificationService.markAsRead(notification.id).catch(() => { });
           }
         }
-        
+
         const unreadCount = notification.data?.unreadCount || 1;
         setUnreadChatCount(prev => Math.max(0, prev - unreadCount));
-        
+
         setNotifications(prev =>
           prev.map(notif =>
             notif.id === notification.id ? { ...notif, isRead: true } : notif
           )
         );
-        
+
         setNotificationCounts(prev => ({
           ...prev,
           unread: Math.max(0, prev.unread - 1),
@@ -335,12 +316,11 @@ const NotificationButton = ({
           }
         }));
 
-        console.log(`Navigating to chat ID: ${chatId}`);
         navigate('/chat');
         return;
       }
     }
-    
+
     // For other notifications
     notificationService.handleNotificationClick(notification, navigate);
 
@@ -376,10 +356,10 @@ const NotificationButton = ({
           store_follow: 0
         }
       }));
-      
+
       setUnreadChatCount(0);
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      // Silently handle error
     }
   };
 
@@ -398,20 +378,19 @@ const NotificationButton = ({
       const storeAvatar = notification.store?.logo_url || notification.avatar || notification.data?.storeAvatar;
       const unreadCount = notification.data?.unreadCount || 1;
       const messagePreview = notification.message || 'New message';
-      
+
       return (
         <div
           key={notification.id}
-          className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer relative ${
-            !notification.isRead ? 'bg-blue-50/30' : ''
-          }`}
+          className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer relative ${!notification.isRead ? 'bg-blue-50/30' : ''
+            }`}
           onClick={() => handleNotificationClick(notification)}
         >
           <div className="flex items-start space-x-3">
             <div className="relative flex-shrink-0">
-              <StoreIcon 
-                src={storeAvatar} 
-                className="w-10 h-10" 
+              <StoreIcon
+                src={storeAvatar}
+                className="w-10 h-10"
                 fallback={!storeAvatar}
               />
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
@@ -448,14 +427,13 @@ const NotificationButton = ({
         </div>
       );
     }
-    
+
     // Default rendering for other notifications
     return (
       <div
         key={notification.id}
-        className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer relative ${
-          !notification.isRead ? 'bg-blue-50/30' : ''
-        }`}
+        className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer relative ${!notification.isRead ? 'bg-blue-50/30' : ''
+          }`}
         onClick={() => handleNotificationClick(notification)}
       >
         <div className="flex items-start space-x-3">
@@ -520,12 +498,12 @@ const NotificationButton = ({
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
-      <button 
-        onClick={toggleNotifications} 
+      <button
+        onClick={toggleNotifications}
         className={`
           relative flex items-center justify-center transition-all duration-200
-          ${isMobile 
-            ? 'w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm border border-slate-200/50' 
+          ${isMobile
+            ? 'w-9 h-9 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 backdrop-blur-sm border border-slate-200/50'
             : 'bg-slate-100/60 hover:bg-slate-200/80 backdrop-blur-sm p-2.5 rounded-xl border border-slate-200/50'
           }
         `}
@@ -544,8 +522,8 @@ const NotificationButton = ({
       {isNotificationOpen && (
         <div className={`
           absolute bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden
-          ${isMobile 
-            ? 'top-12 w-80 max-w-[calc(100vw-2rem)]' 
+          ${isMobile
+            ? 'top-12 w-80 max-w-[calc(100vw-2rem)]'
             : 'right-0 top-12 w-96'
           }
         `}
@@ -579,7 +557,7 @@ const NotificationButton = ({
               <div className="p-8 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 bg-yellow-100 rounded-full flex items-center justify-center">
                   <svg className="w-8 h-8 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
                   </svg>
                 </div>
                 <h4 className="text-lg font-medium text-gray-900 mb-2">No notification yet</h4>
