@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import notificationService from '../services/notificationService';
 import chatService from '../services/chatService';
 import authService from '../services/authService';
+import { getTokenFromCookie } from '../config/api';
 
 // Icons
 const NotificationIcon = ({ className }) => (
@@ -147,7 +148,8 @@ const useWebPush = (isAuthenticated) => {
       console.log('✅ Push subscription created:', subscription);
 
       // Get auth token
-      const token = authService.getToken();
+      const token = getTokenFromCookie();
+
 
       if (!token) {
         console.error('❌ No auth token found');
