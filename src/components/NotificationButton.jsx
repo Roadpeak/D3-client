@@ -53,7 +53,7 @@ const StoreIcon = ({ src, className, fallback = false }) => {
 };
 
 // ============================================
-// WEB PUSH HOOK (NEW)
+// WEB PUSH HOOK (UPDATED WITH FIXED ENDPOINT)
 // ============================================
 
 const useWebPush = (isAuthenticated) => {
@@ -62,6 +62,7 @@ const useWebPush = (isAuthenticated) => {
   const [showPushPrompt, setShowPushPrompt] = useState(false);
 
   const VAPID_PUBLIC_KEY = 'BKejhBqZqa4GnoAc7nFnQXtCTTbQBpMXjABBS_cMyk4RRpRkgOB6_52y2VQxObMi9XBvRyim7seUpvUm1HaoFms';
+  const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://discoun3ree.com/api/v1';
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -75,7 +76,7 @@ const useWebPush = (isAuthenticated) => {
     if ('serviceWorker' in navigator && isAuthenticated) {
       navigator.serviceWorker.register('/service-worker.js')
         .then(reg => {
-          console.log('✅ Service Worker registered');
+          console.log('✅ Service Worker registered:', reg);
         })
         .catch(err => {
           console.error('❌ Service Worker registration failed:', err);
@@ -91,6 +92,8 @@ const useWebPush = (isAuthenticated) => {
       const subscription = await registration.pushManager.getSubscription();
       setIsPushSubscribed(!!subscription);
 
+      console.log('📊 Push subscription status:', !!subscription);
+
       // Show prompt if not subscribed and permission not denied
       if (!subscription && Notification.permission !== 'denied') {
         // Show prompt after 3 seconds to not be intrusive
@@ -105,9 +108,12 @@ const useWebPush = (isAuthenticated) => {
 
   const enablePushNotifications = async () => {
     try {
+      console.log('🔔 Starting push notification subscription...');
+
       // Request permission
       const result = await Notification.requestPermission();
       setPushPermission(result);
+      console.log('📋 Notification permission:', result);
 
       if (result !== 'granted') {
         alert('Please allow notifications to stay updated');
@@ -116,6 +122,7 @@ const useWebPush = (isAuthenticated) => {
 
       // Get service worker registration
       const registration = await navigator.serviceWorker.ready;
+      console.log('✅ Service Worker ready');
 
       // Subscribe to push
       const subscription = await registration.pushManager.subscribe({
@@ -123,9 +130,11 @@ const useWebPush = (isAuthenticated) => {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
 
-      // Send subscription to backend
+      console.log('✅ Push subscription created:', subscription);
+
+      // Send subscription to backend - FIXED ENDPOINT
       const token = authService.getToken();
-      const response = await fetch('https://discoun3ree.com/api/v1/notifications/push/subscribe', {
+      const response = await fetch(`${API_BASE}/notifications/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,17 +143,29 @@ const useWebPush = (isAuthenticated) => {
         body: JSON.stringify(subscription)
       });
 
+      console.log('📡 Backend response status:', response.status);
+
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Backend response:', result);
+
         setIsPushSubscribed(true);
         setShowPushPrompt(false);
-        console.log('✅ Push notifications enabled');
+        console.log('🎉 Push notifications enabled successfully!');
+
+        // Show success message to user
+        alert('Push notifications enabled! You\'ll now receive instant updates.');
+
         return true;
       } else {
-        console.error('Failed to save subscription');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Failed to save subscription:', response.status, errorData);
+        alert('Failed to enable push notifications. Please try again.');
         return false;
       }
     } catch (error) {
-      console.error('Error enabling push notifications:', error);
+      console.error('❌ Error enabling push notifications:', error);
+      alert('Error enabling push notifications: ' + error.message);
       return false;
     }
   };
@@ -170,7 +191,7 @@ const useWebPush = (isAuthenticated) => {
 };
 
 // ============================================
-// PUSH NOTIFICATION PROMPT COMPONENT (NEW)
+// PUSH NOTIFICATION PROMPT COMPONENT
 // ============================================
 
 const PushNotificationPrompt = ({ onEnable, onDismiss }) => (
@@ -228,7 +249,7 @@ const NotificationButton = ({
 }) => {
   const navigate = useNavigate();
 
-  // WEB PUSH HOOK (NEW)
+  // WEB PUSH HOOK (UPDATED)
   const {
     pushPermission,
     isPushSubscribed,
@@ -442,11 +463,10 @@ const NotificationButton = ({
   // Event handlers
   const toggleNotifications = () => setIsNotificationOpen(!isNotificationOpen);
 
-  // NEW: Handle push enable
+  // Handle push enable
   const handleEnablePush = async () => {
     const success = await enablePushNotifications();
     if (success) {
-      // Optional: Show success message
       console.log('🎉 Push notifications enabled successfully!');
     }
   };
@@ -719,7 +739,7 @@ const NotificationButton = ({
             transform: 'translateX(0)'
           } : {}}
         >
-          {/* WEB PUSH PROMPT (NEW) */}
+          {/* WEB PUSH PROMPT */}
           {showPushPrompt && !isPushSubscribed && (
             <PushNotificationPrompt
               onEnable={handleEnablePush}
@@ -730,15 +750,6 @@ const NotificationButton = ({
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
-              {/* {notifications.length > 0 && (
-                <button
-                  onClick={markAllNotificationsAsRead}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 transition-colors"
-                >
-                  <CheckIcon className="w-4 h-4" />
-                  <span>Mark all as read</span>
-                </button>
-              )} */}
             </div>
           </div>
 
