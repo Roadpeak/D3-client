@@ -164,8 +164,10 @@ const useWebPush = (isAuthenticated) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'x-api-key': process.env.REACT_APP_API_KEY || ''
         },
+        credentials: 'include',
         body: JSON.stringify(subscription)
       });
 
