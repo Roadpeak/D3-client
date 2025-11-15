@@ -52,12 +52,190 @@ const StoreIcon = ({ src, className, fallback = false }) => {
   );
 };
 
+// ============================================
+// WEB PUSH HOOK (NEW)
+// ============================================
+
+const useWebPush = (isAuthenticated) => {
+  const [pushPermission, setPushPermission] = useState('default');
+  const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
+
+  const VAPID_PUBLIC_KEY = 'BKejhBqZqa4GnoAc7nFnQXtCTTbQBpMXjABBS_cMyk4RRpRkgOB6_52y2VQxObMi9XBvRyim7seUpvUm1HaoFms';
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setPushPermission(Notification.permission);
+      checkPushSubscription();
+    }
+  }, [isAuthenticated]);
+
+  // Register service worker
+  useEffect(() => {
+    if ('serviceWorker' in navigator && isAuthenticated) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => {
+          console.log('✅ Service Worker registered');
+        })
+        .catch(err => {
+          console.error('❌ Service Worker registration failed:', err);
+        });
+    }
+  }, [isAuthenticated]);
+
+  const checkPushSubscription = async () => {
+    try {
+      if (!isAuthenticated) return;
+
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      setIsPushSubscribed(!!subscription);
+
+      // Show prompt if not subscribed and permission not denied
+      if (!subscription && Notification.permission !== 'denied') {
+        // Show prompt after 3 seconds to not be intrusive
+        setTimeout(() => {
+          setShowPushPrompt(true);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error checking push subscription:', error);
+    }
+  };
+
+  const enablePushNotifications = async () => {
+    try {
+      // Request permission
+      const result = await Notification.requestPermission();
+      setPushPermission(result);
+
+      if (result !== 'granted') {
+        alert('Please allow notifications to stay updated');
+        return false;
+      }
+
+      // Get service worker registration
+      const registration = await navigator.serviceWorker.ready;
+
+      // Subscribe to push
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+
+      // Send subscription to backend
+      const token = authService.getToken();
+      const response = await fetch('https://discoun3ree.com/api/v1/notifications/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(subscription)
+      });
+
+      if (response.ok) {
+        setIsPushSubscribed(true);
+        setShowPushPrompt(false);
+        console.log('✅ Push notifications enabled');
+        return true;
+      } else {
+        console.error('Failed to save subscription');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error enabling push notifications:', error);
+      return false;
+    }
+  };
+
+  const urlBase64ToUint8Array = (base64String) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  return {
+    pushPermission,
+    isPushSubscribed,
+    showPushPrompt,
+    setShowPushPrompt,
+    enablePushNotifications
+  };
+};
+
+// ============================================
+// PUSH NOTIFICATION PROMPT COMPONENT (NEW)
+// ============================================
+
+const PushNotificationPrompt = ({ onEnable, onDismiss }) => (
+  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 p-4">
+    <div className="flex items-start space-x-3">
+      <div className="flex-shrink-0">
+        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-semibold text-gray-900 mb-1">
+          Stay Updated with Push Notifications
+        </h4>
+        <p className="text-xs text-gray-600 mb-3">
+          Get instant alerts for messages, bookings, and offers even when the app is closed
+        </p>
+        <div className="flex space-x-2">
+          <button
+            onClick={onEnable}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+          >
+            Enable Notifications
+          </button>
+          <button
+            onClick={onDismiss}
+            className="px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-medium rounded-lg border border-gray-200 transition-colors"
+          >
+            Maybe Later
+          </button>
+        </div>
+      </div>
+      <button
+        onClick={onDismiss}
+        className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+);
+
+// ============================================
+// MAIN NOTIFICATION BUTTON COMPONENT
+// ============================================
+
 const NotificationButton = ({
   isMobile = false,
   isAuthenticated = false,
   className = ""
 }) => {
   const navigate = useNavigate();
+
+  // WEB PUSH HOOK (NEW)
+  const {
+    pushPermission,
+    isPushSubscribed,
+    showPushPrompt,
+    setShowPushPrompt,
+    enablePushNotifications
+  } = useWebPush(isAuthenticated);
 
   // State management
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -263,6 +441,15 @@ const NotificationButton = ({
 
   // Event handlers
   const toggleNotifications = () => setIsNotificationOpen(!isNotificationOpen);
+
+  // NEW: Handle push enable
+  const handleEnablePush = async () => {
+    const success = await enablePushNotifications();
+    if (success) {
+      // Optional: Show success message
+      console.log('🎉 Push notifications enabled successfully!');
+    }
+  };
 
   const handleNotificationClick = async (notification) => {
     setIsNotificationOpen(false);
@@ -532,6 +719,14 @@ const NotificationButton = ({
             transform: 'translateX(0)'
           } : {}}
         >
+          {/* WEB PUSH PROMPT (NEW) */}
+          {showPushPrompt && !isPushSubscribed && (
+            <PushNotificationPrompt
+              onEnable={handleEnablePush}
+              onDismiss={() => setShowPushPrompt(false)}
+            />
+          )}
+
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
