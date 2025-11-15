@@ -64,6 +64,20 @@ const useWebPush = (isAuthenticated) => {
   const VAPID_PUBLIC_KEY = 'BKejhBqZqa4GnoAc7nFnQXtCTTbQBpMXjABBS_cMyk4RRpRkgOB6_52y2VQxObMi9XBvRyim7seUpvUm1HaoFms';
   const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://discoun3ree.com/api/v1';
 
+  // Helper to get auth token
+  const getAuthToken = () => {
+    // Try cookie first (same as notificationService)
+    const cookieToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('token='))
+      ?.split('=')[1];
+
+    // Fallback to localStorage
+    const localStorageToken = localStorage.getItem('token');
+
+    return cookieToken || localStorageToken || '';
+  };
+
   useEffect(() => {
     if ('Notification' in window) {
       setPushPermission(Notification.permission);
@@ -132,8 +146,18 @@ const useWebPush = (isAuthenticated) => {
 
       console.log('✅ Push subscription created:', subscription);
 
-      // Send subscription to backend - FIXED ENDPOINT
-      const token = authService.getToken();
+      // Get auth token
+      const token = getAuthToken();
+
+      if (!token) {
+        console.error('❌ No auth token found');
+        alert('Authentication error. Please log in again.');
+        return false;
+      }
+
+      console.log('✅ Auth token found');
+
+      // Send subscription to backend
       const response = await fetch(`${API_BASE}/notifications/subscribe`, {
         method: 'POST',
         headers: {
@@ -189,6 +213,7 @@ const useWebPush = (isAuthenticated) => {
     enablePushNotifications
   };
 };
+
 
 // ============================================
 // PUSH NOTIFICATION PROMPT COMPONENT
