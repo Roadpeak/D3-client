@@ -160,7 +160,7 @@ const useWebPush = (isAuthenticated) => {
       console.log('✅ Auth token found');
 
       // Send subscription to backend
-      const response = await fetch(`${API_BASE}/notifications/subscribe`, {
+      const response = await fetch(`${API_BASE}/notifications/push/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
