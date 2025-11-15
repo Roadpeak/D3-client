@@ -147,7 +147,7 @@ const useWebPush = (isAuthenticated) => {
       console.log('✅ Push subscription created:', subscription);
 
       // Get auth token
-      const token = getAuthToken();
+      const token = authService.getToken();
 
       if (!token) {
         console.error('❌ No auth token found');
