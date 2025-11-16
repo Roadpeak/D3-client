@@ -47,7 +47,7 @@ class ReelService {
             });
 
             const response = await axios.get(
-                `${API_BASE_URL}/reels?${queryParams}`,
+                `${API_BASE_URL}/api/v1/reels?${queryParams}`,
                 { headers: this.getAuthHeaders() }
             );
 
@@ -64,7 +64,7 @@ class ReelService {
     async getReel(reelId) {
         try {
             const response = await axios.get(
-                `${API_BASE_URL}/reels/${reelId}`,
+                `${API_BASE_URL}/api/v1/reels/${reelId}`,
                 { headers: this.getAuthHeaders() }
             );
 
@@ -81,7 +81,7 @@ class ReelService {
     async toggleLike(reelId) {
         try {
             const response = await axios.post(
-                `${API_BASE_URL}/reels/${reelId}/like`,
+                `${API_BASE_URL}/api/v1/reels/${reelId}/like`,
                 {},
                 { headers: this.getAuthHeaders() }
             );
@@ -99,7 +99,7 @@ class ReelService {
     async trackView(reelId, duration = 0) {
         try {
             const response = await axios.post(
-                `${API_BASE_URL}/reels/${reelId}/view`,
+                `${API_BASE_URL}/api/v1/reels/${reelId}/view`,
                 { duration },
                 { headers: this.getAuthHeaders() }
             );
@@ -118,7 +118,7 @@ class ReelService {
     async trackShare(reelId) {
         try {
             const response = await axios.post(
-                `${API_BASE_URL}/reels/${reelId}/share`,
+                `${API_BASE_URL}/api/v1/reels/${reelId}/share`,
                 {},
                 { headers: this.getAuthHeaders() }
             );
@@ -137,7 +137,7 @@ class ReelService {
     async trackChat(reelId) {
         try {
             const response = await axios.post(
-                `${API_BASE_URL}/reels/${reelId}/chat`,
+                `${API_BASE_URL}/api/v1/reels/${reelId}/chat`,
                 {},
                 { headers: this.getAuthHeaders() }
             );
