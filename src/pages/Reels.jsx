@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReelVideo from '../components/reels/ReelVideo';
 import authService from '../services/authService';
-import reelService from '../services/reelService';
+import reelService from '../services/reelsService';
 
 const Reels = () => {
     const [reels, setReels] = useState([]);
