@@ -1,50 +1,19 @@
-// services/reelService.js - Customer Reel API Service
+// services/reelsService.js
+import { getTokenFromCookie } from '../config/api';
+
 class ReelService {
     constructor() {
-        this.API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
+        this.API_BASE = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
     }
 
-    /**
-     * Enhanced token retrieval (same as chatService)
-     */
+    // Use the same token retrieval as authService and notificationService
     getAuthToken() {
-        const getTokenFromCookie = () => {
-            if (typeof document === 'undefined') return '';
-
-            const name = 'authToken=';
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const ca = decodedCookie.split(';');
-
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') {
-                    c = c.substring(1);
-                }
-                if (c.indexOf(name) === 0) {
-                    return c.substring(name.length, c.length);
-                }
-            }
-            return '';
-        };
-
-        const tokenSources = {
-            localStorage_access_token: typeof window !== 'undefined' ? localStorage.getItem('access_token') : '',
-            localStorage_authToken: typeof window !== 'undefined' ? localStorage.getItem('authToken') : '',
-            localStorage_token: typeof window !== 'undefined' ? localStorage.getItem('token') : '',
-            cookie_authToken: getTokenFromCookie(),
-        };
-
-        return tokenSources.localStorage_access_token ||
-            tokenSources.localStorage_authToken ||
-            tokenSources.localStorage_token ||
-            tokenSources.cookie_authToken;
+        return getTokenFromCookie();
     }
 
-    /**
-     * Get authentication headers
-     */
     getHeaders() {
         const token = this.getAuthToken();
+
         return {
             'Content-Type': 'application/json',
             'Authorization': token ? `Bearer ${token}` : '',
@@ -52,9 +21,6 @@ class ReelService {
         };
     }
 
-    /**
-     * Handle response
-     */
     async handleResponse(response) {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
@@ -64,39 +30,33 @@ class ReelService {
     }
 
     /**
-     * Get reels feed
+     * Get reels feed for customers
      */
     async getReelsFeed(params = {}) {
         try {
-            const {
-                limit = 20,
-                offset = 0,
-                location,
-                category,
-                store_id,
-                sort = 'recent'
-            } = params;
+            const { limit = 20, offset = 0, location, category, store_id, sort = 'recent' } = params;
 
             const queryParams = new URLSearchParams({
                 limit: limit.toString(),
                 offset: offset.toString(),
-                sort,
+                sort: sort,
                 ...(location && { location }),
                 ...(category && { category }),
                 ...(store_id && { store_id }),
             });
 
-            const response = await fetch(
-                `${this.API_BASE}/api/v1/reels?${queryParams}`,
-                {
-                    headers: this.getHeaders(),
-                    credentials: 'include'
-                }
-            );
+            console.log('🔍 Fetching reels feed:', queryParams.toString());
 
-            return this.handleResponse(response);
+            const response = await fetch(`${this.API_BASE}/reels?${queryParams}`, {
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            const result = await this.handleResponse(response);
+            console.log('✅ Reels feed response:', result);
+            return result;
         } catch (error) {
-            console.error('Error fetching reels feed:', error);
+            console.error('❌ Error fetching reels feed:', error);
             throw error;
         }
     }
@@ -106,13 +66,10 @@ class ReelService {
      */
     async getReel(reelId) {
         try {
-            const response = await fetch(
-                `${this.API_BASE}/api/v1/reels/${reelId}`,
-                {
-                    headers: this.getHeaders(),
-                    credentials: 'include'
-                }
-            );
+            const response = await fetch(`${this.API_BASE}/reels/${reelId}`, {
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
 
             return this.handleResponse(response);
         } catch (error) {
@@ -122,47 +79,54 @@ class ReelService {
     }
 
     /**
-     * Toggle like on reel
+     * Toggle like on a reel
      */
     async toggleLike(reelId) {
         try {
-            const response = await fetch(
-                `${this.API_BASE}/api/v1/reels/${reelId}/like`,
-                {
-                    method: 'POST',
-                    headers: this.getHeaders(),
-                    credentials: 'include',
-                    body: JSON.stringify({})
-                }
-            );
+            const token = this.getAuthToken();
 
-            return this.handleResponse(response);
+            if (!token) {
+                throw new Error('Authentication required. Please log in to like reels.');
+            }
+
+            console.log('❤️ Toggling like for reel:', reelId);
+
+            const response = await fetch(`${this.API_BASE}/reels/${reelId}/like`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            const result = await this.handleResponse(response);
+            console.log('✅ Like toggled:', result);
+            return result;
         } catch (error) {
-            console.error('Error toggling like:', error);
+            console.error('❌ Error toggling like:', error);
             throw error;
         }
     }
 
     /**
-     * Track view
+     * Track reel view
      */
     async trackView(reelId, duration = 0) {
         try {
-            const response = await fetch(
-                `${this.API_BASE}/api/v1/reels/${reelId}/view`,
-                {
-                    method: 'POST',
-                    headers: this.getHeaders(),
-                    credentials: 'include',
-                    body: JSON.stringify({ duration })
-                }
-            );
+            console.log('👁️ Tracking view for reel:', reelId);
 
-            return this.handleResponse(response);
+            const response = await fetch(`${this.API_BASE}/reels/${reelId}/view`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({ duration })
+            });
+
+            const result = await this.handleResponse(response);
+            console.log('✅ View tracked:', result);
+            return result;
         } catch (error) {
-            console.error('Error tracking view:', error);
-            // Don't throw error for tracking - fail silently
-            return null;
+            console.error('❌ Error tracking view:', error);
+            // Don't throw error for view tracking - silent failure
+            return { success: false, error: error.message };
         }
     }
 
@@ -171,21 +135,21 @@ class ReelService {
      */
     async trackShare(reelId) {
         try {
-            const response = await fetch(
-                `${this.API_BASE}/api/v1/reels/${reelId}/share`,
-                {
-                    method: 'POST',
-                    headers: this.getHeaders(),
-                    credentials: 'include',
-                    body: JSON.stringify({})
-                }
-            );
+            console.log('🔄 Tracking share for reel:', reelId);
 
-            return this.handleResponse(response);
+            const response = await fetch(`${this.API_BASE}/reels/${reelId}/share`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            const result = await this.handleResponse(response);
+            console.log('✅ Share tracked:', result);
+            return result;
         } catch (error) {
-            console.error('Error tracking share:', error);
-            // Don't throw error for tracking - fail silently
-            return null;
+            console.error('❌ Error tracking share:', error);
+            // Don't throw error for share tracking - silent failure
+            return { success: false, error: error.message };
         }
     }
 
@@ -194,25 +158,167 @@ class ReelService {
      */
     async trackChat(reelId) {
         try {
-            const response = await fetch(
-                `${this.API_BASE}/api/v1/reels/${reelId}/chat`,
-                {
-                    method: 'POST',
-                    headers: this.getHeaders(),
-                    credentials: 'include',
-                    body: JSON.stringify({})
-                }
-            );
+            console.log('💬 Tracking chat for reel:', reelId);
+
+            const response = await fetch(`${this.API_BASE}/reels/${reelId}/chat`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            const result = await this.handleResponse(response);
+            console.log('✅ Chat tracked:', result);
+            return result;
+        } catch (error) {
+            console.error('❌ Error tracking chat:', error);
+            // Don't throw error for chat tracking - silent failure
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Get reel analytics (for merchants)
+     */
+    async getReelAnalytics(reelId) {
+        try {
+            const response = await fetch(`${this.API_BASE}/reels/${reelId}/analytics`, {
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
 
             return this.handleResponse(response);
         } catch (error) {
-            console.error('Error tracking chat:', error);
-            // Don't throw error for tracking - fail silently
-            return null;
+            console.error('Error fetching reel analytics:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Search reels by query
+     */
+    async searchReels(query, params = {}) {
+        try {
+            const { limit = 20, offset = 0 } = params;
+
+            const queryParams = new URLSearchParams({
+                q: query,
+                limit: limit.toString(),
+                offset: offset.toString(),
+            });
+
+            const response = await fetch(`${this.API_BASE}/reels/search?${queryParams}`, {
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            return this.handleResponse(response);
+        } catch (error) {
+            console.error('Error searching reels:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get reels by store
+     */
+    async getStoreReels(storeId, params = {}) {
+        try {
+            const { limit = 20, offset = 0 } = params;
+
+            const queryParams = new URLSearchParams({
+                limit: limit.toString(),
+                offset: offset.toString(),
+            });
+
+            const response = await fetch(`${this.API_BASE}/reels?store_id=${storeId}&${queryParams}`, {
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            return this.handleResponse(response);
+        } catch (error) {
+            console.error('Error fetching store reels:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get reels by category
+     */
+    async getCategoryReels(category, params = {}) {
+        try {
+            const { limit = 20, offset = 0 } = params;
+
+            const queryParams = new URLSearchParams({
+                category: category,
+                limit: limit.toString(),
+                offset: offset.toString(),
+            });
+
+            const response = await fetch(`${this.API_BASE}/reels?${queryParams}`, {
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            return this.handleResponse(response);
+        } catch (error) {
+            console.error('Error fetching category reels:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get trending reels
+     */
+    async getTrendingReels(params = {}) {
+        try {
+            const { limit = 20, offset = 0 } = params;
+
+            const queryParams = new URLSearchParams({
+                sort: 'trending',
+                limit: limit.toString(),
+                offset: offset.toString(),
+            });
+
+            const response = await fetch(`${this.API_BASE}/reels?${queryParams}`, {
+                headers: this.getHeaders(),
+                credentials: 'include'
+            });
+
+            return this.handleResponse(response);
+        } catch (error) {
+            console.error('Error fetching trending reels:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Report reel
+     */
+    async reportReel(reelId, reason, description = '') {
+        try {
+            const token = this.getAuthToken();
+
+            if (!token) {
+                throw new Error('Authentication required to report reels.');
+            }
+
+            const response = await fetch(`${this.API_BASE}/reels/${reelId}/report`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({ reason, description })
+            });
+
+            return this.handleResponse(response);
+        } catch (error) {
+            console.error('Error reporting reel:', error);
+            throw error;
         }
     }
 }
 
-// Create and export instance
+// Create singleton instance
 const reelService = new ReelService();
+
 export default reelService;
