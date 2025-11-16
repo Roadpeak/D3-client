@@ -1,26 +1,66 @@
 // services/reelService.js - Customer Reel API Service
-import axios from 'axios';
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000/api/v1';
-
 class ReelService {
+    constructor() {
+        this.API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
+    }
+
     /**
-     * Get authentication headers (optional)
+     * Enhanced token retrieval (same as chatService)
      */
-    getAuthHeaders() {
-        const token = localStorage.getItem('token') || localStorage.getItem('userToken');
+    getAuthToken() {
+        const getTokenFromCookie = () => {
+            if (typeof document === 'undefined') return '';
 
-        if (token) {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'x-api-key': process.env.REACT_APP_API_KEY || '',
-            };
-        }
+            const name = 'authToken=';
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
 
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) === 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return '';
+        };
+
+        const tokenSources = {
+            localStorage_access_token: typeof window !== 'undefined' ? localStorage.getItem('access_token') : '',
+            localStorage_authToken: typeof window !== 'undefined' ? localStorage.getItem('authToken') : '',
+            localStorage_token: typeof window !== 'undefined' ? localStorage.getItem('token') : '',
+            cookie_authToken: getTokenFromCookie(),
+        };
+
+        return tokenSources.localStorage_access_token ||
+            tokenSources.localStorage_authToken ||
+            tokenSources.localStorage_token ||
+            tokenSources.cookie_authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getHeaders() {
+        const token = this.getAuthToken();
         return {
             'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+            'x-api-key': process.env.REACT_APP_API_KEY || '',
         };
+    }
+
+    /**
+     * Handle response
+     */
+    async handleResponse(response) {
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     }
 
     /**
@@ -46,15 +86,18 @@ class ReelService {
                 ...(store_id && { store_id }),
             });
 
-            const response = await axios.get(
-                `${API_BASE_URL}/api/v1/reels?${queryParams}`,
-                { headers: this.getAuthHeaders() }
+            const response = await fetch(
+                `${this.API_BASE}/api/v1/reels?${queryParams}`,
+                {
+                    headers: this.getHeaders(),
+                    credentials: 'include'
+                }
             );
 
-            return response.data;
+            return this.handleResponse(response);
         } catch (error) {
             console.error('Error fetching reels feed:', error);
-            throw error.response?.data || error;
+            throw error;
         }
     }
 
@@ -63,15 +106,18 @@ class ReelService {
      */
     async getReel(reelId) {
         try {
-            const response = await axios.get(
-                `${API_BASE_URL}/api/v1/reels/${reelId}`,
-                { headers: this.getAuthHeaders() }
+            const response = await fetch(
+                `${this.API_BASE}/api/v1/reels/${reelId}`,
+                {
+                    headers: this.getHeaders(),
+                    credentials: 'include'
+                }
             );
 
-            return response.data;
+            return this.handleResponse(response);
         } catch (error) {
             console.error('Error fetching reel:', error);
-            throw error.response?.data || error;
+            throw error;
         }
     }
 
@@ -80,16 +126,20 @@ class ReelService {
      */
     async toggleLike(reelId) {
         try {
-            const response = await axios.post(
-                `${API_BASE_URL}/api/v1/reels/${reelId}/like`,
-                {},
-                { headers: this.getAuthHeaders() }
+            const response = await fetch(
+                `${this.API_BASE}/api/v1/reels/${reelId}/like`,
+                {
+                    method: 'POST',
+                    headers: this.getHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({})
+                }
             );
 
-            return response.data;
+            return this.handleResponse(response);
         } catch (error) {
             console.error('Error toggling like:', error);
-            throw error.response?.data || error;
+            throw error;
         }
     }
 
@@ -98,13 +148,17 @@ class ReelService {
      */
     async trackView(reelId, duration = 0) {
         try {
-            const response = await axios.post(
-                `${API_BASE_URL}/api/v1/reels/${reelId}/view`,
-                { duration },
-                { headers: this.getAuthHeaders() }
+            const response = await fetch(
+                `${this.API_BASE}/api/v1/reels/${reelId}/view`,
+                {
+                    method: 'POST',
+                    headers: this.getHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({ duration })
+                }
             );
 
-            return response.data;
+            return this.handleResponse(response);
         } catch (error) {
             console.error('Error tracking view:', error);
             // Don't throw error for tracking - fail silently
@@ -117,13 +171,17 @@ class ReelService {
      */
     async trackShare(reelId) {
         try {
-            const response = await axios.post(
-                `${API_BASE_URL}/api/v1/reels/${reelId}/share`,
-                {},
-                { headers: this.getAuthHeaders() }
+            const response = await fetch(
+                `${this.API_BASE}/api/v1/reels/${reelId}/share`,
+                {
+                    method: 'POST',
+                    headers: this.getHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({})
+                }
             );
 
-            return response.data;
+            return this.handleResponse(response);
         } catch (error) {
             console.error('Error tracking share:', error);
             // Don't throw error for tracking - fail silently
@@ -136,13 +194,17 @@ class ReelService {
      */
     async trackChat(reelId) {
         try {
-            const response = await axios.post(
-                `${API_BASE_URL}/api/v1/reels/${reelId}/chat`,
-                {},
-                { headers: this.getAuthHeaders() }
+            const response = await fetch(
+                `${this.API_BASE}/api/v1/reels/${reelId}/chat`,
+                {
+                    method: 'POST',
+                    headers: this.getHeaders(),
+                    credentials: 'include',
+                    body: JSON.stringify({})
+                }
             );
 
-            return response.data;
+            return this.handleResponse(response);
         } catch (error) {
             console.error('Error tracking chat:', error);
             // Don't throw error for tracking - fail silently
@@ -151,4 +213,6 @@ class ReelService {
     }
 }
 
-export default new ReelService();
+// Create and export instance
+const reelService = new ReelService();
+export default reelService;
