@@ -1,4 +1,4 @@
-// components/Navbar.jsx - Modernized with professional mobile design
+// components/Navbar.jsx - Updated with Reels feature
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
@@ -20,14 +20,16 @@ import {
   FileText,
   MessageSquare,
   Building,
-  Headphones
+  Headphones,
+  Video
 } from 'lucide-react';
 
-// For mobile view we keep the React icons
+// For mobile view we keep the React icons plus add Video icon
 import { FaStore, FaFire } from "react-icons/fa6";
 import { HiHome } from "react-icons/hi2";
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { CiDiscount1 } from "react-icons/ci";
+import { MdVideoLibrary } from "react-icons/md";
 
 const Navbar = () => {
   // Location hook with fallback
@@ -241,8 +243,21 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Right Side - Notification Icon and Profile */}
+          {/* Right Side - Chat, Notification Icon and Profile */}
           <div className="flex items-center space-x-3">
+            {/* Chat Icon - Moved here */}
+            <Link
+              to="/chat"
+              className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 transition-all duration-200 relative shadow-md"
+            >
+              <IoChatbubbleEllipsesOutline className="w-5 h-5 text-white" />
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-blue-500 font-semibold shadow-lg animate-pulse">
+                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                </span>
+              )}
+            </Link>
+
             {/* Notification Icon */}
             {isAuthenticated ? (
               <NotificationButton
@@ -301,7 +316,7 @@ const Navbar = () => {
       </div>
       {/* End of blue gradient section */}
     </div>
-  ), [isAuthenticated, user, handleSearchNavigate, handleStoreClick, handleOfferClick]);
+  ), [isAuthenticated, user, unreadChatCount, handleSearchNavigate, handleStoreClick, handleOfferClick]);
 
   // Loading state
   if (loading || isLocationLoading) {
@@ -501,6 +516,10 @@ const Navbar = () => {
                     <Store className="w-3.5 h-3.5" />
                     <span>Stores</span>
                   </Link>
+                  <Link to="/reels" className={`text-white hover:text-yellow-400 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sm flex items-center space-x-1.5 ${location.pathname === '/reels' ? 'text-yellow-400 bg-white/10' : ''}`}>
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Reels</span>
+                  </Link>
                   <Link to="/requestservice" className={`text-white hover:text-yellow-400 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sm flex items-center space-x-1.5 ${location.pathname === '/requestservice' ? 'text-yellow-400 bg-white/10' : ''}`}>
                     <FileText className="w-3.5 h-3.5" />
                     <span>Request Service</span>
@@ -531,7 +550,7 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Fixed Bottom Mobile Navigation - Enhanced with modern design */}
+      {/* Fixed Bottom Mobile Navigation - Enhanced with Reels button */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
         <div className="bg-white/95 backdrop-blur-md border-t border-gray-200/50 rounded-t-3xl shadow-2xl">
           {/* Reduced padding for more compact design */}
@@ -598,22 +617,17 @@ const Navbar = () => {
             </Link>
 
             <Link
-              to="/chat"
-              className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/chat'
+              to="/reels"
+              className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/reels'
                 ? 'text-blue-600'
                 : 'text-gray-700 hover:text-blue-600'
                 }`}
             >
-              <div className={`relative transition-transform duration-300 ${location.pathname === '/chat' ? 'scale-110' : ''}`}>
-                <IoChatbubbleEllipsesOutline className="w-6 h-6" />
-                {unreadChatCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center border-2 border-white font-semibold shadow-lg animate-pulse">
-                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
-                  </span>
-                )}
+              <div className={`relative transition-transform duration-300 ${location.pathname === '/reels' ? 'scale-110' : ''}`}>
+                <MdVideoLibrary className="w-6 h-6" />
               </div>
-              <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/chat' ? 'font-semibold' : ''}`}>
-                Chat
+              <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/reels' ? 'font-semibold' : ''}`}>
+                Reels
               </span>
             </Link>
           </div>

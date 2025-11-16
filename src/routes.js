@@ -12,6 +12,9 @@ import ViewOffer from './pages/ViewOffer' // Keep existing for backward compatib
 import Stores from './pages/Stores'
 import Store from './pages/Store'
 
+// Reels Feature
+import Reels from './pages/Reels'
+
 // Updated Service Components
 import ServiceDetailPage from './pages/ServiceDetailPage' // Our new enhanced service page
 import ViewService from './pages/ViewService' // Keep existing for backward compatibility
@@ -115,6 +118,19 @@ const AppRoutes = () => {
           {/* Login redirect routes */}
           <Route path='/login' element={<Navigate to="/accounts/sign-in" replace />} />
           <Route path='/signup' element={<Navigate to="/accounts/sign-up" replace />} />
+
+          {/* ==================== REELS ROUTES ==================== */}
+
+          {/* Main Reels Page */}
+          <Route path='/reels' element={<Reels />} />
+          <Route path='/Reels' element={<Navigate to="/reels" replace />} />
+
+          {/* Individual Reel View */}
+          <Route path='/reels/:id' element={<Reels />} />
+
+          {/* Alternative routes */}
+          <Route path='/videos' element={<Navigate to="/reels" replace />} />
+          <Route path='/shorts' element={<Navigate to="/reels" replace />} />
 
           {/* ==================== OFFER ROUTES ==================== */}
 
