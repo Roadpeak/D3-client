@@ -21,11 +21,15 @@ const Reels = () => {
     }, []);
 
     const checkAuth = async () => {
-        if (authService.isAuthenticated()) {
-            const result = await authService.getCurrentUser();
-            if (result.success) {
-                setUser(result.data.user);
+        try {
+            if (authService.isAuthenticated()) {
+                const result = await authService.getCurrentUser();
+                if (result.success) {
+                    setUser(result.data?.user || result.user || result.data);
+                }
             }
+        } catch (error) {
+            console.error('Error checking auth:', error);
         }
     };
 
@@ -37,57 +41,84 @@ const Reels = () => {
                 setIsLoadingMore(true);
             }
 
+            console.log('📱 Loading reels feed...', { offset });
+
             const response = await reelService.getReelsFeed({
                 limit: 10,
                 offset: offset,
                 sort: 'recent'
             });
 
-            if (response.success) {
-                const newReels = response.data.reels.map(reel => ({
-                    id: reel.id,
-                    videoUrl: reel.video_url,
-                    thumbnail: reel.thumbnail_url || reel.video_url,
-                    store: {
-                        id: reel.store?.id,
-                        name: reel.store?.name || 'Unknown Store',
-                        avatar: reel.store?.logo_url || reel.store?.avatar_url || '/default-avatar.png',
-                        verified: reel.store?.verified || false
-                    },
-                    service: {
-                        id: reel.service?.id,
-                        name: reel.service?.name || 'Service',
-                        price: reel.service?.price || 0,
-                        duration: reel.service?.duration || 'N/A'
-                    },
-                    description: reel.caption || reel.description || '',
-                    likes: reel.likes_count || 0,
-                    comments: reel.comments_count || 0,
-                    shares: reel.shares_count || 0,
-                    views: reel.views_count || 0,
-                    isLiked: reel.is_liked || false,
-                    createdAt: formatTimeAgo(reel.created_at)
-                }));
+            console.log('📋 Reels API response:', response);
 
-                if (offset === 0) {
-                    setReels(newReels);
-                } else {
-                    setReels(prev => [...prev, ...newReels]);
-                }
+            // ✅ FIXED: Handle the actual response structure from your API
+            let reelsData = [];
 
-                setHasMore(response.data.pagination?.has_more || newReels.length === 10);
+            if (response && response.success && response.data) {
+                // Check if data is directly an array or has a reels property
+                reelsData = Array.isArray(response.data) ? response.data : (response.data.reels || []);
+            } else if (response && Array.isArray(response.data)) {
+                reelsData = response.data;
+            } else if (Array.isArray(response)) {
+                reelsData = response;
             }
+
+            console.log('✅ Reels data extracted:', reelsData.length, 'reels');
+
+            const newReels = reelsData.map(reel => ({
+                id: reel.id,
+                videoUrl: reel.videoUrl || reel.video_url,
+                thumbnail: reel.thumbnail || reel.thumbnail_url || reel.videoUrl || reel.video_url,
+                store: {
+                    id: reel.store?.id,
+                    name: reel.store?.name || 'Unknown Store',
+                    avatar: reel.store?.avatar || reel.store?.logo_url || reel.store?.avatar_url || '/default-avatar.png',
+                    verified: reel.store?.verified || false
+                },
+                service: {
+                    id: reel.service?.id,
+                    name: reel.service?.name || 'Service',
+                    price: reel.service?.price || 0,
+                    duration: reel.service?.duration || 'N/A'
+                },
+                description: reel.description || reel.caption || reel.title || '',
+                likes: reel.likes || reel.likes_count || 0,
+                comments: reel.comments || reel.comments_count || 0,
+                shares: reel.shares || reel.shares_count || 0,
+                views: reel.views || reel.views_count || 0,
+                isLiked: reel.isLiked || reel.is_liked || false,
+                createdAt: reel.createdAt || formatTimeAgo(reel.created_at)
+            }));
+
+            console.log('✅ Formatted reels:', newReels.length);
+
+            if (offset === 0) {
+                setReels(newReels);
+            } else {
+                setReels(prev => [...prev, ...newReels]);
+            }
+
+            // Check pagination
+            const hasMoreReels = response?.pagination?.hasMore ||
+                response?.data?.pagination?.hasMore ||
+                newReels.length === 10;
+
+            setHasMore(hasMoreReels);
 
             setLoading(false);
             setIsLoadingMore(false);
+
+            if (newReels.length === 0 && offset === 0) {
+                console.log('ℹ️ No reels found');
+            }
         } catch (error) {
-            console.error('Error loading reels:', error);
+            console.error('💥 Error loading reels:', error);
             setLoading(false);
             setIsLoadingMore(false);
 
             // Show user-friendly error message
             if (error.message) {
-                alert(`Failed to load reels: ${error.message}`);
+                console.error('Error details:', error.message);
             }
         }
     };
@@ -121,7 +152,9 @@ const Reels = () => {
 
             // Track view for the current reel
             if (reels[newIndex]) {
-                reelService.trackView(reels[newIndex].id, 0);
+                reelService.trackView(reels[newIndex].id, 0).catch(err => {
+                    console.error('Error tracking view:', err);
+                });
             }
         }
 
@@ -132,6 +165,13 @@ const Reels = () => {
     };
 
     const handleLike = async (reelId) => {
+        // Check if user is authenticated
+        if (!user) {
+            alert('Please log in to like reels');
+            navigate('/login');
+            return;
+        }
+
         try {
             // Optimistic update
             setReels(prevReels =>
@@ -149,15 +189,17 @@ const Reels = () => {
             // API call
             const response = await reelService.toggleLike(reelId);
 
-            if (response.success) {
+            console.log('Like response:', response);
+
+            if (response && response.success && response.data) {
                 // Update with actual values from server
                 setReels(prevReels =>
                     prevReels.map(reel =>
                         reel.id === reelId
                             ? {
                                 ...reel,
-                                isLiked: response.data.is_liked,
-                                likes: response.data.likes_count
+                                isLiked: response.data.isLiked,
+                                likes: response.data.totalLikes || reel.likes
                             }
                             : reel
                     )
@@ -177,6 +219,8 @@ const Reels = () => {
                         : reel
                 )
             );
+
+            alert('Failed to like reel. Please try again.');
         }
     };
 
@@ -188,7 +232,9 @@ const Reels = () => {
     const handleChat = async (reel) => {
         try {
             // Track chat initiation
-            await reelService.trackChat(reel.id);
+            await reelService.trackChat(reel.id).catch(err => {
+                console.error('Error tracking chat:', err);
+            });
 
             // Navigate to chat with the store
             navigate(`/chat/Store/${reel.store.id}`, {
@@ -215,14 +261,18 @@ const Reels = () => {
                 });
 
                 // Track share
-                await reelService.trackShare(reelId);
+                await reelService.trackShare(reelId).catch(err => {
+                    console.error('Error tracking share:', err);
+                });
             } else {
                 // Fallback: Copy to clipboard
                 await navigator.clipboard.writeText(shareUrl);
                 alert('Link copied to clipboard!');
 
                 // Track share
-                await reelService.trackShare(reelId);
+                await reelService.trackShare(reelId).catch(err => {
+                    console.error('Error tracking share:', err);
+                });
             }
         } catch (error) {
             console.error('Error sharing:', error);
@@ -336,7 +386,7 @@ const Reels = () => {
 
             {/* Progress Indicator */}
             <div className="fixed top-20 left-0 right-0 z-40 flex justify-center space-x-1 px-4">
-                {reels.slice(0, 10).map((_, index) => (
+                {reels.slice(0, Math.min(10, reels.length)).map((_, index) => (
                     <div
                         key={index}
                         className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-white' : 'bg-white/30'
