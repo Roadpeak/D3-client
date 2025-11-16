@@ -14,6 +14,7 @@ class ReelService {
             return {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
+                'x-api-key': process.env.REACT_APP_API_KEY || '',
             };
         }
 
