@@ -384,7 +384,7 @@ const Reels = () => {
                 </div>
             </div>
 
-            {/* Progress Indicator */}
+            {/* Progress Indicator
             <div className="fixed top-20 left-0 right-0 z-40 flex justify-center space-x-1 px-4">
                 {reels.slice(0, Math.min(10, reels.length)).map((_, index) => (
                     <div
@@ -393,7 +393,7 @@ const Reels = () => {
                             }`}
                     ></div>
                 ))}
-            </div>
+            </div> */}
 
             <style jsx>{`
                 .scrollbar-hide::-webkit-scrollbar {

@@ -4,7 +4,7 @@ import { Heart, MessageCircle, Share2, Calendar, Play, Pause, Volume2, VolumeX, 
 
 const ReelVideo = ({ reel, isActive, onLike, onComment, onShare, onBook, onStoreClick, onChat, user }) => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [isMuted, setIsMuted] = useState(true);
+    const [isMuted, setIsMuted] = useState(false); // ✅ Changed from true to false - audio unmuted by default
     const [showControls, setShowControls] = useState(true);
     const [progress, setProgress] = useState(0);
     const videoRef = useRef(null);
@@ -13,8 +13,11 @@ const ReelVideo = ({ reel, isActive, onLike, onComment, onShare, onBook, onStore
 
     useEffect(() => {
         if (isActive && videoRef.current) {
+            // ✅ Unmute video when it becomes active
+            videoRef.current.muted = false;
             videoRef.current.play().catch(err => console.log('Autoplay prevented:', err));
             setIsPlaying(true);
+            setIsMuted(false);
             viewTrackedRef.current = false;
         } else if (!isActive && videoRef.current) {
             videoRef.current.pause();
@@ -218,8 +221,8 @@ const ReelVideo = ({ reel, isActive, onLike, onComment, onShare, onBook, onStore
                     <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-all group-active:scale-90">
                         <Heart
                             className={`w-7 h-7 transition-all ${reel.isLiked
-                                    ? 'text-red-500 fill-red-500 scale-110'
-                                    : 'text-white group-hover:scale-110'
+                                ? 'text-red-500 fill-red-500 scale-110'
+                                : 'text-white group-hover:scale-110'
                                 }`}
                         />
                     </div>

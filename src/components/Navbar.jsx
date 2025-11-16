@@ -1,4 +1,4 @@
-// components/Navbar.jsx - Updated with Reels feature
+// components/Navbar.jsx - Updated with Instagram-style Reels icon
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
@@ -24,12 +24,24 @@ import {
   Video
 } from 'lucide-react';
 
-// For mobile view we keep the React icons plus add Video icon
+// For mobile view we keep the React icons
 import { FaStore, FaFire } from "react-icons/fa6";
 import { HiHome } from "react-icons/hi2";
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { CiDiscount1 } from "react-icons/ci";
-import { MdVideoLibrary } from "react-icons/md";
+
+// Simple Reels Icon - Rounded square with play button (matching Instagram style)
+const ReelsIcon = ({ className, isActive }) => (
+  <div className={`relative w-6 h-6 ${isActive ? 'bg-gradient-to-br from-purple-600 via-pink-600 to-red-600' : 'border-2 border-current'} rounded-md flex items-center justify-center transition-all duration-300`}>
+    <svg
+      className={`w-3 h-3 ${isActive ? 'text-white' : 'text-current'}`}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M8 5v14l11-7z" />
+    </svg>
+  </div>
+);
 
 const Navbar = () => {
   // Location hook with fallback
@@ -550,7 +562,7 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* Fixed Bottom Mobile Navigation - Enhanced with Reels button */}
+      {/* Fixed Bottom Mobile Navigation - Enhanced with Instagram-style Reels icon */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
         <div className="bg-white/95 backdrop-blur-md border-t border-gray-200/50 rounded-t-3xl shadow-2xl">
           {/* Reduced padding for more compact design */}
@@ -624,7 +636,7 @@ const Navbar = () => {
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/reels' ? 'scale-110' : ''}`}>
-                <MdVideoLibrary className="w-6 h-6" />
+                <ReelsIcon className="w-6 h-6" />
               </div>
               <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/reels' ? 'font-semibold' : ''}`}>
                 Reels
