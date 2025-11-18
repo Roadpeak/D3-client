@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { offerAPI } from '../services/offerService';
 import ApiService from '../services/storeService';
@@ -32,25 +32,91 @@ const TimerIcon = ({ className = "" }) => (
   </svg>
 );
 
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center h-64">
-    <motion.div
-      className="h-10 w-10 rounded-full border-2 border-t-transparent border-blue-500"
-      animate={{ rotate: 360 }}
-      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-    />
+// Progressive Image Component with blur-up effect
+const ProgressiveImage = ({ src, alt, className, placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E" }) => {
+  const [imgSrc, setImgSrc] = useState(placeholder);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = src;
+
+    img.onload = () => {
+      setImgSrc(src);
+      setLoading(false);
+    };
+
+    img.onerror = () => {
+      setImgSrc('/images/default-offer.jpg');
+      setLoading(false);
+    };
+  }, [src]);
+
+  return (
+    <div className="relative w-full h-full overflow-hidden">
+      <img
+        src={imgSrc}
+        alt={alt}
+        className={`${className} ${loading ? 'blur-sm scale-105' : 'blur-0 scale-100'} transition-all duration-500`}
+      />
+      {loading && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+      )}
+    </div>
+  );
+};
+
+// Skeleton loader for Hero
+const HeroSkeleton = () => (
+  <div className="w-full max-w-[1280px] mx-auto px-4 py-6">
+    <div className="grid lg:grid-cols-3 gap-6">
+      {/* Main skeleton */}
+      <div className="lg:col-span-2 bg-gray-200 rounded-xl overflow-hidden shadow-sm h-[450px] animate-pulse">
+        <div className="h-full flex flex-col justify-end p-8">
+          <div className="max-w-md space-y-4">
+            <div className="h-4 w-32 bg-gray-300 rounded"></div>
+            <div className="h-8 w-3/4 bg-gray-300 rounded"></div>
+            <div className="h-6 w-24 bg-gray-300 rounded-full"></div>
+            <div className="space-y-2">
+              <div className="h-6 w-48 bg-gray-300 rounded"></div>
+              <div className="h-4 w-32 bg-gray-300 rounded"></div>
+            </div>
+            <div className="h-4 w-24 bg-gray-300 rounded"></div>
+            <div className="h-10 w-32 bg-gray-300 rounded-lg"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Side skeletons */}
+      <div className="space-y-6 h-[450px]">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-gray-200 rounded-xl shadow-sm h-[215px] animate-pulse flex">
+            <div className="w-1/2 bg-gray-300"></div>
+            <div className="w-1/2 p-4 space-y-3">
+              <div className="h-4 w-full bg-gray-300 rounded"></div>
+              <div className="h-3 w-2/3 bg-gray-300 rounded"></div>
+              <div className="mt-auto space-y-2">
+                <div className="h-5 w-1/2 bg-gray-300 rounded"></div>
+                <div className="h-3 w-1/3 bg-gray-300 rounded"></div>
+                <div className="h-8 w-full bg-gray-300 rounded"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   </div>
 );
 
 // Animation variants - simplified and more subtle
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.5 } }
+  visible: { opacity: 1, transition: { duration: 0.3 } }
 };
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
 };
 
 const slideVariants = {
@@ -76,6 +142,42 @@ const slideVariants = {
   })
 };
 
+// Cache manager for offers
+const offerCache = {
+  key: 'hero_offers_cache',
+  expiryKey: 'hero_offers_expiry',
+  duration: 5 * 60 * 1000, // 5 minutes
+
+  set(data) {
+    try {
+      localStorage.setItem(this.key, JSON.stringify(data));
+      localStorage.setItem(this.expiryKey, Date.now() + this.duration);
+    } catch (e) {
+      console.warn('Cache storage failed:', e);
+    }
+  },
+
+  get() {
+    try {
+      const expiry = localStorage.getItem(this.expiryKey);
+      if (!expiry || Date.now() > parseInt(expiry)) {
+        this.clear();
+        return null;
+      }
+      const data = localStorage.getItem(this.key);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      console.warn('Cache retrieval failed:', e);
+      return null;
+    }
+  },
+
+  clear() {
+    localStorage.removeItem(this.key);
+    localStorage.removeItem(this.expiryKey);
+  }
+};
+
 export default function Hero() {
   const [topOffers, setTopOffers] = useState([]);
   const [sideOffers, setSideOffers] = useState([]);
@@ -83,6 +185,27 @@ export default function Hero() {
   const [direction, setDirection] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const mountedRef = useRef(true);
+
+  // Preload images
+  const preloadImages = async (offers) => {
+    const imageUrls = offers.map(offer => offer.image).filter(Boolean);
+
+    const promises = imageUrls.map(url => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.src = url;
+        img.onload = resolve;
+        img.onerror = resolve; // Still resolve on error to not block
+      });
+    });
+
+    await Promise.all(promises);
+    if (mountedRef.current) {
+      setImagesLoaded(true);
+    }
+  };
 
   // Transform API offer data to match component structure
   const transformOfferData = async (offers) => {
@@ -142,8 +265,21 @@ export default function Hero() {
   };
 
   useEffect(() => {
+    mountedRef.current = true;
+
     const fetchTopDiscountOffers = async () => {
       try {
+        // Check cache first
+        const cachedData = offerCache.get();
+        if (cachedData && mountedRef.current) {
+          setTopOffers(cachedData.topOffers);
+          setSideOffers(cachedData.sideOffers);
+          setLoading(false);
+          // Preload images in background
+          preloadImages([...cachedData.topOffers, ...cachedData.sideOffers]);
+          return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -152,6 +288,8 @@ export default function Hero() {
           status: 'active',
           limit: 20
         });
+
+        if (!mountedRef.current) return;
 
         if (response.success && response.offers) {
           const activeOffers = response.offers.filter(offer => {
@@ -162,16 +300,29 @@ export default function Hero() {
           const sortedOffers = activeOffers.sort((a, b) => b.discount - a.discount);
           const transformedOffers = await transformOfferData(sortedOffers);
 
+          if (!mountedRef.current) return;
+
           const heroOffers = transformedOffers.slice(0, 2);
           const sideOffersList = transformedOffers.slice(2, 4);
 
           setTopOffers(heroOffers);
           setSideOffers(sideOffersList);
+
+          // Cache the data
+          offerCache.set({
+            topOffers: heroOffers,
+            sideOffers: sideOffersList
+          });
+
+          // Preload images
+          preloadImages([...heroOffers, ...sideOffersList]);
         } else {
           throw new Error('No offers data received');
         }
       } catch (err) {
         console.error('Error fetching top discount offers:', err);
+        if (!mountedRef.current) return;
+
         setError('Failed to load top offers');
 
         const fallbackOffers = [
@@ -209,12 +360,19 @@ export default function Hero() {
 
         setTopOffers(fallbackOffers.slice(0, 2));
         setSideOffers([fallbackOffers[0]]);
+        setImagesLoaded(true);
       } finally {
-        setLoading(false);
+        if (mountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchTopDiscountOffers();
+
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -255,12 +413,9 @@ export default function Hero() {
     }
   };
 
-  if (loading) {
-    return (
-      <section className="w-full max-w-[1280px] mx-auto px-4 py-12">
-        <LoadingSpinner />
-      </section>
-    );
+  // Show skeleton loader initially
+  if (loading && topOffers.length === 0) {
+    return <HeroSkeleton />;
   }
 
   if (error && topOffers.length === 0) {
@@ -300,7 +455,7 @@ export default function Hero() {
           {topOffers.length > 0 && (
             <>
               {/* Carousel Container */}
-              <div className="relative h-[450px] overflow-hidden">
+              <div className="relative h-[450px] overflow-hidden bg-gray-100">
                 <AnimatePresence initial={false} custom={direction} mode="wait">
                   <motion.div
                     key={currentSlide}
@@ -311,16 +466,13 @@ export default function Hero() {
                     exit="exit"
                     className="absolute inset-0"
                   >
-                    <img
+                    <ProgressiveImage
                       src={topOffers[currentSlide].image}
                       alt={topOffers[currentSlide].title}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = '/images/default-offer.jpg';
-                      }}
                     />
 
-                    {/* Modern semi-transparent overlay - less gradient, more flat */}
+                    {/* Modern semi-transparent overlay */}
                     <div className="absolute inset-0 bg-black/40"></div>
 
                     {/* Content */}
@@ -387,10 +539,9 @@ export default function Hero() {
                 </AnimatePresence>
               </div>
 
-              {/* Simplified Navigation */}
+              {/* Navigation */}
               {topOffers.length > 1 && (
                 <>
-                  {/* Clean, minimal arrow buttons */}
                   <button
                     onClick={prevSlide}
                     className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full transition-colors z-10"
@@ -406,15 +557,13 @@ export default function Hero() {
                     <ChevronIcon direction="right" className="w-5 h-5" />
                   </button>
 
-                  {/* Subtle dots indicator */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
                     {topOffers.map((_, index) => (
                       <button
                         key={index}
                         onClick={() => goToSlide(index)}
                         aria-label={`Go to slide ${index + 1}`}
-                        className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentSlide ? "bg-white" : "bg-white/40 hover:bg-white/60"
-                          }`}
+                        className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentSlide ? "bg-white" : "bg-white/40 hover:bg-white/60"}`}
                       />
                     ))}
                   </div>
@@ -424,7 +573,7 @@ export default function Hero() {
           )}
         </motion.div>
 
-        {/* Side Deals - Improved to match layout */}
+        {/* Side Deals */}
         <div className="space-y-6 h-[450px] overflow-hidden">
           {sideOffers.slice(0, 2).map((offer) => (
             <motion.div
@@ -436,14 +585,11 @@ export default function Hero() {
             >
               <div className="flex h-full">
                 {/* Image */}
-                <div className="w-1/2 relative">
-                  <img
+                <div className="w-1/2 relative bg-gray-100">
+                  <ProgressiveImage
                     src={offer.image}
                     alt={offer.title}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src = '/images/default-offer.jpg';
-                    }}
                   />
 
                   {/* Clean discount badge */}
@@ -452,7 +598,7 @@ export default function Hero() {
                   </div>
                 </div>
 
-                {/* Content - Fixed text truncation issues */}
+                {/* Content */}
                 <div className="w-1/2 p-4 flex flex-col">
                   <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2 h-10">
                     {offer.title}
@@ -501,7 +647,7 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Minimal footer stats */}
+      {/* Footer stats */}
       {topOffers.length > 0 && (
         <motion.div
           variants={fadeInUp}
