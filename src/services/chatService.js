@@ -177,12 +177,11 @@ class ChatService {
     }
   }
 
-  // FIXED: Start a new customer↔store conversation
   async startConversation(storeId, initialMessage = '') {
     const endpoint = `${this.API_BASE}/chat/conversations`;
 
     const body = {
-      storeId: parseInt(storeId), // Ensure it's a number
+      storeId: storeId, // ✅ Keep as string UUID
       initialMessage: initialMessage.trim()
     };
 
@@ -200,7 +199,6 @@ class ChatService {
       throw error;
     }
   }
-
   // Mark messages as read in customer↔store conversation
   async markMessagesAsRead(conversationId) {
     const endpoint = `${this.API_BASE}/chat/conversations/${conversationId}/read`;
