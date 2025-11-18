@@ -384,17 +384,6 @@ const Reels = () => {
                 </div>
             </div>
 
-            {/* Progress Indicator
-            <div className="fixed top-20 left-0 right-0 z-40 flex justify-center space-x-1 px-4">
-                {reels.slice(0, Math.min(10, reels.length)).map((_, index) => (
-                    <div
-                        key={index}
-                        className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${index === currentIndex ? 'bg-white' : 'bg-white/30'
-                            }`}
-                    ></div>
-                ))}
-            </div> */}
-
             <style jsx>{`
                 .scrollbar-hide::-webkit-scrollbar {
                     display: none;
