@@ -162,18 +162,18 @@ const ReelVideo = ({ reel, isActive, onLike, onFollow, onChat, onShare, onBook, 
                                     <BadgeCheck className="w-4 h-4 text-blue-400 fill-blue-400" />
                                 )}
                             </div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onFollow(reel.store?.id, reel.id);
-                                }}
-                                className={`px-3 py-1 text-white text-xs font-medium rounded-full transition-all ${reel.isFollowing
-                                        ? 'bg-gray-600 hover:bg-gray-700'
-                                        : 'bg-blue-500 hover:bg-blue-600'
-                                    }`}
-                            >
-                                {reel.isFollowing ? 'Following' : 'Follow'}
-                            </button>
+                            {/* Only show Follow button if NOT following */}
+                            {!reel.isFollowing && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onFollow(reel.store?.id, reel.id);
+                                    }}
+                                    className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-full transition-all"
+                                >
+                                    Follow
+                                </button>
+                            )}
                         </button>
 
                         {/* Service Description */}

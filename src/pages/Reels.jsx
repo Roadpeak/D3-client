@@ -5,6 +5,7 @@ import ReelVideo from '../components/reels/ReelVideo';
 import authService from '../services/authService';
 import reelService from '../services/reelsService';
 import chatService from '../services/chatService';
+import { getTokenFromCookie } from '../config/api';
 import { X, Check } from 'lucide-react';
 
 const Reels = () => {
@@ -20,6 +21,27 @@ const Reels = () => {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const containerRef = useRef(null);
     const navigate = useNavigate();
+
+    // Helper function to get API headers with auth
+    const getApiHeaders = (includeAuth = false) => {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
+
+        if (process.env.REACT_APP_API_KEY) {
+            headers['x-api-key'] = process.env.REACT_APP_API_KEY;
+        }
+
+        if (includeAuth) {
+            const token = getTokenFromCookie() || localStorage.getItem('access_token') || localStorage.getItem('authToken');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+
+        return headers;
+    };
 
     useEffect(() => {
         loadReels();
@@ -42,7 +64,7 @@ const Reels = () => {
         } else {
             setFilteredReels(reels);
         }
-        setCurrentIndex(0); // Reset to first reel when filtering
+        setCurrentIndex(0);
     }, [selectedCategory, reels]);
 
     const checkAuth = async () => {
@@ -240,13 +262,15 @@ const Reels = () => {
     };
 
     const handleFollow = async (storeId, reelId) => {
-        if (!user) {
+        if (!user || !authService.isAuthenticated()) {
             alert('Please log in to follow stores');
             navigate('/login');
             return;
         }
 
         try {
+            console.log('Following store:', storeId);
+
             // Optimistic update
             setReels(prevReels =>
                 prevReels.map(reel =>
@@ -261,17 +285,20 @@ const Reels = () => {
 
             const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${storeId}/toggle-follow`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authService.getToken()}`
-                }
+                headers: getApiHeaders(true)
             });
 
             if (!response.ok) {
-                throw new Error('Failed to toggle follow');
+                if (response.status === 401) {
+                    alert('Your session has expired. Please log in again.');
+                    navigate('/login');
+                    return;
+                }
+                throw new Error('Failed to toggle follow status');
             }
 
             const data = await response.json();
+            console.log('Follow response:', data);
 
             // Update with server response
             setReels(prevReels =>
