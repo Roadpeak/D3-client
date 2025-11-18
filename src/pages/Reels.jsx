@@ -21,6 +21,7 @@ const Reels = () => {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const containerRef = useRef(null);
     const navigate = useNavigate();
+    const userIdRef = useRef(null); // ✅ Track previous user ID
 
     // Helper function to get API headers with auth
     const getApiHeaders = (includeAuth = false) => {
@@ -54,7 +55,6 @@ const Reels = () => {
 
             const followStatusMap = {};
 
-            // Fetch follow status for each store
             await Promise.all(
                 storeIds.map(async (storeId) => {
                     try {
@@ -109,20 +109,58 @@ const Reels = () => {
         setCurrentIndex(0);
     }, [selectedCategory, reels]);
 
-    // Fetch follow status when user changes
+    // ✅ FIXED: Watch for user authentication changes and reload reels
     useEffect(() => {
-        if (user && reels.length > 0) {
-            const storeIds = [...new Set(reels.map(reel => reel.store?.id).filter(Boolean))];
-            fetchFollowStatus(storeIds).then(followStatusMap => {
-                if (Object.keys(followStatusMap).length > 0) {
-                    setReels(prevReels =>
-                        prevReels.map(reel => ({
-                            ...reel,
-                            isFollowing: followStatusMap[reel.store?.id] || false
-                        }))
-                    );
-                }
+        const currentUserId = user?.id || user?.userId || null;
+        const previousUserId = userIdRef.current;
+
+        // User changed (login, logout, or different user)
+        if (currentUserId !== previousUserId) {
+            console.log('User authentication changed:', {
+                previous: previousUserId,
+                current: currentUserId
             });
+
+            userIdRef.current = currentUserId;
+
+            // If we already have reels loaded and user changed
+            if (reels.length > 0 && previousUserId !== null) {
+                console.log('Reloading reels due to user change');
+
+                // Reset and reload
+                setReels([]);
+                setFilteredReels([]);
+                setCurrentIndex(0);
+                setLoading(true);
+
+                // Small delay to ensure state is cleared
+                setTimeout(() => {
+                    loadReels(0);
+                }, 100);
+            }
+            // If user just logged in and we have reels, refresh follow status
+            else if (currentUserId && reels.length > 0) {
+                const storeIds = [...new Set(reels.map(reel => reel.store?.id).filter(Boolean))];
+                fetchFollowStatus(storeIds).then(followStatusMap => {
+                    if (Object.keys(followStatusMap).length > 0) {
+                        setReels(prevReels =>
+                            prevReels.map(reel => ({
+                                ...reel,
+                                isFollowing: followStatusMap[reel.store?.id] || false
+                            }))
+                        );
+                    }
+                });
+            }
+            // If user logged out, clear follow status
+            else if (!currentUserId && reels.length > 0) {
+                setReels(prevReels =>
+                    prevReels.map(reel => ({
+                        ...reel,
+                        isFollowing: false
+                    }))
+                );
+            }
         }
     }, [user]);
 
@@ -131,11 +169,18 @@ const Reels = () => {
             if (authService.isAuthenticated()) {
                 const result = await authService.getCurrentUser();
                 if (result.success) {
-                    setUser(result.data?.user || result.user || result.data);
+                    const userData = result.data?.user || result.user || result.data;
+                    setUser(userData);
+                    userIdRef.current = userData?.id || userData?.userId || null;
                 }
+            } else {
+                setUser(null);
+                userIdRef.current = null;
             }
         } catch (error) {
             console.error('Error checking auth:', error);
+            setUser(null);
+            userIdRef.current = null;
         }
     };
 
@@ -252,6 +297,8 @@ const Reels = () => {
             }
         }
     };
+
+    // ... rest of the code remains the same (formatTimeAgo, handleScroll, handleLike, etc.) ...
 
     const formatTimeAgo = (timestamp) => {
         if (!timestamp) return 'Recently';
