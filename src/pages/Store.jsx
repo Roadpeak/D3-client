@@ -28,7 +28,11 @@ import {
   Linkedin,
   Youtube,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Play,
+  Volume2,
+  VolumeX,
+  Share2
 } from 'lucide-react';
 
 import Navbar from '../components/Navbar';
@@ -39,6 +43,7 @@ import StoreService from '../services/storeService';
 import serviceAPI from '../services/serviceService';
 import chatService from '../services/chatService';
 import authService from '../services/authService';
+import reelService from '../services/reelsService';
 import { getTokenFromCookie } from '../config/api';
 
 
@@ -129,10 +134,12 @@ const StoreViewPage = () => {
   const [offers, setOffers] = useState([]);
   const [services, setServices] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [reels, setReels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [offersLoading, setOffersLoading] = useState(false);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [branchesLoading, setBranchesLoading] = useState(false);
+  const [reelsLoading, setReelsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
@@ -434,6 +441,28 @@ const StoreViewPage = () => {
     }
   };
 
+  // Fetch reels for the store
+  const fetchReels = async () => {
+    try {
+      setReelsLoading(true);
+      console.log('Fetching reels for store:', id);
+
+      const response = await reelService.getStoreReels(id, { limit: 20, offset: 0 });
+
+      if (response.success && response.reels) {
+        setReels(response.reels);
+        console.log(`Store reels - Total: ${response.reels.length}`);
+      } else {
+        setReels([]);
+      }
+    } catch (err) {
+      console.error('Error fetching reels:', err);
+      setReels([]);
+    } finally {
+      setReelsLoading(false);
+    }
+  };
+
   const handleChatClick = async () => {
     try {
       console.log('=== CHAT BUTTON CLICKED ===');
@@ -467,14 +496,7 @@ const StoreViewPage = () => {
         console.log('Store ID:', id, 'Store Name:', storeData.name);
         console.log('User:', currentUser.name, 'ID:', currentUser.id);
 
-        // ✅ REMOVE THIS LINE - Don't convert UUID to integer
-        // const storeId = parseInt(id);
-        // if (isNaN(storeId)) {
-        //   throw new Error('Invalid store ID');
-        // }
-
-        // ✅ USE THE ID DIRECTLY
-        const storeId = id; // Keep it as string UUID
+        const storeId = id; // Keep as string UUID
 
         const chatToken = chatService.getAuthToken();
         console.log('Chat service token:', chatToken ? 'Found' : 'Not found');
@@ -510,7 +532,7 @@ const StoreViewPage = () => {
             const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
 
             const newConversationResponse = await chatService.startConversation(
-              storeId, // ✅ Now passing string UUID instead of NaN
+              storeId,
               initialMessage
             );
 
@@ -695,6 +717,7 @@ const StoreViewPage = () => {
     fetchOffers();
     fetchServices();
     fetchBranches();
+    fetchReels();
   }, [storeData]);
 
   useEffect(() => {
@@ -706,6 +729,9 @@ const StoreViewPage = () => {
         break;
       case 'services':
         if (services.length === 0) fetchServices();
+        break;
+      case 'reels':
+        if (reels.length === 0) fetchReels();
         break;
       case 'outlets':
       case 'map':
@@ -894,6 +920,181 @@ const StoreViewPage = () => {
     );
   });
 
+  // Reel Card Component
+  const ReelCard = React.memo(({ reel }) => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
+    const videoRef = React.useRef(null);
+
+    const handlePlayPause = () => {
+      if (videoRef.current) {
+        if (isPlaying) {
+          videoRef.current.pause();
+        } else {
+          videoRef.current.play();
+        }
+        setIsPlaying(!isPlaying);
+      }
+    };
+
+    const handleMuteToggle = (e) => {
+      e.stopPropagation();
+      if (videoRef.current) {
+        videoRef.current.muted = !isMuted;
+        setIsMuted(!isMuted);
+      }
+    };
+
+    const handleReelClick = async () => {
+      try {
+        // Track view
+        await reelService.trackView(reel.id);
+
+        // Navigate to full reel view or open in modal
+        navigate(`/reels/${reel.id}`);
+      } catch (error) {
+        console.error('Error tracking reel view:', error);
+      }
+    };
+
+    const handleLike = async (e) => {
+      e.stopPropagation();
+      try {
+        await reelService.toggleLike(reel.id);
+        // Update local state or refetch reels
+        fetchReels();
+      } catch (error) {
+        console.error('Error liking reel:', error);
+        if (error.message.includes('Authentication required')) {
+          setError('Please log in to like reels');
+          navigate('/accounts/sign-in', {
+            state: { from: { pathname: location.pathname } }
+          });
+        }
+      }
+    };
+
+    const formatCount = (count) => {
+      if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+      if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+      return count.toString();
+    };
+
+    return (
+      <div
+        className="relative bg-black rounded-xl overflow-hidden cursor-pointer group aspect-[9/16] max-h-[600px]"
+        onClick={handleReelClick}
+      >
+        {/* Video */}
+        <video
+          ref={videoRef}
+          src={reel.video_url}
+          className="w-full h-full object-cover"
+          loop
+          playsInline
+          muted={isMuted}
+          poster={reel.thumbnail_url}
+        />
+
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+        {/* Play/Pause button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePlayPause();
+          }}
+          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          {!isPlaying && (
+            <div className="bg-white/30 backdrop-blur-sm rounded-full p-6">
+              <Play className="w-12 h-12 text-white fill-white" />
+            </div>
+          )}
+        </button>
+
+        {/* Mute/Unmute button */}
+        <button
+          onClick={handleMuteToggle}
+          className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition-colors"
+        >
+          {isMuted ? (
+            <VolumeX className="w-5 h-5 text-white" />
+          ) : (
+            <Volume2 className="w-5 h-5 text-white" />
+          )}
+        </button>
+
+        {/* Content info - Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+          {/* Title and description */}
+          <div className="mb-3">
+            <h3 className="font-semibold text-lg mb-1 line-clamp-2">
+              {reel.title || 'Check out this reel!'}
+            </h3>
+            {reel.description && (
+              <p className="text-sm text-gray-200 line-clamp-2">
+                {reel.description}
+              </p>
+            )}
+          </div>
+
+          {/* Stats */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-1">
+                <Play className="w-4 h-4" />
+                <span>{formatCount(reel.views || 0)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Heart className={`w-4 h-4 ${reel.isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+                <span>{formatCount(reel.likes || 0)}</span>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLike}
+                className={`p-2 rounded-full transition-colors ${reel.isLiked
+                  ? 'bg-red-500 hover:bg-red-600'
+                  : 'bg-white/20 hover:bg-white/30'
+                  }`}
+              >
+                <Heart className={`w-5 h-5 ${reel.isLiked ? 'fill-white' : ''}`} />
+              </button>
+
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    await reelService.trackChat(reel.id);
+                    handleChatClick();
+                  } catch (error) {
+                    console.error('Error tracking chat:', error);
+                  }
+                }}
+                className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Category badge */}
+        {reel.category && (
+          <div className="absolute top-4 left-4">
+            <span className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded-full">
+              {reel.category}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  });
+
   const getSocialIcon = (platform) => {
     const platformLower = platform.toLowerCase();
 
@@ -922,42 +1123,6 @@ const StoreViewPage = () => {
         return (
           <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-          </svg>
-        );
-      case 'discord':
-        return (
-          <svg className="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-          </svg>
-        );
-      case 'pinterest':
-        return (
-          <svg className="w-5 h-5 text-red-600" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0a12 12 0 0 0-4.37 23.17c-.07-.64-.13-1.63.03-2.33l1.14-4.84s-.29-.58-.29-1.44c0-1.35.78-2.36 1.75-2.36.83 0 1.23.62 1.23 1.36 0 .83-.53 2.07-.8 3.22-.23.97.49 1.76 1.45 1.76 1.74 0 3.08-1.83 3.08-4.47 0-2.34-1.68-3.97-4.08-3.97-2.78 0-4.41 2.08-4.41 4.23 0 .84.32 1.74.72 2.23.08.1.09.18.07.28l-.26 1.09c-.04.17-.14.21-.31.13-1.22-.57-1.98-2.35-1.98-3.78 0-3.08 2.24-5.91 6.46-5.91 3.39 0 6.02 2.41 6.02 5.63 0 3.36-2.12 6.06-5.06 6.06-1.01 0-1.96-.52-2.28-1.14l-.62 2.36c-.22.87-.83 1.96-1.24 2.62A12 12 0 1 0 12 0z" />
-          </svg>
-        );
-      case 'snapchat':
-        return (
-          <svg className="w-5 h-5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.074-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.405-1.109-.779-1.723-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.046-.181-.105-.494-.166-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.15-.055-.225-.015-.243.165-.465.42-.509 3.264-.54 4.73-3.879 4.791-4.02l.016-.029c.18-.345.224-.645.119-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-1.107-.435-1.257-.93-1.197-1.273.09-.479.674-.793 1.168-.793.146 0 .27.029.383.074.42.194.789.3 1.104.3.234 0 .384-.06.465-.105l-.046-.569c-.098-1.626-.225-3.651.307-4.837C7.392 1.077 10.739.807 11.727.807l.419-.015h.06z" />
-          </svg>
-        );
-      case 'tumblr':
-        return (
-          <svg className="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14.563 24c-5.093 0-7.031-3.756-7.031-6.411V9.747H5.116V6.648c3.63-1.313 4.512-4.596 4.71-6.469C9.84.051 9.941 0 9.999 0h3.517v6.114h4.801v3.633h-4.82v7.47c.016 1.001.375 2.371 2.207 2.371h.09c.631-.02 1.486-.205 1.936-.419l1.156 3.425c-.436.636-2.4 1.374-4.156 1.404h-.178l.011.002z" />
-          </svg>
-        );
-      case 'reddit':
-        return (
-          <svg className="w-5 h-5 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
-          </svg>
-        );
-      case 'github':
-        return (
-          <svg className="w-5 h-5 text-gray-900" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
           </svg>
         );
       default:
@@ -1297,6 +1462,37 @@ const StoreViewPage = () => {
           </div>
         );
 
+      case 'reels':
+        return (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Store Reels</h2>
+              <span className="text-sm text-gray-500">
+                {reels.length} {reels.length === 1 ? 'reel' : 'reels'}
+              </span>
+            </div>
+
+            {reelsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                <span className="ml-2 text-gray-600">Loading reels...</span>
+              </div>
+            ) : reels.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {reels.map((reel) => (
+                  <ReelCard key={reel.id} reel={reel} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 rounded-xl">
+                <Play className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No reels available</h3>
+                <p className="text-gray-600">This store hasn't posted any reels yet. Check back later!</p>
+              </div>
+            )}
+          </div>
+        );
+
       case 'outlets':
         return (
           <div className="mb-6">
@@ -1592,8 +1788,8 @@ const StoreViewPage = () => {
               <button
                 onClick={() => setActiveSection('offers')}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'offers'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 <Tag className="w-4 h-4" />
@@ -1609,8 +1805,8 @@ const StoreViewPage = () => {
               <button
                 onClick={() => setActiveSection('services')}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'services'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 <Camera className="w-4 h-4" />
@@ -1624,10 +1820,27 @@ const StoreViewPage = () => {
               </button>
 
               <button
+                onClick={() => setActiveSection('reels')}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'reels'
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+              >
+                <Play className="w-4 h-4" />
+                <span>Reels</span>
+                {!reelsLoading && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'reels' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                    }`}>
+                    {reels.length || 0}
+                  </span>
+                )}
+              </button>
+
+              <button
                 onClick={() => setActiveSection('outlets')}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'outlets'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 <MapPin className="w-4 h-4" />
@@ -1643,8 +1856,8 @@ const StoreViewPage = () => {
               <button
                 onClick={() => setActiveSection('map')}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'map'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gray-900 text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100'
                   }`}
               >
                 <Navigation className="w-4 h-4" />
