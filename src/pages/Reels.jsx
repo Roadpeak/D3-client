@@ -14,6 +14,7 @@ const Reels = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
+    const [authChecked, setAuthChecked] = useState(false); // ✅ Track if auth is checked
     const [hasMore, setHasMore] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [showCategoryFilter, setShowCategoryFilter] = useState(false);
@@ -21,7 +22,6 @@ const Reels = () => {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const containerRef = useRef(null);
     const navigate = useNavigate();
-    const userIdRef = useRef(null); // ✅ Track previous user ID
 
     // Helper function to get API headers with auth
     const getApiHeaders = (includeAuth = false) => {
@@ -46,7 +46,8 @@ const Reels = () => {
 
     // Fetch follow status for stores
     const fetchFollowStatus = async (storeIds) => {
-        if (!user || !authService.isAuthenticated() || storeIds.length === 0) {
+        // ✅ Only check authentication, not user state
+        if (!authService.isAuthenticated() || storeIds.length === 0) {
             return {};
         }
 
@@ -85,9 +86,14 @@ const Reels = () => {
         }
     };
 
+    // ✅ Check auth first, then load reels
     useEffect(() => {
-        loadReels();
-        checkAuth();
+        const initializeReels = async () => {
+            await checkAuth();
+            await loadReels();
+        };
+
+        initializeReels();
     }, []);
 
     // Extract unique categories from reels
@@ -109,61 +115,6 @@ const Reels = () => {
         setCurrentIndex(0);
     }, [selectedCategory, reels]);
 
-    // ✅ FIXED: Watch for user authentication changes and reload reels
-    useEffect(() => {
-        const currentUserId = user?.id || user?.userId || null;
-        const previousUserId = userIdRef.current;
-
-        // User changed (login, logout, or different user)
-        if (currentUserId !== previousUserId) {
-            console.log('User authentication changed:', {
-                previous: previousUserId,
-                current: currentUserId
-            });
-
-            userIdRef.current = currentUserId;
-
-            // If we already have reels loaded and user changed
-            if (reels.length > 0 && previousUserId !== null) {
-                console.log('Reloading reels due to user change');
-
-                // Reset and reload
-                setReels([]);
-                setFilteredReels([]);
-                setCurrentIndex(0);
-                setLoading(true);
-
-                // Small delay to ensure state is cleared
-                setTimeout(() => {
-                    loadReels(0);
-                }, 100);
-            }
-            // If user just logged in and we have reels, refresh follow status
-            else if (currentUserId && reels.length > 0) {
-                const storeIds = [...new Set(reels.map(reel => reel.store?.id).filter(Boolean))];
-                fetchFollowStatus(storeIds).then(followStatusMap => {
-                    if (Object.keys(followStatusMap).length > 0) {
-                        setReels(prevReels =>
-                            prevReels.map(reel => ({
-                                ...reel,
-                                isFollowing: followStatusMap[reel.store?.id] || false
-                            }))
-                        );
-                    }
-                });
-            }
-            // If user logged out, clear follow status
-            else if (!currentUserId && reels.length > 0) {
-                setReels(prevReels =>
-                    prevReels.map(reel => ({
-                        ...reel,
-                        isFollowing: false
-                    }))
-                );
-            }
-        }
-    }, [user]);
-
     const checkAuth = async () => {
         try {
             if (authService.isAuthenticated()) {
@@ -171,16 +122,20 @@ const Reels = () => {
                 if (result.success) {
                     const userData = result.data?.user || result.user || result.data;
                     setUser(userData);
-                    userIdRef.current = userData?.id || userData?.userId || null;
+                    console.log('✅ User authenticated:', userData?.id);
+                } else {
+                    setUser(null);
+                    console.log('❌ User not authenticated');
                 }
             } else {
                 setUser(null);
-                userIdRef.current = null;
+                console.log('❌ No authentication');
             }
         } catch (error) {
             console.error('Error checking auth:', error);
             setUser(null);
-            userIdRef.current = null;
+        } finally {
+            setAuthChecked(true);
         }
     };
 
@@ -192,7 +147,7 @@ const Reels = () => {
                 setIsLoadingMore(true);
             }
 
-            console.log('📱 Loading reels feed...', { offset });
+            console.log('📱 Loading reels feed...', { offset, authenticated: authService.isAuthenticated() });
 
             const response = await reelService.getReelsFeed({
                 limit: 10,
@@ -237,7 +192,7 @@ const Reels = () => {
                 shares: reel.shares || reel.shares_count || 0,
                 views: reel.views || reel.views_count || 0,
                 isLiked: reel.isLiked || reel.is_liked || false,
-                isFollowing: reel.store?.isFollowing || reel.store?.is_following || false,
+                isFollowing: false, // ✅ Always start with false, fetch real status below
                 createdAt: reel.createdAt || formatTimeAgo(reel.created_at)
             }));
 
@@ -249,30 +204,29 @@ const Reels = () => {
                 setReels(prev => [...prev, ...newReels]);
             }
 
-            // Fetch follow status for the loaded reels if user is authenticated
+            // ✅ ALWAYS fetch follow status if user is authenticated
             if (authService.isAuthenticated() && newReels.length > 0) {
+                console.log('🔍 Fetching follow status for all stores...');
                 const storeIds = [...new Set(newReels.map(reel => reel.store?.id).filter(Boolean))];
                 const followStatusMap = await fetchFollowStatus(storeIds);
 
+                console.log('📊 Follow status received:', followStatusMap);
+
                 if (Object.keys(followStatusMap).length > 0) {
-                    if (offset === 0) {
-                        setReels(prevReels =>
-                            prevReels.map(reel => ({
-                                ...reel,
-                                isFollowing: followStatusMap[reel.store?.id] || false
-                            }))
-                        );
-                    } else {
-                        setReels(prevReels =>
-                            prevReels.map(reel => ({
-                                ...reel,
-                                isFollowing: followStatusMap[reel.store?.id] !== undefined
-                                    ? followStatusMap[reel.store?.id]
-                                    : reel.isFollowing
-                            }))
-                        );
-                    }
+                    // Update all reels with correct follow status
+                    setReels(prevReels =>
+                        prevReels.map(reel => ({
+                            ...reel,
+                            isFollowing: followStatusMap[reel.store?.id] || false
+                        }))
+                    );
+
+                    console.log('✅ Follow status updated for all reels');
+                } else {
+                    console.log('⚠️ No follow status data received');
                 }
+            } else if (!authService.isAuthenticated()) {
+                console.log('👤 User not authenticated - all follow buttons will show');
             }
 
             const hasMoreReels = response?.pagination?.hasMore ||
@@ -297,8 +251,6 @@ const Reels = () => {
             }
         }
     };
-
-    // ... rest of the code remains the same (formatTimeAgo, handleScroll, handleLike, etc.) ...
 
     const formatTimeAgo = (timestamp) => {
         if (!timestamp) return 'Recently';
@@ -403,7 +355,7 @@ const Reels = () => {
         try {
             console.log('Following store:', storeId);
 
-            // Optimistic update
+            // Optimistic update - update ALL reels from this store
             setReels(prevReels =>
                 prevReels.map(reel =>
                     reel.store?.id === storeId
@@ -473,8 +425,6 @@ const Reels = () => {
             });
 
             const storeId = reel.store.id;
-
-            // Check for existing conversation
             const conversationsResponse = await chatService.getConversations('customer');
 
             if (conversationsResponse.success) {
@@ -492,13 +442,8 @@ const Reels = () => {
                         }
                     });
                 } else {
-                    // Create new conversation
                     const initialMessage = `Hi! I'm interested in ${reel.service.name}. Could you help me with some information?`;
-
-                    const newConversationResponse = await chatService.startConversation(
-                        storeId,
-                        initialMessage
-                    );
+                    const newConversationResponse = await chatService.startConversation(storeId, initialMessage);
 
                     if (newConversationResponse.success) {
                         const newConversation = {
@@ -572,7 +517,6 @@ const Reels = () => {
         navigate(`/store/${storeId}`);
     };
 
-    // Category filter component
     const CategoryFilter = () => (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={() => setShowCategoryFilter(false)}>
             <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -588,8 +532,7 @@ const Reels = () => {
                             setSelectedCategory(null);
                             setShowCategoryFilter(false);
                         }}
-                        className={`w-full flex items-center justify-between p-4 rounded-xl mb-2 transition-colors ${!selectedCategory ? 'bg-blue-500 text-white' : 'bg-gray-50 hover:bg-gray-100'
-                            }`}
+                        className={`w-full flex items-center justify-between p-4 rounded-xl mb-2 transition-colors ${!selectedCategory ? 'bg-blue-500 text-white' : 'bg-gray-50 hover:bg-gray-100'}`}
                     >
                         <span className="font-medium">All Categories</span>
                         {!selectedCategory && <Check className="w-5 h-5" />}
@@ -601,8 +544,7 @@ const Reels = () => {
                                 setSelectedCategory(category);
                                 setShowCategoryFilter(false);
                             }}
-                            className={`w-full flex items-center justify-between p-4 rounded-xl mb-2 transition-colors ${selectedCategory === category ? 'bg-blue-500 text-white' : 'bg-gray-50 hover:bg-gray-100'
-                                }`}
+                            className={`w-full flex items-center justify-between p-4 rounded-xl mb-2 transition-colors ${selectedCategory === category ? 'bg-blue-500 text-white' : 'bg-gray-50 hover:bg-gray-100'}`}
                         >
                             <span className="font-medium">{category}</span>
                             {selectedCategory === category && <Check className="w-5 h-5" />}
@@ -666,7 +608,6 @@ const Reels = () => {
 
     return (
         <div className="fixed inset-0 bg-black overflow-hidden">
-            {/* Reels Container - Snap Scroll */}
             <div
                 ref={containerRef}
                 className="h-full w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
@@ -691,7 +632,6 @@ const Reels = () => {
                     />
                 ))}
 
-                {/* Loading More Indicator */}
                 {isLoadingMore && (
                     <div className="h-screen flex items-center justify-center bg-black">
                         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -699,7 +639,6 @@ const Reels = () => {
                 )}
             </div>
 
-            {/* Top Header */}
             <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4">
                 <div className="flex items-center justify-between">
                     <button
@@ -732,7 +671,6 @@ const Reels = () => {
                 </div>
             </div>
 
-            {/* Category Filter Modal */}
             {showCategoryFilter && <CategoryFilter />}
 
             <style jsx>{`
