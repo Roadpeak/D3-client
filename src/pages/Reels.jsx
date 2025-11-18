@@ -43,6 +43,48 @@ const Reels = () => {
         return headers;
     };
 
+    // Fetch follow status for stores
+    const fetchFollowStatus = async (storeIds) => {
+        if (!user || !authService.isAuthenticated() || storeIds.length === 0) {
+            return {};
+        }
+
+        try {
+            console.log('Fetching follow status for stores:', storeIds);
+
+            const followStatusMap = {};
+
+            // Fetch follow status for each store
+            await Promise.all(
+                storeIds.map(async (storeId) => {
+                    try {
+                        const response = await fetch(
+                            `${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${storeId}`,
+                            {
+                                headers: getApiHeaders(true)
+                            }
+                        );
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.store) {
+                                followStatusMap[storeId] = data.store.following || false;
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error fetching follow status for store ${storeId}:`, error);
+                    }
+                })
+            );
+
+            console.log('Follow status map:', followStatusMap);
+            return followStatusMap;
+        } catch (error) {
+            console.error('Error fetching follow statuses:', error);
+            return {};
+        }
+    };
+
     useEffect(() => {
         loadReels();
         checkAuth();
@@ -66,6 +108,23 @@ const Reels = () => {
         }
         setCurrentIndex(0);
     }, [selectedCategory, reels]);
+
+    // Fetch follow status when user changes
+    useEffect(() => {
+        if (user && reels.length > 0) {
+            const storeIds = [...new Set(reels.map(reel => reel.store?.id).filter(Boolean))];
+            fetchFollowStatus(storeIds).then(followStatusMap => {
+                if (Object.keys(followStatusMap).length > 0) {
+                    setReels(prevReels =>
+                        prevReels.map(reel => ({
+                            ...reel,
+                            isFollowing: followStatusMap[reel.store?.id] || false
+                        }))
+                    );
+                }
+            });
+        }
+    }, [user]);
 
     const checkAuth = async () => {
         try {
@@ -143,6 +202,32 @@ const Reels = () => {
                 setReels(newReels);
             } else {
                 setReels(prev => [...prev, ...newReels]);
+            }
+
+            // Fetch follow status for the loaded reels if user is authenticated
+            if (authService.isAuthenticated() && newReels.length > 0) {
+                const storeIds = [...new Set(newReels.map(reel => reel.store?.id).filter(Boolean))];
+                const followStatusMap = await fetchFollowStatus(storeIds);
+
+                if (Object.keys(followStatusMap).length > 0) {
+                    if (offset === 0) {
+                        setReels(prevReels =>
+                            prevReels.map(reel => ({
+                                ...reel,
+                                isFollowing: followStatusMap[reel.store?.id] || false
+                            }))
+                        );
+                    } else {
+                        setReels(prevReels =>
+                            prevReels.map(reel => ({
+                                ...reel,
+                                isFollowing: followStatusMap[reel.store?.id] !== undefined
+                                    ? followStatusMap[reel.store?.id]
+                                    : reel.isFollowing
+                            }))
+                        );
+                    }
+                }
             }
 
             const hasMoreReels = response?.pagination?.hasMore ||
@@ -274,7 +359,7 @@ const Reels = () => {
             // Optimistic update
             setReels(prevReels =>
                 prevReels.map(reel =>
-                    reel.id === reelId
+                    reel.store?.id === storeId
                         ? {
                             ...reel,
                             isFollowing: !reel.isFollowing
@@ -300,10 +385,10 @@ const Reels = () => {
             const data = await response.json();
             console.log('Follow response:', data);
 
-            // Update with server response
+            // Update with server response for ALL reels from this store
             setReels(prevReels =>
                 prevReels.map(reel =>
-                    reel.id === reelId
+                    reel.store?.id === storeId
                         ? {
                             ...reel,
                             isFollowing: data.following
@@ -316,7 +401,7 @@ const Reels = () => {
             // Revert on error
             setReels(prevReels =>
                 prevReels.map(reel =>
-                    reel.id === reelId
+                    reel.store?.id === storeId
                         ? {
                             ...reel,
                             isFollowing: !reel.isFollowing
