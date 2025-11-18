@@ -4,14 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import ReelVideo from '../components/reels/ReelVideo';
 import authService from '../services/authService';
 import reelService from '../services/reelsService';
+import chatService from '../services/chatService';
+import { X, Check } from 'lucide-react';
 
 const Reels = () => {
     const [reels, setReels] = useState([]);
+    const [filteredReels, setFilteredReels] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [hasMore, setHasMore] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [showCategoryFilter, setShowCategoryFilter] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
     const containerRef = useRef(null);
     const navigate = useNavigate();
 
@@ -19,6 +25,25 @@ const Reels = () => {
         loadReels();
         checkAuth();
     }, []);
+
+    // Extract unique categories from reels
+    useEffect(() => {
+        if (reels.length > 0) {
+            const uniqueCategories = [...new Set(reels.map(reel => reel.service?.category).filter(Boolean))];
+            setCategories(uniqueCategories);
+        }
+    }, [reels]);
+
+    // Filter reels when category changes
+    useEffect(() => {
+        if (selectedCategory) {
+            const filtered = reels.filter(reel => reel.service?.category === selectedCategory);
+            setFilteredReels(filtered);
+        } else {
+            setFilteredReels(reels);
+        }
+        setCurrentIndex(0); // Reset to first reel when filtering
+    }, [selectedCategory, reels]);
 
     const checkAuth = async () => {
         try {
@@ -51,11 +76,9 @@ const Reels = () => {
 
             console.log('📋 Reels API response:', response);
 
-            // ✅ FIXED: Handle the actual response structure from your API
             let reelsData = [];
 
             if (response && response.success && response.data) {
-                // Check if data is directly an array or has a reels property
                 reelsData = Array.isArray(response.data) ? response.data : (response.data.reels || []);
             } else if (response && Array.isArray(response.data)) {
                 reelsData = response.data;
@@ -79,7 +102,8 @@ const Reels = () => {
                     id: reel.service?.id,
                     name: reel.service?.name || 'Service',
                     price: reel.service?.price || 0,
-                    duration: reel.service?.duration || 'N/A'
+                    duration: reel.service?.duration || 'N/A',
+                    category: reel.service?.category || 'General'
                 },
                 description: reel.description || reel.caption || reel.title || '',
                 likes: reel.likes || reel.likes_count || 0,
@@ -87,6 +111,7 @@ const Reels = () => {
                 shares: reel.shares || reel.shares_count || 0,
                 views: reel.views || reel.views_count || 0,
                 isLiked: reel.isLiked || reel.is_liked || false,
+                isFollowing: reel.store?.isFollowing || reel.store?.is_following || false,
                 createdAt: reel.createdAt || formatTimeAgo(reel.created_at)
             }));
 
@@ -98,7 +123,6 @@ const Reels = () => {
                 setReels(prev => [...prev, ...newReels]);
             }
 
-            // Check pagination
             const hasMoreReels = response?.pagination?.hasMore ||
                 response?.data?.pagination?.hasMore ||
                 newReels.length === 10;
@@ -116,7 +140,6 @@ const Reels = () => {
             setLoading(false);
             setIsLoadingMore(false);
 
-            // Show user-friendly error message
             if (error.message) {
                 console.error('Error details:', error.message);
             }
@@ -146,26 +169,22 @@ const Reels = () => {
         const scrollHeight = container.scrollHeight;
         const newIndex = Math.round(scrollTop / clientHeight);
 
-        // Update current index
-        if (newIndex !== currentIndex && newIndex >= 0 && newIndex < reels.length) {
+        if (newIndex !== currentIndex && newIndex >= 0 && newIndex < filteredReels.length) {
             setCurrentIndex(newIndex);
 
-            // Track view for the current reel
-            if (reels[newIndex]) {
-                reelService.trackView(reels[newIndex].id, 0).catch(err => {
+            if (filteredReels[newIndex]) {
+                reelService.trackView(filteredReels[newIndex].id, 0).catch(err => {
                     console.error('Error tracking view:', err);
                 });
             }
         }
 
-        // Load more reels when near the end
         if (scrollTop + clientHeight >= scrollHeight - clientHeight && hasMore && !isLoadingMore) {
             loadReels(reels.length);
         }
     };
 
     const handleLike = async (reelId) => {
-        // Check if user is authenticated
         if (!user) {
             alert('Please log in to like reels');
             navigate('/login');
@@ -173,7 +192,6 @@ const Reels = () => {
         }
 
         try {
-            // Optimistic update
             setReels(prevReels =>
                 prevReels.map(reel =>
                     reel.id === reelId
@@ -186,13 +204,11 @@ const Reels = () => {
                 )
             );
 
-            // API call
             const response = await reelService.toggleLike(reelId);
 
             console.log('Like response:', response);
 
             if (response && response.success && response.data) {
-                // Update with actual values from server
                 setReels(prevReels =>
                     prevReels.map(reel =>
                         reel.id === reelId
@@ -207,7 +223,6 @@ const Reels = () => {
             }
         } catch (error) {
             console.error('Error toggling like:', error);
-            // Revert optimistic update on error
             setReels(prevReels =>
                 prevReels.map(reel =>
                     reel.id === reelId
@@ -224,28 +239,137 @@ const Reels = () => {
         }
     };
 
-    const handleComment = (reelId) => {
-        // Deprecated - replaced with chat functionality
-        console.log('Comments deprecated, use chat instead');
+    const handleFollow = async (storeId, reelId) => {
+        if (!user) {
+            alert('Please log in to follow stores');
+            navigate('/login');
+            return;
+        }
+
+        try {
+            // Optimistic update
+            setReels(prevReels =>
+                prevReels.map(reel =>
+                    reel.id === reelId
+                        ? {
+                            ...reel,
+                            isFollowing: !reel.isFollowing
+                        }
+                        : reel
+                )
+            );
+
+            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${storeId}/toggle-follow`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authService.getToken()}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to toggle follow');
+            }
+
+            const data = await response.json();
+
+            // Update with server response
+            setReels(prevReels =>
+                prevReels.map(reel =>
+                    reel.id === reelId
+                        ? {
+                            ...reel,
+                            isFollowing: data.following
+                        }
+                        : reel
+                )
+            );
+        } catch (error) {
+            console.error('Error toggling follow:', error);
+            // Revert on error
+            setReels(prevReels =>
+                prevReels.map(reel =>
+                    reel.id === reelId
+                        ? {
+                            ...reel,
+                            isFollowing: !reel.isFollowing
+                        }
+                        : reel
+                )
+            );
+            alert('Failed to follow store. Please try again.');
+        }
     };
 
     const handleChat = async (reel) => {
+        if (!user) {
+            alert('Please log in to chat with stores');
+            navigate('/login');
+            return;
+        }
+
         try {
-            // Track chat initiation
             await reelService.trackChat(reel.id).catch(err => {
                 console.error('Error tracking chat:', err);
             });
 
-            // Navigate to chat with the store
-            navigate(`/chat/Store/${reel.store.id}`, {
-                state: {
-                    reelId: reel.id,
-                    reelTitle: reel.service.name,
-                    message: `Hi! I'm interested in your service: ${reel.service.name}`
+            const storeId = reel.store.id;
+
+            // Check for existing conversation
+            const conversationsResponse = await chatService.getConversations('customer');
+
+            if (conversationsResponse.success) {
+                const existingConversation = conversationsResponse.data.find(
+                    conv => conv.store && (conv.store.id === storeId)
+                );
+
+                if (existingConversation) {
+                    navigate('/chat', {
+                        state: {
+                            selectedConversation: existingConversation,
+                            storeData: reel.store,
+                            user: { ...user, userType: 'customer', role: 'customer' },
+                            userType: 'customer'
+                        }
+                    });
+                } else {
+                    // Create new conversation
+                    const initialMessage = `Hi! I'm interested in ${reel.service.name}. Could you help me with some information?`;
+
+                    const newConversationResponse = await chatService.startConversation(
+                        storeId,
+                        initialMessage
+                    );
+
+                    if (newConversationResponse.success) {
+                        const newConversation = {
+                            id: newConversationResponse.data.conversationId,
+                            store: {
+                                id: storeId,
+                                name: reel.store.name,
+                                avatar: reel.store.avatar,
+                                online: true
+                            },
+                            lastMessage: initialMessage,
+                            lastMessageTime: 'now',
+                            unreadCount: 0
+                        };
+
+                        navigate('/chat', {
+                            state: {
+                                selectedConversation: newConversation,
+                                newConversationId: newConversationResponse.data.conversationId,
+                                storeData: reel.store,
+                                user: { ...user, userType: 'customer', role: 'customer' },
+                                userType: 'customer'
+                            }
+                        });
+                    }
                 }
-            });
+            }
         } catch (error) {
             console.error('Error initiating chat:', error);
+            alert('Failed to start chat. Please try again.');
         }
     };
 
@@ -260,16 +384,13 @@ const Reels = () => {
                     url: shareUrl
                 });
 
-                // Track share
                 await reelService.trackShare(reelId).catch(err => {
                     console.error('Error tracking share:', err);
                 });
             } else {
-                // Fallback: Copy to clipboard
                 await navigator.clipboard.writeText(shareUrl);
                 alert('Link copied to clipboard!');
 
-                // Track share
                 await reelService.trackShare(reelId).catch(err => {
                     console.error('Error tracking share:', err);
                 });
@@ -292,6 +413,47 @@ const Reels = () => {
         navigate(`/store/${storeId}`);
     };
 
+    // Category filter component
+    const CategoryFilter = () => (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center" onClick={() => setShowCategoryFilter(false)}>
+            <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="p-6 border-b flex items-center justify-between">
+                    <h3 className="text-lg font-bold">Filter by Category</h3>
+                    <button onClick={() => setShowCategoryFilter(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                <div className="overflow-y-auto max-h-[60vh] p-4">
+                    <button
+                        onClick={() => {
+                            setSelectedCategory(null);
+                            setShowCategoryFilter(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-4 rounded-xl mb-2 transition-colors ${!selectedCategory ? 'bg-blue-500 text-white' : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                    >
+                        <span className="font-medium">All Categories</span>
+                        {!selectedCategory && <Check className="w-5 h-5" />}
+                    </button>
+                    {categories.map((category) => (
+                        <button
+                            key={category}
+                            onClick={() => {
+                                setSelectedCategory(category);
+                                setShowCategoryFilter(false);
+                            }}
+                            className={`w-full flex items-center justify-between p-4 rounded-xl mb-2 transition-colors ${selectedCategory === category ? 'bg-blue-500 text-white' : 'bg-gray-50 hover:bg-gray-100'
+                                }`}
+                        >
+                            <span className="font-medium">{category}</span>
+                            {selectedCategory === category && <Check className="w-5 h-5" />}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
     if (loading) {
         return (
             <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -303,7 +465,7 @@ const Reels = () => {
         );
     }
 
-    if (reels.length === 0) {
+    if (filteredReels.length === 0 && !selectedCategory) {
         return (
             <div className="fixed inset-0 bg-black flex items-center justify-center">
                 <div className="flex flex-col items-center space-y-4 text-center px-6">
@@ -323,6 +485,26 @@ const Reels = () => {
         );
     }
 
+    if (filteredReels.length === 0 && selectedCategory) {
+        return (
+            <div className="fixed inset-0 bg-black flex items-center justify-center">
+                <div className="flex flex-col items-center space-y-4 text-center px-6">
+                    <svg className="w-20 h-20 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <h2 className="text-white text-xl font-semibold">No Reels in "{selectedCategory}"</h2>
+                    <p className="text-gray-400">Try selecting a different category</p>
+                    <button
+                        onClick={() => setSelectedCategory(null)}
+                        className="mt-4 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-all"
+                    >
+                        View All Reels
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 bg-black overflow-hidden">
             {/* Reels Container - Snap Scroll */}
@@ -335,13 +517,13 @@ const Reels = () => {
                     WebkitOverflowScrolling: 'touch'
                 }}
             >
-                {reels.map((reel, index) => (
+                {filteredReels.map((reel, index) => (
                     <ReelVideo
                         key={reel.id}
                         reel={reel}
                         isActive={index === currentIndex}
                         onLike={handleLike}
-                        onComment={handleComment}
+                        onFollow={handleFollow}
                         onChat={handleChat}
                         onShare={handleShare}
                         onBook={handleBook}
@@ -372,17 +554,27 @@ const Reels = () => {
 
                     <div className="flex items-center space-x-3">
                         <span className="text-white font-semibold text-lg">Reels</span>
-                        <div className="w-1 h-1 bg-white/60 rounded-full"></div>
-                        <span className="text-white/80 text-sm">Professional Services</span>
+                        {selectedCategory && (
+                            <>
+                                <div className="w-1 h-1 bg-white/60 rounded-full"></div>
+                                <span className="text-white/80 text-sm">{selectedCategory}</span>
+                            </>
+                        )}
                     </div>
 
-                    <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all">
+                    <button
+                        onClick={() => setShowCategoryFilter(true)}
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 transition-all"
+                    >
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                         </svg>
                     </button>
                 </div>
             </div>
+
+            {/* Category Filter Modal */}
+            {showCategoryFilter && <CategoryFilter />}
 
             <style jsx>{`
                 .scrollbar-hide::-webkit-scrollbar {
