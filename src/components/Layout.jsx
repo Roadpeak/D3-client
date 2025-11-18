@@ -10,12 +10,12 @@ import Footer from './Footer';
  */
 const Layout = () => {
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900 transition-colors duration-200">
             {/* Navbar stays mounted across all routes */}
             <Navbar />
 
             {/* Main content area where routes render */}
-            <main className="flex-1">
+            <main className="flex-1 bg-gray-50 dark:bg-gray-900">
                 <Outlet />
             </main>
 

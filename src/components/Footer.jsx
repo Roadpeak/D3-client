@@ -92,14 +92,14 @@ const LoginIcon = () => (
 
 const Footer = () => {
   return (
-    <footer className="bg-white py-6 px-4 border-t border-gray-100">
+    <footer className="bg-white dark:bg-gray-900 py-6 px-4 border-t border-gray-100 dark:border-gray-800 transition-colors duration-200">
       <div className="max-w-7xl mx-auto">
         {/* Main footer content - 2 columns on mobile, 4 on desktop */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
           {/* Column 1: Support */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-900 mb-2">Support</h3>
-            <div className="space-y-1.5 text-xs text-gray-600">
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-2">Support</h3>
+            <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
               <p className="flex items-start">
                 <EmailIcon />
                 <span className="ml-1.5 break-all">support@discoun3.com</span>
@@ -109,28 +109,28 @@ const Footer = () => {
 
           {/* Column 2: D3 (Discoun3) */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-900 mb-2">D3 (Discoun3)</h3>
-            <div className="space-y-1.5 text-xs text-gray-600">
-              <Link to="/about-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-2">D3 (Discoun3)</h3>
+            <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
+              <Link to="/about-us" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
                   <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M12 16V12M12 8H12.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span className="ml-1.5">About Us</span>
               </Link>
-              <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/contact-us" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <ContactIcon />
                 <span className="ml-1.5">Contact us</span>
               </Link>
-              <Link to="/faq" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/faq" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <FAQIcon />
                 <span className="ml-1.5">FAQ</span>
               </Link>
-              <Link to="/terms-conditions" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/terms-conditions" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <TermsIcon />
                 <span className="ml-1.5">Terms</span>
               </Link>
-              <Link to="/privacy-policy" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/privacy-policy" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <PrivacyIcon />
                 <span className="ml-1.5">Privacy</span>
               </Link>
@@ -139,29 +139,29 @@ const Footer = () => {
 
           {/* Column 3: Business */}
           <div className="-mt-16 md:-mt-0">
-            <h3 className="text-xs font-semibold text-gray-900 mb-2">Business</h3>
-            <div className="space-y-1.5 text-xs text-gray-600">
-              <a href="https://merchants.discoun3ree.com/accounts/sign-up" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-2">Business</h3>
+            <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
+              <a href="https://merchants.discoun3ree.com/accounts/sign-up" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <AddBusinessIcon />
                 <span className="ml-1.5">Add your business</span>
               </a>
-              <Link to="/contact-us" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/contact-us" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <AdvertiseIcon />
                 <span className="ml-1.5">Advertise</span>
               </Link>
             </div>
 
-            <h4 className="text-xs font-semibold text-gray-900 mt-3 mb-2">Quick links</h4>
-            <div className="space-y-1.5 text-xs text-gray-600">
-              <Link to="/stores" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+            <h4 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mt-3 mb-2">Quick links</h4>
+            <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-400">
+              <Link to="/stores" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <CompanyIcon />
                 <span className="ml-1.5">Stores</span>
               </Link>
-              <Link to="/hotdeals" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/hotdeals" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <DirectoryIcon />
                 <span className="ml-1.5">Deals</span>
               </Link>
-              <Link to="/profile" className="flex items-center hover:text-blue-600 transition-colors cursor-pointer">
+              <Link to="/profile" className="flex items-center hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
                 <LoginIcon />
                 <span className="ml-1.5">Login</span>
               </Link>
@@ -170,7 +170,7 @@ const Footer = () => {
 
           {/* Column 4: Follow Us & Newsletter */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-900 mb-2">Follow Us</h3>
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-2">Follow Us</h3>
             <div className="flex gap-2.5 mb-3">
               {/* Facebook */}
               <a href="https://www.facebook.com/discoun3/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center transition-transform hover:scale-110">
@@ -195,14 +195,14 @@ const Footer = () => {
               </a>
             </div>
 
-            <h4 className="text-xs font-semibold text-gray-900 mb-2">Newsletter</h4>
+            <h4 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-2">Newsletter</h4>
             <div className="mb-2">
               <input
                 type="email"
                 id="newsletter-email"
                 placeholder="Enter Email"
                 required
-                className="w-full px-3 py-1.5 mb-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-1.5 mb-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-colors duration-200"
               />
               <button
                 onClick={() => {
@@ -220,8 +220,8 @@ const Footer = () => {
         </div>
 
         {/* Copyright */}
-        <div className="text-center pt-4 mt-4 border-t border-gray-100">
-          <p className="text-[10px] md:text-xs text-gray-500">
+        <div className="text-center pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
+          <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400">
             Copyright © 2025, D3 (Discoun3). All rights reserved.
           </p>
         </div>

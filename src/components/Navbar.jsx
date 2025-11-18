@@ -1,10 +1,11 @@
-// components/Navbar.jsx - Updated with Instagram-style Reels icon
+// components/Navbar.jsx - Updated with Dark Mode Support
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import RealTimeSearch from './RealTimeSearch';
 import NotificationButton from './NotificationButton';
 import { useLocation } from '../contexts/LocationContext';
+import { useDarkMode } from '../contexts/DarkModeContext';
 import chatService from '../services/chatService';
 
 // Import Lucide icons for desktop navigation
@@ -21,7 +22,9 @@ import {
   MessageSquare,
   Building,
   Headphones,
-  Video
+  Video,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 // For mobile view we keep the React icons
@@ -42,6 +45,47 @@ const ReelsIcon = ({ className, isActive }) => (
     </svg>
   </div>
 );
+
+// Dark Mode Toggle Button Component
+const DarkModeToggle = ({ isMobile = false }) => {
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+
+  if (isMobile) {
+    return (
+      <button
+        onClick={toggleDarkMode}
+        className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 transition-all duration-200 shadow-md"
+        aria-label="Toggle dark mode"
+      >
+        {isDarkMode ? (
+          <Sun className="w-5 h-5 text-yellow-300" />
+        ) : (
+          <Moon className="w-5 h-5 text-white" />
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={toggleDarkMode}
+      className="flex items-center space-x-1.5 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 bg-gray-100/60 dark:bg-gray-800/60 hover:bg-gray-200/80 dark:hover:bg-gray-700/80 px-3 py-1.5 rounded-lg border border-gray-200/50 dark:border-gray-700/50"
+      aria-label="Toggle dark mode"
+    >
+      {isDarkMode ? (
+        <>
+          <Sun className="w-3 h-3" />
+          <span className="font-medium text-xs">Light</span>
+        </>
+      ) : (
+        <>
+          <Moon className="w-3 h-3" />
+          <span className="font-medium text-xs">Dark</span>
+        </>
+      )}
+    </button>
+  );
+};
 
 const Navbar = () => {
   // Location hook with fallback
@@ -255,9 +299,9 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Right Side - Chat, Notification Icon and Profile */}
+          {/* Right Side - Chat, Dark Mode, Notification Icon and Profile */}
           <div className="flex items-center space-x-3">
-            {/* Chat Icon - Moved here */}
+            {/* Chat Icon */}
             <Link
               to="/chat"
               className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-sm border border-white/20 transition-all duration-200 relative shadow-md"
@@ -269,6 +313,9 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
+
+            {/* Dark Mode Toggle - Mobile */}
+            <DarkModeToggle isMobile={true} />
 
             {/* Notification Icon */}
             {isAuthenticated ? (
@@ -333,7 +380,7 @@ const Navbar = () => {
   // Loading state
   if (loading || isLocationLoading) {
     return (
-      <header className="bg-white shadow-sm border-b border-gray-200/50 sticky top-0 z-40">
+      <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center space-x-3">
@@ -345,8 +392,8 @@ const Navbar = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="animate-pulse bg-gray-200 rounded-lg w-20 h-8"></div>
-              <div className="animate-pulse bg-gray-200 rounded-full w-8 h-8"></div>
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg w-20 h-8"></div>
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-full w-8 h-8"></div>
             </div>
           </div>
         </div>
@@ -356,7 +403,7 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="bg-white shadow-sm sticky top-0 z-40 transition-all duration-200">
+      <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-40 transition-all duration-200">
         <div className="container mx-auto lg:px-4">
           {/* Mobile Top Header */}
           {mobileNavbar}
@@ -364,7 +411,7 @@ const Navbar = () => {
           {/* Desktop Header */}
           <div className="hidden lg:block">
             {/* Top Header - White Background */}
-            <div className="flex items-center justify-between py-3 border-b border-gray-200/50 bg-white">
+            <div className="flex items-center justify-between py-3 border-b border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-900">
               <div className="flex items-center space-x-4">
                 <Link to="/" className="flex items-center space-x-2">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600 p-1.5 shadow-lg flex items-center justify-center">
@@ -388,46 +435,46 @@ const Navbar = () => {
                 </Link>
 
                 {/* Desktop location dropdown */}
-                <div className="flex items-center space-x-1 text-sm text-gray-600 relative">
+                <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400 relative">
                   <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                  <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-blue-600 transition-colors">
+                  <button onClick={toggleLocation} className="flex items-center space-x-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                     <span className="font-medium text-xs">{currentLocationDisplay}</span>
                     <ChevronDown className="w-3 h-3" />
                   </button>
 
                   {/* Desktop Location Dropdown */}
                   {isLocationOpen && availableLocations.length > 0 && (
-                    <div className="absolute top-8 left-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-lg shadow-md z-50">
-                      <div className="p-3 border-b border-gray-200/50 bg-gray-50/50">
-                        <h3 className="text-sm font-medium text-gray-800">Choose Your Location</h3>
-                        <p className="text-xs text-gray-600 mt-0.5">Find the best deals near you</p>
+                    <div className="absolute top-8 left-0 w-80 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-lg shadow-md z-50">
+                      <div className="p-3 border-b border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50">
+                        <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">Choose Your Location</h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Find the best deals near you</p>
                       </div>
                       <div className="max-h-64 overflow-y-auto">
                         {availableLocations.map((locationItem) => (
                           <button
                             key={locationItem.id}
-                            className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100/50 last:border-b-0 transition-all duration-200"
+                            className="w-full p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100/50 dark:border-gray-700/50 last:border-b-0 transition-all duration-200"
                             onClick={() => handleLocationSelect(locationItem)}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm font-medium text-gray-900">{locationItem.name}</p>
-                                <p className="text-xs text-gray-500">{locationItem.area}</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{locationItem.name}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{locationItem.area}</p>
                               </div>
                               <div className="text-right">
                                 {locationItem.name === currentLocation && (
                                   <div className="w-2 h-2 bg-blue-500 rounded-full mb-1"></div>
                                 )}
-                                <p className="text-xs text-blue-600 font-medium">{locationItem.offers}</p>
+                                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">{locationItem.offers}</p>
                               </div>
                             </div>
                           </button>
                         ))}
                       </div>
-                      <div className="p-3 border-t border-gray-200/50 bg-gray-50/50">
+                      <div className="p-3 border-t border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/50">
                         <button
                           onClick={handleUseCurrentLocation}
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 transition-colors"
+                          className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center space-x-2 transition-colors"
                         >
                           <MapPin className="w-3 h-3" />
                           <span>Use My Current Location</span>
@@ -437,12 +484,12 @@ const Navbar = () => {
                   )}
 
                   {isLocationOpen && availableLocations.length === 0 && (
-                    <div className="absolute top-8 left-0 w-80 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-lg shadow-md z-50">
+                    <div className="absolute top-8 left-0 w-80 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-lg shadow-md z-50">
                       <div className="p-4 text-center">
-                        <p className="text-sm text-gray-600">Loading locations...</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Loading locations...</p>
                         <button
                           onClick={handleUseCurrentLocation}
-                          className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-2 mx-auto transition-colors"
+                          className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center space-x-2 mx-auto transition-colors"
                         >
                           <MapPin className="w-3 h-3" />
                           <span>Use My Current Location</span>
@@ -458,24 +505,27 @@ const Navbar = () => {
                   href="https://merchants.discoun3ree.com/accounts/sign-up"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-1.5 text-gray-700 hover:text-blue-600 transition-all duration-200 bg-gray-100/60 hover:bg-gray-200/80 px-3 py-1.5 rounded-lg border border-gray-200/50"
+                  className="flex items-center space-x-1.5 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 bg-gray-100/60 dark:bg-gray-800/60 hover:bg-gray-200/80 dark:hover:bg-gray-700/80 px-3 py-1.5 rounded-lg border border-gray-200/50 dark:border-gray-700/50"
                 >
                   <Building className="w-3 h-3" />
                   <span className="font-medium text-xs">List Business</span>
                 </a>
                 <Link
                   to="/contact-us"
-                  className="flex items-center space-x-1.5 text-gray-700 hover:text-blue-600 transition-all duration-200 bg-gray-100/60 hover:bg-gray-200/80 px-3 py-1.5 rounded-lg border border-gray-200/50"
+                  className="flex items-center space-x-1.5 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 bg-gray-100/60 dark:bg-gray-800/60 hover:bg-gray-200/80 dark:hover:bg-gray-700/80 px-3 py-1.5 rounded-lg border border-gray-200/50 dark:border-gray-700/50"
                 >
                   <Headphones className="w-3 h-3" />
                   <span className="font-medium text-xs">Support</span>
                 </Link>
 
+                {/* Dark Mode Toggle - Desktop */}
+                <DarkModeToggle isMobile={false} />
+
                 {/* Authentication Section */}
                 {isAuthenticated && user ? (
                   <Link
                     to="/profile"
-                    className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-all duration-200 bg-gray-100/60 hover:bg-gray-200/80 px-3 py-1.5 rounded-lg border border-gray-200/50"
+                    className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 bg-gray-100/60 dark:bg-gray-800/60 hover:bg-gray-200/80 dark:hover:bg-gray-700/80 px-3 py-1.5 rounded-lg border border-gray-200/50 dark:border-gray-700/50"
                   >
                     <div className="flex items-center space-x-1.5">
                       {user.avatar ? (
@@ -492,7 +542,7 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <Link to="/accounts/sign-in">
-                    <button className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-all duration-200 bg-gray-100/60 hover:bg-gray-200/80 px-3 py-1.5 rounded-lg border border-gray-200/50">
+                    <button className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 bg-gray-100/60 dark:bg-gray-800/60 hover:bg-gray-200/80 dark:hover:bg-gray-700/80 px-3 py-1.5 rounded-lg border border-gray-200/50 dark:border-gray-700/50">
                       <div className="flex items-center space-x-1.5">
                         <User className="w-3 h-3" />
                         <span className="font-medium text-xs">Sign In</span>
@@ -564,14 +614,14 @@ const Navbar = () => {
 
       {/* Fixed Bottom Mobile Navigation - Enhanced with Instagram-style Reels icon */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-        <div className="bg-white/95 backdrop-blur-md border-t border-gray-200/50 rounded-t-3xl shadow-2xl">
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200/50 dark:border-gray-700/50 rounded-t-3xl shadow-2xl">
           {/* Reduced padding for more compact design */}
           <div className="grid grid-cols-5 gap-0 px-2 py-2">
             <Link
               to="/"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/'
-                ? 'text-blue-600'
-                : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/' ? 'scale-110' : ''}`}>
@@ -585,8 +635,8 @@ const Navbar = () => {
             <Link
               to="/hotdeals"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/hotdeals'
-                ? 'text-blue-600'
-                : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/hotdeals' ? 'scale-110' : ''}`}>
@@ -601,8 +651,8 @@ const Navbar = () => {
             <Link
               to="/stores"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/stores'
-                ? 'text-blue-600'
-                : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/stores' ? 'scale-110' : ''}`}>
@@ -616,8 +666,8 @@ const Navbar = () => {
             <Link
               to="/requestservice"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/requestservice'
-                ? 'text-blue-600'
-                : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/requestservice' ? 'scale-110' : ''}`}>
@@ -631,12 +681,12 @@ const Navbar = () => {
             <Link
               to="/reels"
               className={`flex flex-col items-center justify-center space-y-1 px-2 py-1.5 rounded-2xl transition-all duration-300 active:scale-95 ${location.pathname === '/reels'
-                ? 'text-blue-600'
-                : 'text-gray-700 hover:text-blue-600'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
                 }`}
             >
               <div className={`relative transition-transform duration-300 ${location.pathname === '/reels' ? 'scale-110' : ''}`}>
-                <ReelsIcon className="w-6 h-6" />
+                <ReelsIcon className="w-6 h-6" isActive={location.pathname === '/reels'} />
               </div>
               <span className={`text-xs font-medium transition-all duration-300 ${location.pathname === '/reels' ? 'font-semibold' : ''}`}>
                 Reels
