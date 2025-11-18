@@ -467,10 +467,14 @@ const StoreViewPage = () => {
         console.log('Store ID:', id, 'Store Name:', storeData.name);
         console.log('User:', currentUser.name, 'ID:', currentUser.id);
 
-        const storeId = parseInt(id);
-        if (isNaN(storeId)) {
-          throw new Error('Invalid store ID');
-        }
+        // ✅ REMOVE THIS LINE - Don't convert UUID to integer
+        // const storeId = parseInt(id);
+        // if (isNaN(storeId)) {
+        //   throw new Error('Invalid store ID');
+        // }
+
+        // ✅ USE THE ID DIRECTLY
+        const storeId = id; // Keep it as string UUID
 
         const chatToken = chatService.getAuthToken();
         console.log('Chat service token:', chatToken ? 'Found' : 'Not found');
@@ -506,7 +510,7 @@ const StoreViewPage = () => {
             const initialMessage = `Hi! I'm interested in ${storeData.name}. Could you help me with some information?`;
 
             const newConversationResponse = await chatService.startConversation(
-              storeId,
+              storeId, // ✅ Now passing string UUID instead of NaN
               initialMessage
             );
 
