@@ -1,8 +1,7 @@
-// pages/ChatPage.jsx - Updated with NO auto-selection and NO Footer
+// pages/ChatPage.jsx - Updated with dark mode support
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Send, Search, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle, Store, Paperclip, X } from 'lucide-react';
-import Navbar from '../components/Navbar';
 import chatService from '../services/chatService';
 import useSocket from '../hooks/useSocket';
 import authService from '../services/authService';
@@ -116,10 +115,10 @@ const ChatPage = () => {
         try {
           console.log('Fetching user profile via authService...');
           const result = await authService.getCurrentUser();
-          
+
           if (result.success && result.data) {
             const userData = result.data.user || result.data;
-            
+
             const formattedUser = {
               id: userData.id,
               name: `${userData.firstName} ${userData.lastName}`.trim(),
@@ -128,7 +127,7 @@ const ChatPage = () => {
               userType: 'customer',
               role: 'customer'
             };
-        
+
             console.log('✅ Customer user set from API:', formattedUser);
             localStorage.setItem('userInfo', JSON.stringify(userData));
             setUser(formattedUser);
@@ -267,7 +266,7 @@ const ChatPage = () => {
     };
   }, [socket, on, off, selectedChat, user]);
 
-  // FIXED: Load customer↔store chats WITHOUT auto-selection
+  // Load customer↔store chats WITHOUT auto-selection
   useEffect(() => {
     if (user) {
       loadChats();
@@ -280,14 +279,12 @@ const ChatPage = () => {
       } else if (location.state?.newConversationId) {
         console.log('📌 Auto-selecting new conversation from navigation state');
         const newChatId = location.state.newConversationId;
-        // Find the conversation in the list after it's loaded
         loadMessages(newChatId);
       }
-      // REMOVED: Auto-selection of first chat when no specific chat is provided
     }
   }, [user, location.state]);
 
-  // FIXED: Load customer's chats with stores WITHOUT auto-selection
+  // Load customer's chats with stores WITHOUT auto-selection
   const loadChats = async () => {
     try {
       setLoading(true);
@@ -310,7 +307,6 @@ const ChatPage = () => {
       if (response.success) {
         setChats(response.data);
 
-        // FIXED: Only auto-select if specifically requested via navigation state
         if (location.state?.newConversationId) {
           const newChat = response.data.find(chat => chat.id === location.state.newConversationId);
           if (newChat) {
@@ -319,8 +315,6 @@ const ChatPage = () => {
             loadMessages(newChat.id);
           }
         }
-        // REMOVED: Auto-selection of first chat
-        // No longer auto-selects first chat - user must manually select
 
       } else {
         setError(response.message || 'Failed to load chats');
@@ -364,7 +358,6 @@ const ChatPage = () => {
     loadMessages(chat.id);
     markAsRead(chat.id);
 
-    // Dispatch event to update navbar count when messages are read
     window.dispatchEvent(new CustomEvent('chatUpdated'));
   };
 
@@ -379,7 +372,6 @@ const ChatPage = () => {
           : chat
       ));
 
-      // Dispatch event to update navbar count
       window.dispatchEvent(new CustomEvent('chatUpdated'));
     } catch (error) {
       console.error('Failed to mark as read:', error);
@@ -432,11 +424,10 @@ const ChatPage = () => {
       if (response.success) {
         console.log('✅ Customer message to store sent successfully');
 
-        // Add the message to the customer's view immediately
         const newMessage = {
           id: response.data.id || `temp-${Date.now()}`,
           text: messageText,
-          sender: 'user', // Customer sender type
+          sender: 'user',
           senderInfo: {
             id: user.id,
             name: user.name,
@@ -450,7 +441,6 @@ const ChatPage = () => {
         setMessages(prev => [...prev, newMessage]);
         scrollToBottom();
 
-        // Update chat list
         setChats(prev => prev.map(chat =>
           chat.id === selectedChat.id
             ? {
@@ -461,7 +451,6 @@ const ChatPage = () => {
             : chat
         ));
 
-        // Dispatch event to update navbar count
         window.dispatchEvent(new CustomEvent('chatUpdated'));
       } else {
         throw new Error(response.message || 'Failed to send message');
@@ -478,10 +467,7 @@ const ChatPage = () => {
   // Handle sending with image
   const handleSendWithImage = async () => {
     if (selectedImage) {
-      // Handle image sending logic here
       console.log('Sending image:', selectedImage);
-      // You'll need to implement image upload in your chatService
-      // For now, we'll just remove the selected image
       removeSelectedImage();
     }
     if (message.trim()) {
@@ -529,12 +515,11 @@ const ChatPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
-            <p className="text-gray-600">Loading your store conversations...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">Loading your store conversations...</p>
           </div>
         </div>
       </div>
@@ -543,11 +528,10 @@ const ChatPage = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-600">Loading customer data...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading customer data...</p>
           </div>
         </div>
       </div>
@@ -555,30 +539,27 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-
-      {/* Main Chat Container - Constrained width like navbar */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
+      {/* Main Chat Container */}
       <div className="flex-1 w-full">
-        <div className="max-w-7xl mx-auto h-full bg-white shadow-sm">
-          {/* Main chat layout - Constrained width */}
+        <div className="max-w-7xl mx-auto h-full bg-white dark:bg-gray-800 shadow-sm transition-colors duration-200">
           <div className="flex w-full" style={{ height: 'calc(100vh - 60px)' }}>
-            {/* Store Chat List Sidebar - Fixed width */}
+            {/* Store Chat List Sidebar */}
             <div className={`${selectedChat
               ? 'hidden xl:flex'
               : 'flex'
-              } w-full xl:w-80 flex-col bg-gray-50 border-r border-gray-200`}>
+              } w-full xl:w-80 flex-col bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-colors duration-200`}>
 
               {/* Search */}
-              <div className="p-4 bg-white border-b border-gray-200">
+              <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                   <input
                     type="text"
                     placeholder="Search stores..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
                   />
                 </div>
               </div>
@@ -586,21 +567,21 @@ const ChatPage = () => {
               {/* Store Chat List */}
               <div className="flex-1 overflow-y-auto">
                 {filteredChats.length === 0 ? (
-                  <div className="flex items-center justify-center h-48 text-gray-500">
+                  <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400">
                     <div className="text-center px-4">
-                      <Store className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                      <Store className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
                       <p className="font-medium mb-1">No store conversations found</p>
                       <p className="text-sm">Start chatting with stores!</p>
                       <button
                         onClick={() => navigate('/stores')}
-                        className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                        className="mt-3 px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors text-sm"
                       >
                         Browse Stores
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
                     {filteredChats.map((chat) => {
                       const store = chat.store;
                       const storeName = store?.name || 'Unknown Store';
@@ -610,8 +591,8 @@ const ChatPage = () => {
                         <div
                           key={chat.id}
                           onClick={() => handleChatSelect(chat)}
-                          className={`flex items-start p-4 hover:bg-white cursor-pointer transition-all duration-200 ${selectedChat?.id === chat.id
-                            ? 'bg-white border-r-4 border-blue-500 shadow-sm'
+                          className={`flex items-start p-4 hover:bg-white dark:hover:bg-gray-800 cursor-pointer transition-all duration-200 ${selectedChat?.id === chat.id
+                            ? 'bg-white dark:bg-gray-800 border-r-4 border-blue-500 dark:border-blue-400 shadow-sm'
                             : 'hover:shadow-sm'
                             }`}
                         >
@@ -621,35 +602,35 @@ const ChatPage = () => {
                               alt={storeName}
                               className="w-12 h-12 rounded-full object-cover"
                             />
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 dark:bg-blue-600 rounded-full border-2 border-white dark:border-gray-900 flex items-center justify-center">
                               <Store className="w-2 h-2 text-white" />
                             </div>
                             {isUserOnline(store?.merchant_id) && (
-                              <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                              <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
                             )}
                           </div>
 
                           <div className="ml-3 flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-1">
                               <div className="flex items-center gap-2 min-w-0">
-                                <h3 className="font-semibold text-gray-900 truncate text-sm">{storeName}</h3>
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm">{storeName}</h3>
                                 {chat.unreadCount > 0 && (
-                                  <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0">
+                                  <span className="bg-blue-500 dark:bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0">
                                     {chat.unreadCount}
                                   </span>
                                 )}
                               </div>
-                              <span className="text-xs text-gray-500 flex-shrink-0">{chat.lastMessageTime}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{chat.lastMessageTime}</span>
                             </div>
 
-                            <p className="text-sm text-gray-600 truncate mb-2 leading-tight">{chat.lastMessage}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-2 leading-tight">{chat.lastMessage}</p>
 
-                            <div className="flex items-center justify-between text-xs text-gray-400">
+                            <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
                               <span className="flex items-center gap-1">
                                 <span>{store?.category || 'Store'}</span>
                               </span>
                               {isUserOnline(store?.merchant_id) && (
-                                <span className="text-green-500 flex items-center gap-1">
+                                <span className="text-green-500 dark:text-green-400 flex items-center gap-1">
                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                   Online
                                 </span>
@@ -668,17 +649,17 @@ const ChatPage = () => {
             <div className={`${selectedChat
               ? 'flex'
               : 'hidden xl:flex'
-              } flex-1 flex-col bg-white`}>
+              } flex-1 flex-col bg-white dark:bg-gray-800 transition-colors duration-200`}>
               {selectedChat ? (
                 <>
-                  {/* Store Chat Header - Removed action buttons */}
-                  <div className="bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+                  {/* Store Chat Header */}
+                  <div className="bg-white dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0 transition-colors duration-200">
                     <div className="flex items-center">
                       <button
                         onClick={handleBackToSidebar}
-                        className="xl:hidden mr-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="xl:hidden mr-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                       >
-                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       </button>
                       <div className="relative flex-shrink-0">
                         <img
@@ -686,18 +667,18 @@ const ChatPage = () => {
                           alt={selectedChat.store?.name || 'Store'}
                           className="w-12 h-12 rounded-full object-cover"
                         />
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 dark:bg-blue-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
                           <Store className="w-2.5 h-2.5 text-white" />
                         </div>
                       </div>
                       <div className="ml-4">
                         <div className="flex items-center space-x-3">
-                          <h2 className="text-lg font-semibold text-gray-900">{selectedChat.store?.name || 'Store'}</h2>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">Store</span>
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedChat.store?.name || 'Store'}</h2>
+                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-medium rounded-full">Store</span>
                         </div>
-                        <p className="text-sm text-gray-500 flex items-center gap-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                           {isUserOnline(selectedChat.store?.merchant_id) ? (
-                            <span className="text-green-600 flex items-center gap-1">
+                            <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
                               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                               Store is Online
                             </span>
@@ -705,7 +686,7 @@ const ChatPage = () => {
                             'Store will respond soon'
                           )}
                           {selectedChat.store?.category && (
-                            <span className="text-gray-400">• {selectedChat.store.category}</span>
+                            <span className="text-gray-400 dark:text-gray-500">• {selectedChat.store.category}</span>
                           )}
                         </p>
                       </div>
@@ -713,15 +694,15 @@ const ChatPage = () => {
                   </div>
 
                   {/* Messages Area */}
-                  <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gray-50">
+                  <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                     {messages.length === 0 ? (
-                      <div className="flex items-center justify-center h-full text-gray-500">
+                      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
                         <div className="text-center max-w-md">
-                          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Store className="w-8 h-8 text-blue-500" />
+                          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Store className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                           </div>
-                          <h3 className="text-lg font-medium mb-2 text-gray-900">Start chatting with {selectedChat.store?.name || 'this store'}</h3>
-                          <p className="text-sm text-gray-600 mb-4">Ask about products, services, store hours, or anything else!</p>
+                          <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">Start chatting with {selectedChat.store?.name || 'this store'}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Ask about products, services, store hours, or anything else!</p>
                         </div>
                       </div>
                     ) : (
@@ -729,9 +710,7 @@ const ChatPage = () => {
                         {messages.map((msg, index) => (
                           <div
                             key={msg.id}
-                            className={`flex ${
-                              // Customer messages align right, store messages align left
-                              msg.sender === 'user' || msg.sender === 'customer'
+                            className={`flex ${msg.sender === 'user' || msg.sender === 'customer'
                                 ? 'justify-end'
                                 : 'justify-start'
                               }`}
@@ -750,30 +729,30 @@ const ChatPage = () => {
 
                               <div
                                 className={`px-4 py-3 rounded-2xl max-w-full ${msg.sender === 'user' || msg.sender === 'customer'
-                                  ? 'bg-blue-500 text-white rounded-br-md'
-                                  : 'bg-white text-gray-900 rounded-bl-md border border-gray-200 shadow-sm'
+                                  ? 'bg-blue-500 dark:bg-blue-600 text-white rounded-br-md'
+                                  : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-200 dark:border-gray-700 shadow-sm'
                                   }`}
                               >
                                 {/* Store name for store messages */}
                                 {msg.sender === 'store' && (
                                   <div className="flex items-center gap-2 mb-2">
-                                    <Store className="w-3 h-3 text-blue-500" />
-                                    <span className="text-xs font-medium text-blue-600">{selectedChat.store?.name || 'Store'}</span>
+                                    <Store className="w-3 h-3 text-blue-500 dark:text-blue-400" />
+                                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{selectedChat.store?.name || 'Store'}</span>
                                   </div>
                                 )}
 
                                 <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
 
                                 <div className={`flex items-center justify-end mt-2 space-x-1 ${msg.sender === 'user' || msg.sender === 'customer'
-                                  ? 'text-blue-100'
-                                  : 'text-gray-500'
+                                  ? 'text-blue-100 dark:text-blue-200'
+                                  : 'text-gray-500 dark:text-gray-400'
                                   }`}>
                                   <Clock className="w-3 h-3" />
                                   <span className="text-xs">{msg.timestamp}</span>
                                   {(msg.sender === 'user' || msg.sender === 'customer') && (
                                     <div className="ml-1">
                                       {msg.status === 'read' ? (
-                                        <CheckCheck className="w-3 h-3 text-blue-200" />
+                                        <CheckCheck className="w-3 h-3 text-blue-200 dark:text-blue-300" />
                                       ) : (
                                         <Check className="w-3 h-3" />
                                       )}
@@ -805,11 +784,11 @@ const ChatPage = () => {
                                 alt="Store"
                                 className="w-8 h-8 rounded-full object-cover"
                               />
-                              <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm">
+                              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm">
                                 <div className="flex space-x-1">
-                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
+                                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                                 </div>
                               </div>
                             </div>
@@ -820,16 +799,16 @@ const ChatPage = () => {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {/* WhatsApp-style Message Input */}
-                  <div className="bg-white px-8 py-6 border-t border-gray-200 flex-shrink-0 mb-16 lg:mb-0">
+                  {/* Message Input */}
+                  <div className="bg-white dark:bg-gray-800 px-8 py-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mb-16 lg:mb-0 transition-colors duration-200">
                     {/* Image Preview Area */}
                     {imagePreview && (
-                      <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
                         <div className="flex items-start justify-between mb-3">
-                          <span className="text-sm font-medium text-gray-700">Image to send:</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Image to send:</span>
                           <button
                             onClick={removeSelectedImage}
-                            className="text-gray-400 hover:text-red-500 transition-colors"
+                            className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                           >
                             <X className="w-5 h-5" />
                           </button>
@@ -837,25 +816,22 @@ const ChatPage = () => {
                         <img
                           src={imagePreview}
                           alt="Preview"
-                          className="max-w-sm max-h-48 rounded-lg border border-gray-300 shadow-sm"
+                          className="max-w-sm max-h-48 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm"
                         />
                       </div>
                     )}
 
-                    {/* WhatsApp-style Input Container */}
+                    {/* Input Container */}
                     <div className="flex items-end gap-3">
-                      {/* Input with integrated attach button */}
-                      <div className="flex-1 relative bg-white border border-gray-300 rounded-3xl flex items-center">
-                        {/* Attach Button - Inside input like WhatsApp */}
+                      <div className="flex-1 relative bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-3xl flex items-center transition-colors duration-200">
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          className="p-3 text-gray-500 hover:text-gray-700 transition-colors"
+                          className="p-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                           title="Attach image"
                         >
                           <Paperclip className="w-5 h-5" />
                         </button>
 
-                        {/* Text Input */}
                         <textarea
                           value={message}
                           onChange={handleMessageChange}
@@ -863,16 +839,15 @@ const ChatPage = () => {
                           placeholder={`Chat with ${selectedChat.store?.name || 'store'}...`}
                           rows={1}
                           disabled={sendingMessage || !isConnected}
-                          className="flex-1 px-2 py-3 bg-transparent border-none focus:outline-none resize-none max-h-32 disabled:cursor-not-allowed placeholder-gray-500"
+                          className="flex-1 px-2 py-3 bg-transparent border-none focus:outline-none resize-none max-h-32 disabled:cursor-not-allowed placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100"
                           style={{ minHeight: '48px' }}
                         />
                       </div>
 
-                      {/* Send Button */}
                       <button
                         onClick={selectedImage ? handleSendWithImage : handleSendMessage}
                         disabled={(!message.trim() && !selectedImage) || sendingMessage || !isConnected}
-                        className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                        className="p-3 bg-blue-500 dark:bg-blue-600 text-white rounded-full hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
                         title={!isConnected ? 'Connecting...' : 'Send message'}
                         style={{ minHeight: '48px', minWidth: '48px' }}
                       >
@@ -887,14 +862,13 @@ const ChatPage = () => {
                     {/* Connection Status */}
                     {!isConnected && (
                       <div className="mt-3">
-                        <p className="text-xs text-orange-600 flex items-center gap-2">
+                        <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-2">
                           <Loader2 className="w-3 h-3 animate-spin" />
                           Connecting to chat server...
                         </p>
                       </div>
                     )}
 
-                    {/* Hidden File Input */}
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -905,53 +879,53 @@ const ChatPage = () => {
                   </div>
                 </>
               ) : (
-                /* FIXED: Enhanced Welcome Screen - Always shows when no chat selected */
-                <div className="flex-1 flex items-center justify-center bg-gray-50">
+                /* Welcome Screen */
+                <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                   <div className="text-center max-w-lg px-8">
-                    <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <MessageCircle className="w-12 h-12 text-blue-500" />
+                    <div className="w-24 h-24 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <MessageCircle className="w-12 h-12 text-blue-500 dark:text-blue-400" />
                     </div>
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-3">Welcome to Store Chat</h2>
-                    <p className="text-gray-600 mb-8 leading-relaxed">
+                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">Welcome to Store Chat</h2>
+                    <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
                       Connect with stores to ask questions, get support, and stay updated on your orders. Select a conversation from the sidebar to start chatting.
                     </p>
 
                     <div className="grid grid-cols-2 gap-6 mb-8">
                       <div className="flex flex-col items-center space-y-2">
-                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                          <AlertCircle className="w-6 h-6 text-orange-500" />
+                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                          <AlertCircle className="w-6 h-6 text-orange-500 dark:text-orange-400" />
                         </div>
                         <div className="text-center">
-                          <div className="text-lg font-semibold text-gray-900">{totalUnreadCount}</div>
-                          <div className="text-sm text-gray-500">Unread Messages</div>
+                          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{totalUnreadCount}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Unread Messages</div>
                         </div>
                       </div>
                       <div className="flex flex-col items-center space-y-2">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Store className="w-6 h-6 text-blue-500" />
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                          <Store className="w-6 h-6 text-blue-500 dark:text-blue-400" />
                         </div>
                         <div className="text-center">
-                          <div className="text-lg font-semibold text-gray-900">{chats.length}</div>
-                          <div className="text-sm text-gray-500">Store Conversations</div>
+                          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{chats.length}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Store Conversations</div>
                         </div>
                       </div>
                     </div>
 
                     {chats.length === 0 ? (
                       <div>
-                        <p className="text-gray-500 mb-4">You haven't started any conversations with stores yet.</p>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">You haven't started any conversations with stores yet.</p>
                         <button
                           onClick={() => navigate('/stores')}
-                          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                          className="px-6 py-3 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors font-medium"
                         >
                           Browse Stores to Start Chatting
                         </button>
                       </div>
                     ) : (
                       <div>
-                        <p className="text-gray-500 mb-4">Select a store conversation from the sidebar to continue chatting.</p>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">Select a store conversation from the sidebar to continue chatting.</p>
                         {totalUnreadCount > 0 && (
-                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
+                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg">
                             <AlertCircle className="w-4 h-4" />
                             <span className="text-sm font-medium">You have {totalUnreadCount} unread message{totalUnreadCount !== 1 ? 's' : ''}</span>
                           </div>

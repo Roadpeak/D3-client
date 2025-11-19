@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, Gift, Store, Settings, LogOut, Heart, Calendar, 
-  Award, Target, Users, 
+import {
+  User, Gift, Store, Settings, LogOut, Heart, Calendar,
+  Award, Target, Users,
   Moon, Sun, Star, CheckCircle, Trophy, Bookmark, MessageCircle
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import authService from '../services/authService';
 import api from '../config/api';
 import { useFavorites } from '../hooks/useFavorites';
@@ -24,7 +22,7 @@ const EnhancedCouponProfilePage = () => {
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -41,13 +39,13 @@ const EnhancedCouponProfilePage = () => {
     return badges;
   };
 
-  // Fetch user profile data (original functionality)
+  // Fetch user profile data
   useEffect(() => {
     const checkAuth = async () => {
       try {
         if (!authService.isAuthenticated()) {
-          navigate('/accounts/sign-in', { 
-            state: { returnUrl: location.pathname } 
+          navigate('/accounts/sign-in', {
+            state: { returnUrl: location.pathname }
           });
           return;
         }
@@ -75,17 +73,17 @@ const EnhancedCouponProfilePage = () => {
     checkAuth();
   }, [navigate, location.pathname]);
 
-  // Fetch user statistics (original functionality)
+  // Fetch user statistics
   useEffect(() => {
     const fetchUserStats = async () => {
       if (!authService.isAuthenticated()) return;
 
       try {
         setStatsLoading(true);
-        
+
         // Fetch followed stores count
         const followedStoresResponse = await api.get('/users/followed-stores');
-        const followedStoresCount = followedStoresResponse.data.success ? 
+        const followedStoresCount = followedStoresResponse.data.success ?
           (followedStoresResponse.data.followedStores?.length || 0) : 0;
 
         // Get real-time favorites count from the hook
@@ -94,26 +92,22 @@ const EnhancedCouponProfilePage = () => {
         // Fetch bookings count - try multiple endpoints
         let bookingsCount = 0;
         try {
-          // Try user bookings endpoint first
           const userBookingsResponse = await api.get('/bookings/user');
           if (userBookingsResponse.data.success && userBookingsResponse.data.bookings) {
             bookingsCount = userBookingsResponse.data.bookings.length;
           } else if (userBookingsResponse.data.data) {
-            // Handle different response structure
-            bookingsCount = Array.isArray(userBookingsResponse.data.data) ? 
+            bookingsCount = Array.isArray(userBookingsResponse.data.data) ?
               userBookingsResponse.data.data.length : 0;
           }
         } catch (bookingsError) {
           console.warn('Primary bookings endpoint failed, trying alternative:', bookingsError.message);
           try {
-            // Try alternative endpoint
             const altBookingsResponse = await api.get('/users/bookings');
             if (altBookingsResponse.data.success && altBookingsResponse.data.bookings) {
               bookingsCount = altBookingsResponse.data.bookings.length;
             }
           } catch (altError) {
             console.warn('Alternative bookings endpoint also failed:', altError.message);
-            // Keep bookingsCount as 0
           }
         }
 
@@ -127,14 +121,12 @@ const EnhancedCouponProfilePage = () => {
         } catch (rewardsError) {
           console.warn('Rewards endpoint failed:', rewardsError.message);
           try {
-            // Try alternative endpoint
             const altRewardsResponse = await api.get('/users/points');
             if (altRewardsResponse.data.success) {
               rewardPoints = altRewardsResponse.data.points || 0;
             }
           } catch (altError) {
             console.warn('Alternative rewards endpoint also failed:', altError.message);
-            // Keep rewardPoints as 0
           }
         }
 
@@ -171,7 +163,7 @@ const EnhancedCouponProfilePage = () => {
     }
   }, [user, favoritesLoading, getFavoritesCount]);
 
-  // Update favorites count when it changes (original functionality)
+  // Update favorites count when it changes
   useEffect(() => {
     if (!favoritesLoading) {
       setUserStats(prevStats => ({
@@ -206,51 +198,45 @@ const EnhancedCouponProfilePage = () => {
     return badges;
   };
 
-  // Show loading state (original functionality)
+  // Show loading state
   if (loading) {
     return (
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <Navbar />
+      <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
             <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} text-sm`}>Loading your profile...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
-  // Show error state (original functionality)
+  // Show error state
   if (error) {
     return (
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <Navbar />
+      <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="flex items-center justify-center min-h-[70vh]">
           <div className="text-center">
-            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-red-600 text-lg">!</span>
+            <div className={`w-12 h-12 ${darkMode ? 'bg-red-900/20' : 'bg-red-50'} rounded-full flex items-center justify-center mx-auto mb-4`}>
+              <span className={`${darkMode ? 'text-red-400' : 'text-red-600'} text-lg`}>!</span>
             </div>
             <h2 className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>Something went wrong</h2>
             <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-4 text-sm`}>{error}</p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
+              className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 text-sm transition-colors"
             >
               Try Again
             </button>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Navbar />
-      
       {/* Enhanced Header with Dark Mode Toggle */}
       <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} border-b transition-colors duration-300`}>
         <div className="max-w-6xl mx-auto px-6 py-6">
@@ -261,16 +247,16 @@ const EnhancedCouponProfilePage = () => {
             </div>
             <div className="flex items-center gap-3">
               {/* Dark Mode Toggle */}
-              <button 
+              <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 ${darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'} rounded-lg transition-colors`}
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => navigate('/profile/settings')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors text-sm font-medium"
               >
                 Edit Profile
               </button>
@@ -288,10 +274,10 @@ const EnhancedCouponProfilePage = () => {
               <div className="relative mx-auto md:mx-0">
                 <div className="w-24 md:w-32 h-24 md:h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center relative overflow-hidden">
                   {user?.avatar ? (
-                    <img 
-                      src={user.avatar} 
-                      alt="Profile" 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={user.avatar}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <User className="w-12 md:w-16 h-12 md:h-16 text-white" />
@@ -310,17 +296,16 @@ const EnhancedCouponProfilePage = () => {
                     {user?.phoneNumber && (
                       <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} text-sm mb-4`}>{user.phoneNumber}</p>
                     )}
-                    
+
                     {/* Enhanced Verification Status */}
                     <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
                       {getVerificationBadges().map((badge, index) => (
-                        <span 
+                        <span
                           key={index}
-                          className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 ${
-                            badge.color === 'green' ? 'bg-green-100 text-green-700' :
-                            badge.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                            'bg-orange-100 text-orange-700'
-                          }`}
+                          className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 ${badge.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                              badge.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                                'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
+                            }`}
                         >
                           <CheckCircle className="w-3 h-3" />
                           {badge.label}
@@ -333,14 +318,13 @@ const EnhancedCouponProfilePage = () => {
                       {getUserBadges().map((badge, index) => {
                         const IconComponent = badge.icon;
                         return (
-                          <span 
+                          <span
                             key={index}
-                            className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 ${
-                              badge.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                              badge.color === 'red' ? 'bg-red-100 text-red-700' :
-                              badge.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-green-100 text-green-700'
-                            }`}
+                            className={`text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1 ${badge.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
+                                badge.color === 'red' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                                  badge.color === 'yellow' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
+                                    'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                              }`}
                           >
                             <IconComponent className="w-3 h-3" />
                             {badge.label}
@@ -350,7 +334,7 @@ const EnhancedCouponProfilePage = () => {
                     </div>
                   </div>
 
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className={`${darkMode ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'} text-sm font-medium transition-colors flex items-center gap-1 mt-4 md:mt-0 md:absolute md:top-4 md:right-4`}
                   >
@@ -366,12 +350,12 @@ const EnhancedCouponProfilePage = () => {
         {/* Enhanced Stats Grid with Icons and Colors */}
         <div className="pb-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <button 
+            <button
               onClick={() => navigate('/profile/bookings')}
               className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-blue-500' : 'bg-white border-gray-200 hover:border-blue-300'} border rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1`}
             >
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-6 h-6 text-blue-600" />
+              <div className={`w-12 h-12 ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+                <Calendar className={`w-6 h-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
               </div>
               <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
                 {statsLoading ? (
@@ -380,15 +364,15 @@ const EnhancedCouponProfilePage = () => {
                   userStats.totalBookings
                 )}
               </div>
-              <div className="text-sm text-blue-600 font-medium">Bookings</div>
+              <div className={`text-sm ${darkMode ? 'text-blue-400' : 'text-blue-600'} font-medium`}>Bookings</div>
             </button>
 
-            <button 
+            <button
               onClick={() => navigate('/profile/favourites')}
               className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-red-500' : 'bg-white border-gray-200 hover:border-red-300'} border rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1`}
             >
-              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Heart className="w-6 h-6 text-red-600" />
+              <div className={`w-12 h-12 ${darkMode ? 'bg-red-900/30' : 'bg-red-100'} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+                <Heart className={`w-6 h-6 ${darkMode ? 'text-red-400' : 'text-red-600'}`} />
               </div>
               <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
                 {favoritesLoading ? (
@@ -397,15 +381,15 @@ const EnhancedCouponProfilePage = () => {
                   userStats.totalFavorites
                 )}
               </div>
-              <div className="text-sm text-red-600 font-medium">Favourites</div>
+              <div className={`text-sm ${darkMode ? 'text-red-400' : 'text-red-600'} font-medium`}>Favourites</div>
             </button>
 
-            <button 
+            <button
               onClick={() => navigate('/profile/followed-stores')}
               className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-yellow-500' : 'bg-white border-gray-200 hover:border-yellow-300'} border rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1`}
             >
-              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Users className="w-6 h-6 text-yellow-600" />
+              <div className={`w-12 h-12 ${darkMode ? 'bg-yellow-900/30' : 'bg-yellow-100'} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+                <Users className={`w-6 h-6 ${darkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
               </div>
               <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
                 {statsLoading ? (
@@ -414,15 +398,15 @@ const EnhancedCouponProfilePage = () => {
                   userStats.followedStores
                 )}
               </div>
-              <div className="text-sm text-yellow-600 font-medium">Following</div>
+              <div className={`text-sm ${darkMode ? 'text-yellow-400' : 'text-yellow-600'} font-medium`}>Following</div>
             </button>
 
-            <button 
+            <button
               onClick={() => navigate('/profile/earn')}
               className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:border-green-500' : 'bg-white border-gray-200 hover:border-green-300'} border rounded-xl p-6 text-center cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-1`}
             >
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Target className="w-6 h-6 text-green-600" />
+              <div className={`w-12 h-12 ${darkMode ? 'bg-green-900/30' : 'bg-green-100'} rounded-xl flex items-center justify-center mx-auto mb-4`}>
+                <Target className={`w-6 h-6 ${darkMode ? 'text-green-400' : 'text-green-600'}`} />
               </div>
               <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2`}>
                 {statsLoading ? (
@@ -431,7 +415,7 @@ const EnhancedCouponProfilePage = () => {
                   userStats.rewardPoints.toLocaleString()
                 )}
               </div>
-              <div className="text-sm text-green-600 font-medium">KSH</div>
+              <div className={`text-sm ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>KSH</div>
             </button>
           </div>
         </div>
@@ -440,7 +424,7 @@ const EnhancedCouponProfilePage = () => {
         <div className="pb-8">
           <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-6`}>Quick Actions</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <button 
+            <button
               onClick={() => navigate('/Hotdeals')}
               className={`text-left p-6 ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-blue-500' : 'bg-white border-gray-200 hover:border-blue-300'} border rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1`}
             >
@@ -451,7 +435,7 @@ const EnhancedCouponProfilePage = () => {
               <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Discover amazing deals</p>
             </button>
 
-            <button 
+            <button
               onClick={() => navigate('/stores')}
               className={`text-left p-6 ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-green-500' : 'bg-white border-gray-200 hover:border-green-300'} border rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1`}
             >
@@ -462,7 +446,7 @@ const EnhancedCouponProfilePage = () => {
               <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Explore businesses</p>
             </button>
 
-            <button 
+            <button
               onClick={() => navigate('/service-requests')}
               className={`text-left p-6 ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-orange-500' : 'bg-white border-gray-200 hover:border-orange-300'} border rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1`}
             >
@@ -473,7 +457,7 @@ const EnhancedCouponProfilePage = () => {
               <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>Manage requests & offers</p>
             </button>
 
-            <button 
+            <button
               onClick={() => navigate('/profile/settings')}
               className={`text-left p-6 ${darkMode ? 'bg-gray-800 border-gray-700 hover:border-purple-500' : 'bg-white border-gray-200 hover:border-purple-300'} border rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1`}
             >
@@ -487,44 +471,42 @@ const EnhancedCouponProfilePage = () => {
         </div>
 
         {/* Mobile-Friendly Bottom Actions Bar */}
-        <div 
-          className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 px-6 py-4 z-40" 
+        <div
+          className={`md:hidden fixed bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-800 border-t border-gray-700' : 'bg-white border-t border-gray-200'} px-6 py-4 z-40 transition-colors duration-300`}
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
           <div className="flex justify-around">
-            <button 
+            <button
               onClick={() => navigate('/Hotdeals')}
               className="flex flex-col items-center gap-1"
             >
-              <Gift className="w-6 h-6 text-blue-600" />
-              <span className="text-xs text-gray-600 dark:text-gray-300">Offers</span>
+              <Gift className={`w-6 h-6 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+              <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Offers</span>
             </button>
-            <button 
+            <button
               onClick={() => navigate('/stores')}
               className="flex flex-col items-center gap-1"
             >
-              <Store className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-              <span className="text-xs text-gray-600 dark:text-gray-300">Stores</span>
+              <Store className={`w-6 h-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Stores</span>
             </button>
-            <button 
+            <button
               onClick={() => navigate('/service-requests')}
               className="flex flex-col items-center gap-1"
             >
-              <MessageCircle className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-              <span className="text-xs text-gray-600 dark:text-gray-300">Requests</span>
+              <MessageCircle className={`w-6 h-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Requests</span>
             </button>
-            <button 
+            <button
               onClick={() => navigate('/profile/settings')}
               className="flex flex-col items-center gap-1"
             >
-              <Settings className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-              <span className="text-xs text-gray-600 dark:text-gray-300">Settings</span>
+              <Settings className={`w-6 h-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+              <span className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Settings</span>
             </button>
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };

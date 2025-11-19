@@ -183,7 +183,7 @@ const PopularListings = () => {
     return (
       <div
         key={deal.id}
-        className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-300 cursor-pointer group"
         onClick={() => handleDealClick(deal.id)}
       >
         <div className="relative">
@@ -200,7 +200,7 @@ const PopularListings = () => {
           <button
             className={`absolute top-2 right-2 p-1.5 md:p-2 rounded-full transition-all duration-200 shadow-lg ${isOfferFavorited
               ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-              : 'bg-white/90 text-gray-600 hover:bg-white hover:text-blue-500'
+              : 'bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-blue-500 dark:hover:text-blue-400'
               } ${!isAuthenticated || !favoritesInitialized
                 ? 'cursor-not-allowed opacity-50'
                 : 'cursor-pointer'
@@ -224,7 +224,7 @@ const PopularListings = () => {
           </button>
 
           {/* Discount Badge - Keep red for urgency */}
-          <div className="absolute bottom-2 right-2 bg-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
+          <div className="absolute bottom-2 right-2 bg-red-500 dark:bg-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
             {deal.discount} OFF
           </div>
         </div>
@@ -232,16 +232,16 @@ const PopularListings = () => {
         {/* Content */}
         <div className="p-3 md:p-4">
           {/* Title */}
-          <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 group-hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {deal.title}
           </h3>
 
           {/* Location */}
-          <p className="text-xs text-gray-500 mb-2">{deal.location}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{deal.location}</p>
 
           {/* Time Left (if available) - Keep orange for urgency */}
           {deal.timeLeft && deal.timeLeft !== 'Expired' && (
-            <div className="flex items-center space-x-1 text-orange-600 text-xs mb-3">
+            <div className="flex items-center space-x-1 text-orange-600 dark:text-orange-400 text-xs mb-3">
               <Clock className="w-3 h-3" />
               <span>{deal.timeLeft}</span>
             </div>
@@ -250,9 +250,9 @@ const PopularListings = () => {
           {/* Pricing */}
           <div className="flex items-center justify-between mt-3">
             <div className="flex flex-col">
-              <span className="font-bold text-blue-600 text-base md:text-lg">{deal.salePrice}</span>
+              <span className="font-bold text-blue-600 dark:text-blue-400 text-base md:text-lg">{deal.salePrice}</span>
               {deal.originalPrice && (
-                <span className="text-gray-400 line-through text-xs">{deal.originalPrice}</span>
+                <span className="text-gray-400 dark:text-gray-500 line-through text-xs">{deal.originalPrice}</span>
               )}
             </div>
           </div>
@@ -265,15 +265,15 @@ const PopularListings = () => {
   if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">TOP DEALS - HIGHEST DISCOUNTS</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
           {[...Array(8)].map((_, index) => (
-            <div key={index} className="bg-gray-100 rounded-2xl overflow-hidden animate-pulse">
-              <div className="h-40 md:h-48 bg-gray-300"></div>
+            <div key={index} className="bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden animate-pulse border border-gray-200 dark:border-gray-700">
+              <div className="h-40 md:h-48 bg-gray-300 dark:bg-gray-700"></div>
               <div className="p-3 md:p-4 space-y-2">
-                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-2/3"></div>
               </div>
             </div>
           ))}
@@ -286,12 +286,12 @@ const PopularListings = () => {
   if (error) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl">
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">TOP DEALS - HIGHEST DISCOUNTS</h2>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-2xl">
           <p>Error loading deals: {error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
+            className="mt-2 bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-600 dark:to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 dark:hover:from-blue-700 dark:hover:to-cyan-700 transition-all"
           >
             Retry
           </button>
@@ -304,12 +304,12 @@ const PopularListings = () => {
   if (deals.length === 0) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP DEALS - HIGHEST DISCOUNTS</h2>
-        <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">No active deals available at the moment.</p>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">TOP DEALS - HIGHEST DISCOUNTS</h2>
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">No active deals available at the moment.</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-600 dark:to-cyan-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 dark:hover:from-blue-700 dark:hover:to-cyan-700 transition-all"
           >
             Refresh
           </button>
@@ -323,21 +323,23 @@ const PopularListings = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 gap-2">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-gray-800">TOP DEALS</h2>
-          <p className="text-xs md:text-sm text-gray-600 mt-1">Highest Discounts Available</p>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 transition-colors duration-200">
+            TOP DEALS
+          </h2>
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Highest Discounts Available</p>
         </div>
         <div className="hidden md:block text-right">
-          <span className="text-sm text-gray-500">{deals.length} active deals</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{deals.length} active deals</span>
         </div>
       </div>
 
       {/* Favorites Error */}
       {favoritesError && (
-        <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-2 rounded-xl flex items-center justify-between text-sm">
+        <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400 px-4 py-2 rounded-xl flex items-center justify-between text-sm">
           <span>{favoritesError}</span>
           <button
             onClick={clearFavoritesError}
-            className="ml-4 text-yellow-800 hover:text-yellow-900 text-lg"
+            className="ml-4 text-yellow-800 dark:text-yellow-300 hover:text-yellow-900 dark:hover:text-yellow-200 text-lg"
           >
             ×
           </button>
@@ -353,7 +355,7 @@ const PopularListings = () => {
       <div className="flex justify-center md:justify-end">
         <button
           onClick={handleViewAllDeals}
-          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95"
+          className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-600 dark:to-cyan-600 hover:from-blue-600 hover:to-cyan-600 dark:hover:from-blue-700 dark:hover:to-cyan-700 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95"
         >
           View All Deals
           <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

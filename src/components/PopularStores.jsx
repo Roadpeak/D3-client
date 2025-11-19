@@ -65,7 +65,7 @@ const StoreLogo = ({
   );
 };
 
-// Store Image Component with fallback handling
+// Store Image Component with fallback handling (Dark Mode Support)
 const StoreImage = ({
   imageUrl,
   storeName,
@@ -87,8 +87,8 @@ const StoreImage = ({
   // If no image URL or has error, show placeholder
   if (!imageUrl || hasError || imageUrl === '/images/placeholder-store.png') {
     return (
-      <div className={`${className} bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center`}>
-        <div className="text-center text-gray-500">
+      <div className={`${className} bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center transition-colors duration-200`}>
+        <div className="text-center text-gray-500 dark:text-gray-400">
           <div className="text-4xl mb-2">🏪</div>
           <div className="text-sm font-medium">{storeName}</div>
         </div>
@@ -203,7 +203,7 @@ const PopularStores = () => {
     return (
       <div
         key={store.id}
-        className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group flex flex-col h-full"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-300 cursor-pointer group flex flex-col h-full"
         onClick={() => handleStoreClick(store)}
       >
         <div className="relative">
@@ -225,25 +225,27 @@ const PopularStores = () => {
         {/* Content */}
         <div className="p-3 md:p-4 flex flex-col flex-grow">
           {/* Store Name - Allow 2 lines */}
-          <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 group-hover:text-blue-600 transition-colors min-h-[2.5rem]">
+          <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors min-h-[2.5rem]">
             {store.name}
           </h3>
 
           {/* Category - Allow 2 lines */}
-          <p className="text-xs text-gray-500 mb-2 line-clamp-2 min-h-[2rem]">{store.category || 'General'}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2 min-h-[2rem]">
+            {store.category || 'General'}
+          </p>
 
           {/* Rating and Reviews */}
           <div className="flex items-center space-x-1 mb-3">
-            <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-yellow-500 dark:text-yellow-400 fill-current" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
-            <span className="text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
-            <span className="text-xs text-gray-500">({reviewCount})</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{rating.toFixed(1)}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">({reviewCount})</span>
           </div>
 
           {/* Visit Store Button - Push to bottom */}
           <button
-            className="w-full bg-white text-blue-600 border border-blue-600 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold hover:bg-blue-50 transition-all active:scale-95 mt-auto"
+            className="w-full bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-500 px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold hover:bg-blue-50 dark:hover:bg-gray-600 transition-all active:scale-95 mt-auto"
             onClick={(e) => {
               e.stopPropagation();
               handleStoreClick(store);
@@ -259,15 +261,15 @@ const PopularStores = () => {
   if (loading) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP STORES</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">TOP STORES</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8">
           {[...Array(8)].map((_, index) => (
-            <div key={`skeleton-${index}`} className="bg-gray-100 rounded-2xl overflow-hidden animate-pulse">
-              <div className="h-40 md:h-48 bg-gray-300"></div>
+            <div key={`skeleton-${index}`} className="bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden animate-pulse border border-gray-200 dark:border-gray-700">
+              <div className="h-40 md:h-48 bg-gray-300 dark:bg-gray-700"></div>
               <div className="p-3 md:p-4 space-y-2">
-                <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                <div className="h-8 bg-gray-300 rounded"></div>
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+                <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded"></div>
               </div>
             </div>
           ))}
@@ -279,12 +281,12 @@ const PopularStores = () => {
   if (error) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP STORES</h2>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl">
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">TOP STORES</h2>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-2xl">
           <p>Error: {error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
+            className="mt-2 bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-600 dark:to-cyan-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 dark:hover:from-blue-700 dark:hover:to-cyan-700 transition-all"
           >
             Retry
           </button>
@@ -298,12 +300,12 @@ const PopularStores = () => {
   if (totalStores === 0) {
     return (
       <section className="container mx-auto px-4 py-8">
-        <h2 className="text-xl md:text-2xl font-bold mb-6">TOP STORES</h2>
-        <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">No stores found.</p>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">TOP STORES</h2>
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">No stores found.</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all"
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-600 dark:to-cyan-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-cyan-600 dark:hover:from-blue-700 dark:hover:to-cyan-700 transition-all"
           >
             Refresh
           </button>
@@ -317,11 +319,13 @@ const PopularStores = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 gap-2">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-gray-800">TOP STORES</h2>
-          <p className="text-xs md:text-sm text-gray-600 mt-1">Most Popular Stores</p>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 transition-colors duration-200">
+            TOP STORES
+          </h2>
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">Most Popular Stores</p>
         </div>
         <div className="hidden md:block text-right">
-          <span className="text-sm text-gray-500">{totalStores} stores available</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{totalStores} stores available</span>
         </div>
       </div>
 
@@ -334,7 +338,7 @@ const PopularStores = () => {
       <div className="flex justify-center md:justify-end">
         <button
           onClick={handleViewAllStores}
-          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95"
+          className="bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-600 dark:to-cyan-600 hover:from-blue-600 hover:to-cyan-600 dark:hover:from-blue-700 dark:hover:to-cyan-700 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg active:scale-95"
         >
           View All Stores
           <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

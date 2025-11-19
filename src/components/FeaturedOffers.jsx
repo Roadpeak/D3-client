@@ -143,10 +143,10 @@ const FeaturedOffers = () => {
     return (
       <section className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">FEATURED OFFERS</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">FEATURED OFFERS</h2>
         </div>
-        <div className="relative bg-white rounded-3xl overflow-hidden shadow-lg animate-pulse">
-          <div className="h-96 bg-gray-300"></div>
+        <div className="relative bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg animate-pulse border border-gray-200 dark:border-gray-700">
+          <div className="h-96 bg-gray-300 dark:bg-gray-700"></div>
         </div>
       </section>
     );
@@ -157,13 +157,13 @@ const FeaturedOffers = () => {
     return (
       <section className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">FEATURED OFFERS</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">FEATURED OFFERS</h2>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-          <p className="text-red-600">Unable to load featured offers: {error}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
+          <p className="text-red-600 dark:text-red-400">Unable to load featured offers: {error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className="mt-2 px-4 py-2 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition-colors"
           >
             Retry
           </button>
@@ -177,11 +177,11 @@ const FeaturedOffers = () => {
     return (
       <section className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">FEATURED OFFERS</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">FEATURED OFFERS</h2>
         </div>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <p className="text-gray-600 text-lg">No featured offers available at the moment.</p>
-          <p className="text-gray-500 text-sm mt-2">Check back later for exciting deals!</p>
+        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
+          <p className="text-gray-600 dark:text-gray-300 text-lg">No featured offers available at the moment.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">Check back later for exciting deals!</p>
         </div>
       </section>
     );
@@ -192,18 +192,20 @@ const FeaturedOffers = () => {
   return (
     <section className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">FEATURED OFFERS</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 transition-colors duration-200">
+          FEATURED OFFERS
+        </h2>
         <div className="flex items-center space-x-2">
           <button
             onClick={goToPrevious}
-            className="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition-colors"
+            className="p-2 bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             aria-label="Previous offer"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
           <button
             onClick={goToNext}
-            className="p-2 bg-gray-800 text-white rounded-full hover:bg-gray-900 transition-colors"
+            className="p-2 bg-gray-800 dark:bg-gray-600 text-white rounded-full hover:bg-gray-900 dark:hover:bg-gray-500 transition-colors"
             aria-label="Next offer"
           >
             <ChevronRight className="w-5 h-5" />
@@ -218,7 +220,7 @@ const FeaturedOffers = () => {
         onMouseLeave={() => setIsPaused(false)}
       >
         <div
-          className="relative bg-white rounded-3xl overflow-hidden shadow-lg cursor-pointer transform hover:scale-[1.02] transition-all duration-300"
+          className="relative bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 cursor-pointer transform hover:scale-[1.02] transition-all duration-300"
           onClick={() => handleOfferClick(currentOffer)}
         >
           {/* Background Image */}
@@ -228,8 +230,8 @@ const FeaturedOffers = () => {
               backgroundImage: `url(${currentOffer.backgroundImage})`
             }}
           >
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+            {/* Gradient Overlay - Enhanced for dark mode */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent dark:from-black/80 dark:via-black/40"></div>
 
             {/* Content Overlay */}
             <div className="absolute inset-0 flex flex-col justify-end p-8">
@@ -251,7 +253,7 @@ const FeaturedOffers = () => {
                   </p>
 
                   {/* Discount Badge */}
-                  <div className="inline-block bg-red-500 text-white px-6 py-3 rounded-full text-xl font-bold shadow-lg">
+                  <div className="inline-block bg-red-500 dark:bg-red-600 text-white px-6 py-3 rounded-full text-xl font-bold shadow-lg">
                     {currentOffer.discount}
                   </div>
 
@@ -266,7 +268,7 @@ const FeaturedOffers = () => {
                 {/* View Details Button */}
                 <div className="hidden md:block">
                   <button
-                    className="bg-white text-gray-800 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+                    className="bg-white dark:bg-gray-100 text-gray-800 dark:text-gray-900 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 dark:hover:bg-white transition-colors shadow-lg"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleOfferClick(currentOffer);
@@ -288,8 +290,8 @@ const FeaturedOffers = () => {
                 key={index}
                 onClick={() => goToSlide(index)}
                 className={`transition-all duration-300 rounded-full ${currentIndex === index
-                    ? 'w-8 h-3 bg-gray-800'
-                    : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                    ? 'w-8 h-3 bg-gray-800 dark:bg-gray-300'
+                    : 'w-3 h-3 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
                   }`}
                 aria-label={`Go to offer ${index + 1}`}
               />
@@ -300,8 +302,8 @@ const FeaturedOffers = () => {
         {/* Auto-play indicator */}
         {!isPaused && featuredOffers.length > 1 && (
           <div className="absolute top-4 right-4">
-            <div className="bg-black/50 text-white text-xs px-3 py-1 rounded-full flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <div className="bg-black/50 dark:bg-black/70 text-white text-xs px-3 py-1 rounded-full flex items-center space-x-2 backdrop-blur-sm">
+              <div className="w-2 h-2 bg-red-500 dark:bg-red-400 rounded-full animate-pulse"></div>
               <span>Auto-playing</span>
             </div>
           </div>
@@ -309,7 +311,7 @@ const FeaturedOffers = () => {
       </div>
 
       {/* Offer Counter */}
-      <div className="text-center mt-4 text-gray-600 text-sm">
+      <div className="text-center mt-4 text-gray-600 dark:text-gray-400 text-sm transition-colors duration-200">
         {currentIndex + 1} of {featuredOffers.length} Featured Offers
       </div>
     </section>

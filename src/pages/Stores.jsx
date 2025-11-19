@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronDown, Star, Grid3X3, List, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import { useLocation } from '../contexts/LocationContext';
 import ApiService from '../services/storeService';
 
@@ -31,7 +29,7 @@ const Stores = () => {
 
   const sortOptions = ['Popular', 'Highest Discount', 'Lowest Discount', 'A-Z', 'Z-A'];
 
-  // Store Logo Component
+  // Store Logo Component with Dark Mode
   const StoreLogo = ({ store, className }) => {
     const [imageError, setImageError] = useState(false);
 
@@ -43,7 +41,7 @@ const Stores = () => {
     if (!hasValidLogo || imageError) {
       return (
         <div
-          className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center border-2 border-gray-200 group-hover:border-blue-400 transition-all duration-300 shadow-sm hover:scale-110 hover:rotate-6 ${className}`}
+          className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-500 dark:to-gray-700 flex items-center justify-center border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-all duration-300 shadow-sm hover:scale-110 hover:rotate-6 ${className}`}
         >
           <span className="text-white font-bold text-sm">
             {storeInitials}
@@ -63,11 +61,11 @@ const Stores = () => {
     );
   };
 
-  // Store Card Component
+  // Store Card Component with Dark Mode
   const StoreCard = React.memo(({ store, isListView = false }) => {
     return (
       <div
-        className={`bg-white rounded-lg border border-gray-100 hover:shadow-md transition-all duration-300 cursor-pointer group hover:-translate-y-2 hover:scale-105 ${isListView ? 'p-4' : 'p-4 md:p-6'}`}
+        className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-300 cursor-pointer group hover:-translate-y-2 hover:scale-105 ${isListView ? 'p-4' : 'p-4 md:p-6'}`}
         onClick={() => handleStoreClick(store)}
       >
         {isListView ? (
@@ -76,17 +74,19 @@ const Stores = () => {
               <div className="relative">
                 <StoreLogo
                   store={store}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-400 transition-colors duration-300 shadow-sm"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-colors duration-300 shadow-sm"
                 />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 text-base">{store.name}</h3>
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 text-base transition-colors duration-200">
+                  {store.name}
+                </h3>
                 <div className="flex items-center space-x-1 mt-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 dark:fill-yellow-500 dark:text-yellow-500" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{store.rating || 0}</span>
                 </div>
                 {store.location && (
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {store.location}
                   </div>
                 )}
@@ -100,13 +100,15 @@ const Stores = () => {
                 <div className="relative flex-shrink-0">
                   <StoreLogo
                     store={store}
-                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-400 transition-colors duration-300 shadow-sm"
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-colors duration-300 shadow-sm"
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-gray-900 text-sm md:text-base leading-tight truncate">{store.name}</h3>
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm md:text-base leading-tight truncate transition-colors duration-200">
+                    {store.name}
+                  </h3>
                   {store.location && (
-                    <div className="text-xs text-gray-500 mt-1 truncate">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
                       {store.location}
                     </div>
                   )}
@@ -116,8 +118,8 @@ const Stores = () => {
 
             <div className="flex items-center justify-between mt-auto">
               <div className="flex items-center space-x-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="text-sm text-gray-600 font-medium">{store.rating || 0}</span>
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 dark:fill-yellow-500 dark:text-yellow-500" />
+                <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{store.rating || 0}</span>
               </div>
             </div>
           </div>
@@ -227,23 +229,19 @@ const Stores = () => {
 
   if (loading && stores.length === 0) {
     return (
-      <div className="min-h-screen bg-white">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin">
-            <Loader2 className="w-8 h-8 text-blue-500" />
+            <Loader2 className="w-8 h-8 text-blue-500 dark:text-blue-400" />
           </div>
-          <span className="ml-2 text-gray-600">Loading stores</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading stores</span>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Sort and View Controls */}
         <div className="flex items-center justify-between mb-6">
@@ -251,14 +249,20 @@ const Stores = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${viewMode === 'grid' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-200'}`}
+              className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${viewMode === 'grid'
+                  ? 'bg-blue-500 dark:bg-blue-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                }`}
               aria-label="Grid view"
             >
               <Grid3X3 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 border border-gray-200'}`}
+              className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 active:scale-95 ${viewMode === 'list'
+                  ? 'bg-blue-500 dark:bg-blue-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                }`}
               aria-label="List view"
             >
               <List className="w-4 h-4" />
@@ -269,20 +273,20 @@ const Stores = () => {
           <div className="relative">
             <button
               onClick={() => setShowSortDropdown(!showSortDropdown)}
-              className="flex items-center space-x-2 px-3 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-all duration-200 hover:scale-105 active:scale-95"
+              className="flex items-center space-x-2 px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-105 active:scale-95"
             >
-              <span className="text-gray-700 text-sm hidden sm:inline">Sort by {sortBy}</span>
-              <span className="text-gray-700 text-sm sm:hidden">Sort</span>
-              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${showSortDropdown ? 'rotate-180' : ''}`} />
+              <span className="text-gray-700 dark:text-gray-300 text-sm hidden sm:inline">Sort by {sortBy}</span>
+              <span className="text-gray-700 dark:text-gray-300 text-sm sm:hidden">Sort</span>
+              <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${showSortDropdown ? 'rotate-180' : ''}`} />
             </button>
 
             {showSortDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-md border border-gray-100 z-10 overflow-hidden animate-fadeIn">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-100 dark:border-gray-700 z-10 overflow-hidden animate-fadeIn">
                 {sortOptions.map((option) => (
                   <button
                     key={option}
                     onClick={() => handleFilterChange('sort', option)}
-                    className="block w-full text-left px-4 py-2 text-sm first:rounded-t-lg last:rounded-b-lg transition-all duration-200 hover:bg-gray-50 hover:translate-x-1"
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 first:rounded-t-lg last:rounded-b-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:translate-x-1"
                   >
                     Sort by {option}
                   </button>
@@ -299,8 +303,8 @@ const Stores = () => {
               key={`category-${index}-${category}`}
               onClick={() => handleFilterChange('category', category)}
               className={`px-5 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all duration-200 hover:scale-105 hover:-translate-y-0.5 active:scale-95 ${selectedCategory === category
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  ? 'bg-blue-500 dark:bg-blue-600 text-white shadow-sm'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                 }`}
             >
               {category}
@@ -310,7 +314,7 @@ const Stores = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-100 text-gray-700 px-4 py-3 rounded-lg mb-6 animate-fadeIn">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-gray-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6 animate-fadeIn">
             {error}
           </div>
         )}
@@ -319,9 +323,9 @@ const Stores = () => {
         {loading && stores.length > 0 && (
           <div className="flex items-center justify-center py-4">
             <div className="animate-spin">
-              <Loader2 className="w-5 h-5 text-blue-500" />
+              <Loader2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
             </div>
-            <span className="ml-2 text-sm text-gray-600">Updating</span>
+            <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Updating</span>
           </div>
         )}
 
@@ -348,19 +352,19 @@ const Stores = () => {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={!pagination.hasPrevPage}
-                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-all duration-200 hover:scale-105 active:scale-95"
+                  className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm text-gray-700 dark:text-gray-300 transition-all duration-200 hover:scale-105 active:scale-95"
                 >
                   Previous
                 </button>
 
-                <span className="px-4 py-2 text-sm text-gray-600">
+                <span className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
                   {pagination.currentPage} / {pagination.totalPages}
                 </span>
 
                 <button
                   onClick={() => setCurrentPage(prev => prev + 1)}
                   disabled={!pagination.hasNextPage}
-                  className="px-4 py-2 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm transition-all duration-200 hover:scale-105 active:scale-95"
+                  className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm text-gray-700 dark:text-gray-300 transition-all duration-200 hover:scale-105 active:scale-95"
                 >
                   Next
                 </button>
@@ -371,8 +375,8 @@ const Stores = () => {
 
         {/* No results message */}
         {!loading && stores.length === 0 && (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <div className="text-gray-500 mb-4">
+          <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+            <div className="text-gray-500 dark:text-gray-400 mb-4">
               {currentLocation && currentLocation !== 'All Locations'
                 ? `No stores found in ${shortLocationName} for the selected filters.`
                 : 'No stores found for the selected filters.'
@@ -380,20 +384,18 @@ const Stores = () => {
             </div>
             <button
               onClick={clearFilters}
-              className="px-5 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 text-sm font-medium hover:scale-105 active:scale-95"
+              className="px-5 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-all duration-200 text-sm font-medium hover:scale-105 active:scale-95"
             >
               Clear Filters
             </button>
             {currentLocation && currentLocation !== 'All Locations' && (
-              <p className="text-sm text-gray-400 mt-2">
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
                 Try changing location in the navbar to see more stores
               </p>
             )}
           </div>
         )}
       </div>
-
-      <Footer />
 
       <style jsx>{`
         @keyframes fadeIn {

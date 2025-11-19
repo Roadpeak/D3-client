@@ -60,29 +60,29 @@ const ProgressiveImage = ({ src, alt, className, placeholder = "data:image/svg+x
         className={`${className} ${loading ? 'blur-sm scale-105' : 'blur-0 scale-100'} transition-all duration-500`}
       />
       {loading && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
+        <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
       )}
     </div>
   );
 };
 
-// Skeleton loader for Hero
+// Skeleton loader for Hero with dark mode
 const HeroSkeleton = () => (
   <div className="w-full max-w-[1280px] mx-auto px-4 py-6">
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Main skeleton */}
-      <div className="lg:col-span-2 bg-gray-200 rounded-xl overflow-hidden shadow-sm h-[450px] animate-pulse">
+      <div className="lg:col-span-2 bg-gray-200 dark:bg-gray-700 rounded-xl overflow-hidden shadow-sm h-[450px] animate-pulse">
         <div className="h-full flex flex-col justify-end p-8">
           <div className="max-w-md space-y-4">
-            <div className="h-4 w-32 bg-gray-300 rounded"></div>
-            <div className="h-8 w-3/4 bg-gray-300 rounded"></div>
-            <div className="h-6 w-24 bg-gray-300 rounded-full"></div>
+            <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            <div className="h-8 w-3/4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            <div className="h-6 w-24 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
             <div className="space-y-2">
-              <div className="h-6 w-48 bg-gray-300 rounded"></div>
-              <div className="h-4 w-32 bg-gray-300 rounded"></div>
+              <div className="h-6 w-48 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
             </div>
-            <div className="h-4 w-24 bg-gray-300 rounded"></div>
-            <div className="h-10 w-32 bg-gray-300 rounded-lg"></div>
+            <div className="h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            <div className="h-10 w-32 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
           </div>
         </div>
       </div>
@@ -90,15 +90,15 @@ const HeroSkeleton = () => (
       {/* Side skeletons */}
       <div className="space-y-6 h-[450px]">
         {[1, 2].map((i) => (
-          <div key={i} className="bg-gray-200 rounded-xl shadow-sm h-[215px] animate-pulse flex">
-            <div className="w-1/2 bg-gray-300"></div>
+          <div key={i} className="bg-gray-200 dark:bg-gray-700 rounded-xl shadow-sm h-[215px] animate-pulse flex">
+            <div className="w-1/2 bg-gray-300 dark:bg-gray-600"></div>
             <div className="w-1/2 p-4 space-y-3">
-              <div className="h-4 w-full bg-gray-300 rounded"></div>
-              <div className="h-3 w-2/3 bg-gray-300 rounded"></div>
+              <div className="h-4 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+              <div className="h-3 w-2/3 bg-gray-300 dark:bg-gray-600 rounded"></div>
               <div className="mt-auto space-y-2">
-                <div className="h-5 w-1/2 bg-gray-300 rounded"></div>
-                <div className="h-3 w-1/3 bg-gray-300 rounded"></div>
-                <div className="h-8 w-full bg-gray-300 rounded"></div>
+                <div className="h-5 w-1/2 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                <div className="h-3 w-1/3 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                <div className="h-8 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
               </div>
             </div>
           </div>
@@ -424,13 +424,13 @@ export default function Hero() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-10 bg-white rounded-xl shadow-sm"
+          className="text-center py-10 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
         >
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
-          <p className="text-gray-700 mb-6">{error}</p>
+          <div className="text-red-500 dark:text-red-400 text-4xl mb-4">⚠️</div>
+          <p className="text-gray-700 dark:text-gray-300 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
           >
             Try Again
           </button>
@@ -450,12 +450,12 @@ export default function Hero() {
         {/* Main Hero Banner with Carousel */}
         <motion.div
           variants={fadeInUp}
-          className="lg:col-span-2 relative bg-white rounded-xl overflow-hidden shadow-sm"
+          className="lg:col-span-2 relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700"
         >
           {topOffers.length > 0 && (
             <>
               {/* Carousel Container */}
-              <div className="relative h-[450px] overflow-hidden bg-gray-100">
+              <div className="relative h-[450px] overflow-hidden bg-gray-100 dark:bg-gray-700">
                 <AnimatePresence initial={false} custom={direction} mode="wait">
                   <motion.div
                     key={currentSlide}
@@ -473,7 +473,7 @@ export default function Hero() {
                     />
 
                     {/* Modern semi-transparent overlay */}
-                    <div className="absolute inset-0 bg-black/40"></div>
+                    <div className="absolute inset-0 bg-black/40 dark:bg-black/60"></div>
 
                     {/* Content */}
                     <div className="absolute inset-0 flex flex-col justify-center px-8 py-6">
@@ -483,7 +483,7 @@ export default function Hero() {
                           <span className="text-white font-medium">
                             {topOffers[currentSlide].store}
                           </span>
-                          <div className="flex items-center gap-1 bg-white/20 px-2 py-1 rounded-full">
+                          <div className="flex items-center gap-1 bg-white/20 dark:bg-white/30 px-2 py-1 rounded-full backdrop-blur-sm">
                             <StarIcon className="w-3 h-3 text-yellow-300" />
                             <span className="text-white text-xs">
                               {topOffers[currentSlide].rating?.toFixed(1)}
@@ -497,7 +497,7 @@ export default function Hero() {
                         </h2>
 
                         {/* Simple discount badge */}
-                        <div className="inline-flex items-center bg-blue-500 px-4 py-1 rounded-full mb-4">
+                        <div className="inline-flex items-center bg-blue-500 dark:bg-blue-600 px-4 py-1 rounded-full mb-4">
                           <span className="text-white font-bold">
                             {topOffers[currentSlide].discountPercentage}% OFF
                           </span>
@@ -513,7 +513,7 @@ export default function Hero() {
                               KSH {topOffers[currentSlide].discountedPrice.toFixed(2)}
                             </span>
                           </div>
-                          <div className="text-green-300 text-sm mt-1">
+                          <div className="text-green-300 dark:text-green-400 text-sm mt-1">
                             Save KSH {(topOffers[currentSlide].originalPrice - topOffers[currentSlide].discountedPrice).toFixed(2)}
                           </div>
                         </div>
@@ -529,7 +529,7 @@ export default function Hero() {
                         {/* Clean button */}
                         <button
                           onClick={() => handleOfferClick(topOffers[currentSlide])}
-                          className="bg-white hover:bg-white/90 text-blue-600 px-6 py-3 rounded-lg text-sm font-medium transition-colors"
+                          className="bg-white hover:bg-white/90 dark:bg-gray-100 dark:hover:bg-white text-blue-600 dark:text-blue-700 px-6 py-3 rounded-lg text-sm font-medium transition-colors"
                         >
                           Get Deal
                         </button>
@@ -544,14 +544,14 @@ export default function Hero() {
                 <>
                   <button
                     onClick={prevSlide}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full transition-colors z-10"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 p-2 rounded-full transition-colors z-10 backdrop-blur-sm"
                     aria-label="Previous slide"
                   >
                     <ChevronIcon direction="left" className="w-5 h-5" />
                   </button>
                   <button
                     onClick={nextSlide}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full transition-colors z-10"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 p-2 rounded-full transition-colors z-10 backdrop-blur-sm"
                     aria-label="Next slide"
                   >
                     <ChevronIcon direction="right" className="w-5 h-5" />
@@ -580,12 +580,12 @@ export default function Hero() {
               key={offer.id}
               variants={fadeInUp}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 flex-1 cursor-pointer h-[215px]"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700 flex-1 cursor-pointer h-[215px] transition-colors duration-200"
               onClick={() => handleOfferClick(offer)}
             >
               <div className="flex h-full">
                 {/* Image */}
-                <div className="w-1/2 relative bg-gray-100">
+                <div className="w-1/2 relative bg-gray-100 dark:bg-gray-700">
                   <ProgressiveImage
                     src={offer.image}
                     alt={offer.title}
@@ -593,39 +593,39 @@ export default function Hero() {
                   />
 
                   {/* Clean discount badge */}
-                  <div className="absolute top-3 left-3 bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded-full">
+                  <div className="absolute top-3 left-3 bg-blue-500 dark:bg-blue-600 text-white text-xs font-medium px-2 py-1 rounded-full">
                     {offer.discountPercentage}% OFF
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="w-1/2 p-4 flex flex-col">
-                  <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2 h-10">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1 line-clamp-2 h-10">
                     {offer.title}
                   </h3>
 
-                  <p className="text-xs text-gray-500 mb-2 truncate">{offer.store}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">{offer.store}</p>
 
                   {/* Price */}
                   <div className="mt-auto">
                     <div className="flex flex-col mb-1">
-                      <span className="text-gray-900 font-semibold">
+                      <span className="text-gray-900 dark:text-gray-100 font-semibold">
                         KSH {offer.discountedPrice?.toFixed(2)}
                       </span>
-                      <span className="text-gray-400 line-through text-xs">
+                      <span className="text-gray-400 dark:text-gray-500 line-through text-xs">
                         KSH {offer.originalPrice?.toFixed(2)}
                       </span>
                     </div>
 
                     {/* Time left */}
-                    <div className="flex items-center gap-1 text-blue-500 text-xs mb-3">
+                    <div className="flex items-center gap-1 text-blue-500 dark:text-blue-400 text-xs mb-3">
                       <TimerIcon className="w-3 h-3 flex-shrink-0" />
                       <span className="truncate">{offer.timeLeft}</span>
                     </div>
 
                     {/* Button */}
                     <button
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-1.5 rounded text-xs font-medium transition-colors"
+                      className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-1.5 rounded text-xs font-medium transition-colors"
                     >
                       View Deal
                     </button>
@@ -639,9 +639,9 @@ export default function Hero() {
           {sideOffers.length === 0 && !loading && (
             <motion.div
               variants={fadeInUp}
-              className="bg-gray-50 rounded-xl p-6 text-center flex-1 flex flex-col justify-center h-full"
+              className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 text-center flex-1 flex flex-col justify-center h-full border border-gray-200 dark:border-gray-700"
             >
-              <p className="text-gray-500 font-medium">More deals coming soon</p>
+              <p className="text-gray-500 dark:text-gray-400 font-medium">More deals coming soon</p>
             </motion.div>
           )}
         </div>
@@ -651,9 +651,9 @@ export default function Hero() {
       {topOffers.length > 0 && (
         <motion.div
           variants={fadeInUp}
-          className="mt-6 bg-blue-50 rounded-xl p-4 border border-blue-100 text-center"
+          className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-800 text-center transition-colors duration-200"
         >
-          <p className="text-blue-800 text-sm">
+          <p className="text-blue-800 dark:text-blue-300 text-sm">
             Top deals with discounts up to <span className="font-semibold">
               {Math.max(...topOffers.map(o => o.discountPercentage))}%
             </span> off

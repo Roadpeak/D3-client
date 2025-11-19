@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Heart, Grid, List, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, RefreshCw, Filter, MapPin, Clock, Star, Search } from 'lucide-react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
 import { offerAPI } from '../services/api';
@@ -13,12 +11,11 @@ const StoreLogo = ({
   logoUrl,
   storeName,
   className = "w-5 h-5",
-  containerClassName = "w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm"
+  containerClassName = "w-8 h-8 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-sm transition-colors duration-200"
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(!!logoUrl);
 
-  // Reset error state when logoUrl changes
   useEffect(() => {
     if (logoUrl && logoUrl !== '/api/placeholder/20/20') {
       setHasError(false);
@@ -29,7 +26,6 @@ const StoreLogo = ({
     }
   }, [logoUrl]);
 
-  // Get first letter of store name, fallback to 'S'
   const getInitial = (name) => {
     return name && name.trim() ? name.trim().charAt(0).toUpperCase() : 'S';
   };
@@ -43,13 +39,12 @@ const StoreLogo = ({
     setIsLoading(false);
   };
 
-  // Show fallback if no logoUrl, has error, or is placeholder URL
   const showFallback = !logoUrl || hasError || logoUrl === '/api/placeholder/20/20';
 
   return (
     <div className={containerClassName}>
       {showFallback ? (
-        <div className="w-full h-full flex items-center justify-center bg-blue-500 rounded-full">
+        <div className="w-full h-full flex items-center justify-center bg-blue-500 dark:bg-blue-600 rounded-full">
           <span className="text-white text-sm font-medium">
             {getInitial(storeName)}
           </span>
@@ -69,7 +64,7 @@ const StoreLogo = ({
 };
 
 export default function Hotdeals() {
-  const [viewMode, setViewMode] = useState('grid'); // Default to grid
+  const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -77,25 +72,20 @@ export default function Hotdeals() {
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Data states
   const [offers, setOffers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [pagination, setPagination] = useState({});
 
-  // Filter states
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('latest');
   const [limit] = useState(12);
 
-  // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Location Context
   const { currentLocation, getShortLocationName } = useLocation();
 
   const navigate = useNavigate();
 
-  // Favorites hook
   const {
     error: favoritesError,
     toggleFavorite,
@@ -104,22 +94,17 @@ export default function Hotdeals() {
     initialized: favoritesInitialized
   } = useFavorites();
 
-  // Function to check if offer is expired
   const isOfferExpired = useCallback((expirationDate) => {
     if (!expirationDate) return false;
     return new Date(expirationDate) < new Date();
   }, []);
 
-  // Calculate category counts from current offers (excluding expired)
   const calculateCategoryCounts = useCallback((offers) => {
     const counts = {};
-
-    // Only count non-expired offers
     offers.filter(offer => !isOfferExpired(offer.expiration_date)).forEach(offer => {
       const category = offer.category || offer.service?.category || 'General';
       counts[category] = (counts[category] || 0) + 1;
     });
-
     return counts;
   }, [isOfferExpired]);
 
@@ -136,14 +121,12 @@ export default function Hotdeals() {
         ...(selectedCategory && { category: selectedCategory })
       };
 
-      // Add location filter from context
       if (currentLocation && currentLocation !== 'All Locations') {
         params.location = currentLocation;
       }
 
       const response = await offerAPI.getOffers(params);
 
-      // Transform offers to match frontend expectations
       const transformedOffers = response.offers?.map(offer => ({
         id: offer.id,
         title: offer.title || offer.service?.name || "Special Offer",
@@ -165,14 +148,12 @@ export default function Hotdeals() {
         expiration_date: offer.expiration_date
       })) || [];
 
-      // Filter out expired offers for customer-facing page
       const activeOffers = transformedOffers.filter(offer => !isOfferExpired(offer.expiration_date));
 
       setOffers(activeOffers);
       setPagination(response.pagination || {});
       setRetryCount(0);
 
-      // Update categories based on active (non-expired) offers only
       const counts = calculateCategoryCounts(activeOffers);
       const offerCategories = [...new Set(activeOffers.map(offer =>
         offer.category || offer.service?.category || 'General'
@@ -194,7 +175,6 @@ export default function Hotdeals() {
     } catch (err) {
       setError(`Failed to fetch offers: ${err.message || 'Unknown error'}`);
 
-      // Add retry logic for network errors
       if (retryCount < 3 && (err.code === 'NETWORK_ERROR' || err.code === 'ECONNABORTED')) {
         setTimeout(() => {
           setRetryCount(prev => prev + 1);
@@ -205,7 +185,6 @@ export default function Hotdeals() {
     }
   }, [currentPage, limit, sortBy, selectedCategory, retryCount, calculateCategoryCounts, isOfferExpired, currentLocation]);
 
-  // Enhanced favorite handling
   const handleFavoriteClick = useCallback(async (e, offer) => {
     e.stopPropagation();
 
@@ -255,15 +234,12 @@ export default function Hotdeals() {
     }
   }, [pagination.totalPages]);
 
-  // Handle offer click with store ID
   const handleOfferClick = useCallback((offer) => {
-    // Use the new URL structure with store ID when available
     const storeId = offer.store_info?.id || offer.store?.id;
 
     if (storeId) {
       navigate(`/store/${storeId}/offer/${offer.id}`);
     } else {
-      // Fallback to simple offer route if no store ID
       navigate(`/offer/${offer.id}`);
     }
   }, [navigate]);
@@ -278,7 +254,6 @@ export default function Hotdeals() {
     setCurrentPage(1);
   }, []);
 
-  // Check authentication status
   useEffect(() => {
     const checkAuth = () => {
       const authStatus = authService.isAuthenticated();
@@ -297,7 +272,6 @@ export default function Hotdeals() {
     };
   }, []);
 
-  // Listen for location changes from navbar
   useEffect(() => {
     const handleLocationChange = () => {
       setCurrentPage(1);
@@ -307,43 +281,38 @@ export default function Hotdeals() {
     return () => window.removeEventListener('locationChanged', handleLocationChange);
   }, []);
 
-  // Fetch data effect
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   if (loading && offers.length === 0) {
     return (
-      <div className="min-h-screen bg-white">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="flex items-center space-x-2">
-            <Loader2 className="animate-spin text-blue-500" size={24} />
-            <span className="text-gray-600">Loading offers</span>
+            <Loader2 className="animate-spin text-blue-500 dark:text-blue-400" size={24} />
+            <span className="text-gray-600 dark:text-gray-400">Loading offers</span>
             {retryCount > 0 && (
-              <span className="text-sm text-gray-500">({retryCount}/3)</span>
+              <span className="text-sm text-gray-500 dark:text-gray-500">({retryCount}/3)</span>
             )}
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-
-      {/* Navigation - Hidden on mobile, visible on desktop */}
-      <div className="hidden md:block bg-white border-b border-gray-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      {/* Navigation */}
+      <div className="hidden md:block bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-4">
-              <a href='/' className="text-gray-500 hover:text-blue-500 text-sm">
+              <a href='/' className="text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors">
                 Home
               </a>
-              <span className="text-sm text-gray-400">/</span>
-              <span className="text-blue-500 font-medium text-sm">
+              <span className="text-sm text-gray-400 dark:text-gray-600">/</span>
+              <span className="text-blue-500 dark:text-blue-400 font-medium text-sm">
                 {currentLocation && currentLocation !== 'All Locations'
                   ? `Deals in ${getShortLocationName()}`
                   : 'All Deals'
@@ -357,19 +326,19 @@ export default function Hotdeals() {
       {/* Main Error */}
       {error && (
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="bg-red-50 border border-red-100 rounded-lg p-4 flex items-center justify-between">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+              <AlertCircle className="w-5 h-5 mr-2 text-red-500 dark:text-red-400" />
               <div>
-                <span className="block text-gray-700">{error}</span>
+                <span className="block text-gray-700 dark:text-gray-300">{error}</span>
                 {retryCount > 0 && (
-                  <span className="text-sm text-gray-500">Retry attempt {retryCount}/3</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Retry attempt {retryCount}/3</span>
                 )}
               </div>
             </div>
             <button
               onClick={handleRetry}
-              className="flex items-center gap-1 bg-white border border-red-200 text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors text-sm"
+              className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 text-red-500 dark:text-red-400 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-sm"
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -382,14 +351,14 @@ export default function Hotdeals() {
       {/* Favorites Error */}
       {favoritesError && (
         <div className="max-w-7xl mx-auto px-4 py-2">
-          <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 flex items-center justify-between text-sm">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800 rounded-lg p-3 flex items-center justify-between text-sm">
             <div className="flex items-center">
-              <AlertCircle className="w-4 h-4 mr-2 text-yellow-500" />
-              <span className="text-gray-700">{favoritesError}</span>
+              <AlertCircle className="w-4 h-4 mr-2 text-yellow-500 dark:text-yellow-400" />
+              <span className="text-gray-700 dark:text-gray-300">{favoritesError}</span>
             </div>
             <button
               onClick={clearFavoritesError}
-              className="text-gray-400 hover:text-gray-500"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400"
             >
               <X className="w-4 h-4" />
             </button>
@@ -399,34 +368,33 @@ export default function Hotdeals() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6 relative">
-          {/* Desktop Sidebar - Keep as is */}
+          {/* Desktop Sidebar */}
           <aside className="hidden md:block w-64 flex-shrink-0">
             <div className="space-y-6">
               {/* Location Info */}
               {currentLocation && currentLocation !== 'All Locations' && (
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 text-blue-600 mb-2">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4 transition-colors duration-200">
+                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
                     <MapPin size={16} />
                     <h3 className="font-medium text-sm">Current Location</h3>
                   </div>
-                  <p className="text-blue-800 font-medium">{getShortLocationName()}</p>
-                  <p className="text-xs text-blue-500 mt-1">
+                  <p className="text-blue-800 dark:text-blue-300 font-medium">{getShortLocationName()}</p>
+                  <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
                     Showing deals in your selected area
                   </p>
                 </div>
               )}
 
               {/* Categories */}
-              <div className="bg-white rounded-lg">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-colors duration-200">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium text-gray-700 text-sm">
+                  <h3 className="font-medium text-gray-700 dark:text-gray-300 text-sm">
                     Categories
                   </h3>
-
                   {(selectedCategory || sortBy !== 'latest') && (
                     <button
                       onClick={clearFilters}
-                      className="text-xs text-blue-500 hover:text-blue-700"
+                      className="text-xs text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                     >
                       Reset
                     </button>
@@ -436,11 +404,11 @@ export default function Hotdeals() {
                   <li className="flex items-center justify-between">
                     <button
                       onClick={() => handleCategoryChange('')}
-                      className={`text-sm transition-colors ${!selectedCategory ? 'text-blue-500 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+                      className={`text-sm transition-colors ${!selectedCategory ? 'text-blue-500 dark:text-blue-400 font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                     >
                       All Categories
                     </button>
-                    <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                    <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
                       {offers.length}
                     </span>
                   </li>
@@ -448,17 +416,17 @@ export default function Hotdeals() {
                     <li key={index} className="flex items-center justify-between">
                       <button
                         onClick={() => handleCategoryChange(category.name)}
-                        className={`text-sm transition-colors ${selectedCategory === category.name ? 'text-blue-500 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`text-sm transition-colors ${selectedCategory === category.name ? 'text-blue-500 dark:text-blue-400 font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
                       >
                         {category.name}
                       </button>
-                      <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                      <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
                         {category.count}
                       </span>
                     </li>
                   ))}
                   {categories.length === 0 && !loading && (
-                    <li className="text-sm text-gray-400 italic">
+                    <li className="text-sm text-gray-400 dark:text-gray-500 italic">
                       No categories available
                     </li>
                   )}
@@ -466,8 +434,8 @@ export default function Hotdeals() {
               </div>
 
               {/* Sort By Options */}
-              <div className="bg-white rounded-lg pt-4 border-t border-gray-100">
-                <h3 className="font-medium text-gray-700 text-sm mb-4">Sort By</h3>
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-colors duration-200">
+                <h3 className="font-medium text-gray-700 dark:text-gray-300 text-sm mb-4">Sort By</h3>
                 <div className="space-y-2">
                   {[
                     { id: 'latest', label: 'Latest Deals' },
@@ -479,8 +447,8 @@ export default function Hotdeals() {
                       key={option.id}
                       onClick={() => handleSortChange(option.id)}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${sortBy === option.id
-                        ? 'bg-blue-50 text-blue-500'
-                        : 'text-gray-600 hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                         }`}
                     >
                       {option.label}
@@ -491,13 +459,13 @@ export default function Hotdeals() {
 
               {/* Promo Card */}
               <div className="mt-6">
-                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg p-5 text-white shadow-sm">
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-lg p-5 text-white shadow-sm">
                   <h3 className="text-lg font-medium mb-2">Special Offers</h3>
-                  <p className="text-sm text-blue-100 mb-3">Exclusive deals just for you</p>
-                  <div className="bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg text-center mb-3">
+                  <p className="text-sm text-blue-100 dark:text-blue-200 mb-3">Exclusive deals just for you</p>
+                  <div className="bg-white/20 dark:bg-white/30 backdrop-blur-sm px-3 py-2 rounded-lg text-center mb-3">
                     <p className="font-medium">Up to 90% Off</p>
                   </div>
-                  <button className="w-full bg-white text-blue-600 font-medium rounded-lg py-2 text-sm hover:bg-blue-50 transition-colors">
+                  <button className="w-full bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-700 font-medium rounded-lg py-2 text-sm hover:bg-blue-50 dark:hover:bg-white transition-colors">
                     Browse More
                   </button>
                 </div>
@@ -508,49 +476,43 @@ export default function Hotdeals() {
           {/* Mobile Filter Modal */}
           {isFilterModalOpen && (
             <>
-              {/* Overlay */}
               <div
                 className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
                 onClick={() => setIsFilterModalOpen(false)}
               />
 
-              {/* Modal */}
-              <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[80vh] overflow-y-auto">
-                {/* Modal Header */}
-                <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex justify-between items-center rounded-t-3xl">
-                  <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+              <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl max-h-[80vh] overflow-y-auto transition-colors duration-200">
+                <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-4 flex justify-between items-center rounded-t-3xl">
+                  <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Filters</h2>
                   <button
                     onClick={() => setIsFilterModalOpen(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
                   >
                     <X size={24} />
                   </button>
                 </div>
 
-                {/* Modal Content */}
                 <div className="p-4 space-y-6">
-                  {/* Location Info */}
                   {currentLocation && currentLocation !== 'All Locations' && (
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 text-blue-600 mb-2">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-2">
                         <MapPin size={16} />
                         <h3 className="font-medium text-sm">Current Location</h3>
                       </div>
-                      <p className="text-blue-800 font-medium">{getShortLocationName()}</p>
-                      <p className="text-xs text-blue-500 mt-1">
+                      <p className="text-blue-800 dark:text-blue-300 font-medium">{getShortLocationName()}</p>
+                      <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
                         Showing deals in your selected area
                       </p>
                     </div>
                   )}
 
-                  {/* Categories */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-gray-800">Categories</h3>
+                      <h3 className="font-semibold text-gray-800 dark:text-gray-100">Categories</h3>
                       {selectedCategory && (
                         <button
                           onClick={() => setSelectedCategory('')}
-                          className="text-sm text-blue-500 hover:text-blue-700"
+                          className="text-sm text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                         >
                           Clear
                         </button>
@@ -563,12 +525,12 @@ export default function Hotdeals() {
                           setIsFilterModalOpen(false);
                         }}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${!selectedCategory
-                          ? 'bg-blue-50 text-blue-600 font-medium'
-                          : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium'
+                          : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                           }`}
                       >
                         <span>All Categories</span>
-                        <span className="text-sm bg-white px-2 py-1 rounded-full">
+                        <span className="text-sm bg-white dark:bg-gray-800 px-2 py-1 rounded-full">
                           {offers.length}
                         </span>
                       </button>
@@ -580,12 +542,12 @@ export default function Hotdeals() {
                             setIsFilterModalOpen(false);
                           }}
                           className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${selectedCategory === category.name
-                            ? 'bg-blue-50 text-blue-600 font-medium'
-                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium'
+                            : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                             }`}
                         >
                           <span>{category.name}</span>
-                          <span className="text-sm bg-white px-2 py-1 rounded-full">
+                          <span className="text-sm bg-white dark:bg-gray-800 px-2 py-1 rounded-full">
                             {category.count}
                           </span>
                         </button>
@@ -594,11 +556,10 @@ export default function Hotdeals() {
                   </div>
                 </div>
 
-                {/* Modal Footer */}
-                <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-4">
+                <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-4">
                   <button
                     onClick={() => setIsFilterModalOpen(false)}
-                    className="w-full bg-blue-500 text-white font-medium py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                    className="w-full bg-blue-500 dark:bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
                   >
                     Apply Filters
                   </button>
@@ -609,17 +570,15 @@ export default function Hotdeals() {
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* View Controls - Reorganized for Mobile */}
+            {/* View Controls */}
             <div className="mb-6 flex items-center justify-between gap-2">
-              {/* Left: View Mode + Sort */}
               <div className="flex items-center gap-2">
-                {/* View Mode Buttons */}
-                <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+                <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('list')}
                     className={`p-2 rounded-md transition-colors ${viewMode === 'list'
-                      ? 'bg-white text-blue-500 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-white dark:bg-gray-700 text-blue-500 dark:text-blue-400 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                       }`}
                     aria-label="List view"
                   >
@@ -628,8 +587,8 @@ export default function Hotdeals() {
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`p-2 rounded-md transition-colors ${viewMode === 'grid'
-                      ? 'bg-white text-blue-500 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-white dark:bg-gray-700 text-blue-500 dark:text-blue-400 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                       }`}
                     aria-label="Grid view"
                   >
@@ -637,9 +596,8 @@ export default function Hotdeals() {
                   </button>
                 </div>
 
-                {/* Sort Dropdown */}
                 <select
-                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+                  className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 text-gray-700 dark:text-gray-300 transition-colors duration-200"
                   value={sortBy}
                   onChange={(e) => handleSortChange(e.target.value)}
                 >
@@ -650,9 +608,8 @@ export default function Hotdeals() {
                 </select>
               </div>
 
-              {/* Right: Filter Button */}
               <button
-                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors font-medium"
+                className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg transition-colors font-medium"
                 onClick={() => setIsFilterModalOpen(true)}
               >
                 <Filter size={18} />
@@ -660,21 +617,19 @@ export default function Hotdeals() {
               </button>
             </div>
 
-            {/* Desktop Item Count */}
             {pagination.totalItems > 0 && (
               <div className="hidden md:block mb-4">
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   Showing {Math.min((currentPage - 1) * pagination.itemsPerPage + 1, pagination.totalItems)} - {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} deals
                 </span>
               </div>
             )}
 
-            {/* Loading indicator for pagination */}
             {loading && offers.length > 0 && (
               <div className="flex justify-center mb-4">
                 <div className="flex items-center space-x-2">
-                  <Loader2 className="animate-spin text-blue-500" size={20} />
-                  <span className="text-sm text-gray-500">Loading</span>
+                  <Loader2 className="animate-spin text-blue-500 dark:text-blue-400" size={20} />
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Loading</span>
                 </div>
               </div>
             )}
@@ -690,7 +645,6 @@ export default function Hotdeals() {
               {offers.map((offer) => {
                 const isOfferFavorited = favoritesInitialized && isFavorite(offer.id);
 
-                // Calculate time left if expiration date exists
                 const calculateTimeLeft = (expirationDate) => {
                   if (!expirationDate) return null;
                   const now = new Date();
@@ -713,7 +667,7 @@ export default function Hotdeals() {
                   <div
                     key={offer.id}
                     className={`
-                      bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 cursor-pointer group
+                      bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-300 cursor-pointer group
                       ${viewMode === 'list' ? 'flex flex-col sm:flex-row' : ''}
                     `}
                     onClick={() => handleOfferClick(offer)}
@@ -728,13 +682,12 @@ export default function Hotdeals() {
                         }}
                       />
 
-                      {/* Favorite button */}
                       <button
                         className={`
                           absolute top-2 right-2 p-1.5 md:p-2 rounded-full transition-all duration-200 shadow-lg
                           ${isOfferFavorited
                             ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                            : 'bg-white/90 text-gray-600 hover:bg-white hover:text-blue-500'}
+                            : 'bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-blue-500 dark:hover:text-blue-400'}
                           ${!isAuthenticated || !favoritesInitialized ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
                         `}
                         onClick={(e) => handleFavoriteClick(e, offer)}
@@ -755,72 +708,64 @@ export default function Hotdeals() {
                         />
                       </button>
 
-                      {/* Discount Badge */}
-                      <div className="absolute bottom-2 right-2 bg-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
+                      <div className="absolute bottom-2 right-2 bg-red-500 dark:bg-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
                         {offer.discount}
                       </div>
                     </div>
 
                     <div className={`p-3 md:p-4 flex flex-col ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>
-                      {/* Title */}
-                      <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 group-hover:text-blue-600 transition-colors">
+                      <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {offer.title}
                       </h3>
 
-                      {/* Store info */}
                       <div className="flex items-center gap-2 mb-2">
                         <StoreLogo
                           logoUrl={offer.store?.googleLogo}
                           storeName={offer.store?.name || 'Store'}
                           className="w-4 h-4"
-                          containerClassName="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm"
+                          containerClassName="w-6 h-6 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-sm"
                         />
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {offer.store?.name || 'Store name'}
                         </span>
                       </div>
 
-                      {/* Category Badge - Only show in list view or if no time left */}
                       {(viewMode === 'list' || !timeLeft) && (
                         <div className="mb-2">
-                          <span className="inline-block bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-xs">
+                          <span className="inline-block bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs">
                             {offer.category}
                           </span>
                         </div>
                       )}
 
-                      {/* Time Left - Show in grid view */}
                       {viewMode === 'grid' && timeLeft && timeLeft !== 'Expired' && (
-                        <div className="flex items-center space-x-1 text-orange-600 text-xs mb-2">
+                        <div className="flex items-center space-x-1 text-orange-600 dark:text-orange-400 text-xs mb-2">
                           <Clock className="w-3 h-3" />
                           <span>{timeLeft}</span>
                         </div>
                       )}
 
-                      {/* Description - Only in list view */}
                       {viewMode === 'list' && (
-                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{offer.description}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{offer.description}</p>
                       )}
 
-                      {/* Pricing */}
                       <div className="flex flex-col mt-auto pt-2">
                         {offer.originalPrice > 0 && (
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex flex-col">
-                              <span className="font-bold text-blue-600 text-base md:text-lg">
+                              <span className="font-bold text-blue-600 dark:text-blue-400 text-base md:text-lg">
                                 KSH {offer.discountedPrice}
                               </span>
-                              <span className="text-gray-400 line-through text-xs">
+                              <span className="text-gray-400 dark:text-gray-500 line-through text-xs">
                                 KSH {offer.originalPrice}
                               </span>
                             </div>
                           </div>
                         )}
 
-                        {/* CTA button - Only in list view */}
                         {viewMode === 'list' && (
                           <button
-                            className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold py-2 rounded-xl text-sm transition-all duration-300 shadow-md hover:shadow-lg active:scale-95"
+                            className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-600 dark:to-cyan-600 hover:from-blue-600 hover:to-cyan-600 dark:hover:from-blue-700 dark:hover:to-cyan-700 text-white font-semibold py-2 rounded-xl text-sm transition-all duration-300 shadow-md hover:shadow-lg active:scale-95"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleOfferClick(offer);
@@ -838,13 +783,13 @@ export default function Hotdeals() {
 
             {/* No offers message */}
             {!loading && offers.length === 0 && (
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-200">
                 <div className="max-w-md mx-auto">
-                  <div className="text-gray-300 mb-4">
+                  <div className="text-gray-300 dark:text-gray-600 mb-4">
                     <Search size={40} className="mx-auto" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-700 mb-2">No deals found</h3>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">No deals found</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     {currentLocation && currentLocation !== 'All Locations' ? (
                       selectedCategory
                         ? `No active deals found in "${selectedCategory}" category for ${getShortLocationName()}.`
@@ -860,7 +805,7 @@ export default function Hotdeals() {
                     {(selectedCategory || sortBy !== 'latest') && (
                       <button
                         onClick={clearFilters}
-                        className="text-blue-500 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg text-sm transition-colors"
+                        className="text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-4 py-2 rounded-lg text-sm transition-colors"
                       >
                         Clear filters
                       </button>
@@ -868,7 +813,7 @@ export default function Hotdeals() {
 
                     {currentLocation && currentLocation !== 'All Locations' && (
                       <button
-                        className="text-gray-600 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm transition-colors"
+                        className="text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded-lg text-sm transition-colors"
                       >
                         View all locations
                       </button>
@@ -885,7 +830,7 @@ export default function Hotdeals() {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={!pagination.hasPrevPage}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+                    className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent transition-colors"
                     aria-label="Previous page"
                   >
                     <ChevronLeft size={18} />
@@ -908,8 +853,8 @@ export default function Hotdeals() {
                           key={page}
                           onClick={() => handlePageChange(page)}
                           className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm transition-colors ${currentPage === page
-                            ? 'bg-blue-500 text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'bg-blue-500 dark:bg-blue-600 text-white'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                           aria-label={`Page ${page}`}
                           aria-current={currentPage === page ? 'page' : undefined}
@@ -921,11 +866,11 @@ export default function Hotdeals() {
 
                     {pagination.totalPages > 5 && currentPage < pagination.totalPages - 2 && (
                       <>
-                        <span className="w-9 h-9 flex items-center justify-center text-gray-400">
+                        <span className="w-9 h-9 flex items-center justify-center text-gray-400 dark:text-gray-500">
                           ...
                         </span>
                         <button
-                          className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                          className="w-9 h-9 flex items-center justify-center rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                           onClick={() => handlePageChange(pagination.totalPages)}
                           aria-label={`Page ${pagination.totalPages}`}
                         >
@@ -938,7 +883,7 @@ export default function Hotdeals() {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={!pagination.hasNextPage}
-                    className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
+                    className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent transition-colors"
                     aria-label="Next page"
                   >
                     <ChevronRight size={18} />
@@ -946,7 +891,7 @@ export default function Hotdeals() {
                 </div>
 
                 {pagination.totalItems > 0 && (
-                  <p className="text-center text-xs text-gray-500">
+                  <p className="text-center text-xs text-gray-500 dark:text-gray-400">
                     Page {currentPage} of {pagination.totalPages}
                   </p>
                 )}
@@ -955,10 +900,10 @@ export default function Hotdeals() {
 
             {/* Location Stats */}
             {!loading && (
-              <div className="mt-8 bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
+              <div className="mt-8 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-sm text-gray-600 dark:text-gray-400 transition-colors duration-200">
                 <div className="flex flex-wrap items-center justify-between gap-y-2">
                   <div className="flex items-center gap-2">
-                    <MapPin size={14} className="text-blue-500" />
+                    <MapPin size={14} className="text-blue-500 dark:text-blue-400" />
                     {offers.length > 0 ? (
                       currentLocation && currentLocation !== 'All Locations'
                         ? <span>{offers.length} deals in {getShortLocationName()}</span>
@@ -971,7 +916,7 @@ export default function Hotdeals() {
                   </div>
                   <button
                     onClick={() => window.location.reload()}
-                    className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
+                    className="text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1"
                   >
                     <RefreshCw size={14} />
                     <span>Refresh</span>
@@ -984,33 +929,31 @@ export default function Hotdeals() {
       </div>
 
       {/* Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 py-12">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 py-12 transition-colors duration-200">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="flex flex-col items-center">
             <div className="mb-6">
               <h2 className="text-2xl font-medium text-white mb-2">
                 Discover Amazing Deals
               </h2>
-              <p className="text-blue-100">
+              <p className="text-blue-100 dark:text-blue-200">
                 Save up to 90% with thousands of exclusive offers
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
               <a href="https://merchants.discoun3ree.com/accounts/sign-up"
-                className="flex-1 bg-white text-blue-600 font-medium px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors text-center">
+                className="flex-1 bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-700 font-medium px-6 py-3 rounded-lg hover:bg-blue-50 dark:hover:bg-white transition-colors text-center">
                 Add a Listing
               </a>
               <a href="/search"
-                className="flex-1 bg-blue-500 text-white px-6 py-3 rounded-lg font-medium border border-blue-400 hover:bg-blue-400 transition-colors text-center">
+                className="flex-1 bg-blue-500 dark:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium border border-blue-400 dark:border-blue-500 hover:bg-blue-400 dark:hover:bg-blue-500 transition-colors text-center">
                 Search Deals
               </a>
             </div>
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }
