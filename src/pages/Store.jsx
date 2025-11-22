@@ -35,8 +35,6 @@
     Share2
   } from 'lucide-react';
 
-  import Navbar from '../components/Navbar';
-  import Footer from '../components/Footer';
   import ServiceCard from '../components/ServiceCard';
   import ReviewSection from '../components/ReviewSection';
   import StoreService from '../services/storeService';
@@ -149,41 +147,43 @@
     const [startingChat, setStartingChat] = useState(false);
     const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 
-    // FIXED: Enhanced Image Component with stable error handling
+    // FIXED: Enhanced Image Component with stable error handling and no flicker
     const StableImage = React.memo(({
       src,
       fallbackSrc,
       alt,
       className,
       onError: customOnError,
+      priority = false,
       ...props
     }) => {
       const [imageError, setImageError] = useState(false);
-      const [currentSrc, setCurrentSrc] = useState(src);
+      const [isLoaded, setIsLoaded] = useState(false);
+      const imageSrcRef = React.useRef(src);
 
+      // Reset states when src changes
       useEffect(() => {
-        if (src !== currentSrc) {
+        if (src !== imageSrcRef.current) {
+          imageSrcRef.current = src;
           setImageError(false);
-          setCurrentSrc(src);
+          setIsLoaded(false);
         }
-      }, [src, currentSrc]);
+      }, [src]);
 
       const handleImageError = useCallback((e) => {
         if (!imageError) {
-          console.log('Image failed to load:', src);
           setImageError(true);
-
           if (fallbackSrc && e.target.src !== fallbackSrc) {
             e.target.src = fallbackSrc;
           }
-
           if (customOnError) {
             customOnError(e);
           }
         }
-      }, [imageError, src, fallbackSrc, customOnError]);
+      }, [imageError, fallbackSrc, customOnError]);
 
       const handleImageLoad = useCallback(() => {
+        setIsLoaded(true);
         setImageError(false);
       }, []);
 
@@ -194,10 +194,11 @@
           {...props}
           src={imageSrc}
           alt={alt}
-          className={className}
+          className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
           onError={handleImageError}
           onLoad={handleImageLoad}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
         />
       );
     });
@@ -826,7 +827,7 @@
         : 0;
 
       return (
-        <div className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group ${isListView ? 'flex flex-col sm:flex-row' : ''}`}>
+        <div className={`bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm dark:shadow-gray-900/30 hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-300 cursor-pointer group ${isListView ? 'flex flex-col sm:flex-row' : ''}`}>
           <div className={`relative ${isListView ? 'sm:w-1/3' : ''}`}>
             <StableImage
               src={offer.image_url || offer.service?.image_url}
@@ -836,16 +837,16 @@
             />
 
             <button
-              className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+              className="absolute top-3 right-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 rounded-full hover:bg-white dark:hover:bg-gray-700 transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
               }}
             >
-              <Heart size={16} className="text-gray-600" />
+              <Heart size={16} className="text-gray-600 dark:text-gray-400" />
             </button>
 
             <div className="absolute bottom-3 left-3">
-              <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500 text-white">
+              <span className="px-2 py-1 rounded text-xs font-medium bg-gray-800 dark:bg-gray-700 text-white">
                 {offer.service?.category || offer.category || 'Special Offer'}
               </span>
             </div>
@@ -861,7 +862,7 @@
 
           <div className={`p-4 ${isListView ? 'sm:flex-1' : ''}`}>
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
+              <div className="w-8 h-8 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-600">
                 <StableImage
                   src={storeData?.logo || storeData?.logo_url}
                   fallbackSrc={SMALL_LOGO_FALLBACK}
@@ -870,37 +871,37 @@
                 />
               </div>
 
-              <div className="flex items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-blue-400">
+              <div className="flex items-center bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded-full text-sm font-medium">
                 <span>{storeData?.name || 'Store'}</span>
               </div>
             </div>
 
-            <h3 className="font-medium text-gray-800 mb-2 line-clamp-2">
+            <h3 className="font-medium text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">
               {offer.title || offer.service?.name || offer.description || 'Special Offer'}
             </h3>
 
-            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
               {offer.description || offer.service?.description || 'Get exclusive offers with this amazing deal'}
             </p>
 
             {originalPrice > 0 && discountedPrice > 0 && (
               <div className="flex items-center space-x-2 mb-3">
-                <span className="text-lg font-bold text-black">
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                   KES {discountedPrice}
                 </span>
-                <span className="text-sm text-gray-500 line-through">
+                <span className="text-sm text-gray-500 dark:text-gray-500 line-through">
                   KES {originalPrice}
                 </span>
               </div>
             )}
 
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 text-red-700">
+              <span className="px-3 py-1 rounded text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                 {offer.discount_value || offer.discount || '20'}% OFF
               </span>
 
               <button
-                className="px-6 py-2 rounded text-sm font-medium transition-colors bg-red-500 hover:bg-red-600 text-white"
+                className="px-6 py-2 rounded text-sm font-medium transition-colors bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOfferClick(offer.id);
@@ -911,7 +912,7 @@
             </div>
 
             {offer.expiry_date && (
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-500">
                 Expires: {new Date(offer.expiry_date).toLocaleDateString()}
               </div>
             )}
@@ -1132,11 +1133,11 @@
 
     // Enhanced Outlet Card Component
     const OutletCard = React.memo(({ branch }) => (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b">
-          <h3 className="font-bold text-gray-900 text-lg mb-1">{branch.name}</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl dark:hover:shadow-gray-900/50 transition-all duration-300">
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 p-4 border-b dark:border-gray-700">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-1">{branch.name}</h3>
           {branch.isMainBranch && (
-            <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">
+            <span className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-2 py-1 rounded-full font-semibold">
               Main Branch
             </span>
           )}
@@ -1146,20 +1147,20 @@
           <div className="space-y-3 mb-6">
             <div className="flex items-start gap-3">
               <MapPin className="w-4 h-4 mt-0.5 text-gray-400 flex-shrink-0" />
-              <span className="text-gray-700 text-sm">{branch.address}</span>
+              <span className="text-gray-700 dark:text-gray-300 text-sm">{branch.address}</span>
             </div>
 
             {branch.phone && (
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-700 text-sm">{branch.phone}</span>
+                <span className="text-gray-700 dark:text-gray-300 text-sm">{branch.phone}</span>
               </div>
             )}
 
             {branch.openingTime && branch.closingTime && (
               <div className="flex items-center gap-3">
                 <Clock className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-700 text-sm">
+                <span className="text-gray-700 dark:text-gray-300 text-sm">
                   {branch.openingTime} - {branch.closingTime}
                 </span>
               </div>
@@ -1168,24 +1169,24 @@
             {branch.manager && (
               <div className="flex items-center gap-3">
                 <Users className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-700 text-sm">Manager: {branch.manager}</span>
+                <span className="text-gray-700 dark:text-gray-300 text-sm">Manager: {branch.manager}</span>
               </div>
             )}
           </div>
 
           <div className="flex gap-3">
-            <button className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold">
+            <button className="flex-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold">
               View Details
             </button>
             {branch.phone && (
-              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <a href={`tel:${branch.phone}`} className="flex items-center gap-1">
                   <Phone className="w-4 h-4" />
                 </a>
               </button>
             )}
             {branch.latitude && branch.longitude && (
-              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+              <button className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <Navigation className="w-4 h-4" />
               </button>
             )}
@@ -1239,8 +1240,8 @@
 
       if (mapError) {
         return (
-          <div className="h-96 bg-gray-100 flex items-center justify-center rounded-lg">
-            <div className="text-center text-gray-500">
+          <div className="h-96 bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-lg">
+            <div className="text-center text-gray-500 dark:text-gray-400">
               <MapPin className="w-16 h-16 mx-auto mb-4 text-gray-400" />
               <p className="text-lg font-medium mb-2">Interactive Map</p>
               <p className="text-sm">
@@ -1251,7 +1252,7 @@
               </p>
               <div className="mt-4 flex justify-center space-x-4">
                 {branches.slice(0, 3).map((branch, index) => (
-                  <div key={branch.id} className="bg-red-500 text-white p-2 rounded-full shadow-lg">
+                  <div key={branch.id} className="bg-gray-700 dark:bg-gray-600 text-white p-2 rounded-full shadow-lg">
                     <MapPin className="w-4 h-4" />
                   </div>
                 ))}
@@ -1265,8 +1266,8 @@
         <div className="relative">
           <div ref={mapRef} className="h-96 w-full rounded-lg" />
           {!mapLoaded && (
-            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center rounded-lg">
-              <div className="text-center text-gray-500">
+            <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center rounded-lg">
+              <div className="text-center text-gray-500 dark:text-gray-400">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
                 <p className="text-sm">Loading map...</p>
               </div>
@@ -1303,10 +1304,10 @@
       };
 
       return (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Store Locations</h3>
-            <p className="text-gray-600">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 p-6 border-b dark:border-gray-700">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Store Locations</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               {branches.length} {branches.length === 1 ? 'location' : 'locations'} available
             </p>
           </div>
@@ -1316,32 +1317,32 @@
           </div>
 
           {branches.length > 0 ? (
-            <div className="p-6 border-t">
-              <h4 className="font-semibold text-gray-900 mb-4">All Locations</h4>
+            <div className="p-6 border-t dark:border-gray-700">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">All Locations</h4>
               <div className="space-y-4">
                 {branches.map((branch, index) => (
-                  <div key={branch.id || index} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div key={branch.id || index} className="flex items-start justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h5 className="font-medium text-gray-900">{branch.name}</h5>
+                        <h5 className="font-medium text-gray-900 dark:text-gray-100">{branch.name}</h5>
                         {branch.isMainBranch && (
-                          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold">
+                          <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-2 py-1 rounded-full font-semibold">
                             Main Branch
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {branch.address}
                       </p>
                       {branch.phone && (
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                           <Phone className="w-3 h-3" />
                           {branch.phone}
                         </p>
                       )}
                       {branch.openingTime && branch.closingTime && (
-                        <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
                           <Clock className="w-3 h-3" />
                           {branch.openingTime} - {branch.closingTime}
                         </p>
@@ -1350,7 +1351,7 @@
                     <div className="flex items-center gap-2 ml-4">
                       {branch.phone && (
                         <button
-                          className="text-blue-500 hover:text-blue-600 transition-colors p-1"
+                          className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors p-1"
                           onClick={() => window.open(`tel:${branch.phone}`)}
                           title="Call this location"
                         >
@@ -1358,7 +1359,7 @@
                         </button>
                       )}
                       <button
-                        className="text-green-500 hover:text-green-600 transition-colors p-1"
+                        className="text-green-500 dark:text-green-400 hover:text-green-600 dark:hover:text-green-300 transition-colors p-1"
                         onClick={() => {
                           const query = encodeURIComponent(branch.address);
                           window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
@@ -1374,10 +1375,10 @@
             </div>
           ) : (
             <div className="p-6">
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No locations available</h3>
-                <p className="text-gray-600">Store location information will be displayed here when available.</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No locations available</h3>
+                <p className="text-gray-600 dark:text-gray-400">Store location information will be displayed here when available.</p>
               </div>
             </div>
           )}
@@ -1394,18 +1395,18 @@
           return (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Active Offers</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Active Offers</h2>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-1">
+                  <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-red-500 text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}
                     >
                       <Grid3X3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-red-500 text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`p-2 rounded transition-colors ${viewMode === 'list' ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}
                     >
                       <List className="w-4 h-4" />
                     </button>
@@ -1415,8 +1416,8 @@
 
               {offersLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-red-500" />
-                  <span className="ml-2 text-gray-600">Loading offers...</span>
+                  <Loader2 className="w-8 h-8 animate-spin text-gray-600 dark:text-gray-400" />
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading offers...</span>
                 </div>
               ) : offers.length > 0 ? (
                 <div className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-6'}>
@@ -1425,10 +1426,10 @@
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-gray-50 rounded-xl">
+                <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
                   <Tag className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No active offers available</h3>
-                  <p className="text-gray-600">Check back later for exciting deals and offers!</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No active offers available</h3>
+                  <p className="text-gray-600 dark:text-gray-400">Check back later for exciting deals and offers!</p>
                 </div>
               )}
             </div>
@@ -1438,13 +1439,13 @@
           return (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Our Services</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Our Services</h2>
               </div>
 
               {servicesLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-2 text-gray-600">Loading services...</span>
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400" />
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading services...</span>
                 </div>
               ) : services.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1453,10 +1454,10 @@
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-gray-50 rounded-xl">
+                <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
                   <Camera className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No services available</h3>
-                  <p className="text-gray-600">Services will be listed here when available.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No services available</h3>
+                  <p className="text-gray-600 dark:text-gray-400">Services will be listed here when available.</p>
                 </div>
               )}
             </div>
@@ -1466,16 +1467,16 @@
           return (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Store Reels</h2>
-                <span className="text-sm text-gray-500">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Store Reels</h2>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   {reels.length} {reels.length === 1 ? 'reel' : 'reels'}
                 </span>
               </div>
 
               {reelsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-                  <span className="ml-2 text-gray-600">Loading reels...</span>
+                  <Loader2 className="w-8 h-8 animate-spin text-purple-500 dark:text-purple-400" />
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading reels...</span>
                 </div>
               ) : reels.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -1484,10 +1485,10 @@
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-gray-50 rounded-xl">
+                <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
                   <Play className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No reels available</h3>
-                  <p className="text-gray-600">This store hasn't posted any reels yet. Check back later!</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No reels available</h3>
+                  <p className="text-gray-600 dark:text-gray-400">This store hasn't posted any reels yet. Check back later!</p>
                 </div>
               )}
             </div>
@@ -1497,16 +1498,16 @@
           return (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Our Outlets</h2>
-                <span className="text-sm text-gray-500">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Our Outlets</h2>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   {branches.length} {branches.length === 1 ? 'outlet' : 'outlets'}
                 </span>
               </div>
 
               {branchesLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-                  <span className="ml-2 text-gray-600">Loading outlets...</span>
+                  <Loader2 className="w-8 h-8 animate-spin text-purple-500 dark:text-purple-400" />
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading outlets...</span>
                 </div>
               ) : branches.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1515,10 +1516,10 @@
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-gray-50 rounded-xl">
+                <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
                   <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No outlets available</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No outlets available</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
                     {storeData?.location
                       ? `This store is located at ${storeData.location}`
                       : 'Outlet information will be displayed here when available.'
@@ -1526,7 +1527,7 @@
                   </p>
                   {storeData?.location && (
                     <button
-                      className="mt-4 bg-purple-500 text-white px-6 py-2 rounded-lg hover:bg-purple-600 transition-colors"
+                      className="mt-4 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
                       onClick={() => {
                         const query = encodeURIComponent(storeData.location);
                         window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
@@ -1545,8 +1546,8 @@
             <div className="mb-6">
               {branchesLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-2 text-gray-600">Loading map...</span>
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400" />
+                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading map...</span>
                 </div>
               ) : (
                 <MapView />
@@ -1562,10 +1563,10 @@
     // Loading state
     if (loading) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-red-500 mx-auto mb-4" />
-            <p className="text-gray-600">Loading store information...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-red-500 dark:text-red-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">Loading store information...</p>
           </div>
         </div>
       );
@@ -1574,14 +1575,14 @@
     // Error state
     if (error) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
           <div className="text-center">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Store Not Found</h1>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <div className="text-red-500 dark:text-red-400 text-6xl mb-4">⚠️</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Store Not Found</h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
             <button
               onClick={() => navigate('/stores')}
-              className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              className="bg-red-500 dark:bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition-colors"
             >
               Back to Stores
             </button>
@@ -1593,12 +1594,12 @@
     // No store data
     if (!storeData) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
           <div className="text-center">
-            <p className="text-gray-600">No store data available</p>
+            <p className="text-gray-600 dark:text-gray-400">No store data available</p>
             <button
               onClick={() => navigate('/stores')}
-              className="mt-4 bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+              className="mt-4 bg-red-500 dark:bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-700 transition-colors"
             >
               Back to Stores
             </button>
@@ -1608,22 +1609,21 @@
     }
 
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 py-4">
           {/* Store Header */}
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/30 p-4 sm:p-6 mb-8 transition-colors duration-200">
             {/* Logo and Name Row - Mobile Optimized */}
             <div className="flex items-start gap-3 sm:gap-4 mb-4">
               <StableImage
                 src={storeData.logo || storeData.logo_url}
                 fallbackSrc={STORE_LOGO_FALLBACK}
                 alt={storeData.name}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border-2 border-gray-200 flex-shrink-0"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700 flex-shrink-0"
+                priority={true}
               />
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 break-words">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 break-words">
                   {storeData.name}
                 </h1>
 
@@ -1631,19 +1631,19 @@
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3">
                   <div className="flex items-center gap-2">
                     <div className="flex">{renderStars(storeData.rating || 0)}</div>
-                    <span className="text-sm font-medium">{storeData.rating || 0}</span>
-                    <span className="text-sm text-gray-500">({storeData.totalReviews?.toLocaleString() || 0})</span>
+                    <span className="text-sm font-medium dark:text-gray-200">{storeData.rating || 0}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">({storeData.totalReviews?.toLocaleString() || 0})</span>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                     <Users className="w-4 h-4" />
                     <span>{storeData.followers?.toLocaleString() || 0} followers</span>
                   </div>
                 </div>
 
                 {/* Category and Location - Stacked on Mobile */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
                   {storeData.category && (
-                    <span className="bg-gray-100 px-2 py-1 rounded inline-block w-fit">{storeData.category}</span>
+                    <span className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded inline-block w-fit">{storeData.category}</span>
                   )}
                   {storeData.location && (
                     <div className="flex items-center gap-1">
@@ -1658,13 +1658,13 @@
             {/* Description with Show More/Less */}
             {storeData.description && (
               <div className="mb-4">
-                <div className={`text-gray-600 text-sm sm:text-base ${descriptionExpanded ? '' : 'line-clamp-2'}`}>
+                <div className={`text-gray-600 dark:text-gray-400 text-sm sm:text-base ${descriptionExpanded ? '' : 'line-clamp-2'}`}>
                   {storeData.description}
                 </div>
                 {storeData.description.length > 100 && (
                   <button
                     onClick={() => setDescriptionExpanded(!descriptionExpanded)}
-                    className="text-blue-500 hover:text-blue-600 text-sm font-medium mt-1 flex items-center"
+                    className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 text-sm font-medium mt-1 flex items-center"
                   >
                     {descriptionExpanded ? (
                       <>
@@ -1694,7 +1694,7 @@
                             href={social.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0"
+                            className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0"
                             title={`Visit our ${social.platform} page`}
                           >
                             {getSocialIcon(social.platform)}
@@ -1706,43 +1706,43 @@
                             href={storeData.website_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0"
+                            className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0"
                             title="Visit our website"
                           >
-                            <Globe className="w-5 h-5 text-gray-600" />
+                            <Globe className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                           </a>
                         )}
                       </>
                     ) : (
                       <>
                         {storeData.socialLinks?.facebook && (
-                          <a href={storeData.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
+                          <a href={storeData.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
                             <Facebook className="w-5 h-5 text-blue-600" />
                           </a>
                         )}
                         {storeData.socialLinks?.twitter && (
-                          <a href={storeData.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
+                          <a href={storeData.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
                             <Twitter className="w-5 h-5 text-sky-500" />
                           </a>
                         )}
                         {storeData.socialLinks?.instagram && (
-                          <a href={storeData.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
+                          <a href={storeData.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
                             <Instagram className="w-5 h-5 text-pink-600" />
                           </a>
                         )}
                         {storeData.socialLinks?.linkedin && (
-                          <a href={storeData.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
+                          <a href={storeData.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
                             <Linkedin className="w-5 h-5 text-blue-700" />
                           </a>
                         )}
                         {storeData.socialLinks?.youtube && (
-                          <a href={storeData.socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
+                          <a href={storeData.socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
                             <Youtube className="w-5 h-5 text-red-600" />
                           </a>
                         )}
                         {storeData.socialLinks?.website && (
-                          <a href={storeData.socialLinks.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
-                            <Globe className="w-5 h-5 text-gray-600" />
+                          <a href={storeData.socialLinks.website} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors hover:scale-110 transform duration-200 flex-shrink-0">
+                            <Globe className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                           </a>
                         )}
                       </>
@@ -1758,7 +1758,7 @@
                 disabled={toggleFollowLoading}
                 className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg border transition-colors disabled:opacity-50 ${isFollowing
                   ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
-                  : 'bg-white text-red-500 border-red-500 hover:bg-red-50'
+                  : 'bg-white dark:bg-gray-700 text-red-500 border-red-500 hover:bg-red-50 dark:hover:bg-gray-600'
                   }`}
               >
                 {toggleFollowLoading ? (
@@ -1771,7 +1771,7 @@
               <button
                 onClick={handleChatClick}
                 disabled={startingChat}
-                className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
               >
                 {startingChat ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1783,19 +1783,19 @@
             </div>
 
             {/* Navigation Tabs */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
                 <button
                   onClick={() => setActiveSection('offers')}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'offers'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                 >
                   <Tag className="w-4 h-4" />
                   <span>Offers</span>
                   {!offersLoading && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'offers' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'offers' ? 'bg-white/20 dark:bg-gray-900/20 text-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
                       }`}>
                       {offers.length || storeData.deals?.length || 0}
                     </span>
@@ -1805,14 +1805,14 @@
                 <button
                   onClick={() => setActiveSection('services')}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'services'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                 >
                   <Camera className="w-4 h-4" />
                   <span>Services</span>
                   {!servicesLoading && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'services' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'services' ? 'bg-white/20 dark:bg-gray-900/20 text-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
                       }`}>
                       {services.length || storeData.services?.length || 0}
                     </span>
@@ -1822,14 +1822,14 @@
                 <button
                   onClick={() => setActiveSection('reels')}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'reels'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                 >
                   <Play className="w-4 h-4" />
                   <span>Reels</span>
                   {!reelsLoading && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'reels' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'reels' ? 'bg-white/20 dark:bg-gray-900/20 text-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
                       }`}>
                       {reels.length || 0}
                     </span>
@@ -1839,14 +1839,14 @@
                 <button
                   onClick={() => setActiveSection('outlets')}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'outlets'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                 >
                   <MapPin className="w-4 h-4" />
                   <span>Outlets</span>
                   {!branchesLoading && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'outlets' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'outlets' ? 'bg-white/20 dark:bg-gray-900/20 text-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
                       }`}>
                       {branches.length || storeData.outlets?.length || 0}
                     </span>
@@ -1856,8 +1856,8 @@
                 <button
                   onClick={() => setActiveSection('map')}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'map'
-                    ? 'bg-gray-900 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                 >
                   <Navigation className="w-4 h-4" />
@@ -1886,8 +1886,6 @@
             }}
           />
         </div>
-
-        <Footer />
       </div>
     );
   };

@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import userServiceRequestService from '../services/userServiceRequestService';
 import authService from '../services/authService';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -102,7 +100,7 @@ const ExternalLink = ({ className }) => (
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500 dark:border-indigo-400"></div>
   </div>
 );
 
@@ -519,9 +517,9 @@ export default function UserServiceRequestPage() {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      'pending': { color: 'bg-amber-100 text-amber-800', icon: AlertCircle },
-      'accepted': { color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle },
-      'rejected': { color: 'bg-red-100 text-red-800', icon: XCircle }
+      'pending': { color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400', icon: AlertCircle },
+      'accepted': { color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle },
+      'rejected': { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', icon: XCircle }
     };
 
     const config = statusConfig[status] || statusConfig['pending'];
@@ -541,44 +539,38 @@ export default function UserServiceRequestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <LoadingSpinner />
-        <Footer />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <div className="container mx-auto px-4 py-8">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl">
             <h3 className="font-bold">Error</h3>
             <p>{error}</p>
-            <button onClick={loadInitialData} className="mt-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+            <button onClick={loadInitialData} className="mt-2 bg-red-500 dark:bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-700">
               Retry
             </button>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Navbar />
-
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Modern Compact Hero Section */}
-      <section className="bg-white border-b border-slate-200">
+      <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
         <div className="container mx-auto px-4 py-6">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center px-4 sm:px-0">
               <button
                 onClick={handleRequestFormShow}
-                className="bg-red-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-red-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 w-full sm:w-auto text-sm sm:text-base"
+                className="bg-red-600 dark:bg-red-700 text-white px-6 py-3 rounded-xl font-medium hover:bg-red-700 dark:hover:bg-red-800 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 w-full sm:w-auto text-sm sm:text-base"
               >
                 <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Post Service Request</span>
@@ -586,27 +578,16 @@ export default function UserServiceRequestPage() {
 
               <a
                 href="/search"
-                className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-xl font-medium hover:bg-yellow-500 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 w-full sm:w-auto text-sm sm:text-base"
+                className="bg-yellow-400 dark:bg-yellow-500 text-gray-900 dark:text-gray-900 px-6 py-3 rounded-xl font-medium hover:bg-yellow-500 dark:hover:bg-yellow-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 w-full sm:w-auto text-sm sm:text-base"
               >
                 <Search className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Browse Discounted Services</span>
               </a>
-
-              {/* <div className="text-sm text-slate-500 flex items-center space-x-4">
-                <span className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
-                  <span>{statistics.totalProviders?.toLocaleString() || '0'} verified providers</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                  <span>{statistics.activeRequests?.toLocaleString() || '0'} active requests</span>
-                </span>
-              </div> */}
             </div>
 
             {/* Auth status for development */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="mt-4 text-center text-xs text-slate-400">
+              <div className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
                 User Auth: {isAuthenticated ? `Logged in (${currentUser?.firstName || 'Unknown'})` : 'Not logged in'}
               </div>
             )}
@@ -616,25 +597,25 @@ export default function UserServiceRequestPage() {
 
       {/* Mobile-Friendly Filter Bar */}
       <section className="container mx-auto px-4 py-6">
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/50">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 transition-colors duration-200">
           {/* Filter Header - Always Visible */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-slate-100 rounded-lg">
-                <Filter className="w-4 h-4 text-slate-600" />
+              <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg transition-colors duration-200">
+                <Filter className="w-4 h-4 text-gray-600 dark:text-gray-300" />
               </div>
-              <span className="font-medium text-slate-700">Filters</span>
+              <span className="font-medium text-gray-700 dark:text-gray-200">Filters</span>
             </div>
 
             <div className="flex items-center space-x-4">
-              <div className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+              <div className="text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full transition-colors duration-200">
                 {pagination.totalCount || 0} requests
               </div>
 
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden flex items-center space-x-2 px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors"
+                className="lg:hidden flex items-center space-x-2 px-3 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
               >
                 <span className="text-sm font-medium">
                   {showFilters ? 'Hide' : 'Show'} Filters
@@ -649,12 +630,12 @@ export default function UserServiceRequestPage() {
           </div>
 
           {/* Filter Options - Collapsible on Mobile, Always Visible on Desktop */}
-          <div className={`${showFilters ? 'block' : 'hidden'} lg:block border-t border-slate-200 p-4`}>
+          <div className={`${showFilters ? 'block' : 'hidden'} lg:block border-t border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200`}>
             <div className="flex flex-col lg:flex-row gap-4">
               <select
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
               >
                 <option value="all">All Categories</option>
                 {serviceCategories.map((cat, index) => (
@@ -665,7 +646,7 @@ export default function UserServiceRequestPage() {
               <select
                 value={filters.budget}
                 onChange={(e) => handleFilterChange('budget', e.target.value)}
-                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
               >
                 <option value="all">All Budgets</option>
                 <option value="0-1000">KSH 0 - 1000</option>
@@ -677,7 +658,7 @@ export default function UserServiceRequestPage() {
               <select
                 value={filters.timeline}
                 onChange={(e) => handleFilterChange('timeline', e.target.value)}
-                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
               >
                 <option value="all">All Timelines</option>
                 <option value="urgent">ASAP/Urgent</option>
@@ -694,15 +675,15 @@ export default function UserServiceRequestPage() {
       {/* Main Content */}
       <section className="container mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold text-slate-900">Service Requests</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Service Requests</h2>
 
           {/* Modern Tab Navigation with Fixed Counts */}
-          <div className="flex bg-slate-100 rounded-xl p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 transition-colors duration-200">
             <button
               onClick={() => handleTabChange('all')}
               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === 'all'
-                ? 'bg-white text-indigo-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
             >
               All ({serviceRequests.length})
@@ -712,8 +693,8 @@ export default function UserServiceRequestPage() {
                 <button
                   onClick={() => handleTabChange('offers')}
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === 'offers'
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                     }`}
                 >
                   My Offers ({getOffersCount()})
@@ -721,8 +702,8 @@ export default function UserServiceRequestPage() {
                 <button
                   onClick={() => handleTabChange('past')}
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === 'past'
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                     }`}
                 >
                   Past ({getPastRequestsCount()})
@@ -738,40 +719,40 @@ export default function UserServiceRequestPage() {
             {loadingRequests ? (
               <LoadingSpinner />
             ) : serviceRequests.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <MessageSquare className="w-6 h-6 text-slate-400" />
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm transition-colors duration-200">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <MessageSquare className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-700 mb-2">No service requests found</h3>
-                <p className="text-gray-500 mb-4 text-sm">Be the first to post a service request!</p>
+                <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200 mb-2">No service requests found</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4 text-sm">Be the first to post a service request!</p>
                 <button
                   onClick={handleRequestFormShow}
-                  className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors text-sm"
+                  className="bg-blue-600 dark:bg-blue-700 text-white px-5 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 font-medium transition-colors text-sm"
                 >
                   Post Request
                 </button>
               </div>
             ) : (
               serviceRequests.map((request) => (
-                <div key={request.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-200">
+                <div key={request.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700">
                   {/* Header with user info */}
-                  <div className="flex items-center gap-2 p-3 border-b border-gray-100">
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                  <div className="flex items-center gap-2 p-3 border-b border-gray-100 dark:border-gray-700">
+                    <div className="w-8 h-8 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-xs font-medium">
                       {request.postedBy?.charAt(0) || 'U'}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1 flex-wrap">
-                        <h4 className="font-medium text-gray-800 text-sm truncate">{request.postedBy}</h4>
+                        <h4 className="font-medium text-gray-800 dark:text-gray-100 text-sm truncate">{request.postedBy}</h4>
                         {request.verified && (
-                          <div className="bg-emerald-100 text-emerald-700 text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                          <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs px-1.5 py-0.5 rounded-full flex items-center gap-1">
                             <CheckCircle className="w-2.5 h-2.5" />
                             <span className="text-[10px]">Verified</span>
                           </div>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500 flex items-center gap-1 flex-wrap">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-wrap">
                         <span>{request.postedTime}</span>
-                        <span className="w-1 h-1 bg-gray-300 rounded-full inline-block"></span>
+                        <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full inline-block"></span>
                         <div className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
                           <span>{request.location}</span>
@@ -781,13 +762,13 @@ export default function UserServiceRequestPage() {
 
                     <div className="ml-auto flex items-center gap-1 flex-wrap">
                       <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${request.priority === 'urgent'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-blue-100 text-blue-800'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400'
                         }`}>
                         {request.priority}
                       </span>
 
-                      <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                      <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full text-xs">
                         {request.category}
                       </span>
                     </div>
@@ -795,14 +776,14 @@ export default function UserServiceRequestPage() {
 
                   {/* Main content */}
                   <div className="p-3">
-                    <h3 className="text-md font-medium text-gray-900 mb-1">{request.title}</h3>
-                    <p className="text-gray-600 text-sm mb-2 line-clamp-2">{request.description}</p>
+                    <h3 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-1">{request.title}</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-2 line-clamp-2">{request.description}</p>
 
                     {/* Requirements tags */}
                     {request.requirements && request.requirements.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">
                         {request.requirements.map((req, index) => (
-                          <span key={index} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs rounded-md flex items-center">
+                          <span key={index} className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs rounded-md flex items-center">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             {req}
                           </span>
@@ -812,41 +793,41 @@ export default function UserServiceRequestPage() {
 
                     {/* Budget and timeline info */}
                     <div className="grid grid-cols-2 gap-2 mb-2">
-                      <div className="bg-gray-50 p-2 rounded-md">
-                        <div className="flex items-center gap-1 text-gray-500 mb-0.5 text-xs">
+                      <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded-md">
+                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 mb-0.5 text-xs">
                           <DollarSign className="w-3 h-3" />
                           <span>Budget</span>
                         </div>
-                        <div className="font-medium text-gray-900 text-sm">{request.budget}</div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">{request.budget}</div>
                       </div>
 
-                      <div className="bg-gray-50 p-2 rounded-md">
-                        <div className="flex items-center gap-1 text-gray-500 mb-0.5 text-xs">
+                      <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded-md">
+                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 mb-0.5 text-xs">
                           <Clock className="w-3 h-3" />
                           <span>Timeline</span>
                         </div>
-                        <div className="font-medium text-gray-900 text-sm">{getTimelineLabel(request.timeline)}</div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">{getTimelineLabel(request.timeline)}</div>
                       </div>
                     </div>
                   </div>
 
                   {/* Footer with actions */}
-                  <div className="px-3 py-2 border-t border-gray-100 flex justify-between items-center bg-gray-50">
+                  <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-blue-600">
+                      <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
                         <MessageSquare className="w-3 h-3" />
                         <span className="text-xs font-medium">{request.offers} offers</span>
                       </div>
 
-                      <div className="flex items-center gap-1 text-gray-500">
-                        <Star className="w-3 h-3 text-amber-400" />
+                      <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                        <Star className="w-3 h-3 text-amber-400 dark:text-amber-500" />
                         <span className="text-xs">{request.status}</span>
                       </div>
                     </div>
 
                     <button
                       onClick={() => handleViewDetails(request)}
-                      className="bg-white text-gray-700 border border-gray-200 px-3 py-1 rounded-md text-xs font-medium hover:bg-gray-50 transition-colors"
+                      className="bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 px-3 py-1 rounded-md text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                     >
                       Details
                     </button>
@@ -861,7 +842,7 @@ export default function UserServiceRequestPage() {
                 <button
                   onClick={() => handleFilterChange('page', Math.max(1, filters.page - 1))}
                   disabled={!pagination.hasPrev}
-                  className="p-2 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 border border-gray-200 dark:border-gray-700 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg
                     className="w-4 h-4"
@@ -880,8 +861,8 @@ export default function UserServiceRequestPage() {
                       key={pageNum}
                       onClick={() => handleFilterChange('page', pageNum)}
                       className={`w-8 h-8 flex items-center justify-center rounded-md text-sm transition-colors ${pageNum === pagination.currentPage
-                        ? 'bg-blue-600 text-white'
-                        : 'border border-gray-200 text-gray-700 hover:bg-gray-50'
+                        ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                        : 'border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                         }`}
                     >
                       {pageNum}
@@ -892,7 +873,7 @@ export default function UserServiceRequestPage() {
                 <button
                   onClick={() => handleFilterChange('page', Math.min(pagination.totalPages, filters.page + 1))}
                   disabled={!pagination.hasNext}
-                  className="p-2 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 border border-gray-200 dark:border-gray-700 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <svg
                     className="w-4 h-4"
@@ -914,49 +895,49 @@ export default function UserServiceRequestPage() {
             {loadingOffers ? (
               <LoadingSpinner />
             ) : userOffers.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="w-8 h-8 text-slate-400" />
+              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-700 mb-2">No offers yet</h3>
-                <p className="text-slate-500 mb-6">Offers from service providers will appear here when they respond to your requests.</p>
+                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">No offers yet</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Offers from service providers will appear here when they respond to your requests.</p>
                 <button
                   onClick={() => handleTabChange('all')}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
+                  className="bg-indigo-600 dark:bg-indigo-700 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 dark:hover:bg-indigo-800 font-medium transition-colors"
                 >
                   Browse Requests
                 </button>
               </div>
             ) : (
               userOffers.map((offer) => (
-                <div key={offer.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+                <div key={offer.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
                   <div className="p-4">
                     {/* Mobile-optimized header */}
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-3">
                       <div className="flex items-start space-x-3 flex-1">
-                        <div className="w-12 h-12 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <MessageSquare className="w-6 h-6 text-indigo-600" />
+                        <div className="w-12 h-12 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <MessageSquare className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <h3 className="text-lg font-semibold text-slate-900">{offer.storeName || offer.providerName}</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{offer.storeName || offer.providerName}</h3>
                             {offer.verified && (
-                              <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full flex items-center gap-1 whitespace-nowrap">
+                              <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 text-xs px-2 py-1 rounded-full flex items-center gap-1 whitespace-nowrap">
                                 <CheckCircle className="w-3 h-3" />
                                 Verified
                               </span>
                             )}
                             {getStatusBadge(offer.status)}
                           </div>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
                             <div className="flex items-center">
-                              <Star className="w-4 h-4 text-amber-400 mr-1" />
+                              <Star className="w-4 h-4 text-amber-400 dark:text-amber-500 mr-1" />
                               <span className="font-medium">{offer.rating || 0}</span>
                               <span className="ml-1">({offer.reviews || 0})</span>
                             </div>
                             {offer.responseTime && (
                               <>
-                                <span className="text-slate-400 hidden sm:inline">•</span>
+                                <span className="text-gray-400 dark:text-gray-600 hidden sm:inline">•</span>
                                 <span>{offer.responseTime}</span>
                               </>
                             )}
@@ -964,28 +945,28 @@ export default function UserServiceRequestPage() {
                         </div>
                       </div>
                       <div className="text-left sm:text-right flex-shrink-0">
-                        <div className="text-2xl font-bold text-emerald-600">{offer.price}</div>
-                        <div className="text-sm text-slate-500">Quoted Price</div>
+                        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{offer.price}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Quoted Price</div>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 rounded-xl p-3 mb-3">
-                      <p className="text-slate-700 italic mb-2 text-sm">"{offer.message}"</p>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 mb-3">
+                      <p className="text-gray-700 dark:text-gray-300 italic mb-2 text-sm">"{offer.message}"</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                         {offer.availability && (
                           <div className="flex items-center space-x-2">
-                            <Calendar className="w-4 h-4 text-slate-400" />
-                            <span className="text-slate-600"><span className="font-medium">Available:</span> {offer.availability}</span>
+                            <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            <span className="text-gray-600 dark:text-gray-400"><span className="font-medium">Available:</span> {offer.availability}</span>
                           </div>
                         )}
                         {offer.estimatedDuration && (
                           <div className="flex items-center space-x-2">
-                            <Clock className="w-4 h-4 text-slate-400" />
-                            <span className="text-slate-600"><span className="font-medium">Duration:</span> {offer.estimatedDuration}</span>
+                            <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            <span className="text-gray-600 dark:text-gray-400"><span className="font-medium">Duration:</span> {offer.estimatedDuration}</span>
                           </div>
                         )}
                         {offer.includesSupplies && (
-                          <div className="flex items-center space-x-2 text-emerald-600 col-span-full">
+                          <div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-500 col-span-full">
                             <CheckCircle className="w-4 h-4" />
                             <span className="font-medium text-sm">Includes supplies and materials</span>
                           </div>
@@ -993,9 +974,9 @@ export default function UserServiceRequestPage() {
                       </div>
                     </div>
 
-                    <div className="mb-3 pt-3 border-t border-slate-100">
-                      <div className="text-sm text-slate-500">
-                        Offer for: <span className="font-medium text-slate-700">{offer.requestTitle}</span>
+                    <div className="mb-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        Offer for: <span className="font-medium text-gray-700 dark:text-gray-300">{offer.requestTitle}</span>
                       </div>
                     </div>
 
@@ -1005,7 +986,7 @@ export default function UserServiceRequestPage() {
                       {offer.storeDetails && (
                         <button
                           onClick={() => handleViewStore(offer.storeDetails)}
-                          className="w-full px-3 py-2.5 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-medium flex items-center justify-center space-x-2 transition-colors text-sm"
+                          className="w-full px-3 py-2.5 border border-blue-500 dark:border-blue-600 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 font-medium flex items-center justify-center space-x-2 transition-colors text-sm"
                         >
                           <ExternalLink className="w-4 h-4" />
                           <span>View Store</span>
@@ -1017,14 +998,14 @@ export default function UserServiceRequestPage() {
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             onClick={() => handleRejectOffer(offer.id, offer.requestId)}
-                            className="w-full px-3 py-2.5 border border-red-500 text-red-600 rounded-lg hover:bg-red-50 font-medium transition-colors text-sm"
+                            className="w-full px-3 py-2.5 border border-red-500 dark:border-red-600 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 font-medium transition-colors text-sm"
                             disabled={submitting}
                           >
                             Reject
                           </button>
                           <button
                             onClick={() => handleAcceptOffer(offer.id, offer.requestId)}
-                            className="w-full px-3 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium transition-colors text-sm"
+                            className="w-full px-3 py-2.5 bg-emerald-600 dark:bg-emerald-700 text-white rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-800 font-medium transition-colors text-sm"
                             disabled={submitting}
                           >
                             {submitting ? 'Accepting...' : 'Accept'}
@@ -1034,7 +1015,7 @@ export default function UserServiceRequestPage() {
 
                       {/* Accepted status badge (full width if accepted) */}
                       {offer.status === 'accepted' && (
-                        <div className="w-full px-3 py-2.5 bg-emerald-100 text-emerald-800 rounded-lg font-medium text-center text-sm">
+                        <div className="w-full px-3 py-2.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400 rounded-lg font-medium text-center text-sm">
                           Accepted
                         </div>
                       )}
@@ -1045,68 +1026,59 @@ export default function UserServiceRequestPage() {
             )}
           </div>
         )}
+
         {/* Past Requests Tab - NO DUMMY DATA */}
         {activeTab === 'past' && isAuthenticated && (
           <div className="space-y-4">
             {loadingRequests ? (
               <LoadingSpinner />
             ) : userPastRequests.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Clock className="w-8 h-8 text-slate-400" />
+              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-700 mb-2">No past requests</h3>
-                <p className="text-slate-500 mb-6">Your completed and cancelled service requests will appear here.</p>
+                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">No past requests</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Your completed and cancelled service requests will appear here.</p>
                 <button
                   onClick={() => handleTabChange('all')}
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 font-medium transition-colors"
+                  className="bg-indigo-600 dark:bg-indigo-700 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 dark:hover:bg-indigo-800 font-medium transition-colors"
                 >
                   Browse Requests
                 </button>
               </div>
             ) : (
               userPastRequests.map((request) => (
-                <div key={request.id} className="bg-white rounded-2xl shadow-sm border border-slate-200">
+                <div key={request.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-3">
-                          <h3 className="text-xl font-semibold text-slate-900">{request.title}</h3>
-                          {/* <span className={`px-3 py-1 rounded-full text-xs font-medium ${request.status === 'completed'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-slate-100 text-slate-800'
-                            }`}>
-                            {request.status.toUpperCase()}
-                          </span> */}
+                          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{request.title}</h3>
                         </div>
-                        <p className="text-slate-600 mb-4">{request.description}</p>
+                        <p className="text-gray-600 dark:text-gray-400 mb-4">{request.description}</p>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
-                          <div className="flex items-center space-x-2 text-slate-500">
+                          <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
                             <MapPin className="w-4 h-4" />
                             <span>{request.location}</span>
                           </div>
-                          <div className="flex items-center space-x-2 text-slate-500">
+                          <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
                             <DollarSign className="w-4 h-4" />
                             <span>{request.budget}</span>
                           </div>
-                          {/* <div className="flex items-center space-x-2 text-slate-500">
-                            <Calendar className="w-4 h-4" />
-                            <span>Completed: {request.completedAt ? new Date(request.completedAt).toLocaleDateString() : 'N/A'}</span>
-                          </div> */}
                         </div>
 
                         {request.acceptedOffer && (
-                          <div className="bg-emerald-50 rounded-xl p-4 mb-4">
-                            <h4 className="font-medium text-emerald-800 mb-2">Accepted Offer</h4>
+                          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 mb-4">
+                            <h4 className="font-medium text-emerald-800 dark:text-emerald-400 mb-2">Accepted Offer</h4>
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-emerald-700 font-medium">{request.acceptedOffer.storeName}</p>
-                                <p className="text-emerald-600 text-sm">Final Price: {request.acceptedOffer.price}</p>
+                                <p className="text-emerald-700 dark:text-emerald-400 font-medium">{request.acceptedOffer.storeName}</p>
+                                <p className="text-emerald-600 dark:text-emerald-500 text-sm">Final Price: {request.acceptedOffer.price}</p>
                               </div>
                               {request.acceptedOffer.rating && (
                                 <div className="flex items-center">
-                                  <Star className="w-4 h-4 text-amber-400 mr-1" />
+                                  <Star className="w-4 h-4 text-amber-400 dark:text-amber-500 mr-1" />
                                   <span className="text-sm font-medium">{request.acceptedOffer.rating}/5</span>
                                 </div>
                               )}
@@ -1114,28 +1086,15 @@ export default function UserServiceRequestPage() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
                           <div className="flex items-center space-x-4">
-                            <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs">
+                            <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full text-xs">
                               {request.category}
                             </span>
-                            <span className="text-sm text-slate-500">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
                               {request.offers} offer{request.offers !== 1 ? 's' : ''}
                             </span>
                           </div>
-                          {/* <div className="flex space-x-3">
-                            <button
-                              onClick={() => handleViewDetails(request)}
-                              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
-                            >
-                              View Details
-                            </button>
-                            {request.status === 'completed' && !request.finalRating && (
-                              <button className="px-4 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-50 font-medium transition-colors">
-                                Rate & Review
-                              </button>
-                            )}
-                          </div> */}
                         </div>
                       </div>
                     </div>
@@ -1147,18 +1106,16 @@ export default function UserServiceRequestPage() {
         )}
       </section>
 
-      <Footer />
-
       {/* Details Modal */}
       {showDetailsModal && selectedRequestDetails && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6 border-b border-slate-200">
+        <div className="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl transition-colors duration-200">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-900">Request Details</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Request Details</h2>
                 <button
                   onClick={() => setShowDetailsModal(false)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl transition-colors"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl transition-colors"
                 >
                   ×
                 </button>
@@ -1168,69 +1125,69 @@ export default function UserServiceRequestPage() {
             <div className="p-6 space-y-6">
               <div>
                 <div className="flex items-center space-x-3 mb-3">
-                  <h3 className="text-xl font-semibold text-slate-900">{selectedRequestDetails.title}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{selectedRequestDetails.title}</h3>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${selectedRequestDetails.priority === 'urgent'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-emerald-100 text-emerald-800'
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                    : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-400'
                     }`}>
                     {selectedRequestDetails.priority}
                   </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400">
                     {selectedRequestDetails.status?.toUpperCase()}
                   </span>
                 </div>
               </div>
 
               <div>
-                <h4 className="font-semibold text-slate-700 mb-2">Description</h4>
-                <p className="text-slate-600">{selectedRequestDetails.description}</p>
+                <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Description</h4>
+                <p className="text-gray-600 dark:text-gray-400">{selectedRequestDetails.description}</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-semibold text-slate-700 mb-2">Service Details</h4>
+                  <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Service Details</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center space-x-2">
-                      <span className="text-slate-500">Category:</span>
-                      <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-full text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">Category:</span>
+                      <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs">
                         {selectedRequestDetails.category}
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-500">Location:</span>
-                      <span>{selectedRequestDetails.location}</span>
+                      <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400">Location:</span>
+                      <span className="text-gray-900 dark:text-gray-100">{selectedRequestDetails.location}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-500">Budget:</span>
-                      <span>{selectedRequestDetails.budget}</span>
+                      <DollarSign className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400">Budget:</span>
+                      <span className="text-gray-900 dark:text-gray-100">{selectedRequestDetails.budget}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-500">Timeline:</span>
-                      <span>{getTimelineLabel(selectedRequestDetails.timeline)}</span>
+                      <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400">Timeline:</span>
+                      <span className="text-gray-900 dark:text-gray-100">{getTimelineLabel(selectedRequestDetails.timeline)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-slate-700 mb-2">Request Information</h4>
+                  <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Request Information</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-500">Posted by:</span>
-                      <span>{selectedRequestDetails.postedBy}</span>
+                      <User className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400">Posted by:</span>
+                      <span className="text-gray-900 dark:text-gray-100">{selectedRequestDetails.postedBy}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-500">Posted:</span>
-                      <span>{selectedRequestDetails.postedTime}</span>
+                      <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400">Posted:</span>
+                      <span className="text-gray-900 dark:text-gray-100">{selectedRequestDetails.postedTime}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <MessageSquare className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-500">Offers received:</span>
-                      <span className="font-medium text-indigo-600">
+                      <MessageSquare className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400">Offers received:</span>
+                      <span className="font-medium text-indigo-600 dark:text-indigo-400">
                         {selectedRequestDetails.offers || 0}
                       </span>
                     </div>
@@ -1240,10 +1197,10 @@ export default function UserServiceRequestPage() {
 
               {selectedRequestDetails.requirements && selectedRequestDetails.requirements.length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-slate-700 mb-2">Requirements</h4>
+                  <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Requirements</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedRequestDetails.requirements.map((req, index) => (
-                      <span key={index} className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-full">
+                      <span key={index} className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm rounded-full">
                         {req}
                       </span>
                     ))}
@@ -1253,16 +1210,16 @@ export default function UserServiceRequestPage() {
 
               {selectedRequestDetails.acceptedOffer && (
                 <div>
-                  <h4 className="font-semibold text-slate-700 mb-2">Accepted Offer</h4>
-                  <div className="bg-emerald-50 rounded-xl p-4">
+                  <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">Accepted Offer</h4>
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-emerald-700 font-medium">{selectedRequestDetails.acceptedOffer.storeName}</p>
-                        <p className="text-emerald-600 text-sm">Final Price: {selectedRequestDetails.acceptedOffer.price}</p>
+                        <p className="text-emerald-700 dark:text-emerald-400 font-medium">{selectedRequestDetails.acceptedOffer.storeName}</p>
+                        <p className="text-emerald-600 dark:text-emerald-500 text-sm">Final Price: {selectedRequestDetails.acceptedOffer.price}</p>
                       </div>
                       {selectedRequestDetails.acceptedOffer.rating && (
                         <div className="flex items-center">
-                          <Star className="w-4 h-4 text-amber-400 mr-1" />
+                          <Star className="w-4 h-4 text-amber-400 dark:text-amber-500 mr-1" />
                           <span className="text-sm font-medium">{selectedRequestDetails.acceptedOffer.rating}/5</span>
                         </div>
                       )}
@@ -1272,10 +1229,10 @@ export default function UserServiceRequestPage() {
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-200 bg-slate-50">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <button
                 onClick={() => setShowDetailsModal(false)}
-                className="w-full px-4 py-2 bg-slate-600 text-white rounded-xl hover:bg-slate-700 transition-colors"
+                className="w-full px-4 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded-xl hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
               >
                 Close
               </button>
@@ -1286,12 +1243,12 @@ export default function UserServiceRequestPage() {
 
       {/* Request Form Modal */}
       {showRequestForm && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="p-6 border-b border-slate-200">
+        <div className="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl transition-colors duration-200">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-900">Post a Service Request</h2>
-                <button onClick={() => setShowRequestForm(false)} className="text-slate-400 hover:text-slate-600 text-2xl transition-colors">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Post a Service Request</h2>
+                <button onClick={() => setShowRequestForm(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl transition-colors">
                   ×
                 </button>
               </div>
@@ -1299,11 +1256,11 @@ export default function UserServiceRequestPage() {
 
             <form onSubmit={handleRequestFormSubmit} className="p-6 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Service Category *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Service Category *</label>
                 <select
                   value={requestForm.category}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, category: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                   required
                 >
                   <option value="">Select a category</option>
@@ -1314,63 +1271,63 @@ export default function UserServiceRequestPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Service Title *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Service Title *</label>
                 <input
                   type="text"
                   value={requestForm.title}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="Briefly describe what service you need"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Description *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Description *</label>
                 <textarea
                   rows="4"
                   value={requestForm.description}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Provide detailed description of your requirements..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Min Budget (KSH) *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Min Budget (KSH) *</label>
                   <input
                     type="number"
                     step="0.01"
                     value={requestForm.budgetMin}
                     onChange={(e) => setRequestForm(prev => ({ ...prev, budgetMin: e.target.value }))}
                     placeholder="Minimum budget"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Max Budget (KSH) *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Max Budget (KSH) *</label>
                   <input
                     type="number"
                     step="0.01"
                     value={requestForm.budgetMax}
                     onChange={(e) => setRequestForm(prev => ({ ...prev, budgetMax: e.target.value }))}
                     placeholder="Maximum budget"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Timeline *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Timeline *</label>
                 <select
                   value={requestForm.timeline}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, timeline: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                   required
                 >
                   <option value="">When do you need this?</option>
@@ -1383,23 +1340,23 @@ export default function UserServiceRequestPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Location *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Location *</label>
                 <input
                   type="text"
                   value={requestForm.location}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="Enter your location"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Priority</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Priority</label>
                 <select
                   value={requestForm.priority}
                   onChange={(e) => setRequestForm(prev => ({ ...prev, priority: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                 >
                   <option value="low">Low Priority</option>
                   <option value="normal">Normal Priority</option>
@@ -1409,34 +1366,34 @@ export default function UserServiceRequestPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Special Requirements</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Special Requirements</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['Licensed', 'Insurance', 'References', 'Portfolio'].map((req) => (
-                    <label key={req} className="flex items-center p-3 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <label key={req} className="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
                       <input
                         type="checkbox"
                         checked={requestForm.requirements.includes(req)}
                         onChange={(e) => handleRequirementChange(req, e.target.checked)}
-                        className="mr-2 text-indigo-600"
+                        className="mr-2 text-indigo-600 dark:text-indigo-500"
                       />
-                      <span className="text-sm">{req} required</span>
+                      <span className="text-sm text-gray-900 dark:text-gray-100">{req} required</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4 pt-4 border-t border-slate-200">
+              <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => setShowRequestForm(false)}
-                  className="px-6 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   disabled={submitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
+                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-700 dark:to-purple-700 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-800 dark:hover:to-purple-800 disabled:opacity-50 transition-colors"
                   disabled={submitting}
                 >
                   {submitting ? 'Posting...' : 'Post Request'}
@@ -1449,68 +1406,68 @@ export default function UserServiceRequestPage() {
 
       {/* Offer Form Modal */}
       {showOfferForm && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
-            <div className="p-6 border-b border-slate-200">
+        <div className="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg shadow-2xl transition-colors duration-200">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-slate-900">Make an Offer</h2>
-                <button onClick={() => setShowOfferForm(false)} className="text-slate-400 hover:text-slate-600 text-2xl transition-colors">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Make an Offer</h2>
+                <button onClick={() => setShowOfferForm(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl transition-colors">
                   ×
                 </button>
               </div>
-              <p className="text-slate-600 text-sm mt-1">You're making an individual offer as a service provider</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">You're making an individual offer as a service provider</p>
             </div>
 
             <form onSubmit={handleOfferFormSubmit} className="p-6 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Quoted Price (KSH) *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Quoted Price (KSH) *</label>
                 <input
                   type="number"
                   step="0.01"
                   value={offerForm.quotedPrice}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, quotedPrice: e.target.value }))}
                   placeholder="Enter your price quote"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Message *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Message *</label>
                 <textarea
                   rows="4"
                   value={offerForm.message}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, message: e.target.value }))}
                   placeholder="Describe your offer, experience, and why you're the best choice..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Availability *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Availability *</label>
                 <input
                   type="text"
                   value={offerForm.availability}
                   onChange={(e) => setOfferForm(prev => ({ ...prev, availability: e.target.value }))}
                   placeholder="When can you start? (e.g., Tomorrow, This weekend, Next week)"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 focus:border-indigo-300 dark:focus:border-indigo-600 transition-colors"
                   required
                 />
               </div>
 
-              <div className="flex justify-end space-x-4 pt-4 border-t border-slate-200">
+              <div className="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => setShowOfferForm(false)}
-                  className="px-6 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   disabled={submitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-colors"
+                  className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-700 dark:to-purple-700 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-800 dark:hover:to-purple-800 disabled:opacity-50 transition-colors"
                   disabled={submitting}
                 >
                   {submitting ? 'Submitting...' : 'Submit Offer'}
@@ -1523,26 +1480,26 @@ export default function UserServiceRequestPage() {
 
       {/* Login Prompt Modal */}
       {showLoginPrompt && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl transition-colors duration-200">
             <div className="p-6 text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-indigo-600" />
+              <div className="w-16 h-16 bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Login Required</h2>
-              <p className="text-slate-600 mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Login Required</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Please login to access this feature and manage your service requests.
               </p>
               <div className="flex space-x-4">
                 <button
                   onClick={() => setShowLoginPrompt(false)}
-                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleLogin}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-700 dark:to-purple-700 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-800 dark:hover:to-purple-800 transition-colors"
                 >
                   Login
                 </button>
@@ -1554,24 +1511,24 @@ export default function UserServiceRequestPage() {
 
       {/* Confirm Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl transition-colors duration-200">
             <div className="p-6 text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <AlertCircle className="w-8 h-8 text-amber-600" />
+              <div className="w-16 h-16 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-500" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Confirm Action</h2>
-              <p className="text-slate-600 mb-6">{confirmMessage}</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Confirm Action</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">{confirmMessage}</p>
               <div className="flex space-x-4">
                 <button
                   onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmAction}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600 to-pink-600 dark:from-red-700 dark:to-pink-700 text-white rounded-xl hover:from-red-700 hover:to-pink-700 dark:hover:from-red-800 dark:hover:to-pink-800 transition-colors"
                   disabled={submitting}
                 >
                   {submitting ? 'Processing...' : 'Confirm'}
