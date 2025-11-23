@@ -1057,7 +1057,7 @@
       return (
         <div
           ref={cardRef}
-          className="relative bg-gray-900 rounded-xl overflow-hidden cursor-pointer aspect-[9/16] max-h-[400px]"
+          className="relative bg-gray-900 sm:rounded-xl overflow-hidden cursor-pointer aspect-[9/16] sm:max-h-[500px]"
           onClick={handleTap}
         >
           {/* Thumbnail - shows until video loads */}
@@ -1584,7 +1584,7 @@
         case 'reels':
           // Skeleton loader component for reels
           const ReelSkeleton = () => (
-            <div className="relative aspect-[9/16] bg-gray-200 dark:bg-gray-700 rounded-xl overflow-hidden animate-pulse">
+            <div className="relative aspect-[9/16] bg-gray-200 dark:bg-gray-700 sm:rounded-xl overflow-hidden animate-pulse">
               {/* Video placeholder */}
               <div className="absolute inset-0 bg-gradient-to-b from-gray-300 dark:from-gray-600 to-gray-200 dark:to-gray-700" />
 
@@ -1621,14 +1621,14 @@
 
               {reelsLoading ? (
                 // Skeleton grid - matches the actual layout
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="-mx-4 sm:mx-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 sm:gap-4">
                   {[1, 2, 3, 4].map((i) => (
                     <ReelSkeleton key={i} />
                   ))}
                 </div>
               ) : reels.length > 0 ? (
-                // Mobile: single column (one reel at a time), larger screens: grid
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-4">
+                // Mobile: full-width single column, larger screens: grid
+                <div className="-mx-4 sm:mx-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                   {reels.map((reel) => (
                     <ReelCard key={reel.id} reel={reel} />
                   ))}
