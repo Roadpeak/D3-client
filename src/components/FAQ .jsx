@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
 
 const FAQ = () => {
@@ -151,112 +149,108 @@ const FAQ = () => {
   ];
 
   return (
-    <div>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Find answers to common questions about D3 (Discoun3). Can't find what you're looking for? Contact our support team for personalized assistance.
-            </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Frequently Asked Questions</h1>
+          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Find answers to common questions about D3 (Discoun3). Can't find what you're looking for? Contact our support team for personalized assistance.
+          </p>
+        </div>
+
+        {/* Search FAQ */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search FAQ..."
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
+            >
+              <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
+        </div>
 
-          {/* Search FAQ */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search FAQ..."
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
-              >
-                <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-          </div>
-
-          {/* FAQ Categories */}
-          <div className="space-y-8">
-            {faqData.map((category, categoryIndex) => (
-              <div key={categoryIndex} className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="bg-gray-50 px-6 py-4 border-b">
-                  <h2 className="text-xl font-semibold text-gray-900">{category.category}</h2>
-                </div>
-
-                <div className="divide-y divide-gray-200">
-                  {category.questions.map((item, questionIndex) => {
-                    const itemKey = `${categoryIndex}-${questionIndex}`;
-                    const isOpen = openItems[itemKey];
-
-                    return (
-                      <div key={questionIndex}>
-                        <button
-                          onClick={() => toggleItem(itemKey)}
-                          className="w-full px-6 py-4 text-left focus:outline-none focus:bg-gray-50 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex justify-between items-center">
-                            <h3 className="text-lg font-medium text-gray-900 pr-4">
-                              {item.question}
-                            </h3>
-                            <svg
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              className={`transform transition-transform ${isOpen ? 'rotate-180' : ''} text-gray-400 flex-shrink-0`}
-                            >
-                              <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                        </button>
-
-                        {isOpen && (
-                          <div className="px-6 pb-4">
-                            <p className="text-gray-600 leading-relaxed">
-                              {item.answer}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+        {/* FAQ Categories */}
+        <div className="space-y-8">
+          {faqData.map((category, categoryIndex) => (
+            <div key={categoryIndex} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{category.category}</h2>
               </div>
-            ))}
-          </div>
 
-          {/* Contact Support */}
-          <div className="bg-white rounded-lg shadow-sm p-8 mt-8 text-center">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Still Need Help?</h2>
-            <p className="text-gray-600 mb-6">
-              Can't find the answer you're looking for? Our friendly support team is here to help you with D3.
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {category.questions.map((item, questionIndex) => {
+                  const itemKey = `${categoryIndex}-${questionIndex}`;
+                  const isOpen = openItems[itemKey];
+
+                  return (
+                    <div key={questionIndex}>
+                      <button
+                        onClick={() => toggleItem(itemKey)}
+                        className="w-full px-6 py-4 text-left focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-white pr-4">
+                            {item.question}
+                          </h3>
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`transform transition-transform ${isOpen ? 'rotate-180' : ''} text-gray-400 dark:text-gray-500 flex-shrink-0`}
+                          >
+                            <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
+                      </button>
+
+                      {isOpen && (
+                        <div className="px-6 pb-4">
+                          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {item.answer}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Contact Support */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 mt-8 text-center">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Still Need Help?</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Can't find the answer you're looking for? Our friendly support team is here to help you with D3.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/contact-us" className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-block">
+              Contact Support
+            </Link>
+            <Link to="/contact-us" className="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium py-3 px-6 rounded-lg transition-colors inline-block">
+              Send Feedback
+            </Link>
+          </div>
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Email: <a href="mailto:support@discoun3ree.com" className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300">support@discoun3ree.com</a>
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/contact-us" className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-colors inline-block">
-                Contact Support
-              </Link>
-              <Link to="/contact-us" className="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-lg transition-colors inline-block">
-                Send Feedback
-              </Link>
-            </div>
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-sm text-gray-500">
-                Email: <a href="mailto:support@discoun3ree.com" className="text-blue-500 hover:text-blue-600">support@discoun3ree.com</a>
-              </p>
-            </div>
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 };
