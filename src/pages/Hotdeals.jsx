@@ -285,20 +285,110 @@ export default function Hotdeals() {
     fetchData();
   }, [fetchData]);
 
-  if (loading && offers.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="animate-spin text-blue-500 dark:text-blue-400" size={24} />
-            <span className="text-gray-600 dark:text-gray-400">Loading offers</span>
-            {retryCount > 0 && (
-              <span className="text-sm text-gray-500 dark:text-gray-500">({retryCount}/3)</span>
-            )}
+  // Skeleton Components
+  const OfferCardSkeleton = ({ isListView = false }) => (
+    <div className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse ${isListView ? 'flex flex-col sm:flex-row' : ''}`}>
+      <div className={`relative ${isListView ? 'sm:w-1/3' : ''}`}>
+        <div className={`w-full bg-gray-200 dark:bg-gray-700 ${isListView ? 'h-48 sm:h-full' : 'h-40 md:h-48'}`} />
+        {/* Favorite button placeholder */}
+        <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600" />
+        {/* Discount badge placeholder */}
+        <div className="absolute bottom-2 right-2 w-16 h-6 rounded-full bg-gray-300 dark:bg-gray-600" />
+      </div>
+      <div className={`p-3 md:p-4 flex flex-col ${isListView ? 'sm:flex-1' : ''}`}>
+        {/* Title */}
+        <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+        <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+        {/* Store info */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700" />
+          <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+        </div>
+        {/* Category badge */}
+        <div className="h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded-full mb-3" />
+        {/* Price */}
+        <div className="mt-auto pt-2">
+          <div className="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
+          <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const SidebarSkeleton = () => (
+    <div className="space-y-6 animate-pulse">
+      {/* Categories skeleton */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center justify-between">
+              <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="h-5 w-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Sort skeleton */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const PageSkeleton = () => (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      {/* Breadcrumb skeleton */}
+      <div className="hidden md:block bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 py-4 animate-pulse">
+          <div className="flex items-center space-x-4">
+            <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-4 w-4 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
           </div>
         </div>
       </div>
-    );
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex gap-6">
+          {/* Sidebar skeleton - desktop */}
+          <aside className="hidden md:block w-64 flex-shrink-0">
+            <SidebarSkeleton />
+          </aside>
+
+          {/* Main content */}
+          <div className="flex-1">
+            {/* Controls skeleton */}
+            <div className="mb-6 flex items-center justify-between gap-2 animate-pulse">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                  <div className="w-9 h-9 bg-gray-200 dark:bg-gray-700 rounded-md" />
+                  <div className="w-9 h-9 bg-gray-200 dark:bg-gray-700 rounded-md" />
+                </div>
+                <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              </div>
+              <div className="w-24 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+            </div>
+
+            {/* Grid skeleton */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <OfferCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading && offers.length === 0) {
+    return <PageSkeleton />;
   }
 
   return (
