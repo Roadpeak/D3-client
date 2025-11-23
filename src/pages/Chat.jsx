@@ -512,18 +512,83 @@ const ChatPage = () => {
   const totalUnreadCount = chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0);
   const typingUsers = selectedChat ? getTypingUsers(selectedChat.id) : [];
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Loading your store conversations...</p>
+  // Skeleton Components
+  const ChatListItemSkeleton = () => (
+    <div className="flex items-start p-4 animate-pulse">
+      <div className="relative flex-shrink-0">
+        <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700" />
+        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full" />
+      </div>
+      <div className="ml-3 flex-1">
+        <div className="flex items-start justify-between mb-1">
+          <div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-3 w-10 bg-gray-200 dark:bg-gray-700 rounded" />
+        </div>
+        <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+        <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+      </div>
+    </div>
+  );
+
+  const PageSkeleton = () => (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
+      <div className="flex-1 w-full">
+        <div className="max-w-7xl mx-auto h-full bg-white dark:bg-gray-800 shadow-sm transition-colors duration-200">
+          <div className="flex w-full" style={{ height: 'calc(100vh - 60px)' }}>
+            {/* Sidebar Skeleton */}
+            <div className="flex w-full xl:w-80 flex-col bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+              {/* Search Skeleton */}
+              <div className="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="h-10 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse" />
+              </div>
+              {/* Chat List Skeleton */}
+              <div className="flex-1 overflow-hidden">
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <ChatListItemSkeleton key={i} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Main Chat Area Skeleton - Hidden on mobile */}
+            <div className="hidden xl:flex flex-1 flex-col bg-white dark:bg-gray-800">
+              <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                <div className="text-center max-w-lg px-8 animate-pulse">
+                  {/* Icon placeholder */}
+                  <div className="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto mb-6" />
+                  {/* Title placeholder */}
+                  <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded mx-auto mb-3" />
+                  {/* Description placeholder */}
+                  <div className="space-y-2 mb-8">
+                    <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded" />
+                    <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mx-auto" />
+                  </div>
+                  {/* Stats placeholder */}
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                      <div className="h-6 w-8 bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                      <div className="h-6 w-8 bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
+
+  // Loading state
+  if (loading) {
+    return <PageSkeleton />;
   }
 
   if (!user) {
