@@ -1,4 +1,4 @@
-// MyBookingsEnhanced.js - Fixed version with proper CancelModal component
+// MyBookingsEnhanced.js - Dark mode enabled version
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -7,11 +7,8 @@ import {
   Filter, Search, RefreshCw, Edit3, X, AlertTriangle,
   CheckCircle, XCircle, Clock4, Loader2, Eye, MoreVertical,
   CreditCard, Smartphone, Zap, Building2, UserCheck,
-  // Add missing import for Info icon
   AlertCircle, Shield, Bell, Timer, Tag, Star, Info
 } from 'lucide-react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
 import authService from '../../services/authService';
 import enhancedBookingService from '../../services/enhancedBookingService';
 
@@ -46,11 +43,11 @@ const MyBookingsEnhanced = () => {
   const ITEMS_PER_PAGE = 12;
 
   // ==================== HELPER FUNCTIONS ====================
-  
+
   // Enhanced function to determine if booking is an offer booking
   const isOfferBooking = (booking) => {
     if (!booking) return false;
-    
+
     // Multiple ways to detect offer bookings
     return !!(
       booking.isOfferBooking ||
@@ -65,9 +62,9 @@ const MyBookingsEnhanced = () => {
   // Get entity (offer or service) from booking
   const getBookingEntity = (booking) => {
     if (!booking) return null;
-    
+
     const isOffer = isOfferBooking(booking);
-    
+
     if (isOffer) {
       return booking.Offer || booking.offer || null;
     } else {
@@ -78,12 +75,12 @@ const MyBookingsEnhanced = () => {
   // Get store information from booking
   const getBookingStore = (booking) => {
     if (!booking) return null;
-    
+
     const entity = getBookingEntity(booking);
     if (!entity) return null;
-    
+
     const isOffer = isOfferBooking(booking);
-    
+
     if (isOffer) {
       // For offers: store is nested under service
       return entity.service?.store || entity.service?.Store || entity.Service?.store || null;
@@ -96,7 +93,7 @@ const MyBookingsEnhanced = () => {
   // Get service information (for both offers and direct services)
   const getBookingService = (booking) => {
     if (!booking) return null;
-    
+
     if (isOfferBooking(booking)) {
       const offer = getBookingEntity(booking);
       return offer?.service || offer?.Service || null;
@@ -191,7 +188,7 @@ const MyBookingsEnhanced = () => {
       if (result.success) {
         const rawBookings = result.bookings || result.data || [];
         console.log('Raw bookings array:', rawBookings);
-        
+
         // Format each booking for consistent data structure
         const formattedBookings = rawBookings.map(booking => {
           const formatted = formatBookingData(booking);
@@ -367,8 +364,8 @@ const MyBookingsEnhanced = () => {
   const BookingCard = ({ booking }) => {
     if (!booking) {
       return (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <div className="text-gray-500">Invalid booking data</div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div className="text-gray-500 dark:text-gray-400">Invalid booking data</div>
         </div>
       );
     }
@@ -391,11 +388,11 @@ const MyBookingsEnhanced = () => {
     const isUpcoming = bookingTime > new Date();
 
     const statusColors = {
-      confirmed: 'bg-green-100 text-green-700 border-green-200',
-      pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-      completed: 'bg-blue-100 text-blue-700 border-blue-200',
-      cancelled: 'bg-red-100 text-red-700 border-red-200',
-      checked_in: 'bg-purple-100 text-purple-700 border-purple-200'
+      confirmed: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700',
+      pending: 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700',
+      completed: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700',
+      cancelled: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700',
+      checked_in: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
     };
 
     // Fallback display name
@@ -403,33 +400,33 @@ const MyBookingsEnhanced = () => {
     const storeName = store?.name || 'Unknown Store';
 
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg transition-all duration-200">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             {isOffer ? (
               <div className="flex items-center space-x-2">
-                <Zap className="w-4 h-4 text-orange-500" />
-                <span className="text-sm font-medium text-orange-600">Offer Booking</span>
+                <Zap className="w-4 h-4 text-orange-500 dark:text-orange-400" />
+                <span className="text-sm font-medium text-orange-600 dark:text-orange-400">Offer Booking</span>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Building2 className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-600">Service Booking</span>
+                <Building2 className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Service Booking</span>
               </div>
             )}
           </div>
 
-          <div className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[booking.status] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
-            {booking.status === 'checked_in' ? 'Checked In' : 
-             booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+          <div className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[booking.status] || 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'}`}>
+            {booking.status === 'checked_in' ? 'Checked In' :
+              booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
           </div>
         </div>
 
         {/* Main content */}
         <div className="space-y-3">
           <div>
-            <h3 className="font-semibold text-gray-900 text-lg">
+            <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
               {displayName}
             </h3>
 
@@ -437,12 +434,12 @@ const MyBookingsEnhanced = () => {
             {entity && (
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 {!isOffer && entity.price && (
-                  <span className="text-sm font-medium text-blue-600">
+                  <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
                     KES {parseFloat(entity.price).toLocaleString()}
                   </span>
                 )}
                 {entity.duration && (
-                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {entity.duration}min
                   </span>
@@ -453,16 +450,16 @@ const MyBookingsEnhanced = () => {
             {/* Offer information */}
             {isOffer && entity?.discount && (
               <div className="flex items-center space-x-2 mt-1">
-                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                <span className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 text-xs px-2 py-1 rounded">
                   {entity.discount}% OFF
                 </span>
                 {entity.offerPrice && (
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
                     KES {parseFloat(entity.offerPrice).toLocaleString()}
                   </span>
                 )}
                 {entity.originalPrice && (
-                  <span className="text-sm text-gray-400 line-through">
+                  <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
                     KES {parseFloat(entity.originalPrice).toLocaleString()}
                   </span>
                 )}
@@ -472,13 +469,13 @@ const MyBookingsEnhanced = () => {
 
           {/* Service info for offers */}
           {isOffer && service && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               Service: {service.name}
             </div>
           )}
 
           {/* DateTime */}
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center space-x-1">
               <Calendar className="w-4 h-4" />
               <span>
@@ -502,34 +499,34 @@ const MyBookingsEnhanced = () => {
           </div>
 
           {/* Location */}
-          <div className="flex items-center space-x-1 text-sm text-gray-600">
+          <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
             <MapPin className="w-4 h-4" />
             <span>{storeName}</span>
             {booking.branch && (
-              <span className="text-gray-400">• {booking.branch.name}</span>
+              <span className="text-gray-400 dark:text-gray-500">• {booking.branch.name}</span>
             )}
           </div>
 
           {/* Staff */}
           {booking.staff && (
-            <div className="flex items-center space-x-1 text-sm text-gray-600">
+            <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
               <UserCheck className="w-4 h-4" />
               <span>{booking.staff.name}</span>
               {booking.staff.role && (
-                <span className="text-gray-400">({booking.staff.role})</span>
+                <span className="text-gray-400 dark:text-gray-500">({booking.staff.role})</span>
               )}
             </div>
           )}
 
           {/* Access fee info for offers */}
           {isOffer && booking.accessFee > 0 && (
-            <div className="flex items-center space-x-1 text-sm text-gray-600">
+            <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
               <CreditCard className="w-4 h-4" />
               <span>Access Fee: KES {parseFloat(booking.accessFee).toLocaleString()}</span>
               {booking.accessFeePaid ? (
-                <CheckCircle className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />
               ) : (
-                <Clock4 className="w-4 h-4 text-yellow-500" />
+                <Clock4 className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />
               )}
             </div>
           )}
@@ -537,7 +534,7 @@ const MyBookingsEnhanced = () => {
 
         {/* Actions */}
         {isUpcoming && ['confirmed', 'pending'].includes(booking.status) && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex space-x-2">
                 {canRescheduleBooking(booking) && (
@@ -546,7 +543,7 @@ const MyBookingsEnhanced = () => {
                       setSelectedBooking(booking);
                       setShowRescheduleModal(true);
                     }}
-                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
                   >
                     <Edit3 className="w-4 h-4" />
                     <span>Reschedule</span>
@@ -559,7 +556,7 @@ const MyBookingsEnhanced = () => {
                       setSelectedBooking(booking);
                       setShowCancelModal(true);
                     }}
-                    className="flex items-center space-x-1 text-red-600 hover:text-red-800 text-sm font-medium"
+                    className="flex items-center space-x-1 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium"
                   >
                     <X className="w-4 h-4" />
                     <span>Cancel</span>
@@ -569,7 +566,7 @@ const MyBookingsEnhanced = () => {
 
               <button
                 onClick={() => navigate(`/booking-details/${booking.id}`)}
-                className="text-gray-600 hover:text-gray-800 text-sm"
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 text-sm"
               >
                 View Details
               </button>
@@ -579,18 +576,18 @@ const MyBookingsEnhanced = () => {
 
         {/* Completed booking actions */}
         {booking.status === 'completed' && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 {isOffer ? 'Enjoyed your offer?' : 'How was your service?'}
               </span>
               <div className="flex space-x-2">
-                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                <button className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
                   Leave Review
                 </button>
                 <button
                   onClick={() => navigate(`/booking-details/${booking.id}`)}
-                  className="text-gray-600 hover:text-gray-800 text-sm"
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 text-sm"
                 >
                   View Details
                 </button>
@@ -620,23 +617,21 @@ const MyBookingsEnhanced = () => {
     return (
       <div className="space-y-3">
         {/* Primary tabs - always visible */}
-        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+        <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
           {primaryTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 px-3 py-2 rounded-md font-medium transition-colors text-sm ${
-                activeTab === tab.id
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`flex-1 px-3 py-2 rounded-md font-medium transition-colors text-sm ${activeTab === tab.id
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
             >
               <div className="flex flex-col items-center space-y-1">
                 <span>{tab.label}</span>
                 {tab.count > 0 && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    activeTab === tab.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-600'
-                  }`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === tab.id ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
+                    }`}>
                     {tab.count}
                   </span>
                 )}
@@ -652,17 +647,15 @@ const MyBookingsEnhanced = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center space-x-2 whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center space-x-2 whitespace-nowrap ${activeTab === tab.id
+                    ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
               >
                 <span>{tab.label}</span>
                 {tab.count > 0 && (
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    activeTab === tab.id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
-                  }`}>
+                  <span className={`text-xs px-2 py-1 rounded-full ${activeTab === tab.id ? 'bg-blue-500 dark:bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
+                    }`}>
                     {tab.count}
                   </span>
                 )}
@@ -679,31 +672,31 @@ const MyBookingsEnhanced = () => {
     const generateTimeSlots = () => {
       const slots = [];
       const now = new Date();
-      
+
       for (let day = 1; day <= 7; day++) {
         const date = new Date(now);
         date.setDate(now.getDate() + day);
-        
+
         // Generate slots from 9 AM to 6 PM
         for (let hour = 9; hour <= 18; hour++) {
           const slotDate = new Date(date);
           slotDate.setHours(hour, 0, 0, 0);
-          
+
           slots.push({
             value: slotDate.toISOString().slice(0, 19), // Format: YYYY-MM-DDTHH:mm:ss
-            label: `${slotDate.toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              month: 'short', 
-              day: 'numeric' 
-            })} at ${slotDate.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
+            label: `${slotDate.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric'
+            })} at ${slotDate.toLocaleTimeString('en-US', {
+              hour: '2-digit',
               minute: '2-digit',
-              hour12: true 
+              hour12: true
             })}`
           });
         }
       }
-      
+
       return slots;
     };
 
@@ -711,9 +704,9 @@ const MyBookingsEnhanced = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-900">Reschedule Booking</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Reschedule Booking</h3>
             <button
               onClick={() => {
                 setShowRescheduleModal(false);
@@ -725,18 +718,18 @@ const MyBookingsEnhanced = () => {
                 });
                 setError(null);
               }}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
           {selectedBooking && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <div className="font-medium">
+            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="font-medium text-gray-900 dark:text-white">
                 {selectedBooking.entity?.title || selectedBooking.entity?.name || 'Booking'}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 Current: {new Date(selectedBooking.startTime).toLocaleString()}
               </div>
             </div>
@@ -745,7 +738,7 @@ const MyBookingsEnhanced = () => {
           <div className="space-y-4">
             {/* New Time Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 New Date & Time *
               </label>
               <select
@@ -754,7 +747,7 @@ const MyBookingsEnhanced = () => {
                   ...prev,
                   newStartTime: e.target.value
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
               >
                 <option value="">Select new time...</option>
@@ -768,7 +761,7 @@ const MyBookingsEnhanced = () => {
 
             {/* Reason */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Reason for rescheduling (optional)
               </label>
               <textarea
@@ -778,18 +771,18 @@ const MyBookingsEnhanced = () => {
                   reason: e.target.value
                 }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 placeholder="Let us know why you're rescheduling..."
               />
             </div>
 
             {/* Info Notice */}
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
               <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-blue-600 mt-0.5" />
+                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
                 <div>
-                  <div className="text-sm font-medium text-blue-900">Rescheduling Policy</div>
-                  <div className="text-xs text-blue-700">
+                  <div className="text-sm font-medium text-blue-900 dark:text-blue-300">Rescheduling Policy</div>
+                  <div className="text-xs text-blue-700 dark:text-blue-400">
                     Subject to availability. Original booking terms still apply.
                   </div>
                 </div>
@@ -798,10 +791,10 @@ const MyBookingsEnhanced = () => {
           </div>
 
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <span className="text-sm text-red-600">{error}</span>
+                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                <span className="text-sm text-red-600 dark:text-red-400">{error}</span>
               </div>
             </div>
           )}
@@ -819,14 +812,14 @@ const MyBookingsEnhanced = () => {
                 setError(null);
               }}
               disabled={actionLoading}
-              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+              className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleRescheduleBooking}
               disabled={actionLoading || !rescheduleData.newStartTime}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 transition-colors flex items-center justify-center space-x-2"
+              className="flex-1 bg-blue-600 dark:bg-blue-700 text-white py-3 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
             >
               {actionLoading ? (
                 <>
@@ -846,9 +839,9 @@ const MyBookingsEnhanced = () => {
   const CancelModal = () => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-900">Cancel Booking</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Cancel Booking</h3>
             <button
               onClick={() => {
                 setShowCancelModal(false);
@@ -856,41 +849,41 @@ const MyBookingsEnhanced = () => {
                 setCancelReason('');
                 setError(null);
               }}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
           {selectedBooking && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <div className="font-medium">
+            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div className="font-medium text-gray-900 dark:text-white">
                 {selectedBooking.entity?.title || selectedBooking.entity?.name || 'Booking'}
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 {new Date(selectedBooking.startTime).toLocaleString()}
               </div>
             </div>
           )}
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Reason for cancellation (optional)
             </label>
             <textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
               placeholder="Let us know why you're cancelling..."
             />
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <span className="text-sm text-red-600">{error}</span>
+                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                <span className="text-sm text-red-600 dark:text-red-400">{error}</span>
               </div>
             </div>
           )}
@@ -904,14 +897,14 @@ const MyBookingsEnhanced = () => {
                 setError(null);
               }}
               disabled={actionLoading}
-              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+              className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
             >
               Keep Booking
             </button>
             <button
               onClick={handleCancelBooking}
               disabled={actionLoading}
-              className="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 disabled:bg-gray-300 transition-colors flex items-center justify-center space-x-2"
+              className="flex-1 bg-red-600 dark:bg-red-700 text-white py-3 rounded-lg font-medium hover:bg-red-700 dark:hover:bg-red-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
             >
               {actionLoading ? (
                 <>
@@ -932,30 +925,26 @@ const MyBookingsEnhanced = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="flex items-center space-x-2">
-            <Loader2 className="animate-spin w-8 h-8 text-blue-600" />
-            <span className="text-gray-600">Loading your bookings...</span>
+            <Loader2 className="animate-spin w-8 h-8 text-blue-600 dark:text-blue-400" />
+            <span className="text-gray-600 dark:text-gray-400">Loading your bookings...</span>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Link
               to="/profile"
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to Profile
@@ -965,27 +954,27 @@ const MyBookingsEnhanced = () => {
           <button
             onClick={() => fetchBookings(true)}
             disabled={refreshing}
-            className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 disabled:opacity-50"
+            className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
           {/* Page Title */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Bookings</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
                 Manage your service appointments and offer bookings
               </p>
             </div>
 
             {totalBookings > 0 && (
               <div className="text-right">
-                <div className="text-2xl font-bold text-blue-600">{totalBookings}</div>
-                <div className="text-sm text-gray-500">Total Bookings</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalBookings}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Total Bookings</div>
               </div>
             )}
           </div>
@@ -996,20 +985,20 @@ const MyBookingsEnhanced = () => {
 
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search bookings..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 />
               </div>
 
               <select
                 value={bookingTypeFilter}
                 onChange={(e) => setBookingTypeFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="all">All Types</option>
                 <option value="offer">Offer Bookings</option>
@@ -1020,10 +1009,10 @@ const MyBookingsEnhanced = () => {
 
           {/* Error Display */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                <span className="text-red-600">{error}</span>
+                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <span className="text-red-600 dark:text-red-400">{error}</span>
               </div>
             </div>
           )}
@@ -1031,13 +1020,13 @@ const MyBookingsEnhanced = () => {
           {/* Bookings Grid */}
           {filteredBookings.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-gray-400" />
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 {searchTerm || activeTab !== 'all' ? 'No bookings found' : 'No bookings yet'}
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 {searchTerm
                   ? 'Try adjusting your search or filters'
                   : 'Start booking services and offers to see them here'
@@ -1047,13 +1036,13 @@ const MyBookingsEnhanced = () => {
                 <div className="flex justify-center space-x-4">
                   <button
                     onClick={() => navigate('/offers')}
-                    className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                    className="bg-orange-600 dark:bg-orange-700 text-white px-4 py-2 rounded-lg hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors"
                   >
                     Browse Offers
                   </button>
                   <button
                     onClick={() => navigate('/services')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                   >
                     Book Services
                   </button>
@@ -1076,11 +1065,10 @@ const MyBookingsEnhanced = () => {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      currentPage === page
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === page
+                        ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
                   >
                     {page}
                   </button>
@@ -1096,10 +1084,8 @@ const MyBookingsEnhanced = () => {
 
       {/* Reschedule Modal */}
       {showRescheduleModal && <RescheduleModal />}
-
-      <Footer />
     </div>
   );
 };
 
-export default MyBookingsEnhanced; 
+export default MyBookingsEnhanced;
