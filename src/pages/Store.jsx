@@ -1582,22 +1582,53 @@
           );
 
         case 'reels':
+          // Skeleton loader component for reels
+          const ReelSkeleton = () => (
+            <div className="relative aspect-[9/16] bg-gray-200 dark:bg-gray-700 rounded-xl overflow-hidden animate-pulse">
+              {/* Video placeholder */}
+              <div className="absolute inset-0 bg-gradient-to-b from-gray-300 dark:from-gray-600 to-gray-200 dark:to-gray-700" />
+
+              {/* Play button skeleton */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-gray-300 dark:bg-gray-600" />
+              </div>
+
+              {/* Bottom info skeleton */}
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <div className="h-4 w-3/4 bg-gray-300 dark:bg-gray-600 rounded mb-2" />
+                <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-600 rounded" />
+              </div>
+
+              {/* Side actions skeleton */}
+              <div className="absolute right-3 bottom-20 flex flex-col gap-4">
+                <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600" />
+                <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600" />
+                <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600" />
+              </div>
+            </div>
+          );
+
           return (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Store Reels</h2>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {reels.length} {reels.length === 1 ? 'reel' : 'reels'}
-                </span>
+                {!reelsLoading && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {reels.length} {reels.length === 1 ? 'reel' : 'reels'}
+                  </span>
+                )}
               </div>
 
               {reelsLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-purple-500 dark:text-purple-400" />
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading reels...</span>
+                // Skeleton grid - matches the actual layout
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <ReelSkeleton key={i} />
+                  ))}
                 </div>
               ) : reels.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                // Mobile: single column (one reel at a time), larger screens: grid
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-4">
                   {reels.map((reel) => (
                     <ReelCard key={reel.id} reel={reel} />
                   ))}
@@ -1678,16 +1709,66 @@
       }
     };
 
-    // Loading state
-    if (loading) {
-      return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-red-500 dark:text-red-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Loading store information...</p>
+    // Page Skeleton Loader Component
+    const PageSkeleton = () => (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 py-4">
+          {/* Header Skeleton */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 mb-8 animate-pulse">
+            <div className="flex items-start gap-3 sm:gap-4 mb-4">
+              {/* Logo skeleton */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gray-200 dark:bg-gray-700" />
+              <div className="flex-1">
+                {/* Title skeleton */}
+                <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+                {/* Category skeleton */}
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+                {/* Rating skeleton */}
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                </div>
+              </div>
+            </div>
+            {/* Description skeleton */}
+            <div className="space-y-2 mb-4">
+              <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded" />
+              <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+            {/* Buttons skeleton */}
+            <div className="flex gap-3">
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+            </div>
+          </div>
+
+          {/* Tabs Skeleton */}
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 animate-pulse">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg flex-shrink-0" />
+            ))}
+          </div>
+
+          {/* Content Skeleton - Grid of cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-pulse">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+                <div className="aspect-square bg-gray-200 dark:bg-gray-700" />
+                <div className="p-3 space-y-2">
+                  <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      );
+      </div>
+    );
+
+    // Loading state
+    if (loading) {
+      return <PageSkeleton />;
     }
 
     // Error state
