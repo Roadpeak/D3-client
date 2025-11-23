@@ -1,4 +1,4 @@
-// BookingDetails.jsx - Fixed with working reschedule functionality
+// BookingDetails.jsx - Dark mode enabled version
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -11,8 +11,6 @@ import {
   Clock4, Users, Settings, Info, XCircle, RefreshCw,
   WifiOff, Server, AlertOctagon
 } from 'lucide-react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
 import enhancedBookingService from '../../services/enhancedBookingService';
 
 const BookingDetails = () => {
@@ -38,11 +36,11 @@ const BookingDetails = () => {
   const [copySuccess, setCopySuccess] = useState('');
 
   // ==================== HELPER FUNCTIONS ====================
-  
+
   // Enhanced function to determine if booking is an offer booking
   const isOfferBooking = (bookingData) => {
     if (!bookingData) return false;
-    
+
     return !!(
       bookingData.isOfferBooking ||
       bookingData.offerId ||
@@ -56,9 +54,9 @@ const BookingDetails = () => {
   // Get entity (offer or service) from booking
   const getBookingEntity = (bookingData) => {
     if (!bookingData) return null;
-    
+
     const isOffer = isOfferBooking(bookingData);
-    
+
     if (isOffer) {
       return bookingData.Offer || bookingData.offer || null;
     } else {
@@ -69,12 +67,12 @@ const BookingDetails = () => {
   // Get store information from booking
   const getBookingStore = (bookingData) => {
     if (!bookingData) return null;
-    
+
     const entity = getBookingEntity(bookingData);
     if (!entity) return null;
-    
+
     const isOffer = isOfferBooking(bookingData);
-    
+
     if (isOffer) {
       return entity.service?.store || entity.service?.Store || entity.Service?.store || null;
     } else {
@@ -85,7 +83,7 @@ const BookingDetails = () => {
   // Get service information (for both offers and direct services)
   const getBookingService = (bookingData) => {
     if (!bookingData) return null;
-    
+
     if (isOfferBooking(bookingData)) {
       const offer = getBookingEntity(bookingData);
       return offer?.service || offer?.Service || null;
@@ -323,13 +321,13 @@ const BookingDetails = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      confirmed: 'bg-green-100 text-green-700 border-green-200',
-      pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-      completed: 'bg-blue-100 text-blue-700 border-blue-200',
-      cancelled: 'bg-red-100 text-red-700 border-red-200',
-      checked_in: 'bg-purple-100 text-purple-700 border-purple-200'
+      confirmed: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700',
+      pending: 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700',
+      completed: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700',
+      cancelled: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700',
+      checked_in: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-700'
     };
-    return colors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return colors[status] || 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600';
   };
 
   // ==================== UI COMPONENTS ====================
@@ -338,15 +336,15 @@ const BookingDetails = () => {
     const getErrorIcon = () => {
       switch (errorType) {
         case 'network':
-          return <WifiOff className="w-16 h-16 text-orange-500" />;
+          return <WifiOff className="w-16 h-16 text-orange-500 dark:text-orange-400" />;
         case 'server':
-          return <Server className="w-16 h-16 text-red-500" />;
+          return <Server className="w-16 h-16 text-red-500 dark:text-red-400" />;
         case 'notFound':
-          return <AlertTriangle className="w-16 h-16 text-yellow-500" />;
+          return <AlertTriangle className="w-16 h-16 text-yellow-500 dark:text-yellow-400" />;
         case 'permission':
-          return <Shield className="w-16 h-16 text-red-500" />;
+          return <Shield className="w-16 h-16 text-red-500 dark:text-red-400" />;
         default:
-          return <AlertOctagon className="w-16 h-16 text-gray-500" />;
+          return <AlertOctagon className="w-16 h-16 text-gray-500 dark:text-gray-400" />;
       }
     };
 
@@ -372,12 +370,12 @@ const BookingDetails = () => {
             <div className="space-y-2">
               <button
                 onClick={handleRetry}
-                className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center space-x-2"
+                className="bg-orange-500 dark:bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-600 dark:hover:bg-orange-500 transition-colors flex items-center space-x-2"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Try Again</span>
               </button>
-              <p className="text-sm text-gray-500">Check your internet connection</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Check your internet connection</p>
             </div>
           );
         case 'server':
@@ -386,7 +384,7 @@ const BookingDetails = () => {
               <button
                 onClick={handleRetry}
                 disabled={retrying}
-                className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-2 disabled:opacity-50"
+                className="bg-red-500 dark:bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-600 dark:hover:bg-red-500 transition-colors flex items-center space-x-2 disabled:opacity-50"
               >
                 {retrying ? (
                   <>
@@ -401,7 +399,7 @@ const BookingDetails = () => {
                 )}
               </button>
               {retryCount > 0 && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Retry attempt {retryCount}/3 {retryCount < 3 && '- Auto-retrying...'}
                 </p>
               )}
@@ -411,7 +409,7 @@ const BookingDetails = () => {
           return (
             <button
               onClick={handleGoToBookings}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-blue-500 dark:bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
             >
               View All Bookings
             </button>
@@ -421,11 +419,11 @@ const BookingDetails = () => {
             <div className="space-y-2">
               <button
                 onClick={handleGoToBookings}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                className="bg-blue-500 dark:bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors"
               >
                 Back to My Bookings
               </button>
-              <p className="text-sm text-gray-500">Contact support if you believe this is an error</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Contact support if you believe this is an error</p>
             </div>
           );
         default:
@@ -433,14 +431,14 @@ const BookingDetails = () => {
             <div className="space-y-2">
               <button
                 onClick={handleRetry}
-                className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-2"
+                className="bg-gray-500 dark:bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500 transition-colors flex items-center space-x-2"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Try Again</span>
               </button>
               <button
                 onClick={handleGoToBookings}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors ml-2"
+                className="bg-blue-500 dark:bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors ml-2"
               >
                 View All Bookings
               </button>
@@ -452,8 +450,8 @@ const BookingDetails = () => {
     return (
       <div className="text-center">
         {getErrorIcon()}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 mt-4">{getErrorTitle()}</h1>
-        <p className="text-gray-600 mb-6 max-w-md mx-auto">{error}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 mt-4">{getErrorTitle()}</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">{error}</p>
         {getErrorActions()}
       </div>
     );
@@ -461,47 +459,47 @@ const BookingDetails = () => {
 
   const CancelModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-900">Cancel Booking</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Cancel Booking</h3>
           <button
             onClick={() => {
               setShowCancelModal(false);
               setCancelReason('');
             }}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <div className="font-medium">
+        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="font-medium text-gray-900 dark:text-white">
             {booking.entity?.title || booking.entity?.name || 'Booking'}
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             {new Date(booking.startTime).toLocaleString()}
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Reason for cancellation (optional)
           </label>
           <textarea
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             placeholder="Let us know why you're cancelling..."
           />
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
             <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4 text-red-600" />
-              <span className="text-sm text-red-600">{error}</span>
+              <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+              <span className="text-sm text-red-600 dark:text-red-400">{error}</span>
             </div>
           </div>
         )}
@@ -513,14 +511,14 @@ const BookingDetails = () => {
               setCancelReason('');
             }}
             disabled={actionLoading}
-            className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+            className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
           >
             Keep Booking
           </button>
           <button
             onClick={handleCancelBooking}
             disabled={actionLoading}
-            className="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 disabled:bg-gray-300 transition-colors flex items-center justify-center space-x-2"
+            className="flex-1 bg-red-600 dark:bg-red-700 text-white py-3 rounded-lg font-medium hover:bg-red-700 dark:hover:bg-red-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
           >
             {actionLoading ? (
               <>
@@ -540,30 +538,30 @@ const BookingDetails = () => {
     const generateTimeSlots = () => {
       const slots = [];
       const now = new Date();
-      
+
       for (let day = 1; day <= 7; day++) {
         const date = new Date(now);
         date.setDate(now.getDate() + day);
-        
+
         for (let hour = 9; hour <= 18; hour++) {
           const slotDate = new Date(date);
           slotDate.setHours(hour, 0, 0, 0);
-          
+
           slots.push({
             value: slotDate.toISOString().slice(0, 19),
-            label: `${slotDate.toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              month: 'short', 
-              day: 'numeric' 
-            })} at ${slotDate.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
+            label: `${slotDate.toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric'
+            })} at ${slotDate.toLocaleTimeString('en-US', {
+              hour: '2-digit',
               minute: '2-digit',
-              hour12: true 
+              hour12: true
             })}`
           });
         }
       }
-      
+
       return slots;
     };
 
@@ -571,9 +569,9 @@ const BookingDetails = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-900">Reschedule Booking</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Reschedule Booking</h3>
             <button
               onClick={() => {
                 setShowRescheduleModal(false);
@@ -584,24 +582,24 @@ const BookingDetails = () => {
                 });
                 setError(null);
               }}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-            <div className="font-medium">
+          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="font-medium text-gray-900 dark:text-white">
               {booking.entity?.title || booking.entity?.name || 'Booking'}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               Current: {new Date(booking.startTime).toLocaleString()}
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 New Date & Time *
               </label>
               <select
@@ -610,7 +608,7 @@ const BookingDetails = () => {
                   ...prev,
                   newStartTime: e.target.value
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 required
               >
                 <option value="">Select new time...</option>
@@ -623,7 +621,7 @@ const BookingDetails = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Reason for rescheduling (optional)
               </label>
               <textarea
@@ -633,17 +631,17 @@ const BookingDetails = () => {
                   reason: e.target.value
                 }))}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
                 placeholder="Let us know why you're rescheduling..."
               />
             </div>
 
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
               <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-blue-600 mt-0.5" />
+                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
                 <div>
-                  <div className="text-sm font-medium text-blue-900">Rescheduling Policy</div>
-                  <div className="text-xs text-blue-700">
+                  <div className="text-sm font-medium text-blue-900 dark:text-blue-300">Rescheduling Policy</div>
+                  <div className="text-xs text-blue-700 dark:text-blue-400">
                     Subject to availability. Original booking terms still apply.
                   </div>
                 </div>
@@ -652,10 +650,10 @@ const BookingDetails = () => {
           </div>
 
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                <span className="text-sm text-red-600">{error}</span>
+                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                <span className="text-sm text-red-600 dark:text-red-400">{error}</span>
               </div>
             </div>
           )}
@@ -672,14 +670,14 @@ const BookingDetails = () => {
                 setError(null);
               }}
               disabled={actionLoading}
-              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+              className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-medium hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleRescheduleBooking}
               disabled={actionLoading || !rescheduleData.newStartTime}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 transition-colors flex items-center justify-center space-x-2"
+              className="flex-1 bg-blue-600 dark:bg-blue-700 text-white py-3 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
             >
               {actionLoading ? (
                 <>
@@ -700,38 +698,35 @@ const BookingDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <Loader2 className="animate-spin w-8 h-8 text-blue-600 mx-auto mb-4" />
-            <span className="text-gray-600">Loading booking details...</span>
+            <Loader2 className="animate-spin w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+            <span className="text-gray-600 dark:text-gray-400">Loading booking details...</span>
             {retryCount > 0 && (
-              <p className="text-sm text-gray-500 mt-2">Retry attempt {retryCount}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Retry attempt {retryCount}</p>
             )}
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   if (error || !booking) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-6">
             <Link
               to="/profile/bookings"
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to My Bookings
             </Link>
 
             {retrying && (
-              <div className="flex items-center space-x-2 text-blue-600">
+              <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm">Retrying...</span>
               </div>
@@ -742,7 +737,6 @@ const BookingDetails = () => {
             <ErrorDisplay />
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -760,14 +754,12 @@ const BookingDetails = () => {
   const storeLocation = store?.location || store?.address || '';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <Link
             to="/profile/bookings"
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to My Bookings
@@ -776,7 +768,7 @@ const BookingDetails = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={handleRetry}
-              className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 text-sm"
+              className="flex items-center space-x-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-sm"
               title="Refresh booking details"
             >
               <RefreshCw className="w-4 h-4" />
@@ -785,7 +777,7 @@ const BookingDetails = () => {
 
             <button
               onClick={shareBooking}
-              className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 text-sm"
+              className="flex items-center space-x-1 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-sm"
             >
               <Share2 className="w-4 h-4" />
               <span>Share</span>
@@ -794,51 +786,51 @@ const BookingDetails = () => {
         </div>
 
         {booking && retryCount > 0 && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="text-green-600">Booking details loaded successfully!</span>
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <span className="text-green-600 dark:text-green-400">Booking details loaded successfully!</span>
             </div>
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-8 border-b">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 px-6 py-8 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-3">
                   {isOffer ? (
                     <div className="flex items-center space-x-2">
-                      <div className="p-2 bg-orange-100 rounded-lg">
-                        <Zap className="w-5 h-5 text-orange-600" />
+                      <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                        <Zap className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                       </div>
-                      <span className="text-lg font-medium text-orange-600">Offer Booking</span>
+                      <span className="text-lg font-medium text-orange-600 dark:text-orange-400">Offer Booking</span>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Building2 className="w-5 h-5 text-blue-600" />
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <span className="text-lg font-medium text-blue-600">
+                      <span className="text-lg font-medium text-blue-600 dark:text-blue-400">
                         {entity?.type === 'dynamic' ? 'Custom Service Booking' : 'Service Booking'}
                       </span>
                     </div>
                   )}
 
                   {entity?.featured && (
-                    <div className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-sm">
+                    <div className="flex items-center space-x-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-1 rounded-full text-sm">
                       <Star className="w-3 h-3" />
                       <span>Featured</span>
                     </div>
                   )}
                 </div>
 
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                   {displayName}
                 </h1>
 
                 {isOffer && service && (
-                  <p className="text-gray-600 mb-3">Service: {service.name}</p>
+                  <p className="text-gray-600 dark:text-gray-400 mb-3">Service: {service.name}</p>
                 )}
               </div>
 
@@ -850,12 +842,12 @@ const BookingDetails = () => {
 
           <div className="p-6 space-y-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Date & Time</h3>
-                <p className="text-gray-600">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Date & Time</h3>
+                <p className="text-gray-600 dark:text-gray-400">
                   {bookingTime.toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
@@ -863,7 +855,7 @@ const BookingDetails = () => {
                     day: 'numeric'
                   })}
                 </p>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   {bookingTime.toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit'
@@ -874,68 +866,68 @@ const BookingDetails = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <MapPin className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <MapPin className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Service Location</h3>
-                <p className="text-gray-600">{storeName}</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Service Location</h3>
+                <p className="text-gray-600 dark:text-gray-400">{storeName}</p>
                 {storeLocation && (
-                  <p className="text-gray-500 text-sm">{storeLocation}</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{storeLocation}</p>
                 )}
                 {booking.branch && booking.branch.name !== storeName && (
-                  <p className="text-gray-500 text-sm">Branch: {booking.branch.name}</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">Branch: {booking.branch.name}</p>
                 )}
               </div>
             </div>
 
             {booking.staff && (
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <User className="w-6 h-6 text-purple-600" />
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <User className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Staff Member</h3>
-                  <p className="text-gray-600">{booking.staff.name}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Staff Member</h3>
+                  <p className="text-gray-600 dark:text-gray-400">{booking.staff.name}</p>
                   {booking.staff.role && (
-                    <p className="text-gray-500 text-sm">{booking.staff.role}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">{booking.staff.role}</p>
                   )}
                 </div>
               </div>
             )}
 
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 {isOffer ? 'Offer Details' : 'Service Details'}
               </h3>
 
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                   {displayName}
                 </h4>
 
                 {entity?.description && (
-                  <p className="text-gray-600 text-sm mb-3">{entity.description}</p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{entity.description}</p>
                 )}
 
                 {isOffer && (
                   <div className="space-y-2">
                     {entity?.discount && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Discount:</span>
-                        <span className="text-sm font-medium text-red-600">{entity.discount}% OFF</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Discount:</span>
+                        <span className="text-sm font-medium text-red-600 dark:text-red-400">{entity.discount}% OFF</span>
                       </div>
                     )}
 
                     {booking.accessFee && booking.accessFee > 0 && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Platform Access Fee:</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Platform Access Fee:</span>
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">KES {parseFloat(booking.accessFee).toLocaleString()}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">KES {parseFloat(booking.accessFee).toLocaleString()}</span>
                           {booking.accessFeePaid ? (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />
                           ) : (
-                            <Clock4 className="w-4 h-4 text-yellow-500" />
+                            <Clock4 className="w-4 h-4 text-yellow-500 dark:text-yellow-400" />
                           )}
                         </div>
                       </div>
@@ -943,8 +935,8 @@ const BookingDetails = () => {
 
                     {(entity?.offerPrice || entity?.discounted_price) && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Discounted Price:</span>
-                        <span className="text-sm font-medium text-green-600">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Discounted Price:</span>
+                        <span className="text-sm font-medium text-green-600 dark:text-green-400">
                           KES {parseFloat(entity.offerPrice || entity.discounted_price).toLocaleString()}
                         </span>
                       </div>
@@ -952,8 +944,8 @@ const BookingDetails = () => {
 
                     {(entity?.originalPrice || entity?.original_price) && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Original Price:</span>
-                        <span className="text-sm text-gray-400 line-through">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Original Price:</span>
+                        <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
                           KES {parseFloat(entity.originalPrice || entity.original_price).toLocaleString()}
                         </span>
                       </div>
@@ -965,8 +957,8 @@ const BookingDetails = () => {
                   <div className="space-y-2">
                     {entity.price && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Price:</span>
-                        <span className="text-sm font-medium">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Price:</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
                           KES {parseFloat(entity.price).toLocaleString()}
                         </span>
                       </div>
@@ -974,15 +966,15 @@ const BookingDetails = () => {
 
                     {entity.duration && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Duration:</span>
-                        <span className="text-sm">{entity.duration} minutes</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Duration:</span>
+                        <span className="text-sm text-gray-900 dark:text-white">{entity.duration} minutes</span>
                       </div>
                     )}
 
                     {entity.type && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Service Type:</span>
-                        <span className="text-sm capitalize">{entity.type}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Service Type:</span>
+                        <span className="text-sm capitalize text-gray-900 dark:text-white">{entity.type}</span>
                       </div>
                     )}
                   </div>
@@ -991,31 +983,30 @@ const BookingDetails = () => {
             </div>
 
             {booking.payment && (
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Payment Information</h3>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   {booking.payment.amount && (
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Amount:</span>
-                      <span className="text-sm font-medium">KES {parseFloat(booking.payment.amount).toLocaleString()}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Amount:</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">KES {parseFloat(booking.payment.amount).toLocaleString()}</span>
                     </div>
                   )}
                   {booking.payment.method && (
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Method:</span>
-                      <span className="text-sm uppercase">{booking.payment.method}</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Method:</span>
+                      <span className="text-sm uppercase text-gray-900 dark:text-white">{booking.payment.method}</span>
                     </div>
                   )}
                   {booking.payment.status && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Status:</span>
-                      <span className={`text-sm px-2 py-1 rounded ${
-                        booking.payment.status === 'completed' || booking.payment.status === 'successful'
-                          ? 'bg-green-100 text-green-700'
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+                      <span className={`text-sm px-2 py-1 rounded ${booking.payment.status === 'completed' || booking.payment.status === 'successful'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                           : booking.payment.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}>
+                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                        }`}>
                         {booking.payment.status.charAt(0).toUpperCase() + booking.payment.status.slice(1)}
                       </span>
                     </div>
@@ -1025,19 +1016,19 @@ const BookingDetails = () => {
             )}
 
             {(booking.notes || booking.specialRequests) && (
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Additional Information</h3>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Additional Information</h3>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
                   {booking.notes && (
                     <div>
-                      <span className="text-sm font-medium text-gray-700">Notes:</span>
-                      <p className="text-sm text-gray-600 mt-1">{booking.notes}</p>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Notes:</span>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{booking.notes}</p>
                     </div>
                   )}
                   {booking.specialRequests && (
                     <div>
-                      <span className="text-sm font-medium text-gray-700">Special Requests:</span>
-                      <p className="text-sm text-gray-600 mt-1">{booking.specialRequests}</p>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Special Requests:</span>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{booking.specialRequests}</p>
                     </div>
                   )}
                 </div>
@@ -1045,21 +1036,21 @@ const BookingDetails = () => {
             )}
 
             {(store?.phone_number || store?.phone || store?.email) && (
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contact Information</h3>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
                   {(store.phone_number || store.phone) && (
                     <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-gray-600" />
-                      <span className="text-sm text-gray-600">
+                      <Phone className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
                         {store.phone_number || store.phone}
                       </span>
                     </div>
                   )}
                   {store.email && (
                     <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4 text-gray-600" />
-                      <span className="text-sm text-gray-600">{store.email}</span>
+                      <Mail className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{store.email}</span>
                     </div>
                   )}
                 </div>
@@ -1067,12 +1058,12 @@ const BookingDetails = () => {
             )}
 
             {isUpcoming && ['confirmed', 'pending'].includes(booking.status) && (
-              <div className="border-t pt-6">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                 <div className="flex space-x-4">
                   {canCancelBooking() && (
                     <button
                       onClick={() => setShowCancelModal(true)}
-                      className="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                      className="flex-1 bg-red-600 dark:bg-red-700 text-white py-3 rounded-lg font-medium hover:bg-red-700 dark:hover:bg-red-600 transition-colors flex items-center justify-center space-x-2"
                     >
                       <X className="w-4 h-4" />
                       <span>Cancel Booking</span>
@@ -1082,7 +1073,7 @@ const BookingDetails = () => {
                   {canRescheduleBooking() && (
                     <button
                       onClick={() => setShowRescheduleModal(true)}
-                      className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                      className="flex-1 bg-blue-600 dark:bg-blue-700 text-white py-3 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
                     >
                       <Edit3 className="w-4 h-4" />
                       <span>Reschedule</span>
@@ -1091,12 +1082,12 @@ const BookingDetails = () => {
                 </div>
 
                 {!canCancelBooking() && booking.status === 'confirmed' && (
-                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
                     <div className="flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5" />
+                      <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                       <div>
-                        <div className="text-sm font-medium text-yellow-900">Cancellation Not Available</div>
-                        <div className="text-xs text-yellow-700">
+                        <div className="text-sm font-medium text-yellow-900 dark:text-yellow-300">Cancellation Not Available</div>
+                        <div className="text-xs text-yellow-700 dark:text-yellow-400">
                           This booking cannot be cancelled due to the cancellation policy. Contact the service provider for assistance.
                         </div>
                       </div>
@@ -1107,16 +1098,16 @@ const BookingDetails = () => {
             )}
 
             {booking.status === 'completed' && (
-              <div className="border-t pt-6">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4">
                   <div className="flex items-center space-x-2 mb-2">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="font-medium text-green-900">Booking Completed</span>
+                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    <span className="font-medium text-green-900 dark:text-green-300">Booking Completed</span>
                   </div>
-                  <p className="text-sm text-green-700 mb-3">
+                  <p className="text-sm text-green-700 dark:text-green-400 mb-3">
                     Thank you for using our service! We hope you had a great experience.
                   </p>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                  <button className="bg-green-600 dark:bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors text-sm">
                     Leave a Review
                   </button>
                 </div>
@@ -1124,19 +1115,19 @@ const BookingDetails = () => {
             )}
 
             {booking.status === 'cancelled' && (
-              <div className="border-t pt-6">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4">
                   <div className="flex items-center space-x-2 mb-2">
-                    <XCircle className="w-5 h-5 text-red-600" />
-                    <span className="font-medium text-red-900">Booking Cancelled</span>
+                    <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    <span className="font-medium text-red-900 dark:text-red-300">Booking Cancelled</span>
                   </div>
-                  <p className="text-sm text-red-700">
+                  <p className="text-sm text-red-700 dark:text-red-400">
                     This booking has been cancelled. If you need assistance, please contact support.
                   </p>
                   {booking.cancelReason && (
                     <div className="mt-2">
-                      <span className="text-sm font-medium text-red-700">Reason:</span>
-                      <p className="text-sm text-red-600">{booking.cancelReason}</p>
+                      <span className="text-sm font-medium text-red-700 dark:text-red-400">Reason:</span>
+                      <p className="text-sm text-red-600 dark:text-red-400">{booking.cancelReason}</p>
                     </div>
                   )}
                 </div>
@@ -1148,8 +1139,6 @@ const BookingDetails = () => {
         {showCancelModal && <CancelModal />}
         {showRescheduleModal && <RescheduleModal />}
       </div>
-
-      <Footer />
     </div>
   );
 };
