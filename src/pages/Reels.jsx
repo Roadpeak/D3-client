@@ -555,15 +555,82 @@ const Reels = () => {
         </div>
     );
 
-    if (loading) {
-        return (
-            <div className="fixed inset-0 bg-black flex items-center justify-center">
-                <div className="flex flex-col items-center space-y-4">
-                    <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-white text-lg">Loading reels...</p>
+    // Skeleton loader for reels page
+    const ReelSkeleton = () => (
+        <div className="fixed inset-0 bg-black">
+            {/* Header skeleton */}
+            <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent p-4">
+                <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-full bg-white/10 animate-pulse" />
+                    <div className="h-6 w-16 bg-white/10 rounded animate-pulse" />
+                    <div className="w-10 h-10 rounded-full bg-white/10 animate-pulse" />
                 </div>
             </div>
-        );
+
+            {/* Main content skeleton */}
+            <div className="h-full w-full flex flex-col">
+                {/* Video area skeleton */}
+                <div className="flex-1 relative bg-gray-900 animate-pulse">
+                    {/* Center play button skeleton */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-20 h-20 rounded-full bg-white/10" />
+                    </div>
+                </div>
+
+                {/* Right side actions skeleton */}
+                <div className="absolute right-3 bottom-32 flex flex-col items-center gap-5">
+                    {/* Profile */}
+                    <div className="flex flex-col items-center gap-1">
+                        <div className="w-12 h-12 rounded-full bg-white/20 animate-pulse" />
+                        <div className="w-6 h-6 rounded-full bg-white/20 animate-pulse -mt-3" />
+                    </div>
+                    {/* Like */}
+                    <div className="flex flex-col items-center gap-1">
+                        <div className="w-10 h-10 rounded-full bg-white/10 animate-pulse" />
+                        <div className="w-8 h-3 bg-white/10 rounded animate-pulse" />
+                    </div>
+                    {/* Comment */}
+                    <div className="flex flex-col items-center gap-1">
+                        <div className="w-10 h-10 rounded-full bg-white/10 animate-pulse" />
+                        <div className="w-8 h-3 bg-white/10 rounded animate-pulse" />
+                    </div>
+                    {/* Share */}
+                    <div className="flex flex-col items-center gap-1">
+                        <div className="w-10 h-10 rounded-full bg-white/10 animate-pulse" />
+                        <div className="w-8 h-3 bg-white/10 rounded animate-pulse" />
+                    </div>
+                </div>
+
+                {/* Bottom info skeleton */}
+                <div className="absolute bottom-0 left-0 right-16 p-4">
+                    {/* Store name */}
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-full bg-white/20 animate-pulse" />
+                        <div className="h-4 w-32 bg-white/20 rounded animate-pulse" />
+                        <div className="h-6 w-16 bg-white/10 rounded-full animate-pulse" />
+                    </div>
+                    {/* Description */}
+                    <div className="space-y-2 mb-3">
+                        <div className="h-3 w-3/4 bg-white/10 rounded animate-pulse" />
+                        <div className="h-3 w-1/2 bg-white/10 rounded animate-pulse" />
+                    </div>
+                    {/* Service card skeleton */}
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 animate-pulse">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-2">
+                                <div className="h-4 w-24 bg-white/20 rounded" />
+                                <div className="h-3 w-16 bg-white/10 rounded" />
+                            </div>
+                            <div className="h-8 w-20 bg-white/20 rounded-full" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        return <ReelSkeleton />;
     }
 
     if (filteredReels.length === 0 && !selectedCategory) {
