@@ -227,17 +227,69 @@ const Stores = () => {
     return () => window.removeEventListener('locationChanged', handleLocationChange);
   }, [handleLocationChange]);
 
-  if (loading && stores.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin">
-            <Loader2 className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+  // Skeleton Components
+  const StoreCardSkeleton = ({ isListView = false }) => (
+    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 animate-pulse ${isListView ? 'p-4' : 'p-4 md:p-6'}`}>
+      {isListView ? (
+        <div className="flex items-center">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+            <div>
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+              <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
           </div>
-          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading stores</span>
+        </div>
+      ) : (
+        <div className="flex flex-col h-full">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+              <div className="flex-1">
+                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+                <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-auto">
+            <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const PageSkeleton = () => (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Controls Skeleton */}
+        <div className="flex items-center justify-between mb-6 animate-pulse">
+          <div className="flex items-center space-x-2">
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+          </div>
+          <div className="w-28 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+        </div>
+
+        {/* Category Tabs Skeleton */}
+        <div className="flex space-x-2 mb-8 overflow-x-auto py-1 animate-pulse">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0" />
+          ))}
+        </div>
+
+        {/* Grid Skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <StoreCardSkeleton key={i} />
+          ))}
         </div>
       </div>
-    );
+    </div>
+  );
+
+  if (loading && stores.length === 0) {
+    return <PageSkeleton />;
   }
 
   return (
