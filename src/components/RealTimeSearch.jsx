@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Loader2, MapPin, Tag, X, ChevronDown, Navigation, Check } from 'lucide-react';
 import { offerAPI, storeAPI } from '../services/api';
@@ -21,7 +21,6 @@ const RealTimeSearch = ({
   placeholder = "Search for Deals & Stores?",
   className = "",
   integratedMode = false,
-  onNavigate,
   onStoreClick,
   onOfferClick
 }) => {
@@ -415,21 +414,15 @@ const RealTimeSearch = ({
   const showRecentSearches = !query.trim() && recentSearches.length > 0;
   const currentLocationDisplay = getShortLocationName();
 
-  // Debug: Log available locations
-  useEffect(() => {
-    console.log('RealTimeSearch - Available Locations:', availableLocations);
-    console.log('RealTimeSearch - Current Location:', currentLocation);
-  }, [availableLocations, currentLocation]);
-
   // Integrated mode for navbar
   if (integratedMode) {
     return (
       <div ref={searchRef} className={`relative ${className}`}>
         {/* Integrated Search Bar */}
         <div className="relative">
-          <div className="flex items-center bg-white rounded-full shadow-lg h-12">
+          <div className="flex items-center bg-white dark:bg-gray-800 rounded-full shadow-lg dark:shadow-gray-900 h-12 transition-colors duration-200">
             {/* Location Selector */}
-            <div ref={locationRef} className="relative flex-shrink-0 border-r border-gray-200 rounded-l-full">
+            <div ref={locationRef} className="relative flex-shrink-0 border-r border-gray-200 dark:border-gray-700 rounded-l-full">
               <button
                 type="button"
                 onClick={(e) => {
@@ -437,17 +430,17 @@ const RealTimeSearch = ({
                   e.stopPropagation();
                   setIsLocationOpen(!isLocationOpen);
                 }}
-                className="flex items-center space-x-1.5 px-3 h-12 hover:bg-gray-50 transition-colors cursor-pointer relative z-10 rounded-l-full"
+                className="flex items-center space-x-1.5 px-3 h-12 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer relative z-10 rounded-l-full"
               >
-                <MapPin className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-gray-700 max-w-[70px] truncate">
+                <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[70px] truncate">
                   {currentLocationDisplay}
                 </span>
-                <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${isLocationOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isLocationOpen ? 'rotate-180' : ''}`} />
               </button>
             </div>
 
-            {/* Search Input - FIXED: Added fontSize 16px to prevent mobile zoom */}
+            {/* Search Input */}
             <form onSubmit={handleSearch} className="flex-1 min-w-0 flex items-center">
               <input
                 type="text"
@@ -456,7 +449,7 @@ const RealTimeSearch = ({
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setIsOpen(true)}
-                className="w-full h-12 px-4 bg-transparent border-none outline-none text-gray-700 placeholder-gray-400"
+                className="w-full h-12 px-4 bg-transparent border-none outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500"
                 style={{ fontSize: '16px' }}
               />
             </form>
@@ -480,28 +473,28 @@ const RealTimeSearch = ({
         {isLocationOpen && (
           <div
             id="location-dropdown"
-            className="fixed w-96 bg-white border border-gray-200/80 rounded-2xl shadow-2xl z-[9999] overflow-hidden backdrop-blur-xl"
+            className="fixed w-96 bg-white dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 rounded-2xl shadow-2xl dark:shadow-gray-900 z-[9999] overflow-hidden backdrop-blur-xl transition-colors duration-200"
             style={{
               top: `${dropdownPosition.top}px`,
               left: `${dropdownPosition.left}px`
             }}
           >
             {/* Header with gradient */}
-            <div className="bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50 p-5 border-b border-gray-200/50">
+            <div className="bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50 dark:from-gray-700 dark:via-gray-700 dark:to-gray-700 p-5 border-b border-gray-200/50 dark:border-gray-600">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     Choose Location
                   </h3>
-                  <p className="text-xs text-gray-600 mt-1">Find amazing deals near you</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Find amazing deals near you</p>
                 </div>
                 <button
                   onClick={() => {
                     setIsLocationOpen(false);
                     setLocationSearch('');
                   }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-white/60 rounded-lg"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-white/60 dark:hover:bg-gray-600 rounded-lg"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -509,13 +502,13 @@ const RealTimeSearch = ({
 
               {/* Search locations */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search locations..."
                   value={locationSearch}
                   onChange={(e) => setLocationSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                   style={{ fontSize: '16px' }}
                 />
               </div>
@@ -526,7 +519,7 @@ const RealTimeSearch = ({
               <button
                 onClick={handleUseCurrentLocation}
                 disabled={isGettingLocation}
-                className="w-full flex items-center justify-between p-4 bg-white/95 hover:bg-white rounded-xl transition-all duration-200 group shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-between p-4 bg-white/95 dark:bg-gray-800/95 hover:bg-white dark:hover:bg-gray-800 rounded-xl transition-all duration-200 group shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl group-hover:scale-110 transition-transform">
@@ -537,20 +530,20 @@ const RealTimeSearch = ({
                     )}
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-semibold text-gray-900">Use Current Location</p>
-                    <p className="text-xs text-gray-600">Automatically detect your area</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Use Current Location</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Automatically detect your area</p>
                   </div>
                 </div>
-                <ChevronDown className="-rotate-90 w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                <ChevronDown className="-rotate-90 w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
               </button>
             </div>
 
             {/* Locations List */}
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto bg-white dark:bg-gray-800">
               {filteredLocations.length > 0 ? (
                 <>
                   <div className="px-4 pt-3 pb-2">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       {locationSearch ? 'Search Results' : 'Popular Locations'}
                     </p>
                   </div>
@@ -561,8 +554,8 @@ const RealTimeSearch = ({
                         <button
                           key={locationItem.id}
                           className={`w-full p-3.5 text-left rounded-xl transition-all duration-200 group ${isSelected
-                            ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 shadow-sm'
-                            : 'hover:bg-gray-50 border-2 border-transparent'
+                            ? 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 border-2 border-blue-200 dark:border-blue-700 shadow-sm'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-transparent'
                             }`}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -574,18 +567,18 @@ const RealTimeSearch = ({
                               {/* Location Icon */}
                               <div className={`p-2 rounded-lg flex-shrink-0 transition-all ${isSelected
                                 ? 'bg-gradient-to-br from-blue-500 to-cyan-600'
-                                : 'bg-gray-100 group-hover:bg-blue-100'
+                                : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30'
                                 }`}>
-                                <MapPin className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-gray-600 group-hover:text-blue-600'}`} />
+                                <MapPin className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'}`} />
                               </div>
 
                               {/* Location Info */}
                               <div className="flex-1 min-w-0">
-                                <p className={`text-sm font-semibold truncate ${isSelected ? 'text-blue-900' : 'text-gray-900'
+                                <p className={`text-sm font-semibold truncate ${isSelected ? 'text-blue-900 dark:text-blue-200' : 'text-gray-900 dark:text-gray-100'
                                   }`}>
                                   {locationItem.name}
                                 </p>
-                                <p className="text-xs text-gray-600 truncate">{locationItem.area}</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{locationItem.area}</p>
                               </div>
                             </div>
 
@@ -595,7 +588,7 @@ const RealTimeSearch = ({
                               <div className="text-right">
                                 <div className={`text-xs font-bold px-2 py-1 rounded-full ${isSelected
                                   ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-100 text-gray-700 group-hover:bg-blue-100 group-hover:text-blue-700'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 group-hover:text-blue-700 dark:group-hover:text-blue-400'
                                   }`}>
                                   {locationItem.offers}
                                 </div>
@@ -616,62 +609,62 @@ const RealTimeSearch = ({
                 </>
               ) : (
                 <div className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Search className="w-8 h-8 text-gray-400" />
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Search className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
-                  <p className="text-sm font-medium text-gray-900 mb-1">No locations found</p>
-                  <p className="text-xs text-gray-500">Try a different search term</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">No locations found</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Try a different search term</p>
                 </div>
               )}
             </div>
 
             {/* Footer */}
             {filteredLocations.length > 0 && (
-              <div className="p-4 bg-gray-50/50 border-t border-gray-200/50">
-                <div className="flex items-center justify-between text-xs text-gray-600">
+              <div className="p-4 bg-gray-50/50 dark:bg-gray-700/50 border-t border-gray-200/50 dark:border-gray-600">
+                <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
                   <span className="flex items-center gap-1">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     {filteredLocations.length} location{filteredLocations.length !== 1 ? 's' : ''} available
                   </span>
-                  <span className="text-blue-600 font-medium">Live deals updated</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-medium">Live deals updated</span>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Search Results Dropdown - Enhanced with live results */}
+        {/* Search Results Dropdown */}
         {isOpen && (
           <div
             ref={resultsRef}
-            className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-3xl shadow-xl z-50 max-h-96 overflow-y-auto"
+            className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl dark:shadow-gray-900 z-50 max-h-96 overflow-y-auto transition-colors duration-200"
           >
             {/* Loading State */}
             {isLoading && query.trim() && (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                <span className="ml-2 text-gray-600">Searching...</span>
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+                <span className="ml-2 text-gray-600 dark:text-gray-400">Searching...</span>
               </div>
             )}
 
             {/* Recent Searches */}
             {showRecentSearches && (
-              <div className="p-4 border-b border-gray-100">
-                <h3 className="text-sm font-medium text-gray-500 mb-3">Recent Searches</h3>
+              <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Recent Searches</h3>
                 {recentSearches.map((searchTerm, index) => (
                   <button
                     key={index}
                     onClick={() => handleResultClick({ type: 'recent', item: searchTerm })}
-                    className={`flex items-center justify-between w-full p-2 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === index ? 'bg-cyan-50 border border-cyan-200' : ''
+                    className={`flex items-center justify-between w-full p-2 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${activeIndex === index ? 'bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-700' : ''
                       }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <Search className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-700">{searchTerm}</span>
+                      <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-gray-700 dark:text-gray-300">{searchTerm}</span>
                     </div>
                     <button
                       onClick={(e) => clearRecentSearch(e, searchTerm)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -685,8 +678,8 @@ const RealTimeSearch = ({
               <>
                 {/* Stores Results */}
                 {results.stores.length > 0 && (
-                  <div className="p-4 border-b border-gray-100">
-                    <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center">
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 flex items-center">
                       <MapPin className="w-4 h-4 mr-1" />
                       Stores ({results.stores.length})
                     </h3>
@@ -696,17 +689,17 @@ const RealTimeSearch = ({
                         <button
                           key={store.id}
                           onClick={() => handleResultClick({ type: 'store', item: store })}
-                          className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === globalIndex ? 'bg-cyan-50 border border-cyan-200' : ''
+                          className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${activeIndex === globalIndex ? 'bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-700' : ''
                             }`}
                         >
                           <ImageWithFallback
                             src={store.logo}
                             name={store.name}
-                            className="w-10 h-10 rounded-2xl object-cover border border-gray-200"
+                            className="w-10 h-10 rounded-2xl object-cover border border-gray-200 dark:border-gray-600"
                           />
                           <div className="flex-1 text-left">
-                            <p className="font-medium text-gray-900">{store.name}</p>
-                            <div className="flex items-center text-sm text-gray-500">
+                            <p className="font-medium text-gray-900 dark:text-gray-100">{store.name}</p>
+                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                               <span>{store.category}</span>
                               {store.location && (
                                 <>
@@ -716,7 +709,7 @@ const RealTimeSearch = ({
                               )}
                             </div>
                           </div>
-                          <div className="text-blue-600 font-medium text-sm">
+                          <div className="text-blue-600 dark:text-blue-400 font-medium text-sm">
                             {store.cashback}
                           </div>
                         </button>
@@ -728,7 +721,7 @@ const RealTimeSearch = ({
                 {/* Offers Results */}
                 {results.offers.length > 0 && (
                   <div className="p-4">
-                    <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center">
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 flex items-center">
                       <Tag className="w-4 h-4 mr-1" />
                       Offers ({results.offers.length})
                     </h3>
@@ -738,19 +731,19 @@ const RealTimeSearch = ({
                         <button
                           key={offer.id}
                           onClick={() => handleResultClick({ type: 'offer', item: offer })}
-                          className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 transition-colors ${activeIndex === globalIndex ? 'bg-cyan-50 border border-cyan-200' : ''
+                          className={`flex items-center space-x-3 w-full p-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${activeIndex === globalIndex ? 'bg-cyan-50 dark:bg-cyan-900/30 border border-cyan-200 dark:border-cyan-700' : ''
                             }`}
                         >
                           <ImageWithFallback
                             src={offer.image}
                             name={offer.title}
-                            className="w-12 h-12 rounded-2xl object-cover border border-gray-200"
+                            className="w-12 h-12 rounded-2xl object-cover border border-gray-200 dark:border-gray-600"
                             isOffer={true}
                           />
                           <div className="flex-1 text-left">
-                            <p className="font-medium text-gray-900 truncate">{offer.title}</p>
-                            <p className="text-sm text-gray-500 truncate">{offer.description}</p>
-                            <div className="flex items-center text-xs text-blue-600">
+                            <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{offer.title}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{offer.description}</p>
+                            <div className="flex items-center text-xs text-blue-600 dark:text-blue-400">
                               <span>{offer.store}</span>
                               {offer.location && (
                                 <>
@@ -760,7 +753,7 @@ const RealTimeSearch = ({
                               )}
                             </div>
                           </div>
-                          <div className="text-blue-600 font-medium text-sm">
+                          <div className="text-blue-600 dark:text-blue-400 font-medium text-sm">
                             {offer.discount}
                           </div>
                         </button>
@@ -771,7 +764,7 @@ const RealTimeSearch = ({
 
                 {/* View All Results */}
                 {query.trim() && (
-                  <div className="p-4 border-t border-gray-100">
+                  <div className="p-4 border-t border-gray-100 dark:border-gray-700">
                     <button
                       onClick={handleSearch}
                       className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-2 px-4 rounded-2xl hover:from-cyan-600 hover:to-blue-700 transition-colors font-medium shadow-md"
@@ -786,18 +779,18 @@ const RealTimeSearch = ({
             {/* No Results */}
             {!isLoading && !hasResults && query.trim() && (
               <div className="p-8 text-center">
-                <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 mb-2">No results found for "{query}"</p>
-                <p className="text-sm text-gray-400">Try searching for stores, deals, or categories</p>
+                <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">No results found for "{query}"</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Try searching for stores, deals, or categories</p>
               </div>
             )}
 
             {/* No Recent Searches */}
             {!isLoading && !hasResults && !query.trim() && recentSearches.length === 0 && (
               <div className="p-8 text-center">
-                <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 mb-2">Start typing to search</p>
-                <p className="text-sm text-gray-400">Search for stores, deals, or categories</p>
+                <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Start typing to search</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Search for stores, deals, or categories</p>
               </div>
             )}
           </div>
@@ -818,7 +811,7 @@ const RealTimeSearch = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
-          className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 rounded-3xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+          className="w-full pl-4 pr-12 py-3 border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-3xl focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900 transition-colors text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           style={{ fontSize: '16px' }}
         />
         <button
@@ -837,20 +830,20 @@ const RealTimeSearch = ({
       {isOpen && (
         <div
           ref={resultsRef}
-          className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-3xl shadow-xl z-50 max-h-96 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl shadow-xl dark:shadow-gray-900 z-50 max-h-96 overflow-y-auto transition-colors duration-200"
         >
           {isLoading && query.trim() && (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Searching...</span>
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
+              <span className="ml-2 text-gray-600 dark:text-gray-400">Searching...</span>
             </div>
           )}
 
           {!isLoading && !hasResults && !query.trim() && recentSearches.length === 0 && (
             <div className="p-8 text-center">
-              <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 mb-2">Start typing to search</p>
-              <p className="text-sm text-gray-400">Search for stores, deals, or categories</p>
+              <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-gray-400 mb-2">Start typing to search</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Search for stores, deals, or categories</p>
             </div>
           )}
         </div>
