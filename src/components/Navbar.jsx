@@ -559,10 +559,13 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Main Navigation - Blue Background - Full Width */}
-            <div className="bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600">
-              <div className="container mx-auto lg:px-4 flex items-center justify-between py-2.5">
-                <nav className="flex items-center space-x-1 ml-6">
+          </div>
+        </div>
+
+        {/* Main Navigation - Blue Background - Full Width Edge to Edge */}
+        <div className="hidden lg:block bg-gradient-to-br from-cyan-400 via-blue-500 to-blue-600">
+          <div className="container mx-auto px-4 flex items-center justify-between py-2.5">
+            <nav className="flex items-center space-x-1">
                   <Link to="/" className={`text-white hover:text-yellow-400 font-medium transition-all duration-200 px-3 py-1.5 rounded-lg hover:bg-white/10 text-sm flex items-center space-x-1.5 ${location.pathname === '/' ? 'text-yellow-400 bg-white/10' : ''}`}>
                     <Home className="w-3.5 h-3.5" />
                     <span>Home</span>
@@ -595,18 +598,16 @@ const Navbar = () => {
                       </span>
                     )}
                   </Link>
-                </nav>
+            </nav>
 
-                {/* Desktop Search Bar */}
-                <div className="flex-1 max-w-2xl mx-6">
-                  <RealTimeSearch
-                    placeholder="Search for deals, coupons & stores..."
-                    onNavigate={handleSearchNavigate}
-                    onStoreClick={handleStoreClick}
-                    onOfferClick={handleOfferClick}
-                  />
-                </div>
-              </div>
+            {/* Desktop Search Bar */}
+            <div className="flex-1 max-w-2xl mx-6">
+              <RealTimeSearch
+                placeholder="Search for deals, coupons & stores..."
+                onNavigate={handleSearchNavigate}
+                onStoreClick={handleStoreClick}
+                onOfferClick={handleOfferClick}
+              />
             </div>
           </div>
         </div>

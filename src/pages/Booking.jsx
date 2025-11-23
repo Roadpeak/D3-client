@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Calendar, Clock, MapPin, User, CreditCard, Smartphone, Check, 
-  ChevronRight, AlertCircle, X, Loader2, CheckCircle, 
+import {
+  Calendar, Clock, MapPin, User, CreditCard, Smartphone, Check,
+  ChevronRight, AlertCircle, X, Loader2, CheckCircle,
   Users, UserCheck, Info, RefreshCw, Zap, ArrowLeft, Phone,
-  AlertTriangle
+  AlertTriangle, Shield, ChevronLeft
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import bookingService from '../services/enhancedBookingService';
 import { offerAPI } from '../services/offerService';
 import serviceAPI from '../services/serviceService';
@@ -732,31 +730,34 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   // ==================== UI COMPONENTS ====================
 
   const StepTracker = () => (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-      <div className="flex items-center justify-between">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/20 p-4 sm:p-6 mb-6 transition-colors duration-200">
+      <div className="flex items-center justify-between overflow-x-auto">
         {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
+          <div key={step.id} className="flex items-center flex-shrink-0">
             <div className="flex flex-col items-center">
               <button
                 onClick={() => handleStepNavigation(step.id)}
                 disabled={step.id > currentStep && !step.completed}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                  step.completed ? 'bg-green-500 text-white cursor-pointer hover:bg-green-600' :
-                  currentStep === step.id ? 'bg-blue-500 text-white' : 
-                  step.id < currentStep ? 'bg-blue-300 text-white cursor-pointer hover:bg-blue-400' :
-                  'bg-gray-200 text-gray-500 cursor-not-allowed'
+                className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  step.completed ? 'bg-gradient-to-br from-green-500 to-green-600 text-white cursor-pointer hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/25' :
+                  currentStep === step.id ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' :
+                  step.id < currentStep ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50' :
+                  'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {step.completed ? <Check className="w-6 h-6" /> : <step.icon className="w-6 h-6" />}
+                {step.completed ? <Check className="w-5 h-5 sm:w-6 sm:h-6" /> : <step.icon className="w-5 h-5 sm:w-6 sm:h-6" />}
               </button>
-              <span className={`mt-2 text-sm font-medium ${
-                currentStep === step.id ? 'text-blue-600' : 'text-gray-600'
+              <span className={`mt-2 text-xs sm:text-sm font-medium transition-colors ${
+                step.completed ? 'text-green-600 dark:text-green-400' :
+                currentStep === step.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'
               }`}>
                 {step.title}
               </span>
             </div>
             {index < steps.length - 1 && (
-              <ChevronRight className="w-5 h-5 text-gray-400 mx-4" />
+              <div className={`w-8 sm:w-12 h-0.5 mx-2 sm:mx-4 rounded transition-colors ${
+                step.completed ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
+              }`} />
             )}
           </div>
         ))}
@@ -765,87 +766,93 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   );
 
   const EntitySummary = () => (
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/20 p-4 border border-gray-100 dark:border-gray-700 transition-colors duration-200">
       <div className="flex items-center space-x-4">
-        <img
-          src={entityDetails?.images?.[0] || entityDetails?.image || "/api/placeholder/60/60"}
-          alt={entityDetails?.title || entityDetails?.name}
-          className="w-16 h-16 rounded-lg object-cover"
-        />
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">
+        <div className="relative">
+          <img
+            src={entityDetails?.images?.[0] || entityDetails?.image || "/api/placeholder/60/60"}
+            alt={entityDetails?.title || entityDetails?.name}
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover ring-2 ring-gray-100 dark:ring-gray-700"
+          />
+          {isOfferBooking && entityDetails?.discount && (
+            <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg">
+              -{entityDetails.discount}%
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 dark:text-white truncate">
             {entityDetails?.title || entityDetails?.name}
           </h3>
-          <p className="text-sm text-gray-600 mt-1">
-            {isOfferBooking 
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
+            {isOfferBooking
               ? entityDetails?.service?.name || 'Offer booking'
               : entityDetails?.description || 'Service booking'
             }
           </p>
           {bookingRules && (
-            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-              <span className="flex items-center">
-                <Clock className="w-3 h-3 mr-1" />
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              <span className="flex items-center bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                <Clock className="w-3 h-3 mr-1 text-blue-500" />
                 {bookingRules.serviceDuration}min
               </span>
               {bookingRules.maxConcurrentBookings > 1 && (
-                <span className="flex items-center">
-                  <Users className="w-3 h-3 mr-1" />
-                  Up to {bookingRules.maxConcurrentBookings} per slot
+                <span className="flex items-center bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                  <Users className="w-3 h-3 mr-1 text-purple-500" />
+                  Up to {bookingRules.maxConcurrentBookings}
                 </span>
               )}
-              <span className="flex items-center">
+              <span className="flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-lg">
                 <Zap className="w-3 h-3 mr-1" />
-                {isOfferBooking ? 'Offer Booking' : 'Direct Service'}
+                {isOfferBooking ? 'Offer' : 'Service'}
               </span>
             </div>
           )}
         </div>
-        {isOfferBooking && entityDetails?.discount ? (
-          <div className="text-right">
-            <div className="text-sm bg-red-100 text-red-800 px-2 py-1 rounded mb-1">
-              {entityDetails.discount}% OFF
-            </div>
-            <div className="text-lg font-bold text-green-600">
-              {entityDetails.offerPrice || entityDetails.discounted_price}
-            </div>
-            <div className="text-sm text-gray-500 line-through">
-              {entityDetails.originalPrice || entityDetails.original_price}
-            </div>
-          </div>
-        ) : !isOfferBooking && entityDetails?.price ? (
-          <div className="text-right">
-            <div className="text-lg font-bold text-blue-600">
-              KES {entityDetails.price}
-            </div>
-            <div className="text-sm text-gray-500">
-              Service Price
-            </div>
-          </div>
-        ) : null}
+        <div className="text-right flex-shrink-0">
+          {isOfferBooking && entityDetails?.discount ? (
+            <>
+              <div className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400">
+                {entityDetails.offerPrice || entityDetails.discounted_price}
+              </div>
+              <div className="text-sm text-gray-400 dark:text-gray-500 line-through">
+                {entityDetails.originalPrice || entityDetails.original_price}
+              </div>
+            </>
+          ) : !isOfferBooking && entityDetails?.price ? (
+            <>
+              <div className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">
+                KES {entityDetails.price}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                Service Price
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 
   const SmartDatePicker = () => {
     const availableDates = getAvailableDates();
-    
+
     const getDisplayWorkingDays = () => {
       if (!branchInfo || !branchInfo.workingDays) return [];
-      
+
       const parsedDays = parseWorkingDaysArray(branchInfo.workingDays);
       return parsedDays.map(day => {
         const dayStr = day.toString().trim();
         return dayStr.charAt(0).toUpperCase() + dayStr.slice(1).toLowerCase();
       });
     };
-    
+
     return (
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
           Select Date
         </label>
-        
+
         <input
           type="date"
           value={bookingData.date}
@@ -853,53 +860,63 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
             setBookingData(prev => ({ ...prev, date: e.target.value, time: '' }));
           }}
           min={new Date().toISOString().split('T')[0]}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4 transition-colors"
+          style={{ fontSize: '16px' }}
         />
-        
+
         {availableDates.length > 0 && (
           <div>
-            <p className="text-sm text-gray-600 mb-2">Quick select (working days only):</p>
-            <div className="grid grid-cols-2 gap-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Quick select (working days only):</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {availableDates.slice(0, 6).map((dateObj) => (
                 <button
                   key={dateObj.date}
                   onClick={() => {
                     setBookingData(prev => ({ ...prev, date: dateObj.date, time: '' }));
                   }}
-                  className={`p-2 text-xs rounded border transition-colors ${
+                  className={`p-3 text-xs rounded-xl border-2 transition-all duration-200 ${
                     bookingData.date === dateObj.date
-                      ? 'bg-blue-500 text-white border-blue-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300'
+                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/25'
+                      : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
                   }`}
                 >
-                  <div className="font-medium">{dateObj.dayName}</div>
-                  <div className="text-xs opacity-75">{dateObj.formattedDate}</div>
+                  <div className="font-semibold">{dateObj.dayName}</div>
+                  <div className={`text-xs mt-0.5 ${bookingData.date === dateObj.date ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                    {dateObj.formattedDate}
+                  </div>
                 </button>
               ))}
             </div>
           </div>
         )}
-        
+
         {branchInfo ? (
-          <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-sm font-medium text-gray-700">{branchInfo.name}</p>
-            <p className="text-xs text-gray-500">
+          <div className="mt-4 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
+            <div className="flex items-center mb-2">
+              <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2" />
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{branchInfo.name}</p>
+            </div>
+            <div className="flex items-center text-xs text-gray-600 dark:text-gray-400 mb-1">
+              <Clock className="w-3 h-3 mr-1" />
               Open: {branchInfo.openingTime} - {branchInfo.closingTime}
-            </p>
+            </div>
             {(() => {
               const displayWorkingDays = getDisplayWorkingDays();
               return displayWorkingDays.length > 0 && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   Working days: {displayWorkingDays.join(', ')}
                 </p>
               );
             })()}
           </div>
         ) : (
-          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              Loading branch information...
-            </p>
+          <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl">
+            <div className="flex items-center">
+              <Loader2 className="w-4 h-4 text-yellow-600 dark:text-yellow-400 animate-spin mr-2" />
+              <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                Loading branch information...
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -907,32 +924,32 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   };
 
   const ErrorDisplay = ({ error, onRetry }) => (
-    <div className="flex items-center justify-center h-64 border-2 border-dashed border-red-300 rounded-lg bg-red-50">
-      <div className="text-center max-w-md">
-        <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-2" />
-        <p className="text-red-600 font-medium mb-2">{error}</p>
-        
-        <div className="space-y-2">
-          <button
-            onClick={onRetry}
-            disabled={refreshing}
-            className="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded text-sm transition-colors disabled:opacity-50"
-          >
-            {refreshing ? 'Retrying...' : 'Try Again'}
-          </button>
+    <div className="flex items-center justify-center h-64 border-2 border-dashed border-red-300 dark:border-red-700 rounded-xl bg-red-50 dark:bg-red-900/20">
+      <div className="text-center max-w-md px-4">
+        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-8 h-8 text-red-500 dark:text-red-400" />
         </div>
-        
+        <p className="text-red-700 dark:text-red-300 font-medium mb-4">{error}</p>
+
+        <button
+          onClick={onRetry}
+          disabled={refreshing}
+          className="bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-800 dark:text-red-300 px-6 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+        >
+          {refreshing ? 'Retrying...' : 'Try Again'}
+        </button>
+
         {error.includes('closed') && branchInfo?.workingDays && (
-          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-            <p className="text-blue-800 font-medium">Branch is open on:</p>
-            <p className="text-blue-600">
-              {branchInfo.workingDays.map(day => 
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-sm">
+            <p className="text-blue-800 dark:text-blue-300 font-medium">Branch is open on:</p>
+            <p className="text-blue-600 dark:text-blue-400">
+              {branchInfo.workingDays.map(day =>
                 day.charAt(0).toUpperCase() + day.slice(1).toLowerCase()
               ).join(', ')}
             </p>
             {bookingData.date && (
-              <p className="text-blue-600 text-xs mt-1">
-                Selected: {new Date(bookingData.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })} 
+              <p className="text-blue-600 dark:text-blue-400 text-xs mt-1">
+                Selected: {new Date(bookingData.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })}
                 ({bookingData.date})
               </p>
             )}
@@ -944,12 +961,12 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
 
   const StaffSelectionInfo = () => {
     if (!entityDetails) return null;
-    
+
     return (
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl transition-colors duration-200">
         <div className="flex items-center">
-          <Info className="w-4 h-4 text-blue-600 mr-2" />
-          <span className="text-sm text-blue-800">
+          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2 flex-shrink-0" />
+          <span className="text-sm text-blue-800 dark:text-blue-300">
             {isOfferBooking ? (
               <>
                 Showing staff assigned to: <strong>{entityDetails.service?.name}</strong>
@@ -970,7 +987,7 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
           </span>
         </div>
         {staff.length === 0 && (
-          <p className="text-xs text-blue-600 mt-1">
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
             You can still proceed with your booking. A staff member will be assigned automatically.
           </p>
         )}
@@ -979,29 +996,30 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   };
 
   const DateTimeStep = () => (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Select Date & Time</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/20 p-4 sm:p-6 transition-colors duration-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Select Date & Time</h2>
         {isOfferBooking && accessFee > 0 && (
-          <div className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-            Platform Access Fee: {formatCurrency(accessFee)}
+          <div className="flex items-center text-sm bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 text-blue-800 dark:text-blue-300 px-4 py-2 rounded-full font-medium">
+            <CreditCard className="w-4 h-4 mr-2" />
+            Access Fee: {formatCurrency(accessFee)}
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         <SmartDatePicker />
 
         <div>
           <div className="flex items-center justify-between mb-3">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Available Time Slots
             </label>
             {availableSlots.length > 0 && (
               <button
                 onClick={refreshSlots}
                 disabled={refreshing}
-                className="flex items-center text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors"
+                className="flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 disabled:opacity-50 transition-colors"
               >
                 <RefreshCw className={`w-4 h-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
@@ -1010,24 +1028,28 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
           </div>
 
           {!bookingData.date ? (
-            <div className="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-lg">
+            <div className="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700/50">
               <div className="text-center">
-                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">Please select a date first</p>
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Calendar className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">Please select a date first</p>
               </div>
             </div>
           ) : error ? (
             <ErrorDisplay error={error} onRetry={refreshSlots} />
           ) : availableSlots.length === 0 ? (
-            <div className="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-lg">
+            <div className="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700/50">
               <div className="text-center">
-                <Clock className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">No available slots for this date</p>
-                <p className="text-sm text-gray-400">Please try a different date</p>
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Clock className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 font-medium">No available slots for this date</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Please try a different date</p>
                 <button
                   onClick={refreshSlots}
                   disabled={refreshing}
-                  className="mt-2 text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                  className="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium disabled:opacity-50"
                 >
                   {refreshing ? 'Checking...' : 'Check again'}
                 </button>
@@ -1035,41 +1057,41 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
+              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1">
                 {detailedSlots.length > 0 ? (
                   detailedSlots.map((slot) => {
                     const isSelected = bookingData.time === slot.time;
-                    const availabilityColor = slot.available === slot.total ? 'text-green-600' : 
-                                            slot.available > slot.total / 2 ? 'text-yellow-600' : 'text-orange-600';
-                    
+                    const availabilityColor = slot.available === slot.total ? 'text-green-600 dark:text-green-400' :
+                                            slot.available > slot.total / 2 ? 'text-yellow-600 dark:text-yellow-400' : 'text-orange-600 dark:text-orange-400';
+
                     return (
                       <button
                         key={slot.time}
                         onClick={() => setBookingData(prev => ({ ...prev, time: slot.time }))}
-                        className={`p-3 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                        className={`p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200 ${
                           isSelected
-                            ? 'bg-blue-500 text-white border-blue-500 shadow-md'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300 hover:shadow-sm'
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/25'
+                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span>{slot.time}</span>
+                          <span className="font-semibold">{slot.time}</span>
                           <div className="flex items-center space-x-2">
                             {slot.total > 1 && (
                               <>
                                 <Users className={`w-4 h-4 ${isSelected ? 'text-white' : availabilityColor}`} />
-                                <span className={`text-xs ${isSelected ? 'text-white' : availabilityColor}`}>
+                                <span className={`text-xs font-medium ${isSelected ? 'text-white' : availabilityColor}`}>
                                   {slot.available}/{slot.total}
                                 </span>
                               </>
                             )}
                             {slot.available === 1 && slot.total === 1 && (
-                              <UserCheck className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-green-600'}`} />
+                              <UserCheck className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-green-600 dark:text-green-400'}`} />
                             )}
                           </div>
                         </div>
                         {slot.total > 1 && !isSelected && (
-                          <div className="mt-1 text-xs text-gray-500">
+                          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             {slot.available === slot.total ? 'All slots available' :
                              slot.available === 1 ? 'Last slot available' :
                              `${slot.available} slots available`}
@@ -1083,10 +1105,10 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
                     <button
                       key={time}
                       onClick={() => setBookingData(prev => ({ ...prev, time }))}
-                      className={`p-3 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                      className={`p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200 ${
                         bookingData.time === time
-                          ? 'bg-blue-500 text-white border-blue-500 shadow-md'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-300 hover:shadow-sm'
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/25'
+                          : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
                       }`}
                     >
                       {time}
@@ -1103,7 +1125,7 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
         <button
           onClick={() => setCurrentStep(2)}
           disabled={!bookingData.date || !bookingData.time}
-          className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl font-medium disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg shadow-blue-500/25 disabled:shadow-none"
         >
           <span>Continue</span>
           <ChevronRight className="w-4 h-4" />
@@ -1112,54 +1134,58 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
     </div>
   );
   const BranchSelection = () => (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Service Location & Staff</h2>
-  
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/20 p-4 sm:p-6 transition-colors duration-200">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">Service Location & Staff</h2>
+
       {bookingData.time && (
-        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center">
-            <Clock className="w-4 h-4 text-blue-600 mr-2" />
-            <span className="text-sm text-blue-800">
-              Selected time: <strong>{bookingData.time}</strong> on {bookingData.date}
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
+          <div className="flex items-center flex-wrap gap-2">
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+              <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <span className="text-sm text-blue-800 dark:text-blue-300">
+              Selected: <strong>{bookingData.time}</strong> on <strong>{bookingData.date}</strong>
             </span>
             {(() => {
               const slotDetails = getSlotDetails(bookingData.time);
               return slotDetails && slotDetails.total > 1 && (
-                <span className="ml-2 text-xs text-blue-600">
-                  ({slotDetails.available}/{slotDetails.total} slots available)
+                <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
+                  {slotDetails.available}/{slotDetails.total} slots available
                 </span>
               );
             })()}
           </div>
         </div>
       )}
-  
+
       <div className="mb-8">
-        <h3 className="text-lg font-semibold mb-4">Service Branch</h3>
-        
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Service Branch</h3>
+
         {!branch && loading ? (
-          <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+          <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-center bg-gray-50 dark:bg-gray-700/50">
             <div className="flex items-center justify-center space-x-2">
-              <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
-              <span className="text-gray-500">Loading branch information...</span>
+              <Loader2 className="w-5 h-5 text-gray-400 dark:text-gray-500 animate-spin" />
+              <span className="text-gray-500 dark:text-gray-400">Loading branch information...</span>
             </div>
           </div>
         ) : !branch ? (
-          <div className="p-4 border-2 border-dashed border-red-300 rounded-lg">
+          <div className="p-6 border-2 border-dashed border-red-300 dark:border-red-700 rounded-xl bg-red-50 dark:bg-red-900/20">
             <div className="text-center">
-              <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-              <p className="text-red-600 font-medium mb-2">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <AlertTriangle className="w-6 h-6 text-red-500 dark:text-red-400" />
+              </div>
+              <p className="text-red-700 dark:text-red-300 font-medium mb-2">
                 Branch information not available
               </p>
-              <p className="text-sm text-red-500 mb-3">
-                {isOfferBooking 
-                  ? "We couldn't load the branch details for this offer. This might be a configuration issue."
+              <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+                {isOfferBooking
+                  ? "We couldn't load the branch details for this offer."
                   : "We couldn't load the branch details for this service."
                 }
               </p>
               <button
                 onClick={initializeBooking}
-                className="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded text-sm transition-colors"
+                className="bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-800 dark:text-red-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors"
               >
                 Retry Loading Branch
               </button>
@@ -1170,54 +1196,58 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
             onClick={() => {
               setBookingData(prev => ({ ...prev, branch, staff: null }));
             }}
-            className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+            className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
               bookingData.branch?.id === branch.id
-                ? 'border-blue-500 bg-blue-50 shadow-md'
-                : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg shadow-blue-500/10'
+                : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 bg-white dark:bg-gray-700'
             }`}
           >
             <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-semibold text-gray-900">{branch.name}</h4>
-                <p className="text-gray-600 mt-1 flex items-center">
-                  <MapPin className="w-4 h-4 mr-1" />
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900 dark:text-white">{branch.name}</h4>
+                <p className="text-gray-600 dark:text-gray-400 mt-1 flex items-center text-sm">
+                  <MapPin className="w-4 h-4 mr-1 text-blue-500" />
                   {branch.address || branch.location}
                 </p>
                 {branch.phone && (
-                  <p className="text-gray-600 mt-1 flex items-center">
-                    <Phone className="w-4 h-4 mr-1" />
+                  <p className="text-gray-600 dark:text-gray-400 mt-1 flex items-center text-sm">
+                    <Phone className="w-4 h-4 mr-1 text-green-500" />
                     {branch.phone}
                   </p>
                 )}
                 {branch.openingTime && branch.closingTime && (
-                  <p className="text-gray-600 mt-1 flex items-center">
-                    <Clock className="w-4 h-4 mr-1" />
+                  <p className="text-gray-600 dark:text-gray-400 mt-1 flex items-center text-sm">
+                    <Clock className="w-4 h-4 mr-1 text-purple-500" />
                     {branch.openingTime} - {branch.closingTime}
                   </p>
                 )}
                 {branch.workingDays && Array.isArray(branch.workingDays) && branch.workingDays.length > 0 && (
-                  <p className="text-gray-600 mt-1 text-sm">
-                    Open: {branch.workingDays.map(day => 
+                  <p className="text-gray-500 dark:text-gray-400 mt-1 text-xs">
+                    Open: {branch.workingDays.map(day =>
                       typeof day === 'string' ? day.charAt(0).toUpperCase() + day.slice(1).toLowerCase() : day
                     ).join(', ')}
                   </p>
                 )}
-                {branch.isMainBranch && (
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mt-2">
-                    Main Branch
-                  </span>
-                )}
-                {isOfferBooking && (
-                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mt-2">
-                    Offer Location
-                  </span>
-                )}
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {branch.isMainBranch && (
+                    <span className="inline-flex items-center bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-2.5 py-1 rounded-full font-medium">
+                      Main Branch
+                    </span>
+                  )}
+                  {isOfferBooking && (
+                    <span className="inline-flex items-center bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs px-2.5 py-1 rounded-full font-medium">
+                      <Zap className="w-3 h-3 mr-1" />
+                      Offer Location
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 ml-4">
                 {bookingData.branch?.id === branch.id && (
-                  <Check className="w-5 h-5 text-blue-600" />
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <Check className="w-5 h-5 text-white" />
+                  </div>
                 )}
-                <MapPin className="w-5 h-5 text-gray-400" />
               </div>
             </div>
           </div>
@@ -1226,74 +1256,79 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   
       {(bookingData.branch || branch) && (
         <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">Select Staff Member (Optional)</h3>
-          
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Staff Member (Optional)</h3>
+
           <StaffSelectionInfo />
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {staff.length > 0 ? staff.map((member) => (
               <div
                 key={member.id}
-                onClick={() => setBookingData(prev => ({ 
-                  ...prev, 
-                  staff: prev.staff?.id === member.id ? null : member 
+                onClick={() => setBookingData(prev => ({
+                  ...prev,
+                  staff: prev.staff?.id === member.id ? null : member
                 }))}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                   bookingData.staff?.id === member.id
-                    ? 'border-blue-500 bg-blue-50 shadow-md'
-                    : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg shadow-blue-500/10'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 bg-white dark:bg-gray-700'
                 }`}
               >
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">{member.name}</h4>
-                    <p className="text-gray-600 text-sm">{member.role}</p>
+                    <h4 className="font-semibold text-gray-900 dark:text-white">{member.name}</h4>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{member.role}</p>
                     {member.assignedToService && (
-                      <p className="text-xs text-blue-600">
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                         Assigned to this service
                       </p>
                     )}
                   </div>
                   {bookingData.staff?.id === member.id && (
-                    <Check className="w-5 h-5 text-blue-600" />
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
                   )}
                 </div>
               </div>
             )) : (
-              <div className="col-span-2 text-center py-8">
-                <div className="flex items-center justify-center">
-                  <Info className="w-6 h-6 text-blue-600 mr-2" />
-                  <p className="text-gray-500">No staff assigned to this service</p>
+              <div className="col-span-2 text-center py-8 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
                 </div>
-                <p className="text-sm text-gray-400 mt-2">
-                  You can still proceed with your booking. A staff member will be assigned automatically.
+                <p className="text-gray-600 dark:text-gray-400 font-medium">No staff assigned to this service</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                  A staff member will be assigned automatically.
                 </p>
               </div>
             )}
           </div>
         </div>
       )}
-  
+
       <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Additional Notes (Optional)
         </label>
         <textarea
           value={bookingData.notes}
           onChange={(e) => setBookingData(prev => ({ ...prev, notes: e.target.value }))}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           placeholder="Any special requests or notes..."
+          style={{ fontSize: '16px' }}
         />
       </div>
-  
-      <div className="flex justify-between">
+
+      <div className="flex justify-between gap-4">
         <button
           onClick={() => setCurrentStep(1)}
-          className="bg-gray-300 text-gray-700 px-8 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors flex items-center space-x-2"
+          className="flex-1 sm:flex-none bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 sm:px-8 py-3 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back</span>
@@ -1301,7 +1336,7 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
         <button
           onClick={() => setCurrentStep(3)}
           disabled={!bookingData.branch && !branch}
-          className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
+          className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 sm:px-8 py-3 rounded-xl font-medium disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-blue-500/25 disabled:shadow-none"
         >
           <span>Continue</span>
           <ChevronRight className="w-4 h-4" />
@@ -1312,20 +1347,22 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
 
   const ReviewStep = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Review Your Booking</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/20 p-4 sm:p-6 transition-colors duration-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">Review Your Booking</h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <div className="flex items-start space-x-3">
-              <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
               <div>
-                <p className="font-medium text-gray-900">Date & Time</p>
-                <p className="text-gray-600">{bookingData.date} at {bookingData.time}</p>
+                <p className="font-medium text-gray-900 dark:text-white">Date & Time</p>
+                <p className="text-gray-600 dark:text-gray-400">{bookingData.date} at {bookingData.time}</p>
                 {(() => {
                   const slotDetails = getSlotDetails(bookingData.time);
                   return slotDetails && slotDetails.total > 1 && (
-                    <p className="text-sm text-blue-600">
+                    <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
                       Multiple booking slot ({slotDetails.available}/{slotDetails.total} available)
                     </p>
                   );
@@ -1333,14 +1370,16 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
               </div>
             </div>
 
-            <div className="flex items-start space-x-3">
-              <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div className="flex items-start space-x-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
               <div>
-                <p className="font-medium text-gray-900">Service Location</p>
-                <p className="text-gray-600">{bookingData.branch?.name}</p>
-                <p className="text-sm text-gray-500">{bookingData.branch?.address || bookingData.branch?.location}</p>
+                <p className="font-medium text-gray-900 dark:text-white">Service Location</p>
+                <p className="text-gray-600 dark:text-gray-400">{bookingData.branch?.name}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">{bookingData.branch?.address || bookingData.branch?.location}</p>
                 {bookingData.branch?.isMainBranch && (
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mt-1">
+                  <span className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs px-2.5 py-1 rounded-full mt-2 font-medium">
                     Main Branch
                   </span>
                 )}
@@ -1348,14 +1387,16 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
             </div>
 
             {bookingData.staff && (
-              <div className="flex items-start space-x-3">
-                <User className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div className="flex items-start space-x-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
                 <div>
-                  <p className="font-medium text-gray-900">Staff Member</p>
-                  <p className="text-gray-600">{bookingData.staff.name}</p>
-                  <p className="text-sm text-gray-500">{bookingData.staff.role}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">Staff Member</p>
+                  <p className="text-gray-600 dark:text-gray-400">{bookingData.staff.name}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">{bookingData.staff.role}</p>
                   {bookingData.staff.assignedToService && (
-                    <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mt-1">
+                    <span className="inline-block bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs px-2.5 py-1 rounded-full mt-2 font-medium">
                       Assigned to Service
                     </span>
                   )}
@@ -1364,45 +1405,47 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
             )}
 
             {bookingData.notes && (
-              <div className="flex items-start space-x-3">
-                <Info className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div className="flex items-start space-x-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Info className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                </div>
                 <div>
-                  <p className="font-medium text-gray-900">Notes</p>
-                  <p className="text-gray-600">{bookingData.notes}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">Notes</p>
+                  <p className="text-gray-600 dark:text-gray-400">{bookingData.notes}</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-4">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-700/50">
             <div className="flex space-x-4">
               <img
                 src={entityDetails?.images?.[0] || entityDetails?.image || "/api/placeholder/80/80"}
                 alt={entityDetails?.title || entityDetails?.name}
-                className="w-20 h-20 rounded-lg object-cover"
+                className="w-20 h-20 rounded-xl object-cover ring-2 ring-gray-100 dark:ring-gray-600"
               />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                   {entityDetails?.title || entityDetails?.name}
                 </h3>
-                <p className="text-gray-600 text-sm mt-1 line-clamp-2">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 line-clamp-2">
                   {entityDetails?.description}
                 </p>
-                <div className="flex items-center space-x-2 mt-2">
+                <div className="flex flex-wrap items-center gap-2 mt-3">
                   {isOfferBooking ? (
                     <>
-                      <span className="text-lg font-bold text-green-600">
+                      <span className="text-lg font-bold text-green-600 dark:text-green-400">
                         {entityDetails?.offerPrice || entityDetails?.discounted_price || 'N/A'}
                       </span>
-                      <span className="text-sm text-gray-500 line-through">
+                      <span className="text-sm text-gray-400 dark:text-gray-500 line-through">
                         {entityDetails?.originalPrice || entityDetails?.original_price || ''}
                       </span>
-                      <span className="text-sm bg-red-100 text-red-800 px-2 py-1 rounded">
+                      <span className="text-xs bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full font-medium">
                         {entityDetails?.discount}% OFF
                       </span>
                     </>
                   ) : (
-                    <span className="text-lg font-bold text-blue-600">
+                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       KES {entityDetails?.price || 'Service Price'}
                     </span>
                   )}
@@ -1414,50 +1457,52 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
       </div>
 
       {accessFee > 0 && isOfferBooking && (
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Platform Access Fee</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors duration-200">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Platform Access Fee</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div
-              className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                paymentMethod === 'mpesa' ? 'border-green-500 bg-green-50 shadow-md' : 'border-gray-200 hover:border-green-300'
+              className={`border-2 rounded-xl p-4 cursor-pointer transition-all duration-200 ${
+                paymentMethod === 'mpesa'
+                  ? 'border-green-500 bg-green-50 dark:bg-green-900/30 shadow-md'
+                  : 'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500'
               }`}
               onClick={() => setPaymentMethod('mpesa')}
             >
               <div className="flex items-center space-x-3">
-                <Smartphone className="w-6 h-6 text-green-600" />
+                <Smartphone className="w-6 h-6 text-green-600 dark:text-green-400" />
                 <div>
-                  <h4 className="font-medium">M-Pesa</h4>
-                  <p className="text-sm text-gray-600">Pay with mobile money</p>
+                  <h4 className="font-medium text-gray-900 dark:text-white">M-Pesa</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Pay with mobile money</p>
                 </div>
-                {paymentMethod === 'mpesa' && <Check className="w-5 h-5 text-green-600" />}
+                {paymentMethod === 'mpesa' && <Check className="w-5 h-5 text-green-600 dark:text-green-400" />}
               </div>
             </div>
 
-            <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50 cursor-not-allowed">
+            <div className="border-2 border-gray-200 dark:border-gray-600 rounded-xl p-4 bg-gray-50 dark:bg-gray-700/50 cursor-not-allowed">
               <div className="flex items-center space-x-3">
-                <CreditCard className="w-6 h-6 text-gray-400" />
+                <CreditCard className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                 <div>
-                  <h4 className="font-medium text-gray-500">Card Payment</h4>
-                  <p className="text-sm text-gray-500">Coming soon</p>
+                  <h4 className="font-medium text-gray-500 dark:text-gray-400">Card Payment</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">Coming soon</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="border-t pt-6">
+          <div className="border-t dark:border-gray-700 pt-6">
             <div className="space-y-3">
-              <div className="flex justify-between font-bold text-lg">
+              <div className="flex justify-between font-bold text-lg text-gray-900 dark:text-white">
                 <span>Platform Access Fee</span>
                 <span>{formatCurrency(accessFee)}</span>
               </div>
             </div>
 
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl">
               <div className="flex items-start space-x-2">
-                <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-300">
                     <strong>Platform Access Fee:</strong> This fee secures your booking slot and gives you access to the exclusive offer.
                     You'll pay the discounted service price of <strong>{entityDetails?.offerPrice || entityDetails?.discounted_price}</strong>
                     directly to the merchant when you arrive for your appointment.
@@ -1472,17 +1517,17 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
       <div className="flex justify-between">
         <button
           onClick={() => setCurrentStep(2)}
-          className="bg-gray-300 text-gray-700 px-8 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors flex items-center space-x-2"
+          className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-8 py-3 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back</span>
         </button>
-        
+
         {accessFee > 0 && isOfferBooking ? (
           <button
             onClick={() => setShowPaymentModal(true)}
             disabled={submitting}
-            className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-3 rounded-xl font-medium hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg shadow-green-500/25"
           >
             {submitting ? (
               <>
@@ -1500,7 +1545,7 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
           <button
             onClick={handleBookingSubmit}
             disabled={submitting}
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2 shadow-lg shadow-blue-500/25"
           >
             {submitting ? (
               <>
@@ -1520,39 +1565,41 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   );
 
   const ConfirmationStep = () => (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 transition-colors duration-200">
       <div className="text-center">
-        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
-        <p className="text-gray-600 mb-6">
+        <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-500/25">
+          <CheckCircle className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Booking Confirmed!</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
           Your {isOfferBooking ? 'offer' : 'service'} booking has been successfully created
           {isOfferBooking && accessFee > 0 ? ' and platform access fee processed' : ''}.
         </p>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-green-800 mb-2">What's Next?</h3>
-          <ul className="text-sm text-green-700 space-y-1 text-left">
+        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl p-5 mb-8">
+          <h3 className="font-semibold text-green-800 dark:text-green-300 mb-4">What's Next?</h3>
+          <ul className="text-sm text-green-700 dark:text-green-400 space-y-3 text-left">
             <li className="flex items-center">
-              <Check className="w-4 h-4 mr-2" />
+              <Check className="w-5 h-5 mr-3 flex-shrink-0" />
               Check your email for booking confirmation
             </li>
             <li className="flex items-center">
-              <Check className="w-4 h-4 mr-2" />
+              <Check className="w-5 h-5 mr-3 flex-shrink-0" />
               Arrive 10 minutes before your appointment
             </li>
             {isOfferBooking ? (
               <li className="flex items-center">
-                <Check className="w-4 h-4 mr-2" />
+                <Check className="w-5 h-5 mr-3 flex-shrink-0" />
                 Pay the discounted rate directly to merchant: {entityDetails?.offerPrice || entityDetails?.discounted_price}
               </li>
             ) : (
               <li className="flex items-center">
-                <Check className="w-4 h-4 mr-2" />
+                <Check className="w-5 h-5 mr-3 flex-shrink-0" />
                 Pay the service fee directly to merchant: KES {entityDetails?.price}
               </li>
             )}
             <li className="flex items-center">
-              <Check className="w-4 h-4 mr-2" />
+              <Check className="w-5 h-5 mr-3 flex-shrink-0" />
               Bring a valid ID for verification
             </li>
           </ul>
@@ -1561,13 +1608,13 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
         <div className="space-y-3">
           <button
             onClick={() => navigate('/profile/bookings')}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg shadow-blue-500/25"
           >
             View My Bookings
           </button>
           <button
             onClick={() => navigate(isOfferBooking ? '/offers' : '/stores')}
-            className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+            className="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3.5 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
           >
             Browse More {isOfferBooking ? 'Offers' : 'Services'}
           </button>
@@ -1579,80 +1626,81 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   const PaymentModal = () => {
     // Move phone number state to local component state to prevent re-renders
     const [localPhoneNumber, setLocalPhoneNumber] = useState(phoneNumber);
-    
+
     // Only update parent state on blur or form submit
     const handlePhoneChange = (e) => {
       setLocalPhoneNumber(e.target.value);
     };
-    
+
     const handlePhoneBlur = () => {
       setPhoneNumber(localPhoneNumber);
     };
-  
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-gray-900">Complete Payment</h3>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl transition-colors duration-200">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Complete Payment</h3>
             <button
               onClick={() => setShowPaymentModal(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
-  
+
           <div className="mb-6">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <div className="flex items-center space-x-2">
-                <Smartphone className="w-5 h-5 text-green-600" />
-                <span className="font-medium text-green-800">Platform Access Fee</span>
+            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-5 mb-5 text-white">
+              <div className="flex items-center space-x-2 mb-2">
+                <Smartphone className="w-5 h-5" />
+                <span className="font-medium">Platform Access Fee</span>
               </div>
-              <p className="text-2xl font-bold text-green-600 mt-2">{formatCurrency(accessFee)}</p>
+              <p className="text-3xl font-bold">{formatCurrency(accessFee)}</p>
             </div>
-  
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Enter your M-Pesa phone number
             </label>
             <div className="relative">
-              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="tel"
-                value={localPhoneNumber} // Use local state
-                onChange={handlePhoneChange} // Use local handler
-                onBlur={handlePhoneBlur} // Update parent state on blur
+                value={localPhoneNumber}
+                onChange={handlePhoneChange}
+                onBlur={handlePhoneBlur}
                 placeholder="e.g. 0712345678"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full pl-11 pr-4 py-3.5 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200"
+                style={{ fontSize: '16px' }}
                 maxLength={13}
                 autoComplete="tel"
               />
             </div>
-  
+
             {error && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
                 <div className="flex items-center space-x-2">
-                  <AlertTriangle className="w-4 h-4 text-red-600" />
-                  <p className="text-sm text-red-600">{error}</p>
+                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
                 </div>
               </div>
             )}
           </div>
-  
+
           <div className="flex space-x-3">
             <button
               onClick={() => setShowPaymentModal(false)}
               disabled={submitting}
-              className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors"
+              className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3.5 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={() => {
-                setPhoneNumber(localPhoneNumber); // Ensure parent state is updated
+                setPhoneNumber(localPhoneNumber);
                 handleMpesaPayment();
               }}
               disabled={localPhoneNumber.length < 10 || submitting}
-              className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2"
+              className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-3.5 rounded-xl font-medium hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-green-500/25"
             >
               {submitting ? (
                 <>
@@ -1670,22 +1718,33 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   };
 
   const PaymentPendingStep = () => (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 sm:p-8 transition-colors duration-200">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Processing Payment</h2>
-        <p className="text-gray-600 mb-6">
+        <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/25">
+          <div className="animate-spin rounded-full h-10 w-10 border-3 border-white border-t-transparent"></div>
+        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Processing Payment</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">
           Please complete the M-Pesa payment on your phone. Your booking will be created automatically once payment is confirmed.
         </p>
-        
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            <strong>Next steps:</strong>
+
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
+          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3">
+            Next steps:
           </p>
-          <ul className="text-sm text-blue-700 mt-2 space-y-1">
-            <li>• Check your phone for M-Pesa prompt</li>
-            <li>• Enter your M-Pesa PIN</li>
-            <li>• Wait for confirmation (this may take up to 2 minutes)</li>
+          <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-2 text-left">
+            <li className="flex items-center">
+              <Smartphone className="w-4 h-4 mr-2 flex-shrink-0" />
+              Check your phone for M-Pesa prompt
+            </li>
+            <li className="flex items-center">
+              <Shield className="w-4 h-4 mr-2 flex-shrink-0" />
+              Enter your M-Pesa PIN
+            </li>
+            <li className="flex items-center">
+              <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
+              Wait for confirmation (this may take up to 2 minutes)
+            </li>
           </ul>
         </div>
       </div>
@@ -1712,34 +1771,110 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
 
   // ==================== MAIN RENDER ====================
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="animate-spin" size={24} />
-          <span>Loading booking information...</span>
+  // Skeleton Components
+  const BookingSkeleton = () => (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Skeleton */}
+        <div className="mb-8 animate-pulse">
+          <div className="flex items-center mb-4">
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full mr-4" />
+            <div>
+              <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+              <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
+            </div>
+          </div>
+          {/* Entity Summary Skeleton */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <div className="flex items-center space-x-4">
+              <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+              <div className="flex-1">
+                <div className="h-5 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+                <div className="flex space-x-4">
+                  <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
+                <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Step Tracker Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8 animate-pulse">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3, 4].map((_, index) => (
+              <div key={index} className="flex items-center">
+                <div className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                  <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded mt-2" />
+                </div>
+                {index < 3 && <div className="w-8 h-1 bg-gray-200 dark:bg-gray-700 mx-4" />}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 animate-pulse">
+          <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+              <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded mb-4" />
+              <div className="grid grid-cols-2 gap-2">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+              <div className="space-y-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded" />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    );
+    </div>
+  );
+
+  if (loading) {
+    return <BookingSkeleton />;
   }
 
   if (error && !entityDetails) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
         <div className="text-center max-w-md mx-auto px-4">
-          <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Booking</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          
-          <div className="space-y-2">
+          <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-10 h-10 text-red-500 dark:text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Unable to Load Booking</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+
+          <div className="space-y-3">
             <button
               onClick={() => {
                 setError(null);
                 initializeBooking();
               }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/25"
             >
               Try Again
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="w-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Go Back
             </button>
           </div>
         </div>
@@ -1748,46 +1883,60 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   }
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Book Your {isOfferBooking ? 'Offer' : 'Service'}
-                </h1>
-                <p className="text-gray-600">
-                  {isOfferBooking 
-                    ? 'Secure your exclusive access to this amazing deal'
-                    : 'Schedule your service appointment'
-                  }
-                </p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 transition-colors duration-200">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 mb-6 transition-colors group"
+        >
+          <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+
+        {/* Header Section */}
+        <div className="mb-6">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Book Your {isOfferBooking ? 'Offer' : 'Service'}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                {isOfferBooking
+                  ? 'Secure your exclusive access to this amazing deal'
+                  : 'Schedule your service appointment'
+                }
+              </p>
             </div>
-            
-            {entityDetails && <EntitySummary />}
+            {isOfferBooking && (
+              <div className="hidden sm:flex items-center bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full text-sm font-medium">
+                <Zap className="w-4 h-4 mr-1" />
+                Limited Offer
+              </div>
+            )}
           </div>
 
-          <StepTracker />
-
-          {error && entityDetails && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                <p className="text-red-600">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {renderCurrentStep()}
+          {entityDetails && <EntitySummary />}
         </div>
 
-        {showPaymentModal && <PaymentModal />}
+        <StepTracker />
+
+        {error && entityDetails && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+              <p className="text-red-700 dark:text-red-300">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {renderCurrentStep()}
       </div>
-      <Footer />
-    </>
+
+      {showPaymentModal && <PaymentModal />}
+    </div>
   );
 };
 
