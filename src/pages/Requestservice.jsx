@@ -104,6 +104,104 @@ const LoadingSpinner = () => (
   </div>
 );
 
+// Skeleton Components
+const RequestCardSkeleton = () => (
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700 animate-pulse">
+    {/* Header */}
+    <div className="flex items-center gap-2 p-3 border-b border-gray-100 dark:border-gray-700">
+      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700" />
+      <div className="flex-1">
+        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-1" />
+        <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded" />
+      </div>
+      <div className="flex gap-1">
+        <div className="h-5 w-14 bg-gray-200 dark:bg-gray-700 rounded-full" />
+        <div className="h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+      </div>
+    </div>
+    {/* Content */}
+    <div className="p-3">
+      <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+      <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-1" />
+      <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+      {/* Budget and timeline */}
+      <div className="grid grid-cols-2 gap-2 mb-2">
+        <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-md">
+          <div className="h-3 w-12 bg-gray-200 dark:bg-gray-600 rounded mb-1" />
+          <div className="h-4 w-20 bg-gray-200 dark:bg-gray-600 rounded" />
+        </div>
+        <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-md">
+          <div className="h-3 w-14 bg-gray-200 dark:bg-gray-600 rounded mb-1" />
+          <div className="h-4 w-16 bg-gray-200 dark:bg-gray-600 rounded" />
+        </div>
+      </div>
+    </div>
+    {/* Footer */}
+    <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+      <div className="flex items-center gap-2">
+        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded" />
+      </div>
+      <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded-md" />
+    </div>
+  </div>
+);
+
+const PageSkeleton = () => (
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    {/* Hero Section Skeleton */}
+    <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="container mx-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center animate-pulse">
+            <div className="h-12 w-48 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+            <div className="h-12 w-56 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Filter Section Skeleton */}
+    <section className="container mx-auto px-4 py-6">
+      <div className="bg-white/80 dark:bg-gray-800/80 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 animate-pulse">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+            <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+          <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full" />
+        </div>
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+            <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+            <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Main Content Skeleton */}
+    <section className="container mx-auto px-4 py-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4 animate-pulse">
+        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+          <div className="h-9 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+          <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg ml-1" />
+          <div className="h-9 w-16 bg-gray-200 dark:bg-gray-700 rounded-lg ml-1" />
+        </div>
+      </div>
+
+      {/* Request Cards Skeleton */}
+      <div className="space-y-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <RequestCardSkeleton key={i} />
+        ))}
+      </div>
+    </section>
+  </div>
+);
+
 export default function UserServiceRequestPage() {
   const navigate = useNavigate();
 
@@ -538,11 +636,7 @@ export default function UserServiceRequestPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-        <LoadingSpinner />
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   if (error) {
