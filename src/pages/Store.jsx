@@ -929,53 +929,93 @@
       );
     });
 
-    // Reel Card Component
+    // Reel Card Component - TikTok-like experience
     const ReelCard = React.memo(({ reel }) => {
       const [isPlaying, setIsPlaying] = useState(false);
       const [isMuted, setIsMuted] = useState(true);
+      const [showPlayIcon, setShowPlayIcon] = useState(false);
+      const [thumbnailLoaded, setThumbnailLoaded] = useState(false);
+      const [videoLoaded, setVideoLoaded] = useState(false);
       const videoRef = React.useRef(null);
+      const cardRef = React.useRef(null);
 
-      const handlePlayPause = () => {
+      // Generate thumbnail from video or use provided one
+      const thumbnailUrl = reel.thumbnail_url || reel.thumbnailUrl || reel.cover_url;
+
+      // Handle video load
+      const handleVideoLoaded = () => {
+        setVideoLoaded(true);
+      };
+
+      // Single tap to play/pause, double tap to like
+      const lastTapRef = React.useRef(0);
+
+      const handleTap = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const now = Date.now();
+        const DOUBLE_TAP_DELAY = 300;
+
+        if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+          // Double tap - like
+          handleLike(e);
+          lastTapRef.current = 0;
+        } else {
+          // Single tap - play/pause
+          lastTapRef.current = now;
+          setTimeout(() => {
+            if (lastTapRef.current !== 0 && Date.now() - lastTapRef.current >= DOUBLE_TAP_DELAY) {
+              togglePlayPause();
+            }
+          }, DOUBLE_TAP_DELAY);
+        }
+      };
+
+      const togglePlayPause = () => {
         if (videoRef.current) {
           if (isPlaying) {
             videoRef.current.pause();
+            setIsPlaying(false);
+            setShowPlayIcon(true);
+            setTimeout(() => setShowPlayIcon(false), 500);
           } else {
-            videoRef.current.play();
+            videoRef.current.play().catch(console.error);
+            setIsPlaying(true);
           }
-          setIsPlaying(!isPlaying);
         }
       };
 
       const handleMuteToggle = (e) => {
         e.stopPropagation();
+        e.preventDefault();
         if (videoRef.current) {
           videoRef.current.muted = !isMuted;
           setIsMuted(!isMuted);
         }
       };
 
-      const handleReelClick = async () => {
+      const handleFullScreen = async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
         try {
-          // Track view
           await reelService.trackView(reel.id);
-
-          // Navigate to full reel view or open in modal
           navigate(`/reels/${reel.id}`);
         } catch (error) {
           console.error('Error tracking reel view:', error);
+          navigate(`/reels/${reel.id}`);
         }
       };
 
       const handleLike = async (e) => {
         e.stopPropagation();
+        e.preventDefault();
         try {
           await reelService.toggleLike(reel.id);
-          // Update local state or refetch reels
           fetchReels();
         } catch (error) {
           console.error('Error liking reel:', error);
-          if (error.message.includes('Authentication required')) {
-            setError('Please log in to like reels');
+          if (error.message?.includes('Authentication required')) {
             navigate('/accounts/sign-in', {
               state: { from: { pathname: location.pathname } }
             });
@@ -984,99 +1024,162 @@
       };
 
       const formatCount = (count) => {
+        if (!count) return '0';
         if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
         if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
         return count.toString();
       };
 
+      // Auto-play when in viewport
+      React.useEffect(() => {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting && videoRef.current) {
+                videoRef.current.play().catch(() => {});
+                setIsPlaying(true);
+              } else if (!entry.isIntersecting && videoRef.current) {
+                videoRef.current.pause();
+                setIsPlaying(false);
+              }
+            });
+          },
+          { threshold: 0.7 }
+        );
+
+        if (cardRef.current) {
+          observer.observe(cardRef.current);
+        }
+
+        return () => observer.disconnect();
+      }, []);
+
       return (
         <div
-          className="relative bg-black rounded-xl overflow-hidden cursor-pointer group aspect-[9/16] max-h-[600px]"
-          onClick={handleReelClick}
+          ref={cardRef}
+          className="relative bg-gray-900 rounded-xl overflow-hidden cursor-pointer aspect-[9/16] max-h-[400px]"
+          onClick={handleTap}
         >
+          {/* Thumbnail - shows until video loads */}
+          {thumbnailUrl && !videoLoaded && (
+            <img
+              src={thumbnailUrl}
+              alt={reel.title || 'Reel'}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${thumbnailLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setThumbnailLoaded(true)}
+            />
+          )}
+
+          {/* Loading placeholder */}
+          {!thumbnailLoaded && !videoLoaded && (
+            <div className="absolute inset-0 bg-gray-800 animate-pulse flex items-center justify-center">
+              <Play className="w-12 h-12 text-gray-600" />
+            </div>
+          )}
+
           {/* Video */}
           <video
             ref={videoRef}
-            src={reel.video_url}
-            className="w-full h-full object-cover"
+            src={reel.video_url || reel.videoUrl}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
             loop
             playsInline
             muted={isMuted}
-            poster={reel.thumbnail_url}
+            preload="metadata"
+            onLoadedData={handleVideoLoaded}
           />
 
-          {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-
-          {/* Play/Pause button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePlayPause();
-            }}
-            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            {!isPlaying && (
-              <div className="bg-white/30 backdrop-blur-sm rounded-full p-6">
-                <Play className="w-12 h-12 text-white fill-white" />
+          {/* Play icon animation on pause */}
+          {showPlayIcon && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-black/40 backdrop-blur-sm rounded-full p-4 animate-ping">
+                <Play className="w-8 h-8 text-white fill-white" />
               </div>
-            )}
-          </button>
-
-          {/* Mute/Unmute button */}
-          <button
-            onClick={handleMuteToggle}
-            className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition-colors"
-          >
-            {isMuted ? (
-              <VolumeX className="w-5 h-5 text-white" />
-            ) : (
-              <Volume2 className="w-5 h-5 text-white" />
-            )}
-          </button>
-
-          {/* Content info - Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-            {/* Title and description */}
-            <div className="mb-3">
-              <h3 className="font-semibold text-lg mb-1 line-clamp-2">
-                {reel.title || 'Check out this reel!'}
-              </h3>
-              {reel.description && (
-                <p className="text-sm text-gray-200 line-clamp-2">
-                  {reel.description}
-                </p>
-              )}
             </div>
+          )}
 
-            {/* Stats */}
+          {/* Center play button when paused */}
+          {!isPlaying && videoLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-black/30 backdrop-blur-sm rounded-full p-4">
+                <Play className="w-10 h-10 text-white fill-white" />
+              </div>
+            </div>
+          )}
+
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+
+          {/* Top controls */}
+          <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+            {/* Mute button */}
+            <button
+              onClick={handleMuteToggle}
+              className="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition-colors"
+            >
+              {isMuted ? (
+                <VolumeX className="w-4 h-4 text-white" />
+              ) : (
+                <Volume2 className="w-4 h-4 text-white" />
+              )}
+            </button>
+
+            {/* Expand button */}
+            <button
+              onClick={handleFullScreen}
+              className="bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition-colors"
+            >
+              <ExternalLink className="w-4 h-4 text-white" />
+            </button>
+          </div>
+
+          {/* Category badge */}
+          {reel.category && (
+            <div className="absolute top-3 left-3 z-10">
+              <span className="px-2 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+                {reel.category}
+              </span>
+            </div>
+          )}
+
+          {/* Bottom content */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 text-white z-10">
+            {/* Title only if exists */}
+            {reel.title && (
+              <p className="text-sm font-medium mb-2 line-clamp-2">
+                {reel.title}
+              </p>
+            )}
+
+            {/* Stats row */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-3 text-xs">
                 <div className="flex items-center gap-1">
-                  <Play className="w-4 h-4" />
-                  <span>{formatCount(reel.views || 0)}</span>
+                  <Play className="w-3 h-3" />
+                  <span>{formatCount(reel.views || reel.view_count)}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Heart className={`w-4 h-4 ${reel.isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                  <span>{formatCount(reel.likes || 0)}</span>
+                  <Heart className={`w-3 h-3 ${reel.isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+                  <span>{formatCount(reel.likes || reel.like_count)}</span>
                 </div>
               </div>
 
               {/* Action buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={handleLike}
-                  className={`p-2 rounded-full transition-colors ${reel.isLiked
-                    ? 'bg-red-500 hover:bg-red-600'
+                  className={`p-1.5 rounded-full transition-all active:scale-110 ${reel.isLiked
+                    ? 'bg-red-500'
                     : 'bg-white/20 hover:bg-white/30'
                     }`}
                 >
-                  <Heart className={`w-5 h-5 ${reel.isLiked ? 'fill-white' : ''}`} />
+                  <Heart className={`w-4 h-4 ${reel.isLiked ? 'fill-white text-white' : 'text-white'}`} />
                 </button>
 
                 <button
                   onClick={async (e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     try {
                       await reelService.trackChat(reel.id);
                       handleChatClick();
@@ -1084,22 +1187,29 @@
                       console.error('Error tracking chat:', error);
                     }
                   }}
-                  className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+                  className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
                 >
-                  <MessageCircle className="w-5 h-5" />
+                  <MessageCircle className="w-4 h-4 text-white" />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (navigator.share) {
+                      navigator.share({
+                        title: reel.title || 'Check out this reel',
+                        url: `${window.location.origin}/reels/${reel.id}`
+                      });
+                    }
+                  }}
+                  className="p-1.5 bg-white/20 hover:bg-white/30 rounded-full transition-colors"
+                >
+                  <Share2 className="w-4 h-4 text-white" />
                 </button>
               </div>
             </div>
           </div>
-
-          {/* Category badge */}
-          {reel.category && (
-            <div className="absolute top-4 left-4">
-              <span className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded-full">
-                {reel.category}
-              </span>
-            </div>
-          )}
         </div>
       );
     });
