@@ -8,6 +8,16 @@ import chatService from '../services/chatService';
 import { getTokenFromCookie } from '../config/api';
 import { X, Check } from 'lucide-react';
 
+// Fisher-Yates shuffle algorithm for randomizing reels order
+const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+};
+
 const Reels = () => {
     const [reels, setReels] = useState([]);
     const [filteredReels, setFilteredReels] = useState([]);
@@ -199,9 +209,11 @@ const Reels = () => {
             console.log('✅ Formatted reels:', newReels.length);
 
             if (offset === 0) {
-                setReels(newReels);
+                // Shuffle reels on initial load for randomized appearance
+                setReels(shuffleArray(newReels));
             } else {
-                setReels(prev => [...prev, ...newReels]);
+                // Shuffle only the new reels before appending
+                setReels(prev => [...prev, ...shuffleArray(newReels)]);
             }
 
             // ✅ ALWAYS fetch follow status if user is authenticated
