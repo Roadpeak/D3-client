@@ -450,10 +450,18 @@
 
         const response = await reelService.getStoreReels(id, { limit: 20, offset: 0 });
 
-        if (response.success && response.reels) {
-          setReels(response.reels);
-          console.log(`Store reels - Total: ${response.reels.length}`);
+        console.log('Store reels response:', response);
+
+        // Handle response - backend returns data in response.data, not response.reels
+        if (response && response.success && response.data) {
+          const reelsData = Array.isArray(response.data) ? response.data : [];
+          setReels(reelsData);
+          console.log(`Store reels - Total: ${reelsData.length}`);
+        } else if (response && Array.isArray(response.data)) {
+          setReels(response.data);
+          console.log(`Store reels - Total: ${response.data.length}`);
         } else {
+          console.log('No reels data found in response');
           setReels([]);
         }
       } catch (err) {
