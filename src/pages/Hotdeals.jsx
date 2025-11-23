@@ -223,9 +223,9 @@ export default function Hotdeals() {
   }, []);
 
   const handleCategoryChange = useCallback((category) => {
-    setSelectedCategory(selectedCategory === category ? '' : category);
+    setSelectedCategory(category);
     setCurrentPage(1);
-  }, [selectedCategory]);
+  }, []);
 
   const handlePageChange = useCallback((page) => {
     if (page >= 1 && page <= pagination.totalPages) {
@@ -476,57 +476,78 @@ export default function Hotdeals() {
               )}
 
               {/* Categories */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-colors duration-200">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 transition-colors duration-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium text-gray-700 dark:text-gray-300 text-sm">
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm flex items-center gap-2">
+                    <div className="w-1.5 h-4 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full"></div>
                     Categories
                   </h3>
                   {(selectedCategory || sortBy !== 'latest') && (
                     <button
                       onClick={clearFilters}
-                      className="text-xs text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                      className="text-xs text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                     >
-                      Reset
+                      Reset All
                     </button>
                   )}
                 </div>
-                <ul className="space-y-2">
-                  <li className="flex items-center justify-between">
-                    <button
-                      onClick={() => handleCategoryChange('')}
-                      className={`text-sm transition-colors ${!selectedCategory ? 'text-blue-500 dark:text-blue-400 font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                    >
-                      All Categories
-                    </button>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
+                <div className="space-y-1.5">
+                  {/* All Categories Option */}
+                  <button
+                    onClick={() => handleCategoryChange('')}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group ${
+                      !selectedCategory
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/25'
+                        : 'bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="font-medium">All Categories</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      !selectedCategory
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                    }`}>
                       {offers.length}
                     </span>
-                  </li>
+                  </button>
+
+                  {/* Category List */}
                   {categories.map((category, index) => (
-                    <li key={index} className="flex items-center justify-between">
-                      <button
-                        onClick={() => handleCategoryChange(category.name)}
-                        className={`text-sm transition-colors ${selectedCategory === category.name ? 'text-blue-500 dark:text-blue-400 font-medium' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
-                      >
-                        {category.name}
-                      </button>
-                      <span className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
+                    <button
+                      key={index}
+                      onClick={() => handleCategoryChange(category.name)}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group ${
+                        selectedCategory === category.name
+                          ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/25'
+                          : 'bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="font-medium truncate">{category.name}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                        selectedCategory === category.name
+                          ? 'bg-white/20 text-white'
+                          : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                      }`}>
                         {category.count}
                       </span>
-                    </li>
+                    </button>
                   ))}
+
                   {categories.length === 0 && !loading && (
-                    <li className="text-sm text-gray-400 dark:text-gray-500 italic">
+                    <div className="text-sm text-gray-400 dark:text-gray-500 italic text-center py-3">
                       No categories available
-                    </li>
+                    </div>
                   )}
-                </ul>
+                </div>
               </div>
 
               {/* Sort By Options */}
-              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-colors duration-200">
-                <h3 className="font-medium text-gray-700 dark:text-gray-300 text-sm mb-4">Sort By</h3>
-                <div className="space-y-2">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 transition-colors duration-200 shadow-sm">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-4 flex items-center gap-2">
+                  <div className="w-1.5 h-4 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></div>
+                  Sort By
+                </h3>
+                <div className="space-y-1.5">
                   {[
                     { id: 'latest', label: 'Latest Deals' },
                     { id: 'discount', label: 'Highest Discount' },
@@ -536,10 +557,11 @@ export default function Hotdeals() {
                     <button
                       key={option.id}
                       onClick={() => handleSortChange(option.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${sortBy === option.id
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }`}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        sortBy === option.id
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md shadow-purple-500/25'
+                          : 'bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
                     >
                       {option.label}
                     </button>
@@ -598,11 +620,14 @@ export default function Hotdeals() {
 
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-gray-800 dark:text-gray-100">Categories</h3>
+                      <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full"></div>
+                        Categories
+                      </h3>
                       {selectedCategory && (
                         <button
                           onClick={() => setSelectedCategory('')}
-                          className="text-sm text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                          className="text-sm text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                         >
                           Clear
                         </button>
@@ -614,13 +639,18 @@ export default function Hotdeals() {
                           handleCategoryChange('');
                           setIsFilterModalOpen(false);
                         }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${!selectedCategory
-                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium'
-                          : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                          }`}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
+                          !selectedCategory
+                            ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/25'
+                            : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                        }`}
                       >
-                        <span>All Categories</span>
-                        <span className="text-sm bg-white dark:bg-gray-800 px-2 py-1 rounded-full">
+                        <span className="font-medium">All Categories</span>
+                        <span className={`text-sm px-2 py-1 rounded-full ${
+                          !selectedCategory
+                            ? 'bg-white/20 text-white'
+                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                        }`}>
                           {offers.length}
                         </span>
                       </button>
@@ -631,13 +661,18 @@ export default function Hotdeals() {
                             handleCategoryChange(category.name);
                             setIsFilterModalOpen(false);
                           }}
-                          className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${selectedCategory === category.name
-                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium'
-                            : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                            }`}
+                          className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
+                            selectedCategory === category.name
+                              ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/25'
+                              : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                          }`}
                         >
-                          <span>{category.name}</span>
-                          <span className="text-sm bg-white dark:bg-gray-800 px-2 py-1 rounded-full">
+                          <span className="font-medium">{category.name}</span>
+                          <span className={`text-sm px-2 py-1 rounded-full ${
+                            selectedCategory === category.name
+                              ? 'bg-white/20 text-white'
+                              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                          }`}>
                             {category.count}
                           </span>
                         </button>
