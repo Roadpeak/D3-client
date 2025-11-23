@@ -146,6 +146,7 @@
     const [toggleFollowLoading, setToggleFollowLoading] = useState(false);
     const [startingChat, setStartingChat] = useState(false);
     const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+    const [linkCopied, setLinkCopied] = useState(false);
 
     // FIXED: Enhanced Image Component with stable error handling and no flicker
     const StableImage = React.memo(({
@@ -617,6 +618,46 @@
         setError(`Failed to start chat: ${error.message}`);
       } finally {
         setStartingChat(false);
+      }
+    };
+
+    // Share store link functionality
+    const handleShareStore = async () => {
+      const storeUrl = `${window.location.origin}/store/${id}`;
+      const shareData = {
+        title: storeData?.name || 'Check out this store',
+        text: `Check out ${storeData?.name || 'this store'} on D3 - discover amazing deals and offers!`,
+        url: storeUrl
+      };
+
+      // Try Web Share API first (mobile-friendly)
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (err) {
+          // User cancelled or share failed, fall back to copy
+          if (err.name === 'AbortError') return;
+        }
+      }
+
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(storeUrl);
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = storeUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
       }
     };
 
@@ -1978,6 +2019,22 @@
                   <MessageCircle className="w-4 h-4" />
                 )}
                 {startingChat ? 'Starting Chat...' : 'Chat'}
+              </button>
+              <button
+                onClick={handleShareStore}
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg"
+              >
+                {linkCopied ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Link Copied!
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4" />
+                    Share
+                  </>
+                )}
               </button>
             </div>
 
