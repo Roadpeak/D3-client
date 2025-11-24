@@ -3,6 +3,7 @@ import { ChevronDown, Star, Grid3X3, List, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from '../contexts/LocationContext';
 import ApiService from '../services/storeService';
+import VerificationBadge from '../components/VerificationBadge';
 
 const Stores = () => {
   const navigate = useNavigate();
@@ -29,8 +30,8 @@ const Stores = () => {
 
   const sortOptions = ['Popular', 'Highest Discount', 'Lowest Discount', 'A-Z', 'Z-A'];
 
-  // Store Logo Component with Dark Mode
-  const StoreLogo = ({ store, className }) => {
+  // Store Logo Component with Dark Mode and Verification Badge
+  const StoreLogo = ({ store, className, showBadge = true }) => {
     const [imageError, setImageError] = useState(false);
 
     const storeInitials = store.name?.charAt(0)?.toUpperCase() || 'S';
@@ -38,26 +39,42 @@ const Stores = () => {
     const hasValidLogo = (store.logo && store.logo.trim() !== '') ||
       (store.logo_url && store.logo_url.trim() !== '');
 
+    const isVerified = store.is_verified || store.verified;
+
     if (!hasValidLogo || imageError) {
       return (
-        <div
-          className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-500 dark:to-gray-700 flex items-center justify-center border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-all duration-300 shadow-sm hover:scale-110 hover:rotate-6 ${className}`}
-        >
-          <span className="text-white font-bold text-sm">
-            {storeInitials}
-          </span>
+        <div className="relative">
+          <div
+            className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-500 dark:to-gray-700 flex items-center justify-center border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-all duration-300 shadow-sm hover:scale-110 hover:rotate-6 ${className}`}
+          >
+            <span className="text-white font-bold text-sm">
+              {storeInitials}
+            </span>
+          </div>
+          {isVerified && showBadge && (
+            <div className="absolute -bottom-0.5 -right-0.5">
+              <VerificationBadge size="sm" />
+            </div>
+          )}
         </div>
       );
     }
 
     return (
-      <img
-        src={store.logo || store.logo_url}
-        alt={`${store.name} logo`}
-        className={`${className} transition-all duration-300 hover:scale-110 hover:rotate-6`}
-        onError={() => setImageError(true)}
-        loading="lazy"
-      />
+      <div className="relative">
+        <img
+          src={store.logo || store.logo_url}
+          alt={`${store.name} logo`}
+          className={`${className} transition-all duration-300 hover:scale-110 hover:rotate-6`}
+          onError={() => setImageError(true)}
+          loading="lazy"
+        />
+        {isVerified && showBadge && (
+          <div className="absolute -bottom-0.5 -right-0.5">
+            <VerificationBadge size="sm" />
+          </div>
+        )}
+      </div>
     );
   };
 

@@ -6,6 +6,7 @@ import { offerAPI, storeAPI } from '../services/api';
 import RealTimeSearch from './RealTimeSearch';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import VerificationBadge from '../components/VerificationBadge';
 
 // Animation Variants
 const pageVariants = {
@@ -316,11 +317,18 @@ const SearchResultsPage = () => {
       {viewMode === 'grid' ? (
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <ImageWithFallback
-              src={store.logo || store.logo_url}
-              name={store.name}
-              className="w-16 h-16 rounded-xl object-cover border border-slate-200"
-            />
+            <div className="relative">
+              <ImageWithFallback
+                src={store.logo || store.logo_url}
+                name={store.name}
+                className="w-16 h-16 rounded-xl object-cover border border-slate-200"
+              />
+              {(store.is_verified || store.verified) && (
+                <div className="absolute -bottom-0.5 -right-0.5">
+                  <VerificationBadge size="sm" />
+                </div>
+              )}
+            </div>
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -362,11 +370,18 @@ const SearchResultsPage = () => {
         </div>
       ) : (
         <div className="flex items-center space-x-4 p-4 w-full">
-          <ImageWithFallback
-            src={store.logo || store.logo_url}
-            name={store.name}
-            className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-gray-700 flex-shrink-0"
-          />
+          <div className="relative">
+            <ImageWithFallback
+              src={store.logo || store.logo_url}
+              name={store.name}
+              className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-gray-700 flex-shrink-0"
+            />
+            {(store.is_verified || store.verified) && (
+              <div className="absolute -bottom-1 -right-1">
+                <VerificationBadge size="sm" />
+              </div>
+            )}
+          </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">

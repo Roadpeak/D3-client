@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Store, MapPin, Star, Users, Eye, ArrowLeft, Loader2 } from 'lucide-react';
 import authService from '../../services/authService';
 import api from '../../config/api';
+import VerificationBadge from '../VerificationBadge';
 
 const FollowedStoresStandalone = () => {
   const [user, setUser] = useState(null);
@@ -169,19 +170,26 @@ const FollowedStoresStandalone = () => {
                     onClick={() => handleStoreClick(store.id)}
                   >
                     <div className="flex justify-between items-start mb-4">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                        {store.logo ? (
-                          <img
-                            src={store.logo}
-                            alt={store.name}
-                            className="w-12 h-12 rounded-lg object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
-                          />
-                        ) : null}
-                        <Store className={`w-8 h-8 text-blue-600 dark:text-blue-400 ${store.logo ? 'hidden' : 'block'}`} />
+                      <div className="relative">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                          {store.logo ? (
+                            <img
+                              src={store.logo}
+                              alt={store.name}
+                              className="w-12 h-12 rounded-lg object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <Store className={`w-8 h-8 text-blue-600 dark:text-blue-400 ${store.logo ? 'hidden' : 'block'}`} />
+                        </div>
+                        {(store.is_verified || store.verified) && (
+                          <div className="absolute -bottom-0.5 -right-0.5">
+                            <VerificationBadge size="sm" />
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={(e) => {

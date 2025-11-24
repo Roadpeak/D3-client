@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../services/storeService';
+import VerificationBadge from './VerificationBadge';
 
 // Store Logo Component with fallback to initials
 const StoreLogo = ({
@@ -214,11 +215,18 @@ const PopularStores = () => {
           />
 
           {/* Store Logo */}
-          <div className={`absolute bottom-2 left-2 ${getLogoColor(store)} rounded-full p-2 shadow-lg overflow-hidden`}>
-            <StoreLogo
-              logoUrl={store.logo_url || store.logo}
-              storeName={store.name}
-            />
+          <div className="relative">
+            <div className={`absolute bottom-2 left-2 ${getLogoColor(store)} rounded-full p-2 shadow-lg overflow-hidden`}>
+              <StoreLogo
+                logoUrl={store.logo_url || store.logo}
+                storeName={store.name}
+              />
+            </div>
+            {(store.is_verified || store.verified) && (
+              <div className="absolute bottom-1 left-7">
+                <VerificationBadge size="sm" />
+              </div>
+            )}
           </div>
         </div>
 
