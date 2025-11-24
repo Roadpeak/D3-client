@@ -308,8 +308,8 @@ const SearchResultsPage = () => {
       whileHover="hover"
       layout
       className={`group cursor-pointer transition-all duration-300 ${viewMode === 'grid'
-          ? 'bg-white rounded-2xl shadow-lg hover:shadow-xl border border-slate-200/50'
-          : 'bg-white rounded-xl shadow-md hover:shadow-lg border border-slate-200/50 flex items-center'
+          ? 'bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl border border-slate-200/50 dark:border-gray-700'
+          : 'bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg border border-slate-200/50 dark:border-gray-700 flex items-center'
         }`}
       onClick={() => handleStoreClick(store.id)}
     >
@@ -331,25 +331,25 @@ const SearchResultsPage = () => {
             </motion.div>
           </div>
 
-          <h3 className="font-bold text-lg text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors">
+          <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
             {store.name}
           </h3>
-          <p className="text-sm text-slate-600 mb-2 line-clamp-2">{store.description || `${store.category} store`}</p>
+          <p className="text-sm text-slate-600 dark:text-gray-400 mb-2 line-clamp-2">{store.description || `${store.category} store`}</p>
 
           <div className="flex items-center justify-between text-sm mb-3">
             <div className="flex items-center space-x-1">
               <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              <span className="font-medium">{store.rating || '4.0'}</span>
-              <span className="text-slate-500">({store.reviews || '0'})</span>
+              <span className="font-medium dark:text-white">{store.rating || '4.0'}</span>
+              <span className="text-slate-500 dark:text-gray-400">({store.reviews || '0'})</span>
             </div>
-            <div className="flex items-center text-slate-500">
+            <div className="flex items-center text-slate-500 dark:text-gray-400">
               <MapPin className="w-4 h-4 mr-1" />
               <span className="text-xs">{store.location}</span>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-gray-700">
+            <span className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-gray-300 px-2 py-1 rounded-full">
               {store.category}
             </span>
             <motion.button
@@ -365,12 +365,12 @@ const SearchResultsPage = () => {
           <ImageWithFallback
             src={store.logo || store.logo_url}
             name={store.name}
-            className="w-20 h-20 rounded-xl object-cover border border-slate-200 flex-shrink-0"
+            className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-gray-700 flex-shrink-0"
           />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="font-bold text-lg text-slate-800 group-hover:text-indigo-600 transition-colors">
+              <h3 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 {store.name}
               </h3>
               <motion.div
@@ -383,23 +383,23 @@ const SearchResultsPage = () => {
               </motion.div>
             </div>
 
-            <p className="text-sm text-slate-600 mb-2 line-clamp-1">{store.description || `${store.category} store`}</p>
+            <p className="text-sm text-slate-600 dark:text-gray-400 mb-2 line-clamp-1">{store.description || `${store.category} store`}</p>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-1">
                   <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                  <span className="font-medium text-sm">{store.rating || '4.0'}</span>
-                  <span className="text-slate-500 text-sm">({store.reviews || '0'})</span>
+                  <span className="font-medium text-sm dark:text-white">{store.rating || '4.0'}</span>
+                  <span className="text-slate-500 dark:text-gray-400 text-sm">({store.reviews || '0'})</span>
                 </div>
-                <div className="flex items-center text-slate-500">
+                <div className="flex items-center text-slate-500 dark:text-gray-400">
                   <MapPin className="w-4 h-4 mr-1" />
                   <span className="text-sm">{store.location}</span>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2">
-                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                <span className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-gray-300 px-2 py-1 rounded-full">
                   {store.category}
                 </span>
                 <motion.button
@@ -425,8 +425,8 @@ const SearchResultsPage = () => {
       whileHover="hover"
       layout
       className={`group cursor-pointer transition-all duration-300 ${viewMode === 'grid'
-          ? 'bg-white rounded-2xl shadow-lg hover:shadow-xl border border-slate-200/50 overflow-hidden'
-          : 'bg-white rounded-xl shadow-md hover:shadow-lg border border-slate-200/50 flex overflow-hidden'
+          ? 'bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl border border-slate-200/50 dark:border-gray-700 overflow-hidden'
+          : 'bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg border border-slate-200/50 dark:border-gray-700 flex overflow-hidden'
         }`}
       onClick={() => handleOfferClick(offer.id)}
     >
@@ -464,25 +464,25 @@ const SearchResultsPage = () => {
           </div>
 
           <div className="p-5">
-            <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+            <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
               {offer.title || offer.service?.name || 'Special Offer'}
             </h3>
-            <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+            <p className="text-sm text-slate-600 dark:text-gray-400 mb-3 line-clamp-2">
               {offer.description || offer.service?.description || 'Great deal available'}
             </p>
 
             <div className="flex items-center justify-between text-sm mb-3">
-              <div className="flex items-center text-slate-600">
+              <div className="flex items-center text-slate-600 dark:text-gray-300">
                 <span className="font-medium">{offer.store?.name || offer.service?.store?.name || 'Store'}</span>
               </div>
-              <div className="flex items-center text-slate-500">
+              <div className="flex items-center text-slate-500 dark:text-gray-400">
                 <MapPin className="w-4 h-4 mr-1" />
                 <span>{offer.store?.location || offer.service?.store?.location || 'Location'}</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-              <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-gray-700">
+              <span className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-gray-300 px-2 py-1 rounded-full">
                 {offer.category || offer.service?.category || 'General'}
               </span>
               <motion.button
@@ -517,7 +517,7 @@ const SearchResultsPage = () => {
 
           <div className="flex-1 p-4">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="font-bold text-lg text-slate-800 group-hover:text-indigo-600 transition-colors flex-1">
+              <h3 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex-1">
                 {offer.title || offer.service?.name || 'Special Offer'}
               </h3>
               {offer.isHot && (
@@ -532,16 +532,16 @@ const SearchResultsPage = () => {
               )}
             </div>
 
-            <p className="text-sm text-slate-600 mb-2 line-clamp-2">
+            <p className="text-sm text-slate-600 dark:text-gray-400 mb-2 line-clamp-2">
               {offer.description || offer.service?.description || 'Great deal available'}
             </p>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-slate-700 dark:text-gray-300">
                   {offer.store?.name || offer.service?.store?.name || 'Store'}
                 </span>
-                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                <span className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-gray-300 px-2 py-1 rounded-full">
                   {offer.category || offer.service?.category || 'General'}
                 </span>
               </div>
@@ -578,7 +578,7 @@ const SearchResultsPage = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="min-h-screen bg-gradient-to-b from-slate-50 to-white"
+          className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-gray-800"
         >
           <div className="container mx-auto px-4 py-8">
             <motion.div
@@ -598,10 +598,10 @@ const SearchResultsPage = () => {
                   repeatDelay: 1
                 }}
               >
-                <Search className="w-24 h-24 text-slate-300 mx-auto mb-6" />
+                <Search className="w-24 h-24 text-slate-300 dark:text-gray-600 mx-auto mb-6" />
               </motion.div>
-              <h1 className="text-2xl font-bold text-slate-700 mb-2">D3 Search</h1>
-              <p className="text-slate-500 mb-6">Find Discounted services and stores!</p>
+              <h1 className="text-2xl font-bold text-slate-700 dark:text-white mb-2">D3 Search</h1>
+              <p className="text-slate-500 dark:text-gray-400 mb-6">Find Discounted services and stores!</p>
 
               <div className="max-w-2xl mx-auto">
                 <RealTimeSearch
@@ -628,7 +628,7 @@ const SearchResultsPage = () => {
         animate="animate"
         exit="exit"
         variants={pageVariants}
-        className="min-h-screen bg-gradient-to-b from-slate-50 to-white pb-24"
+        className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-gray-800 pb-24"
       >
         <div className="container mx-auto px-4 py-6">
           {/* Header Section */}
@@ -644,13 +644,13 @@ const SearchResultsPage = () => {
                 whileHover="hover"
                 whileTap="tap"
                 onClick={() => navigate(-1)}
-                className="flex items-center space-x-2 text-slate-600 hover:text-indigo-600 transition-colors"
+                className="flex items-center space-x-2 text-slate-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
                 <span>Back</span>
               </motion.button>
 
-              <div className="text-sm text-slate-500">
+              <div className="text-sm text-slate-500 dark:text-gray-400">
                 {locationParam !== 'All Locations' && (
                   <div className="flex items-center">
                     <MapPin className="w-4 h-4 mr-1" />
@@ -675,14 +675,14 @@ const SearchResultsPage = () => {
             {/* Search Results Info */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-slate-800">
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
                   Search Results for "{query}"
                 </h1>
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="text-slate-600"
+                  className="text-slate-600 dark:text-gray-400"
                 >
                   {isLoading ? 'Searching...' : `${totalResults} results found`}
                   {locationParam !== 'All Locations' && ` in ${locationParam}`}
@@ -699,7 +699,7 @@ const SearchResultsPage = () => {
             className="flex items-center justify-between mb-6 flex-wrap gap-4"
           >
             {/* Tab Navigation */}
-            <div className="flex items-center space-x-1 bg-slate-100 rounded-xl p-1">
+            <div className="flex items-center space-x-1 bg-slate-100 dark:bg-gray-700 rounded-xl p-1">
               <motion.button
                 variants={tabVariants}
                 animate={activeTab === 'all' ? 'active' : 'inactive'}
@@ -707,8 +707,8 @@ const SearchResultsPage = () => {
                 whileTap="tap"
                 onClick={() => setActiveTab('all')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'all'
-                    ? 'bg-white text-slate-800 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-800'
+                    ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white'
                   }`}
               >
                 All ({totalResults})
@@ -720,8 +720,8 @@ const SearchResultsPage = () => {
                 whileTap="tap"
                 onClick={() => setActiveTab('stores')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'stores'
-                    ? 'bg-white text-slate-800 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-800'
+                    ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white'
                   }`}
               >
                 Stores ({filteredResults.stores.length})
@@ -733,8 +733,8 @@ const SearchResultsPage = () => {
                 whileTap="tap"
                 onClick={() => setActiveTab('offers')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === 'offers'
-                    ? 'bg-white text-slate-800 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-800'
+                    ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white'
                   }`}
               >
                 Offers ({filteredResults.offers.length})
@@ -750,14 +750,14 @@ const SearchResultsPage = () => {
                   whileTap={{ scale: 0.98 }}
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none bg-white border border-slate-300 rounded-xl px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="appearance-none bg-white dark:bg-gray-800 border border-slate-300 dark:border-gray-600 text-slate-800 dark:text-white rounded-xl px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
                   <option value="relevance">Sort by Relevance</option>
                   <option value="rating">Sort by Rating</option>
                   <option value="discount">Sort by Discount</option>
                   <option value="newest">Sort by Newest</option>
                 </motion.select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-gray-400 pointer-events-none" />
               </div>
 
               {/* Filter Button */}
@@ -766,22 +766,22 @@ const SearchResultsPage = () => {
                 whileHover="hover"
                 whileTap="tap"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="flex items-center space-x-2 bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm hover:border-slate-400 transition-colors"
+                className="flex items-center space-x-2 bg-white dark:bg-gray-800 border border-slate-300 dark:border-gray-600 text-slate-800 dark:text-white rounded-xl px-4 py-2 text-sm hover:border-slate-400 dark:hover:border-gray-500 transition-colors"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
               </motion.button>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center space-x-1 bg-slate-100 rounded-xl p-1">
+              <div className="flex items-center space-x-1 bg-slate-100 dark:bg-gray-700 rounded-xl p-1">
                 <motion.button
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-lg transition-all ${viewMode === 'grid'
-                      ? 'bg-white text-slate-800 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-800'
+                      ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-white shadow-sm'
+                      : 'text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white'
                     }`}
                 >
                   <Grid className="w-4 h-4" />
@@ -792,8 +792,8 @@ const SearchResultsPage = () => {
                   whileTap="tap"
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded-lg transition-all ${viewMode === 'list'
-                      ? 'bg-white text-slate-800 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-800'
+                      ? 'bg-white dark:bg-gray-800 text-slate-800 dark:text-white shadow-sm'
+                      : 'text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white'
                     }`}
                 >
                   <List className="w-4 h-4" />
@@ -810,15 +810,15 @@ const SearchResultsPage = () => {
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 overflow-hidden"
+                className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-2xl p-6 mb-6 overflow-hidden"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-slate-800">Filters</h3>
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white">Filters</h3>
                   <motion.button
                     whileHover={{ scale: 1.1, rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setIsFilterOpen(false)}
-                    className="text-slate-500 hover:text-slate-700"
+                    className="text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-200"
                   >
                     <X className="w-5 h-5" />
                   </motion.button>
@@ -830,13 +830,13 @@ const SearchResultsPage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 }}
                   >
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
                       Category
                     </label>
                     <select
                       value={filters.category}
                       onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full border border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     >
                       <option value="">All Categories</option>
                       {categories.map(category => (
@@ -850,13 +850,13 @@ const SearchResultsPage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
                       Price Range
                     </label>
                     <select
                       value={filters.priceRange}
                       onChange={(e) => setFilters(prev => ({ ...prev, priceRange: e.target.value }))}
-                      className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full border border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     >
                       <option value="">Any Price</option>
                       <option value="under-1000">Under KSh 1,000</option>
@@ -871,7 +871,7 @@ const SearchResultsPage = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-gray-300 mb-2">
                       Location
                     </label>
                     <input
@@ -879,7 +879,7 @@ const SearchResultsPage = () => {
                       placeholder="Enter location..."
                       value={filters.location}
                       onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                      className="w-full border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full border border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-slate-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </motion.div>
                 </div>
@@ -894,7 +894,7 @@ const SearchResultsPage = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setFilters({ category: '', priceRange: '', location: locationParam })}
-                    className="px-4 py-2 text-slate-600 hover:text-slate-800 transition-colors"
+                    className="px-4 py-2 text-slate-600 dark:text-gray-300 hover:text-slate-800 dark:hover:text-white transition-colors"
                   >
                     Clear All
                   </motion.button>
@@ -924,7 +924,7 @@ const SearchResultsPage = () => {
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 className="inline-block rounded-full h-12 w-12 border-b-2 border-red-500 mb-4"
               />
-              <p className="text-slate-600">Searching for the best deals...</p>
+              <p className="text-slate-600 dark:text-gray-400">Searching for the best deals...</p>
             </motion.div>
           )}
 
@@ -946,7 +946,7 @@ const SearchResultsPage = () => {
                 >
                   ⚠️
                 </motion.div>
-                <p className="text-slate-600 mb-4">{error}</p>
+                <p className="text-slate-600 dark:text-gray-400 mb-4">{error}</p>
                 <motion.button
                   variants={buttonVariants}
                   whileHover="hover"
@@ -982,12 +982,12 @@ const SearchResultsPage = () => {
               >
                 🔍
               </motion.div>
-              <h3 className="text-xl font-semibold text-slate-700 mb-2">No results found</h3>
-              <p className="text-slate-500 mb-6">
+              <h3 className="text-xl font-semibold text-slate-700 dark:text-white mb-2">No results found</h3>
+              <p className="text-slate-500 dark:text-gray-400 mb-6">
                 We couldn't find any results for "{query}"
                 {locationParam !== 'All Locations' && ` in ${locationParam}`}
               </p>
-              <div className="space-y-2 text-sm text-slate-600">
+              <div className="space-y-2 text-sm text-slate-600 dark:text-gray-400">
                 <p>Try:</p>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Checking your spelling</li>
@@ -1013,9 +1013,9 @@ const SearchResultsPage = () => {
                   <motion.h2
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-xl font-bold text-slate-800 mb-4 flex items-center"
+                    className="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center"
                   >
-                    <MapPin className="w-5 h-5 mr-2 text-indigo-600" />
+                    <MapPin className="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" />
                     Stores ({displayResults.stores.length})
                   </motion.h2>
                   <AnimatePresence mode="wait">
@@ -1041,9 +1041,9 @@ const SearchResultsPage = () => {
                   <motion.h2
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-xl font-bold text-slate-800 mb-4 flex items-center"
+                    className="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center"
                   >
-                    <Tag className="w-5 h-5 mr-2 text-red-600" />
+                    <Tag className="w-5 h-5 mr-2 text-red-600 dark:text-red-400" />
                     Offers ({displayResults.offers.length})
                   </motion.h2>
                   <AnimatePresence mode="wait">
