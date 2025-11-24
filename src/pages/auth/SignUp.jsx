@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { FiEye, FiEyeOff, FiMail, FiLock, FiUser, FiPhone, FiTag } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import GoogleSignInButton from './GoogleSignInButton';
 import authService from '../../services/authService';
 
@@ -86,6 +87,7 @@ const SignUp = () => {
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      toast.error('Please check your form for errors');
       return;
     }
 
@@ -103,6 +105,7 @@ const SignUp = () => {
 
       if (result.success) {
         // Registration successful - redirect to intended page or home
+        toast.success('Registration successful! Welcome to D3!');
         const redirectPath = getRedirectPath();
         navigate(redirectPath, {
           replace: true,
@@ -143,14 +146,23 @@ const SignUp = () => {
           });
 
           setErrors(mappedErrors);
+
+          // Show toast notifications for each error
+          Object.values(mappedErrors).forEach((msg, index) => {
+            setTimeout(() => toast.error(msg), index * 100);
+          });
         } else {
           // General error message
-          setErrors({ general: result.message });
+          const errorMsg = result.message || 'Registration failed. Please try again.';
+          setErrors({ general: errorMsg });
+          toast.error(errorMsg);
         }
       }
     } catch (error) {
       console.error('Registration error:', error);
-      setErrors({ general: 'An unexpected error occurred. Please try again.' });
+      const errorMsg = 'An unexpected error occurred. Please try again.';
+      setErrors({ general: errorMsg });
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

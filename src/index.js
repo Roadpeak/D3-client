@@ -17,6 +17,48 @@ root.render(
         <Toaster
           position="top-center"
           reverseOrder={false}
+          toastOptions={{
+            // Default options
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+              padding: '16px',
+              borderRadius: '12px',
+              fontSize: '14px',
+            },
+            // Success toast
+            success: {
+              duration: 3000,
+              style: {
+                background: '#10b981',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#10b981',
+              },
+            },
+            // Error toast
+            error: {
+              duration: 4000,
+              style: {
+                background: '#ef4444',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#ef4444',
+              },
+            },
+            // Loading toast
+            loading: {
+              style: {
+                background: '#3b82f6',
+                color: '#fff',
+              },
+            },
+          }}
         />
       </AuthProvider>
     </BrowserRouter>

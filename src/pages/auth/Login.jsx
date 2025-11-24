@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { FiEye, FiEyeOff, FiMail, FiLock, FiTag, FiPercent } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import GoogleSignInButton from './GoogleSignInButton';
 import authService from '../../services/authService';
 
@@ -84,11 +85,13 @@ const Login = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     // Client-side validation
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      // Show validation error toast
+      toast.error('Please check your form for errors');
       return;
     }
 
@@ -100,11 +103,12 @@ const Login = () => {
 
       if (result.success) {
         console.log('✅ Login successful!');
-        
+        toast.success('Welcome back! Logging you in...');
+
         // Get redirect path - check query params first, then location state
         const redirectParam = searchParams.get('redirect');
         let redirectPath = '/';
-        
+
         if (redirectParam) {
           redirectPath = decodeURIComponent(redirectParam);
           console.log('🎯 Redirecting to (from query param):', redirectPath);
@@ -114,23 +118,32 @@ const Login = () => {
         } else {
           console.log('🎯 No redirect param, going to home');
         }
-        
+
         // Small delay to ensure auth state is updated
         setTimeout(() => {
           navigate(redirectPath, { replace: true });
         }, 100);
-        
+
       } else {
         // Handle login errors
         if (result.errors && typeof result.errors === 'object') {
           setErrors(result.errors);
+          // Show specific error messages
+          const errorMessages = Object.values(result.errors).flat();
+          errorMessages.forEach((msg, index) => {
+            setTimeout(() => toast.error(msg), index * 100);
+          });
         } else {
-          setErrors({ general: result.message || 'Login failed. Please try again.' });
+          const errorMsg = result.message || 'Login failed. Please try again.';
+          setErrors({ general: errorMsg });
+          toast.error(errorMsg);
         }
       }
     } catch (error) {
       console.error('Login error:', error);
-      setErrors({ general: 'An unexpected error occurred. Please try again.' });
+      const errorMsg = 'An unexpected error occurred. Please try again.';
+      setErrors({ general: errorMsg });
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
