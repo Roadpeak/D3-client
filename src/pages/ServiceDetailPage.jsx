@@ -323,32 +323,6 @@ const ServiceDetailPage = () => {
                   </div>
                 </div>
 
-                {/* Service Type Badge */}
-                <div className="absolute top-4 right-4 flex flex-col gap-2">
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-full ${serviceData.type === 'fixed'
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                    }`}>
-                    {serviceData.type === 'fixed' ? 'Fixed Price' : 'Dynamic Price'}
-                  </span>
-                  {serviceData.featured && (
-                    <span className="px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 flex items-center gap-1">
-                      <Star className="w-3 h-3" />
-                      Featured
-                    </span>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="absolute top-4 left-4 flex gap-2">
-                  <button
-                    onClick={() => handleShare('facebook')}
-                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 rounded-full hover:bg-white dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Share2 className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                  </button>
-                </div>
-
                 {/* Image navigation for multiple images */}
                 {hasMultipleImages && (
                   <>
@@ -440,6 +414,16 @@ const ServiceDetailPage = () => {
                         </span>
                       )}
 
+                      {serviceData.type && (
+                        <span className={`inline-block text-sm px-3 py-1 rounded-full font-medium ${
+                          serviceData.type === 'fixed'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                        }`}>
+                          {serviceData.type === 'fixed' ? 'Fixed Price' : 'Dynamic Price'}
+                        </span>
+                      )}
+
                       {serviceData.auto_confirm_bookings && (
                         <span className="inline-block bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-sm px-3 py-1 rounded-full font-medium flex items-center">
                           <CheckCircle className="w-3 h-3 mr-1" />
@@ -453,6 +437,34 @@ const ServiceDetailPage = () => {
                           Prepay Required
                         </span>
                       )}
+
+                      {serviceData.featured && (
+                        <span className="inline-block bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-sm px-3 py-1 rounded-full font-medium flex items-center">
+                          <Star className="w-3 h-3 mr-1 fill-current" />
+                          Featured
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Share Button */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <button
+                        onClick={() => {
+                          if (navigator.share) {
+                            navigator.share({
+                              title: serviceData.name,
+                              text: `Check out this service: ${serviceData.name}`,
+                              url: window.location.href
+                            });
+                          } else {
+                            handleShare('facebook');
+                          }
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+                      >
+                        <Share2 className="w-4 h-4" />
+                        Share Service
+                      </button>
                     </div>
                   </div>
 
@@ -780,16 +792,16 @@ const ServiceDetailPage = () => {
                   </button>
                   {storeData.phone_number && (
                     <div className="mt-2">
-
-                      href={`tel:${storeData.phone_number}`}
-                      className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-sm"
-                      <a>
-                      <Phone className="w-4 h-4" />
-                      {storeData.phone_number}
-                    </a>
+                      <a
+                        href={`tel:${storeData.phone_number}`}
+                        className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 text-sm"
+                      >
+                        <Phone className="w-4 h-4" />
+                        {storeData.phone_number}
+                      </a>
                     </div>
-              )}
-            </div>
+                  )}
+                </div>
               )}
           </div>
 
