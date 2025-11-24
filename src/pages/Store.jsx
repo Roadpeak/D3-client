@@ -1901,7 +1901,7 @@
 
             {/* Description with Show More/Less */}
             {storeData.description && (
-              <div className="mb-4">
+              <div className="mb-3">
                 <div className={`text-gray-600 dark:text-gray-400 text-sm sm:text-base ${descriptionExpanded ? '' : 'line-clamp-2'}`}>
                   {storeData.description}
                 </div>
@@ -1928,7 +1928,7 @@
             {((storeData.socialLinksRaw && storeData.socialLinksRaw.length > 0) ||
               storeData.website_url ||
               (storeData.socialLinks && Object.keys(storeData.socialLinks).length > 0)) && (
-                <div className="mb-4 overflow-x-auto">
+                <div className="mb-3 overflow-x-auto">
                   <div className="flex items-center gap-2 sm:gap-3 pb-2">
                     {storeData.socialLinksRaw && storeData.socialLinksRaw.length > 0 ? (
                       <>
