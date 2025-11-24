@@ -677,29 +677,29 @@ const ChatPage = () => {
                           </div>
 
                           <div className="ml-3 flex-1 min-w-0">
-                            <div className="flex items-start justify-between mb-1">
-                              <div className="flex items-center gap-1 min-w-0">
-                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm">{storeName}</h3>
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm flex-shrink min-w-0">{storeName}</h3>
                                 <div className="flex-shrink-0">
                                   <VerificationBadge size="sm" />
                                 </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
                                 {chat.unreadCount > 0 && (
-                                  <span className="bg-blue-500 dark:bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0 ml-1">
+                                  <span className="bg-blue-500 dark:bg-blue-600 text-white text-xs rounded-full px-2 py-0.5">
                                     {chat.unreadCount}
                                   </span>
                                 )}
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{chat.lastMessageTime}</span>
                               </div>
-                              <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{chat.lastMessageTime}</span>
                             </div>
 
-                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-2 leading-tight">{chat.lastMessage}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-1.5 leading-tight">{chat.lastMessage}</p>
 
                             <div className="flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
-                              <span className="flex items-center gap-1">
-                                <span>{store?.category || 'Store'}</span>
-                              </span>
+                              <span className="truncate">{store?.category || 'Store'}</span>
                               {isUserOnline(store?.merchant_id) && (
-                                <span className="text-green-500 dark:text-green-400 flex items-center gap-1">
+                                <span className="text-green-500 dark:text-green-400 flex items-center gap-1 flex-shrink-0 ml-2">
                                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                   Online
                                 </span>
@@ -722,45 +722,46 @@ const ChatPage = () => {
               {selectedChat ? (
                 <>
                   {/* Store Chat Header */}
-                  <div className="bg-white dark:bg-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0 transition-colors duration-200">
-                    <div className="flex items-center">
-                      <button
-                        onClick={handleBackToSidebar}
-                        className="xl:hidden mr-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                      >
-                        <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      </button>
-                      <div className="relative flex-shrink-0">
-                        <img
-                          src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
-                          alt={selectedChat.store?.name || 'Store'}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 dark:bg-blue-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
-                          <Store className="w-2.5 h-2.5 text-white" />
-                        </div>
+                  <div className="bg-white dark:bg-gray-800 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0 transition-colors duration-200">
+                    <button
+                      onClick={handleBackToSidebar}
+                      className="xl:hidden flex-shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    </button>
+
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
+                        alt={selectedChat.store?.name || 'Store'}
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+                      />
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-blue-500 dark:bg-blue-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
+                        <Store className="w-2 sm:w-2.5 h-2 sm:h-2.5 text-white" />
                       </div>
-                      <div className="ml-4">
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedChat.store?.name || 'Store'}</h2>
-                          <div className="flex-shrink-0">
-                            <VerificationBadge size="md" />
-                          </div>
-                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-medium rounded-full">Store</span>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
+                        <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{selectedChat.store?.name || 'Store'}</h2>
+                        <div className="flex-shrink-0">
+                          <VerificationBadge size="sm" />
                         </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                          {isUserOnline(selectedChat.store?.merchant_id) ? (
-                            <span className="text-green-600 dark:text-green-400 flex items-center gap-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              Store is Online
-                            </span>
-                          ) : (
-                            'Store will respond soon'
-                          )}
-                          {selectedChat.store?.category && (
-                            <span className="text-gray-400 dark:text-gray-500">• {selectedChat.store.category}</span>
-                          )}
-                        </p>
+                        <span className="hidden sm:inline-block px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-medium rounded-full flex-shrink-0">Store</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                        {isUserOnline(selectedChat.store?.merchant_id) ? (
+                          <span className="text-green-600 dark:text-green-400 flex items-center gap-1 flex-shrink-0">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="hidden sm:inline">Store is Online</span>
+                            <span className="sm:hidden">Online</span>
+                          </span>
+                        ) : (
+                          <span className="truncate">Store will respond soon</span>
+                        )}
+                        {selectedChat.store?.category && (
+                          <span className="text-gray-400 dark:text-gray-500 hidden sm:inline flex-shrink-0">• {selectedChat.store.category}</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -872,15 +873,15 @@ const ChatPage = () => {
                   </div>
 
                   {/* Message Input */}
-                  <div className="bg-white dark:bg-gray-800 px-8 py-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mb-16 lg:mb-0 transition-colors duration-200">
+                  <div className="bg-white dark:bg-gray-800 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 mb-16 lg:mb-0 transition-colors duration-200">
                     {/* Image Preview Area */}
                     {imagePreview && (
-                      <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-start justify-between mb-3">
+                      <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-start justify-between mb-2">
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Image to send:</span>
                           <button
                             onClick={removeSelectedImage}
-                            className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                            className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0"
                           >
                             <X className="w-5 h-5" />
                           </button>
@@ -888,52 +889,51 @@ const ChatPage = () => {
                         <img
                           src={imagePreview}
                           alt="Preview"
-                          className="max-w-sm max-h-48 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm"
+                          className="max-w-full sm:max-w-sm max-h-40 sm:max-h-48 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm"
                         />
                       </div>
                     )}
 
                     {/* Input Container */}
-                    <div className="flex items-end gap-3">
-                      <div className="flex-1 relative bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-3xl flex items-center transition-colors duration-200">
+                    <div className="flex items-end gap-2 sm:gap-3">
+                      <div className="flex-1 min-w-0 relative bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl sm:rounded-3xl flex items-center transition-colors duration-200">
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          className="p-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                          className="flex-shrink-0 p-2 sm:p-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                           title="Attach image"
                         >
-                          <Paperclip className="w-5 h-5" />
+                          <Paperclip className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
 
                         <textarea
                           value={message}
                           onChange={handleMessageChange}
                           onKeyPress={handleKeyPress}
-                          placeholder={`Chat with ${selectedChat.store?.name || 'store'}...`}
+                          placeholder="Type a message..."
                           rows={1}
                           disabled={sendingMessage || !isConnected}
-                          className="flex-1 px-2 py-3 bg-transparent border-none focus:outline-none resize-none max-h-32 disabled:cursor-not-allowed placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100"
-                          style={{ minHeight: '48px' }}
+                          className="flex-1 min-w-0 px-1 sm:px-2 py-2.5 sm:py-3 bg-transparent border-none focus:outline-none resize-none max-h-32 disabled:cursor-not-allowed placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 text-sm sm:text-base"
+                          style={{ minHeight: '40px' }}
                         />
                       </div>
 
                       <button
                         onClick={selectedImage ? handleSendWithImage : handleSendMessage}
                         disabled={(!message.trim() && !selectedImage) || sendingMessage || !isConnected}
-                        className="p-3 bg-blue-500 dark:bg-blue-600 text-white rounded-full hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                        className="flex-shrink-0 p-2.5 sm:p-3 bg-blue-500 dark:bg-blue-600 text-white rounded-full hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
                         title={!isConnected ? 'Connecting...' : 'Send message'}
-                        style={{ minHeight: '48px', minWidth: '48px' }}
                       >
                         {sendingMessage ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                         ) : (
-                          <Send className="w-5 h-5" />
+                          <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                         )}
                       </button>
                     </div>
 
                     {/* Connection Status */}
                     {!isConnected && (
-                      <div className="mt-3">
+                      <div className="mt-2">
                         <p className="text-xs text-orange-600 dark:text-orange-400 flex items-center gap-2">
                           <Loader2 className="w-3 h-3 animate-spin" />
                           Connecting to chat server...
