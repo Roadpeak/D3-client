@@ -49,6 +49,7 @@ import PrivacyPolicy from './components/PrivacyPolicy'
 import AboutUs from './components/AboutUs'
 import SearchResultsPage from './components/SearchResultsPage'
 import Layout from './components/Layout';
+import ChatLayout from './components/ChatLayout';
 
 // Route Change Handler Component - OPTIMIZED to prevent navbar flash
 const RouteChangeHandler = ({ children }) => {
@@ -119,6 +120,13 @@ const AppRoutes = () => {
           <Route path='/reels/:id' element={<Reels />} />
           <Route path='/videos' element={<Navigate to="/reels" replace />} />
           <Route path='/shorts' element={<Navigate to="/reels" replace />} />
+
+          {/* Chat Routes - WITH Navbar but WITHOUT Footer */}
+          <Route element={<ChatLayout />}>
+            <Route path='/chat' element={<Chat />} />
+            <Route path='/chat/Store/:id' element={<Chat />} />
+            <Route path='/messages' element={<Navigate to="/chat" replace />} />
+          </Route>
 
           {/* Routes WITH persistent Navbar/Footer */}
           <Route element={<Layout />}>
@@ -195,11 +203,6 @@ const AppRoutes = () => {
             <Route path='/my-service-requests' element={<Navigate to="/profile/service-requests" replace />} />
             <Route path='/bookings' element={<Navigate to="/my-vouchers" replace />} />
             <Route path='/vouchers' element={<Navigate to="/my-vouchers" replace />} />
-
-            {/* ==================== CHAT ==================== */}
-            <Route path='/chat' element={<Chat />} />
-            <Route path='/chat/Store/:id' element={<Chat />} />
-            <Route path='/messages' element={<Navigate to="/chat" replace />} />
 
             {/* ==================== FOOTER PAGES ==================== */}
             <Route path='/contact-us' element={<ContactUs />} />
