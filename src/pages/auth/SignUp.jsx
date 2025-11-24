@@ -170,29 +170,29 @@ const SignUp = () => {
   };
 
   return (
-    <main className="h-screen bg-gray-50 flex items-center overflow-y-auto justify-center p-4">
+    <main className="h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-cyan-100 dark:from-gray-900 dark:via-blue-900/20 dark:to-gray-900 flex items-center overflow-y-auto justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Main Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
+        <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8 text-center">
+          <div className="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 p-8 text-center">
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <FiTag className="text-white text-2xl" />
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Join d3 today</h1>
-            <p className="text-purple-100 text-sm font-light">Create your account and start saving today</p>
+            <p className="text-cyan-100 text-sm font-light">Create your account and start saving today</p>
           </div>
 
           {/* User/Merchant Toggle - Mobile */}
-          <div className="flex md:hidden justify-center gap-1 p-4 bg-gray-50/50">
-            <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full text-sm font-medium shadow-sm">
+          <div className="flex md:hidden justify-center gap-1 p-4 bg-gray-50/50 dark:bg-gray-700/50">
+            <button className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full text-sm font-medium shadow-sm">
               User
             </button>
             <Link
               to='https://merchants.discoun3ree.com/accounts/register'
               target='_blank'
               rel="noopener noreferrer"
-              className="px-6 py-2 bg-white text-gray-600 rounded-full text-sm font-medium border border-gray-200 hover:bg-gray-50 transition-colors"
+              className="px-6 py-2 bg-white dark:bg-gray-600 text-gray-600 dark:text-gray-200 rounded-full text-sm font-medium border border-gray-200 dark:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors"
             >
               Merchant
             </Link>
@@ -227,11 +227,11 @@ const SignUp = () => {
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="firstName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     First Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                     <input
                       type="text"
                       id="firstName"
@@ -239,18 +239,18 @@ const SignUp = () => {
                       placeholder="Enter first name"
                       value={formData.firstName}
                       onChange={handleChange}
-                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.firstName ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all bg-gray-50/50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 ${errors.firstName ? 'border-red-300 bg-red-50/50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600'
                         }`}
                       required
                     />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="lastName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Last Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                     <input
                       type="text"
                       id="lastName"
@@ -258,7 +258,7 @@ const SignUp = () => {
                       placeholder="Enter last name"
                       value={formData.lastName}
                       onChange={handleChange}
-                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.lastName ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all bg-gray-50/50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 ${errors.lastName ? 'border-red-300 bg-red-50/50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600'
                         }`}
                       required
                     />
@@ -268,11 +268,11 @@ const SignUp = () => {
 
               {/* Email Field */}
               <div className="space-y-1">
-                <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Email Address <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                   <input
                     type="email"
                     id="email"
@@ -280,7 +280,7 @@ const SignUp = () => {
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.email ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all bg-gray-50/50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 ${errors.email ? 'border-red-300 bg-red-50/50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600'
                       }`}
                     required
                   />
@@ -289,11 +289,11 @@ const SignUp = () => {
 
               {/* Phone Field */}
               <div className="space-y-1">
-                <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
+                <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <FiPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                   <input
                     type="tel"
                     id="phoneNumber"
@@ -301,7 +301,7 @@ const SignUp = () => {
                     placeholder="Enter your phone number"
                     value={formData.phoneNumber}
                     onChange={handleChange}
-                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.phoneNumber ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                    className={`w-full pl-10 text-xs pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all bg-gray-50/50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 ${errors.phoneNumber ? 'border-red-300 bg-red-50/50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600'
                       }`}
                     required
                   />
@@ -311,11 +311,11 @@ const SignUp = () => {
               {/* Password Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       id="password"
@@ -323,25 +323,25 @@ const SignUp = () => {
                       placeholder="Create password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.password ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all bg-gray-50/50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 ${errors.password ? 'border-red-300 bg-red-50/50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600'
                         }`}
                       required
                     />
                     <button
                       type="button"
                       onClick={togglePasswordVisibility}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
                       {showPassword ? <FiEyeOff /> : <FiEye />}
                     </button>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="password_confirmation" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="password_confirmation" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Confirm Password <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       id="password_confirmation"
@@ -349,14 +349,14 @@ const SignUp = () => {
                       placeholder="Confirm password"
                       value={formData.password_confirmation}
                       onChange={handleChange}
-                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all bg-gray-50/50 hover:bg-white ${errors.password_confirmation ? 'border-red-300 bg-red-50/50' : 'border-gray-200'
+                      className={`w-full pl-10 text-xs pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none transition-all bg-gray-50/50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 ${errors.password_confirmation ? 'border-red-300 bg-red-50/50 dark:border-red-600 dark:bg-red-900/20' : 'border-gray-200 dark:border-gray-600'
                         }`}
                       required
                     />
                     <button
                       type="button"
                       onClick={togglePasswordVisibility}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
                       {showPassword ? <FiEyeOff /> : <FiEye />}
                     </button>
@@ -365,7 +365,7 @@ const SignUp = () => {
               </div>
 
               {/* Password Requirements */}
-              <p className="text-xs text-gray-500 -mt-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400 -mt-4">
                 Password must be at least 8 characters long
               </p>
 
@@ -374,16 +374,16 @@ const SignUp = () => {
                 <input
                   type="checkbox"
                   required
-                  className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500/20 focus:ring-2"
+                  className="mt-1 h-4 w-4 text-cyan-600 border-gray-300 dark:border-gray-600 rounded focus:ring-cyan-500/20 focus:ring-2"
                 />
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  By signing up, you agree to our <a href="https://discoun3ree.com/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 font-medium transition-colors">Terms & Conditions</a> and <a href="https://discoun3ree.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 font-medium transition-colors">Privacy Policy</a>
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                  By signing up, you agree to our <a href="https://discoun3ree.com/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-medium transition-colors">Terms & Conditions</a> and <a href="https://discoun3ree.com/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-medium transition-colors">Privacy Policy</a>
                 </p>
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full text-[14px] bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-md"
+                className="w-full text-[14px] bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-md"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -399,11 +399,11 @@ const SignUp = () => {
 
             {/* Sign In Link */}
             <div className="mt-6 text-center">
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
                 Already have an account?{' '}
                 <Link
                   to={getSignInLink()}
-                  className="text-purple-600 font-medium hover:text-purple-700 transition-colors"
+                  className="text-cyan-600 dark:text-cyan-400 font-medium hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors"
                 >
                   Sign In
                 </Link>
