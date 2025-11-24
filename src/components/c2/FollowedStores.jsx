@@ -170,26 +170,19 @@ const FollowedStoresStandalone = () => {
                     onClick={() => handleStoreClick(store.id)}
                   >
                     <div className="flex justify-between items-start mb-4">
-                      <div className="relative">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                          {store.logo ? (
-                            <img
-                              src={store.logo}
-                              alt={store.name}
-                              className="w-12 h-12 rounded-lg object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <Store className={`w-8 h-8 text-blue-600 dark:text-blue-400 ${store.logo ? 'hidden' : 'block'}`} />
-                        </div>
-                        {(store.is_verified || store.verified) && (
-                          <div className="absolute -bottom-0.5 -right-0.5">
-                            <VerificationBadge size="sm" />
-                          </div>
-                        )}
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                        {store.logo ? (
+                          <img
+                            src={store.logo}
+                            alt={store.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <Store className={`w-8 h-8 text-blue-600 dark:text-blue-400 ${store.logo ? 'hidden' : 'block'}`} />
                       </div>
                       <button
                         onClick={(e) => {
@@ -203,9 +196,12 @@ const FollowedStoresStandalone = () => {
                       </button>
                     </div>
 
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                      {store.name}
-                    </h3>
+                    <div className="flex items-center gap-1 mb-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {store.name}
+                      </h3>
+                      <VerificationBadge size="sm" />
+                    </div>
 
                     {store.description && (
                       <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">

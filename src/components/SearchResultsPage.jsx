@@ -317,18 +317,11 @@ const SearchResultsPage = () => {
       {viewMode === 'grid' ? (
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className="relative">
-              <ImageWithFallback
-                src={store.logo || store.logo_url}
-                name={store.name}
-                className="w-16 h-16 rounded-xl object-cover border border-slate-200"
-              />
-              {(store.is_verified || store.verified) && (
-                <div className="absolute -bottom-0.5 -right-0.5">
-                  <VerificationBadge size="sm" />
-                </div>
-              )}
-            </div>
+            <ImageWithFallback
+              src={store.logo || store.logo_url}
+              name={store.name}
+              className="w-16 h-16 rounded-xl object-cover border border-slate-200"
+            />
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -339,9 +332,12 @@ const SearchResultsPage = () => {
             </motion.div>
           </div>
 
-          <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-            {store.name}
-          </h3>
+          <div className="flex items-center gap-1 mb-1">
+            <h3 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              {store.name}
+            </h3>
+            <VerificationBadge size="sm" />
+          </div>
           <p className="text-sm text-slate-600 dark:text-gray-400 mb-2 line-clamp-2">{store.description || `${store.category} store`}</p>
 
           <div className="flex items-center justify-between text-sm mb-3">
@@ -370,24 +366,20 @@ const SearchResultsPage = () => {
         </div>
       ) : (
         <div className="flex items-center space-x-4 p-4 w-full">
-          <div className="relative">
-            <ImageWithFallback
-              src={store.logo || store.logo_url}
-              name={store.name}
-              className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-gray-700 flex-shrink-0"
-            />
-            {(store.is_verified || store.verified) && (
-              <div className="absolute -bottom-1 -right-1">
-                <VerificationBadge size="sm" />
-              </div>
-            )}
-          </div>
+          <ImageWithFallback
+            src={store.logo || store.logo_url}
+            name={store.name}
+            className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-gray-700 flex-shrink-0"
+          />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                {store.name}
-              </h3>
+              <div className="flex items-center gap-1">
+                <h3 className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  {store.name}
+                </h3>
+                <VerificationBadge size="sm" />
+              </div>
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}

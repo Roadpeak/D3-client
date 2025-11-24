@@ -30,8 +30,8 @@ const Stores = () => {
 
   const sortOptions = ['Popular', 'Highest Discount', 'Lowest Discount', 'A-Z', 'Z-A'];
 
-  // Store Logo Component with Dark Mode and Verification Badge
-  const StoreLogo = ({ store, className, showBadge = true }) => {
+  // Store Logo Component with Dark Mode
+  const StoreLogo = ({ store, className }) => {
     const [imageError, setImageError] = useState(false);
 
     const storeInitials = store.name?.charAt(0)?.toUpperCase() || 'S';
@@ -39,42 +39,26 @@ const Stores = () => {
     const hasValidLogo = (store.logo && store.logo.trim() !== '') ||
       (store.logo_url && store.logo_url.trim() !== '');
 
-    const isVerified = store.is_verified || store.verified;
-
     if (!hasValidLogo || imageError) {
       return (
-        <div className="relative">
-          <div
-            className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-500 dark:to-gray-700 flex items-center justify-center border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-all duration-300 shadow-sm hover:scale-110 hover:rotate-6 ${className}`}
-          >
-            <span className="text-white font-bold text-sm">
-              {storeInitials}
-            </span>
-          </div>
-          {isVerified && showBadge && (
-            <div className="absolute -bottom-0.5 -right-0.5">
-              <VerificationBadge size="sm" />
-            </div>
-          )}
+        <div
+          className={`rounded-full bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-500 dark:to-gray-700 flex items-center justify-center border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-all duration-300 shadow-sm hover:scale-110 hover:rotate-6 ${className}`}
+        >
+          <span className="text-white font-bold text-sm">
+            {storeInitials}
+          </span>
         </div>
       );
     }
 
     return (
-      <div className="relative">
-        <img
-          src={store.logo || store.logo_url}
-          alt={`${store.name} logo`}
-          className={`${className} transition-all duration-300 hover:scale-110 hover:rotate-6`}
-          onError={() => setImageError(true)}
-          loading="lazy"
-        />
-        {isVerified && showBadge && (
-          <div className="absolute -bottom-0.5 -right-0.5">
-            <VerificationBadge size="sm" />
-          </div>
-        )}
-      </div>
+      <img
+        src={store.logo || store.logo_url}
+        alt={`${store.name} logo`}
+        className={`${className} transition-all duration-300 hover:scale-110 hover:rotate-6`}
+        onError={() => setImageError(true)}
+        loading="lazy"
+      />
     );
   };
 
@@ -95,9 +79,12 @@ const Stores = () => {
                 />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-gray-100 text-base transition-colors duration-200">
-                  {store.name}
-                </h3>
+                <div className="flex items-center gap-1">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-base transition-colors duration-200">
+                    {store.name}
+                  </h3>
+                  <VerificationBadge size="sm" />
+                </div>
                 <div className="flex items-center space-x-1 mt-1">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 dark:fill-yellow-500 dark:text-yellow-500" />
                   <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{store.rating || 0}</span>
@@ -121,9 +108,12 @@ const Stores = () => {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm md:text-base leading-tight truncate transition-colors duration-200">
-                    {store.name}
-                  </h3>
+                  <div className="flex items-center gap-1">
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm md:text-base leading-tight truncate transition-colors duration-200">
+                      {store.name}
+                    </h3>
+                    <VerificationBadge size="sm" />
+                  </div>
                   {store.location && (
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
                       {store.location}

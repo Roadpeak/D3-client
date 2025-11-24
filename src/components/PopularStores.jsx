@@ -215,27 +215,23 @@ const PopularStores = () => {
           />
 
           {/* Store Logo */}
-          <div className="relative">
-            <div className={`absolute bottom-2 left-2 ${getLogoColor(store)} rounded-full p-2 shadow-lg overflow-hidden`}>
-              <StoreLogo
-                logoUrl={store.logo_url || store.logo}
-                storeName={store.name}
-              />
-            </div>
-            {(store.is_verified || store.verified) && (
-              <div className="absolute bottom-1 left-7">
-                <VerificationBadge size="sm" />
-              </div>
-            )}
+          <div className={`absolute bottom-2 left-2 ${getLogoColor(store)} rounded-full p-2 shadow-lg overflow-hidden`}>
+            <StoreLogo
+              logoUrl={store.logo_url || store.logo}
+              storeName={store.name}
+            />
           </div>
         </div>
 
         {/* Content */}
         <div className="p-3 md:p-4 flex flex-col flex-grow">
           {/* Store Name - Allow 2 lines */}
-          <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2 text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors min-h-[2.5rem]">
-            {store.name}
-          </h3>
+          <div className="flex items-center gap-1 mb-1">
+            <h3 className="font-semibold text-sm md:text-base line-clamp-2 text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors min-h-[2.5rem]">
+              {store.name}
+            </h3>
+            <VerificationBadge size="sm" />
+          </div>
 
           {/* Category - Allow 2 lines */}
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 line-clamp-2 min-h-[2rem]">

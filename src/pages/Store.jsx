@@ -1856,24 +1856,20 @@
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/30 p-4 sm:p-6 mb-8 transition-colors duration-200">
             {/* Logo and Name Row - Mobile Optimized */}
             <div className="flex items-start gap-3 sm:gap-4 mb-4">
-              <div className="relative">
-                <StableImage
-                  src={storeData.logo || storeData.logo_url}
-                  fallbackSrc={STORE_LOGO_FALLBACK}
-                  alt={storeData.name}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700 flex-shrink-0"
-                  priority={true}
-                />
-                {(storeData.is_verified || storeData.verified) && (
-                  <div className="absolute -bottom-1 -right-1">
-                    <VerificationBadge size="md" />
-                  </div>
-                )}
-              </div>
+              <StableImage
+                src={storeData.logo || storeData.logo_url}
+                fallbackSrc={STORE_LOGO_FALLBACK}
+                alt={storeData.name}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700 flex-shrink-0"
+                priority={true}
+              />
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2 break-words">
-                  {storeData.name}
-                </h1>
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 break-words">
+                    {storeData.name}
+                  </h1>
+                  <VerificationBadge size="md" />
+                </div>
 
                 {/* Rating and Followers - Mobile Friendly */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3">
