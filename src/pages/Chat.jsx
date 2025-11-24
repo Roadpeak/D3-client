@@ -492,6 +492,12 @@ const ChatPage = () => {
     setMessages([]);
   };
 
+  const handleViewStore = (storeId) => {
+    if (storeId) {
+      navigate(`/store/${storeId}`);
+    }
+  };
+
   const filteredChats = chats.filter(chat => {
     const storeName = chat.store?.name?.toLowerCase() || '';
     return storeName.includes(searchTerm.toLowerCase());
@@ -662,7 +668,14 @@ const ChatPage = () => {
                             : 'hover:shadow-sm'
                             }`}
                         >
-                          <div className="relative flex-shrink-0">
+                          <div
+                            className="relative flex-shrink-0 cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewStore(store?.id);
+                            }}
+                            title="View store profile"
+                          >
                             <img
                               src={storeAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(storeName)}&background=2563eb&color=ffffff`}
                               alt={storeName}
@@ -730,7 +743,11 @@ const ChatPage = () => {
                       <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </button>
 
-                    <div className="relative flex-shrink-0">
+                    <div
+                      className="relative flex-shrink-0 cursor-pointer"
+                      onClick={() => handleViewStore(selectedChat.store?.id)}
+                      title="View store profile"
+                    >
                       <img
                         src={selectedChat.store?.avatar || selectedChat.store?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedChat.store?.name || 'Store')}&background=2563eb&color=ffffff`}
                         alt={selectedChat.store?.name || 'Store'}
