@@ -78,19 +78,21 @@ const Stores = () => {
                   className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 dark:group-hover:border-blue-500 transition-colors duration-300 shadow-sm"
                 />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
-                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-base transition-colors duration-200">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-base transition-colors duration-200 truncate">
                     {store.name}
                   </h3>
-                  <VerificationBadge size="sm" />
+                  <div className="flex-shrink-0">
+                    <VerificationBadge size="sm" />
+                  </div>
                 </div>
                 <div className="flex items-center space-x-1 mt-1">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 dark:fill-yellow-500 dark:text-yellow-500" />
                   <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{store.rating || 0}</span>
                 </div>
                 {store.location && (
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
                     {store.location}
                   </div>
                 )}
@@ -112,7 +114,9 @@ const Stores = () => {
                     <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm md:text-base leading-tight truncate transition-colors duration-200">
                       {store.name}
                     </h3>
-                    <VerificationBadge size="sm" />
+                    <div className="flex-shrink-0">
+                      <VerificationBadge size="sm" />
+                    </div>
                   </div>
                   {store.location && (
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">

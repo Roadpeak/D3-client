@@ -217,7 +217,7 @@ const SearchResultsPage = () => {
         id: offer.id,
         title: offer.title || offer.service?.name || 'Special Offer',
         description: offer.description || offer.service?.description || 'Great deal available',
-        discount: offer.discount ? `${offer.discount}% OFF` : 'Special Price',
+        discount: offer.discount || null,
         store: {
           name: offer.store?.name || offer.service?.store?.name || 'Store',
           location: offer.store?.location || offer.service?.store?.location || 'Location'

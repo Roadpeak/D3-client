@@ -372,13 +372,98 @@ const ViewOffer = () => {
               </div>
             </div>
 
-            {/* ACTION BUTTONS - Quick Access Section */}
+            {/* Offer Details Card - MOVED BEFORE BUTTONS */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                <Award className="w-5 h-5 mr-2 text-cyan-600 dark:text-cyan-400" />
-                Quick Actions
-              </h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Offer Details</h3>
 
+              {/* Description First */}
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{offerData.description}</p>
+              </div>
+
+              {/* Key Info Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
+                    <MapPin className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{offerData.location}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
+                    <Calendar className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Valid Until</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{new Date(offerData.expiration_date).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                {offerData.serviceDuration && offerData.serviceType === 'fixed' && (
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Duration</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{offerData.serviceDuration} mins</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Offer Info */}
+              {offerData.offer_type === 'dynamic' && (
+                <div className="mb-6 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-200 dark:border-cyan-800 rounded-xl">
+                  <h4 className="font-bold mb-2 flex items-center text-cyan-900 dark:text-cyan-300">
+                    <Info className="w-5 h-5 mr-2" />
+                    Dynamic Pricing Offer
+                  </h4>
+                  <p className="text-cyan-800 dark:text-cyan-300 text-sm mb-2">
+                    {offerData.discount_explanation ||
+                      `Get ${offerData.discount}% off the final quoted price after consultation.`}
+                  </p>
+                  {offerData.requires_consultation && (
+                    <p className="text-cyan-800 dark:text-cyan-300 text-sm">
+                      <strong>Note:</strong> Consultation required to determine exact pricing before applying discount.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Benefits */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+                  <CheckCircle className="w-5 h-5 text-cyan-600 dark:text-cyan-400 mr-2" />
+                  What You Get
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mr-2 flex-shrink-0" />
+                    <span className="text-sm">{offerData.discount}% discount {offerData.offer_type === 'dynamic' ? 'on final price' : ''}</span>
+                  </div>
+                  <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mr-2 flex-shrink-0" />
+                    <span className="text-sm">Professional service</span>
+                  </div>
+                  <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mr-2 flex-shrink-0" />
+                    <span className="text-sm">Easy online booking</span>
+                  </div>
+                  <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mr-2 flex-shrink-0" />
+                    <span className="text-sm">Flexible scheduling</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ACTION BUTTONS - After Details */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
               <div className="space-y-3">
                 {/* Book Offer Button */}
                 <button
@@ -420,20 +505,53 @@ const ViewOffer = () => {
                       <>
                         <Building2 className="w-5 h-5" />
                         <span>VIEW STORE</span>
-                        <ExternalLink className="w-4 h-4" />
                       </>
                     )}
                   </button>
                 )}
 
-                {/* Share Button */}
-                <button
-                  onClick={handleCopyLink}
-                  className="w-full font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
-                >
-                  <Share2 className="w-5 h-5" />
-                  <span>SHARE THIS OFFER</span>
-                </button>
+                {/* Share Section with Icons */}
+                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 text-center">Share This Offer</p>
+                  <div className="flex items-center justify-center space-x-3">
+                    <button
+                      onClick={() => handleShare('facebook')}
+                      className="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center hover:bg-blue-700 transition-all duration-200 shadow-md"
+                      title="Share on Facebook"
+                    >
+                      <Facebook className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleShare('twitter')}
+                      className="w-10 h-10 bg-cyan-500 text-white rounded-lg flex items-center justify-center hover:bg-cyan-600 transition-all duration-200 shadow-md"
+                      title="Share on Twitter"
+                    >
+                      <Twitter className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleShare('linkedin')}
+                      className="w-10 h-10 bg-blue-700 text-white rounded-lg flex items-center justify-center hover:bg-blue-800 transition-all duration-200 shadow-md"
+                      title="Share on LinkedIn"
+                    >
+                      <Linkedin className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleCopyLink}
+                      className="w-10 h-10 bg-gray-600 dark:bg-gray-700 text-white rounded-lg flex items-center justify-center hover:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 shadow-md"
+                      title="Copy link"
+                    >
+                      <Copy className="w-5 h-5" />
+                    </button>
+                  </div>
+                  {copySuccess && (
+                    <div className="mt-3 p-2 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg text-center">
+                      <p className="text-cyan-900 dark:text-cyan-300 font-medium text-sm flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Link copied!
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Auth Info */}
@@ -448,157 +566,6 @@ const ViewOffer = () => {
                 </div>
               )}
             </div>
-
-            {/* Offer Details Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Offer Details</h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
-                    <MapPin className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Location</p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{offerData.location}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Provider</p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{offerData.platform}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
-                    <Calendar className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Valid Until</p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{new Date(offerData.expiration_date).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                {offerData.serviceDuration && offerData.serviceType === 'fixed' && (
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                      <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Duration</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{offerData.serviceDuration} mins</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-                <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-3">Description</h4>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{offerData.description}</p>
-              </div>
-
-              {/* Dynamic Offer Info */}
-              {offerData.offer_type === 'dynamic' && (
-                <div className="mt-6 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-200 dark:border-cyan-800 rounded-xl">
-                  <h4 className="font-bold mb-2 flex items-center text-cyan-900 dark:text-cyan-300">
-                    <Info className="w-5 h-5 mr-2" />
-                    Dynamic Pricing Offer
-                  </h4>
-                  <p className="text-cyan-800 dark:text-cyan-300 text-sm mb-2">
-                    {offerData.discount_explanation ||
-                      `Get ${offerData.discount}% off the final quoted price after consultation.`}
-                  </p>
-                  {offerData.requires_consultation && (
-                    <p className="text-cyan-800 dark:text-cyan-300 text-sm">
-                      <strong>Note:</strong> Consultation required to determine exact pricing before applying discount.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Benefits */}
-              <div className="mt-6">
-                <h4 className="font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                  <CheckCircle className="w-5 h-5 text-cyan-600 dark:text-cyan-400 mr-2" />
-                  What You Get
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="flex items-center text-gray-700 dark:text-gray-300">
-                    <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm">{offerData.discount}% discount {offerData.offer_type === 'dynamic' ? 'on final price' : ''}</span>
-                  </div>
-                  <div className="flex items-center text-gray-700 dark:text-gray-300">
-                    <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm">Professional service</span>
-                  </div>
-                  <div className="flex items-center text-gray-700 dark:text-gray-300">
-                    <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm">Easy online booking</span>
-                  </div>
-                  <div className="flex items-center text-gray-700 dark:text-gray-300">
-                    <CheckCircle className="w-4 h-4 text-cyan-600 dark:text-cyan-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm">Flexible scheduling</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Share Options Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Share This Offer</h3>
-              <div className="flex items-center justify-center space-x-4">
-                <button
-                  onClick={() => handleShare('facebook')}
-                  className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-700 transition-all duration-200 transform hover:scale-110 shadow-md"
-                  title="Share on Facebook"
-                >
-                  <Facebook className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={() => handleShare('twitter')}
-                  className="w-12 h-12 bg-cyan-500 text-white rounded-xl flex items-center justify-center hover:bg-cyan-600 transition-all duration-200 transform hover:scale-110 shadow-md"
-                  title="Share on Twitter"
-                >
-                  <Twitter className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={() => handleShare('linkedin')}
-                  className="w-12 h-12 bg-blue-700 text-white rounded-xl flex items-center justify-center hover:bg-blue-800 transition-all duration-200 transform hover:scale-110 shadow-md"
-                  title="Share on LinkedIn"
-                >
-                  <Linkedin className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={() => handleShare('instagram')}
-                  className="w-12 h-12 bg-black dark:bg-gray-700 text-white rounded-xl flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-110 shadow-md"
-                  title="Share on Instagram"
-                >
-                  <Instagram className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={handleCopyLink}
-                  className="w-12 h-12 bg-gray-600 dark:bg-gray-700 text-white rounded-xl flex items-center justify-center hover:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200 transform hover:scale-110 shadow-md"
-                  title="Copy link"
-                >
-                  <Copy className="w-6 h-6" />
-                </button>
-              </div>
-
-              {copySuccess && (
-                <div className="mt-4 p-3 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-xl text-center">
-                  <p className="text-cyan-900 dark:text-cyan-300 font-medium text-sm flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Link copied to clipboard!
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right Column - Pricing & Info Sidebar */}
@@ -606,13 +573,9 @@ const ViewOffer = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 sticky top-24 space-y-6 transition-colors duration-200">
               {/* Title */}
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">{offerData.title}</h1>
-                <div className="flex items-center flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <span className="flex items-center bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {offerData.location}
-                  </span>
-                  <span className="flex items-center bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full text-blue-700 dark:text-blue-400">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{offerData.title}</h1>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="flex items-center bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full text-blue-700 dark:text-blue-400 font-medium">
                     <Building2 className="w-4 h-4 mr-1" />
                     {offerData.platform}
                   </span>
@@ -655,7 +618,7 @@ const ViewOffer = () => {
                 <div className={`flex items-center justify-center ${isOfferActive ? 'text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-400'
                   }`}>
                   <Clock className="w-5 h-5 mr-2" />
-                  <span className="font-bold">
+                  <span className="font-bold text-sm">
                     {isOfferActive ? `Valid until ${new Date(offerData.expiration_date).toLocaleDateString()}` : 'Offer Expired'}
                   </span>
                 </div>
@@ -667,36 +630,6 @@ const ViewOffer = () => {
                   <p className="text-gray-900 dark:text-gray-100 font-bold text-sm">⚡ {offerData.urgencyText}</p>
                 </div>
               )}
-
-              {/* Store Info */}
-              {offerData.storeData && (
-                <div className="p-4 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 border border-gray-200 dark:border-gray-700 rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 dark:from-cyan-600 dark:to-blue-700 rounded-xl">
-                      <Building2 className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-bold text-gray-900 dark:text-gray-100">{offerData.storeData.name || offerData.platform}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{offerData.storeData.location || offerData.location}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Booking Info */}
-              <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 border border-cyan-200 dark:border-cyan-800 rounded-xl">
-                <div className="flex items-start space-x-2">
-                  <Info className="w-5 h-5 text-cyan-600 dark:text-cyan-400 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-cyan-900 dark:text-cyan-300">
-                    <p className="font-semibold mb-1">Booking Process</p>
-                    <p>
-                      {offerData.offer_type === 'dynamic'
-                        ? 'Final price determined after consultation. Discount applied to agreed amount.'
-                        : `Pay the discounted price of ${offerData.offerPrice} at your appointment.`}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

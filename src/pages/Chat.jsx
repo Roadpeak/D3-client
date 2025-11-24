@@ -5,6 +5,7 @@ import { Send, Search, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, S
 import chatService from '../services/chatService';
 import useSocket from '../hooks/useSocket';
 import authService from '../services/authService';
+import VerificationBadge from '../components/VerificationBadge';
 
 const ChatPage = () => {
   const location = useLocation();
@@ -677,10 +678,13 @@ const ChatPage = () => {
 
                           <div className="ml-3 flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-1">
-                              <div className="flex items-center gap-2 min-w-0">
+                              <div className="flex items-center gap-1 min-w-0">
                                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate text-sm">{storeName}</h3>
+                                <div className="flex-shrink-0">
+                                  <VerificationBadge size="sm" />
+                                </div>
                                 {chat.unreadCount > 0 && (
-                                  <span className="bg-blue-500 dark:bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0">
+                                  <span className="bg-blue-500 dark:bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 flex-shrink-0 ml-1">
                                     {chat.unreadCount}
                                   </span>
                                 )}
@@ -737,8 +741,11 @@ const ChatPage = () => {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center gap-2">
                           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{selectedChat.store?.name || 'Store'}</h2>
+                          <div className="flex-shrink-0">
+                            <VerificationBadge size="md" />
+                          </div>
                           <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-xs font-medium rounded-full">Store</span>
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">

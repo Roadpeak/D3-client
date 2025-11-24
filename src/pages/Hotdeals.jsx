@@ -290,10 +290,10 @@ export default function Hotdeals() {
     <div className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse ${isListView ? 'flex flex-col sm:flex-row' : ''}`}>
       <div className={`relative ${isListView ? 'sm:w-1/3' : ''}`}>
         <div className={`w-full bg-gray-200 dark:bg-gray-700 ${isListView ? 'h-48 sm:h-full' : 'h-40 md:h-48'}`} />
-        {/* Favorite button placeholder */}
-        <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600" />
         {/* Discount badge placeholder */}
-        <div className="absolute bottom-2 right-2 w-16 h-6 rounded-full bg-gray-300 dark:bg-gray-600" />
+        <div className="absolute top-2 right-2 w-16 h-6 rounded-full bg-gray-300 dark:bg-gray-600" />
+        {/* Favorite button placeholder */}
+        <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600" />
       </div>
       <div className={`p-3 md:p-4 flex flex-col ${isListView ? 'sm:flex-1' : ''}`}>
         {/* Title */}
@@ -807,9 +807,13 @@ export default function Hotdeals() {
                         }}
                       />
 
+                      <div className="absolute top-2 right-2 bg-red-500 dark:bg-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
+                        {offer.discount}
+                      </div>
+
                       <button
                         className={`
-                          absolute top-2 right-2 p-1.5 md:p-2 rounded-full transition-all duration-200 shadow-lg
+                          absolute top-2 left-2 p-1.5 md:p-2 rounded-full transition-all duration-200 shadow-lg
                           ${isOfferFavorited
                             ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
                             : 'bg-white/90 dark:bg-gray-800/90 text-gray-600 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:text-blue-500 dark:hover:text-blue-400'}
@@ -832,10 +836,6 @@ export default function Hotdeals() {
                           className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isOfferFavorited ? 'fill-current' : ''}`}
                         />
                       </button>
-
-                      <div className="absolute bottom-2 right-2 bg-red-500 dark:bg-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-lg">
-                        {offer.discount}
-                      </div>
                     </div>
 
                     <div className={`p-3 md:p-4 flex flex-col ${viewMode === 'list' ? 'sm:flex-1' : ''}`}>

@@ -1,6 +1,7 @@
 // components/reels/ReelVideo.jsx - Individual Reel Video Component
 import React, { useState, useRef, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, Calendar, Volume2, VolumeX, VerifiedIcon as BadgeCheck } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Calendar, Volume2, VolumeX } from 'lucide-react';
+import VerificationBadge from '../VerificationBadge';
 
 const ReelVideo = ({ reel, isActive, onLike, onFollow, onChat, onShare, onBook, onStoreClick, user }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -154,13 +155,13 @@ const ReelVideo = ({ reel, isActive, onLike, onFollow, onChat, onShare, onBook, 
                                     e.target.src = '/default-avatar.png';
                                 }}
                             />
-                            <div className="flex items-center space-x-1">
+                            <div className="flex items-center gap-1">
                                 <span className="text-white font-semibold text-sm drop-shadow-lg group-hover:text-blue-400 transition-colors">
                                     {reel.store?.name || 'Unknown Store'}
                                 </span>
-                                {reel.store?.verified && (
-                                    <BadgeCheck className="w-4 h-4 text-blue-400 fill-blue-400" />
-                                )}
+                                <div className="flex-shrink-0">
+                                    <VerificationBadge size="sm" color="white" />
+                                </div>
                             </div>
                             {/* Only show Follow button if NOT following */}
                             {!reel.isFollowing && (
