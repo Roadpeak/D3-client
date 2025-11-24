@@ -106,19 +106,24 @@ const AppRoutes = () => {
     <div>
       <RouteChangeHandler>
         <Routes>
+          {/* Routes WITHOUT Navbar/Footer - Authentication Pages */}
+          <Route path='/accounts/sign-up' element={<SignUp />} />
+          <Route path='/accounts/sign-in' element={<Login />} />
+          <Route path='/accounts/verify-otp' element={<VerifyOTP />} />
+          <Route path='/login' element={<Navigate to="/accounts/sign-in" replace />} />
+          <Route path='/signup' element={<Navigate to="/accounts/sign-up" replace />} />
+
+          {/* Reels - Fullscreen without Navbar/Footer */}
+          <Route path='/reels' element={<Reels />} />
+          <Route path='/Reels' element={<Navigate to="/reels" replace />} />
+          <Route path='/reels/:id' element={<Reels />} />
+          <Route path='/videos' element={<Navigate to="/reels" replace />} />
+          <Route path='/shorts' element={<Navigate to="/reels" replace />} />
+
           {/* Routes WITH persistent Navbar/Footer */}
           <Route element={<Layout />}>
             {/* ==================== PUBLIC ROUTES ==================== */}
             <Route path='/' element={<Home />} />
-
-            {/* Authentication Routes */}
-            <Route path='/accounts/sign-up' element={<SignUp />} />
-            <Route path='/accounts/sign-in' element={<Login />} />
-            <Route path='/accounts/verify-otp' element={<VerifyOTP />} />
-
-            {/* Login redirect routes */}
-            <Route path='/login' element={<Navigate to="/accounts/sign-in" replace />} />
-            <Route path='/signup' element={<Navigate to="/accounts/sign-up" replace />} />
 
             {/* ==================== STORE ROUTES ==================== */}
             <Route path='/stores' element={<Stores />} />
@@ -218,13 +223,6 @@ const AppRoutes = () => {
             {/* ==================== ERROR ROUTES ==================== */}
             <Route path="*" element={<NotFound />} />
           </Route>
-
-          {/* Routes WITHOUT persistent Navbar/Footer (Reels fullscreen) */}
-          <Route path='/reels' element={<Reels />} />
-          <Route path='/Reels' element={<Navigate to="/reels" replace />} />
-          <Route path='/reels/:id' element={<Reels />} />
-          <Route path='/videos' element={<Navigate to="/reels" replace />} />
-          <Route path='/shorts' element={<Navigate to="/reels" replace />} />
         </Routes>
       </RouteChangeHandler>
     </div>
