@@ -1995,50 +1995,45 @@
                 </div>
               )}
 
-            {/* Action Buttons - Full Width on Mobile */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            {/* Action Buttons - Instagram Style (One Row) */}
+            <div className="flex gap-2">
               <button
                 onClick={toggleFollow}
                 disabled={toggleFollowLoading}
-                className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg border transition-colors disabled:opacity-50 ${isFollowing
-                  ? 'bg-red-500 text-white border-red-500 hover:bg-red-600'
-                  : 'bg-white dark:bg-gray-700 text-red-500 border-red-500 hover:bg-red-50 dark:hover:bg-gray-600'
+                className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 ${isFollowing
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}
               >
                 {toggleFollowLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Heart className={`w-4 h-4 ${isFollowing ? 'fill-current' : ''}`} />
+                  <>
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </>
                 )}
-                {isFollowing ? 'Following' : 'Follow'}
               </button>
               <button
                 onClick={handleChatClick}
                 disabled={startingChat}
-                className="flex items-center justify-center gap-2 px-6 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm transition-colors disabled:opacity-50"
               >
                 {startingChat ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <MessageCircle className="w-4 h-4" />
+                  <>Message</>
                 )}
-                {startingChat ? 'Starting Chat...' : 'Chat'}
               </button>
               <button
                 onClick={handleShareStore}
-                className="flex items-center justify-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-md hover:shadow-lg"
+                className="flex items-center justify-center gap-1 px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm transition-colors flex-shrink-0"
               >
                 {linkCopied ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Link Copied!
-                  </>
+                  <Check className="w-4 h-4" />
                 ) : (
-                  <>
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </>
+                  <Share2 className="w-4 h-4" />
                 )}
+                <span className="hidden sm:inline">{linkCopied ? 'Copied' : 'Share'}</span>
               </button>
             </div>
 
