@@ -2038,8 +2038,8 @@
             </div>
 
             {/* Navigation Tabs - Instagram Style */}
-            <div className="border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-stretch -mb-px overflow-x-auto scrollbar-hide">
+            <div className="mt-4">
+              <div className="flex items-stretch -mb-px overflow-x-auto scrollbar-hide border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setActiveSection('offers')}
                   className={`flex-1 min-w-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-2 text-xs sm:text-sm font-medium transition-colors relative ${activeSection === 'offers'
