@@ -2042,86 +2042,89 @@
               </button>
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+            {/* Navigation Tabs - Instagram Style */}
+            <div className="border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-stretch -mb-px overflow-x-auto scrollbar-hide">
                 <button
                   onClick={() => setActiveSection('offers')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'offers'
-                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  className={`flex-1 min-w-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-2 text-xs sm:text-sm font-medium transition-colors relative ${activeSection === 'offers'
+                    ? 'text-gray-900 dark:text-gray-100'
+                    : 'text-gray-500 dark:text-gray-400'
                     }`}
                 >
-                  <Tag className="w-4 h-4" />
-                  <span>Offers</span>
+                  <Tag className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Offers</span>
                   {!offersLoading && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'offers' ? 'bg-white/20 dark:bg-gray-900/20 text-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                      }`}>
-                      {offers.length || storeData.deals?.length || 0}
-                    </span>
+                    <span className="text-xs">({offers.length || storeData.deals?.length || 0})</span>
+                  )}
+                  {activeSection === 'offers' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100" />
                   )}
                 </button>
 
                 <button
                   onClick={() => setActiveSection('services')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'services'
-                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  className={`flex-1 min-w-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-2 text-xs sm:text-sm font-medium transition-colors relative ${activeSection === 'services'
+                    ? 'text-gray-900 dark:text-gray-100'
+                    : 'text-gray-500 dark:text-gray-400'
                     }`}
                 >
-                  <Camera className="w-4 h-4" />
-                  <span>Services</span>
+                  <Camera className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Services</span>
                   {!servicesLoading && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'services' ? 'bg-white/20 dark:bg-gray-900/20 text-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                      }`}>
-                      {services.length || storeData.services?.length || 0}
-                    </span>
+                    <span className="text-xs">({services.length || storeData.services?.length || 0})</span>
+                  )}
+                  {activeSection === 'services' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100" />
                   )}
                 </button>
 
                 <button
                   onClick={() => setActiveSection('reels')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'reels'
-                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  className={`flex-1 min-w-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-2 text-xs sm:text-sm font-medium transition-colors relative ${activeSection === 'reels'
+                    ? 'text-gray-900 dark:text-gray-100'
+                    : 'text-gray-500 dark:text-gray-400'
                     }`}
                 >
-                  <Play className="w-4 h-4" />
-                  <span>Reels</span>
+                  <Play className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Reels</span>
                   {!reelsLoading && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'reels' ? 'bg-white/20 dark:bg-gray-900/20 text-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                      }`}>
-                      {reels.length || 0}
-                    </span>
+                    <span className="text-xs">({reels.length || 0})</span>
+                  )}
+                  {activeSection === 'reels' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100" />
                   )}
                 </button>
 
                 <button
                   onClick={() => setActiveSection('outlets')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'outlets'
-                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  className={`flex-1 min-w-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-2 text-xs sm:text-sm font-medium transition-colors relative ${activeSection === 'outlets'
+                    ? 'text-gray-900 dark:text-gray-100'
+                    : 'text-gray-500 dark:text-gray-400'
                     }`}
                 >
-                  <MapPin className="w-4 h-4" />
-                  <span>Outlets</span>
+                  <MapPin className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Branches</span>
                   {!branchesLoading && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeSection === 'outlets' ? 'bg-white/20 dark:bg-gray-900/20 text-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-                      }`}>
-                      {branches.length || storeData.outlets?.length || 0}
-                    </span>
+                    <span className="text-xs">({branches.length || storeData.outlets?.length || 0})</span>
+                  )}
+                  {activeSection === 'outlets' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100" />
                   )}
                 </button>
 
                 <button
                   onClick={() => setActiveSection('map')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${activeSection === 'map'
-                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  className={`flex-1 min-w-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-2 text-xs sm:text-sm font-medium transition-colors relative ${activeSection === 'map'
+                    ? 'text-gray-900 dark:text-gray-100'
+                    : 'text-gray-500 dark:text-gray-400'
                     }`}
                 >
-                  <Navigation className="w-4 h-4" />
-                  <span>Map</span>
+                  <Navigation className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Map</span>
+                  {activeSection === 'map' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 dark:bg-gray-100" />
+                  )}
                 </button>
               </div>
             </div>

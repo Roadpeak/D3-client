@@ -235,8 +235,8 @@ const ReviewSection = ({
     }
 
     return (
-      <div className={`${size} rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center`}>
-        <User className="w-1/2 h-1/2 text-gray-400" />
+      <div className={`${size} rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center`}>
+        <User className="w-1/2 h-1/2 text-gray-400 dark:text-gray-500" />
       </div>
     );
   };
@@ -378,13 +378,13 @@ const ReviewSection = ({
 
     return (
       <div className="mb-6 pb-6 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Customer Reviews</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Average Rating */}
           <div className="text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-              <span className="text-5xl font-bold text-gray-900">{avgRating.toFixed(1)}</span>
+              <span className="text-5xl font-bold text-gray-900 dark:text-gray-100">{avgRating.toFixed(1)}</span>
               <div>
                 <div className="flex">{renderStars(avgRating, false, null, null, 'w-5 h-5')}</div>
                 <p className="text-sm text-gray-500 mt-1">
@@ -398,14 +398,14 @@ const ReviewSection = ({
           <div className="space-y-2">
             {distribution.map(({ stars, count, percentage }) => (
               <div key={stars} className="flex items-center gap-3">
-                <span className="text-sm text-gray-600 w-12">{stars} star</span>
-                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <span className="text-sm text-gray-600 dark:text-gray-400 w-12">{stars} star</span>
+                <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gray-900 rounded-full transition-all duration-300"
+                    className="h-full bg-gray-900 dark:bg-gray-100 rounded-full transition-all duration-300"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <span className="text-sm text-gray-500 w-12 text-right">{count}</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 w-12 text-right">{count}</span>
               </div>
             ))}
           </div>
@@ -419,7 +419,7 @@ const ReviewSection = ({
     const [helpful, setHelpful] = useState(false);
 
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6 transition-all duration-200 hover:shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-200 hover:shadow-sm dark:hover:shadow-gray-900/50">
         <div className="flex items-start gap-4">
           <UserAvatar
             user={{
@@ -448,7 +448,7 @@ const ReviewSection = ({
               {canEditReview(review) && editingReview !== review.id && (
                 <button
                   onClick={() => startEditingReview(review)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors p-1 ml-2 flex-shrink-0"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors p-1 ml-2 flex-shrink-0"
                   title="Edit your review"
                 >
                   <Edit2 className="w-4 h-4" />
@@ -465,7 +465,7 @@ const ReviewSection = ({
               /* Edit form */
               <div className="space-y-3 mt-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rating</label>
                   <div className="flex items-center gap-1">
                     {renderStars(
                       editReviewData.rating,
@@ -478,7 +478,7 @@ const ReviewSection = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Review</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Review</label>
                   <textarea
                     value={editReviewData.comment}
                     onChange={(e) => setEditReviewData({ ...editReviewData, comment: e.target.value })}
@@ -495,7 +495,7 @@ const ReviewSection = ({
                   <button
                     onClick={() => handleUpdateReview(review.id)}
                     disabled={updatingReview}
-                    className="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updatingReview ? (
                       <>
@@ -512,7 +512,7 @@ const ReviewSection = ({
 
                   <button
                     onClick={cancelEditingReview}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Cancel
                   </button>
@@ -521,7 +521,7 @@ const ReviewSection = ({
             ) : (
               <>
                 {/* Review Content */}
-                <p className="text-gray-700 mb-4 leading-relaxed">
+                <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
                   {review.comment || review.text || 'No comment provided.'}
                 </p>
 
@@ -552,7 +552,7 @@ const ReviewSection = ({
                     <span>Helpful {review.helpful_count ? `(${review.helpful_count})` : ''}</span>
                   </button>
 
-                  <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                  <button className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                     <Flag className="w-4 h-4" />
                     <span>Report</span>
                   </button>
@@ -566,34 +566,34 @@ const ReviewSection = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
       <RatingSummary />
 
       {/* Success Message */}
       {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-green-800">{success}</p>
+        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-sm text-green-800 dark:text-green-300">{success}</p>
         </div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
       )}
 
       {/* Add Review Form */}
-      <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Write Your Review</h3>
+      <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Write Your Review</h3>
 
         {!currentUser?.isLoggedIn ? (
-          <div className="text-center py-8 text-gray-500">
-            <User className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-            <p className="text-lg font-medium mb-2 text-gray-900">Please log in to write a review</p>
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <User className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
+            <p className="text-lg font-medium mb-2 text-gray-900 dark:text-gray-100">Please log in to write a review</p>
             <button
               onClick={handleLoginRedirect}
-              className="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+              className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
             >
               Log In
             </button>
@@ -602,8 +602,8 @@ const ReviewSection = ({
           <form onSubmit={(e) => { e.preventDefault(); handleReviewSubmit(); }}>
             {/* Rating Selection */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Rating <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Your Rating <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <div className="flex gap-1">
                 {renderStars(
@@ -627,8 +627,8 @@ const ReviewSection = ({
 
             {/* Review Text */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Review <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Your Review <span className="text-red-500 dark:text-red-400">*</span>
               </label>
               <textarea
                 value={newReview.comment}
@@ -648,7 +648,7 @@ const ReviewSection = ({
             <button
               type="submit"
               disabled={submittingReview || newReview.rating === 0 || !newReview.comment.trim()}
-              className="w-full bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submittingReview ? (
                 <>
@@ -670,8 +670,8 @@ const ReviewSection = ({
       <div className="space-y-4">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-900" />
-            <span className="ml-2 text-gray-600">Loading reviews...</span>
+            <Loader2 className="w-8 h-8 animate-spin text-gray-900 dark:text-gray-100" />
+            <span className="ml-2 text-gray-600 dark:text-gray-400">Loading reviews...</span>
           </div>
         ) : reviews && reviews.length > 0 ? (
           <>
@@ -685,7 +685,7 @@ const ReviewSection = ({
                 <button
                   onClick={loadMoreReviews}
                   disabled={loadingMore}
-                  className="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
+                  className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2 mx-auto"
                 >
                   {loadingMore ? (
                     <>
@@ -700,14 +700,14 @@ const ReviewSection = ({
             )}
           </>
         ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-            <User className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No reviews yet</h3>
-            <p className="text-gray-600 mb-4">Be the first to review this store!</p>
+          <div className="text-center py-12 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <User className="w-12 h-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No reviews yet</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">Be the first to review this store!</p>
             {currentUser?.isLoggedIn && (
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-6 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors font-medium"
               >
                 Write the First Review
               </button>
