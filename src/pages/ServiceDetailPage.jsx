@@ -257,33 +257,13 @@ const ServiceDetailPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Breadcrumb Navigation */}
-        <nav className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-6">
-          <Link to="/stores" className="hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
-            All Stores
-          </Link>
-          <ChevronRight className="w-4 h-4" />
-
-          {storeData && (
-            <>
-              <button onClick={goBack} className="hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
-                {storeData.name}
-              </button>
-              <ChevronRight className="w-4 h-4" />
-              <span className="text-gray-900 dark:text-gray-100 font-medium">Services</span>
-              <ChevronRight className="w-4 h-4" />
-            </>
-          )}
-          <span className="text-gray-900 dark:text-gray-100 font-medium">{serviceData.name}</span>
-        </nav>
-
         {/* Back Button */}
         <button
           onClick={goBack}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-6 transition-colors"
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-6 transition-colors font-medium"
         >
-          <ArrowLeft className="w-4 h-4" />
-          {storeId ? 'Back to Store' : 'Back to Stores'}
+          <ArrowLeft className="w-5 h-5" />
+          {storeId && storeData ? `Back to ${storeData.name}` : 'Back to Stores'}
         </button>
 
         {/* Error Alert */}
