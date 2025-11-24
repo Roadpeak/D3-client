@@ -224,7 +224,7 @@ const PopularStores = () => {
             </div>
             {/* Verification Badge on Logo */}
             <div className="absolute bottom-1 left-9">
-              <VerificationBadge size="sm" />
+              <VerificationBadge size="sm" color="white" />
             </div>
           </div>
         </div>
