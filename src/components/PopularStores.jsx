@@ -226,11 +226,13 @@ const PopularStores = () => {
         {/* Content */}
         <div className="p-3 md:p-4 flex flex-col flex-grow">
           {/* Store Name - Allow 2 lines */}
-          <div className="flex items-center gap-1 mb-1">
-            <h3 className="font-semibold text-sm md:text-base line-clamp-2 text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors min-h-[2.5rem]">
+          <div className="flex items-start gap-1 mb-1 min-h-[2.5rem]">
+            <h3 className="font-semibold text-sm md:text-base line-clamp-2 text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-1">
               {store.name}
             </h3>
-            <VerificationBadge size="sm" />
+            <div className="flex-shrink-0 mt-0.5">
+              <VerificationBadge size="sm" />
+            </div>
           </div>
 
           {/* Category - Allow 2 lines */}
