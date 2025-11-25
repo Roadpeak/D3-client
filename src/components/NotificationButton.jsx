@@ -618,44 +618,44 @@ const NotificationButton = ({
       return (
         <div
           key={notification.id}
-          className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer relative ${!notification.isRead ? 'bg-blue-50/30' : ''
+          className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 cursor-pointer relative group ${!notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'bg-white dark:bg-gray-800'
             }`}
           onClick={() => handleNotificationClick(notification)}
         >
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start gap-3">
             <div className="relative flex-shrink-0">
               <StoreIcon
                 src={storeAvatar}
-                className="w-10 h-10"
+                className="w-11 h-11 ring-2 ring-blue-100 dark:ring-blue-900"
                 fallback={!storeAvatar}
               />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
-                <ChatIcon className="w-2 h-2 text-white" />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-md">
+                <ChatIcon className="w-2.5 h-2.5 text-white" />
               </div>
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900">
-                    <span className="font-medium">New message from {storeName}</span>
-                    {unreadCount > 1 && (
-                      <span className="ml-1">
-                        You have <span className="font-semibold">{unreadCount}</span> unread messages
-                      </span>
-                    )}
+                  <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                    New message from {storeName}
                   </p>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <p className="text-xs text-gray-500">{notification.time || notification.timeAgo}</p>
-                  </div>
+                  {unreadCount > 1 && (
+                    <span className="inline-block text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full mb-1 font-medium">
+                      {unreadCount} unread messages
+                    </span>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+                    {notification.time || notification.timeAgo}
+                  </p>
                   {messagePreview && (
-                    <div className="mt-2 text-xs text-gray-600 line-clamp-2">
+                    <div className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 bg-gray-50 dark:bg-gray-900/50 px-2 py-1.5 rounded">
                       {messagePreview}
                     </div>
                   )}
                 </div>
                 {!notification.isRead && (
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-1 flex-shrink-0"></div>
+                  <div className="w-2.5 h-2.5 bg-blue-600 dark:bg-blue-400 rounded-full mt-1 flex-shrink-0 animate-pulse"></div>
                 )}
               </div>
             </div>
@@ -757,7 +757,7 @@ const NotificationButton = ({
 
       {isNotificationOpen && (
         <div className={`
-          absolute bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden
+          absolute bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-sm
           ${isMobile
             ? 'top-12 w-80 max-w-[calc(100vw-2rem)]'
             : 'right-0 top-12 w-96'
@@ -776,32 +776,50 @@ const NotificationButton = ({
             />
           )}
 
-          <div className="p-6 border-b border-gray-100">
+          {/* Header with gradient */}
+          <div className="p-5 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 border-b border-blue-100 dark:border-blue-800">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Notifications</h3>
+                {totalUnreadCount > 0 && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                    {totalUnreadCount} unread {totalUnreadCount === 1 ? 'notification' : 'notifications'}
+                  </p>
+                )}
+              </div>
+              {notifications.length > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                >
+                  Mark all read
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
             {isLoading ? (
               <div className="p-8 text-center">
-                <div className="w-12 h-12 mx-auto mb-4 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
-                <p className="text-sm text-gray-500">Loading notifications...</p>
+                <div className="w-12 h-12 mx-auto mb-4 border-4 border-gray-200 dark:border-gray-700 border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin"></div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Loading notifications...</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-8 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
+              <div className="p-10 text-center">
+                <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-10 h-10 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
-                <h4 className="text-lg font-medium text-gray-900 mb-2">No notification yet</h4>
-                <p className="text-sm text-gray-500">
-                  You'll see notifications here when they are available
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">All caught up!</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+                  You have no new notifications. We'll notify you when something happens.
                 </p>
               </div>
             ) : (
-              notifications.map(notification => renderNotificationItem(notification))
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                {notifications.map(notification => renderNotificationItem(notification))}
+              </div>
             )}
           </div>
         </div>

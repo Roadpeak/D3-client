@@ -190,26 +190,22 @@ const FeaturedOffers = () => {
   const currentOffer = featuredOffers[currentIndex];
 
   return (
-    <section className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 transition-colors duration-200">
-          FEATURED OFFERS
-        </h2>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={goToPrevious}
-            className="p-2 bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-            aria-label="Previous offer"
-          >
-            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </button>
-          <button
-            onClick={goToNext}
-            className="p-2 bg-gray-800 dark:bg-gray-600 text-white rounded-full hover:bg-gray-900 dark:hover:bg-gray-500 transition-colors"
-            aria-label="Next offer"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+    <section className="container mx-auto px-4 py-8 sm:py-12">
+      {/* Header with auto-play indicator */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent mb-2">
+            Hot Deals
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Limited time offers • Auto-rotating
+          </p>
+        </div>
+
+        {/* Live indicator */}
+        <div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-full border border-red-200 dark:border-red-800">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="text-xs font-bold text-red-600 dark:text-red-400">LIVE</span>
         </div>
       </div>
 
@@ -233,6 +229,11 @@ const FeaturedOffers = () => {
             {/* Gradient Overlay - Enhanced for dark mode */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent dark:from-black/80 dark:via-black/40"></div>
 
+            {/* Discount Badge - TOP LEFT */}
+            <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white px-5 py-2.5 rounded-full text-lg font-bold shadow-2xl animate-pulse z-10">
+              {currentOffer.discount}
+            </div>
+
             {/* Content Overlay */}
             <div className="absolute inset-0 flex flex-col justify-end p-8">
               <div className="flex items-end justify-between">
@@ -252,14 +253,9 @@ const FeaturedOffers = () => {
                     {currentOffer.offerName}
                   </p>
 
-                  {/* Discount Badge */}
-                  <div className="inline-block bg-red-500 dark:bg-red-600 text-white px-6 py-3 rounded-full text-xl font-bold shadow-lg">
-                    {currentOffer.discount}
-                  </div>
-
                   {/* Valid Until */}
                   {currentOffer.validUntil && (
-                    <p className="text-white/80 text-sm mt-3">
+                    <p className="text-white/80 text-sm mt-2">
                       Valid until: {new Date(currentOffer.validUntil).toLocaleDateString()}
                     </p>
                   )}
