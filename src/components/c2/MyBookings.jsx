@@ -1090,25 +1090,26 @@ const MyBookingsEnhanced = () => {
               </div>
             )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex justify-center">
-              <div className="flex space-x-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === page
-                        ? 'bg-blue-600 dark:bg-blue-700 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                      }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <div className="flex space-x-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === page
+                          ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
