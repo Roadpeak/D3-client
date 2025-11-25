@@ -789,7 +789,7 @@ const NotificationButton = ({
               </div>
               {notifications.length > 0 && (
                 <button
-                  onClick={handleMarkAllAsRead}
+                  onClick={markAllNotificationsAsRead}
                   className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                 >
                   Mark all read
