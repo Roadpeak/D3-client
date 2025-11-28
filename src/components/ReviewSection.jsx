@@ -202,7 +202,7 @@ const ReviewSection = ({
 
   // Stars component with yellow/golden color maintained
   const renderStars = (rating, interactive = false, onRate = null, onHover = null, size = 'w-5 h-5', currentHover = 0) => {
-    return [...Array(5)].map((_, i) => {
+    const stars = [...Array(5)].map((_, i) => {
       const starValue = i + 1;
       const isActive = interactive
         ? starValue <= (currentHover || rating)
@@ -217,10 +217,23 @@ const ReviewSection = ({
             }`}
           onClick={interactive ? () => onRate(starValue) : undefined}
           onMouseEnter={interactive ? () => onHover(starValue) : undefined}
-          onMouseLeave={interactive ? () => onHover(0) : undefined}
         />
       );
     });
+
+    // For interactive stars, wrap in a container with onMouseLeave
+    if (interactive) {
+      return (
+        <div
+          className="flex gap-1"
+          onMouseLeave={() => onHover(0)}
+        >
+          {stars}
+        </div>
+      );
+    }
+
+    return stars;
   };
 
   // User Avatar Component
@@ -469,16 +482,14 @@ const ReviewSection = ({
               <div className="space-y-3 mt-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Rating</label>
-                  <div className="flex items-center gap-1">
-                    {renderStars(
-                      editReviewData.rating,
-                      true,
-                      (rating) => setEditReviewData({ ...editReviewData, rating }),
-                      (rating) => setEditHoverRating(rating),
-                      'w-6 h-6',
-                      editHoverRating
-                    )}
-                  </div>
+                  {renderStars(
+                    editReviewData.rating,
+                    true,
+                    (rating) => setEditReviewData({ ...editReviewData, rating }),
+                    (rating) => setEditHoverRating(rating),
+                    'w-6 h-6',
+                    editHoverRating
+                  )}
                 </div>
 
                 <div>
@@ -609,23 +620,21 @@ const ReviewSection = ({
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Your Rating <span className="text-red-500 dark:text-red-400">*</span>
               </label>
-              <div className="flex gap-1">
-                {renderStars(
-                  newReview.rating,
-                  true,
-                  (rating) => setNewReview({ ...newReview, rating }),
-                  setHoverRating,
-                  'w-8 h-8',
-                  hoverRating
-                )}
-              </div>
-              {hoverRating > 0 && (
+              {renderStars(
+                newReview.rating,
+                true,
+                (rating) => setNewReview({ ...newReview, rating }),
+                setHoverRating,
+                'w-8 h-8',
+                hoverRating
+              )}
+              {(hoverRating > 0 || newReview.rating > 0) && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  {hoverRating === 1 && 'Poor'}
-                  {hoverRating === 2 && 'Fair'}
-                  {hoverRating === 3 && 'Good'}
-                  {hoverRating === 4 && 'Very Good'}
-                  {hoverRating === 5 && 'Excellent'}
+                  {(hoverRating || newReview.rating) === 1 && 'Poor'}
+                  {(hoverRating || newReview.rating) === 2 && 'Fair'}
+                  {(hoverRating || newReview.rating) === 3 && 'Good'}
+                  {(hoverRating || newReview.rating) === 4 && 'Very Good'}
+                  {(hoverRating || newReview.rating) === 5 && 'Excellent'}
                 </p>
               )}
             </div>
