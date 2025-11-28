@@ -25,6 +25,7 @@ const ReviewSection = ({
   // Edit review state
   const [editingReview, setEditingReview] = useState(null);
   const [editReviewData, setEditReviewData] = useState({ rating: 0, comment: '' });
+  const [editHoverRating, setEditHoverRating] = useState(0);
   const [updatingReview, setUpdatingReview] = useState(false);
 
   // Pagination state
@@ -200,11 +201,11 @@ const ReviewSection = ({
   }, [success]);
 
   // Stars component with yellow/golden color maintained
-  const renderStars = (rating, interactive = false, onRate = null, onHover = null, size = 'w-5 h-5') => {
+  const renderStars = (rating, interactive = false, onRate = null, onHover = null, size = 'w-5 h-5', currentHover = 0) => {
     return [...Array(5)].map((_, i) => {
       const starValue = i + 1;
       const isActive = interactive
-        ? starValue <= (hoverRating || rating)
+        ? starValue <= (currentHover || rating)
         : starValue <= Math.floor(rating);
 
       return (
@@ -309,11 +310,13 @@ const ReviewSection = ({
       rating: review.rating,
       comment: review.text || review.comment || ''
     });
+    setEditHoverRating(0);
   };
 
   const cancelEditingReview = () => {
     setEditingReview(null);
     setEditReviewData({ rating: 0, comment: '' });
+    setEditHoverRating(0);
   };
 
   const handleUpdateReview = async (reviewId) => {
@@ -471,8 +474,9 @@ const ReviewSection = ({
                       editReviewData.rating,
                       true,
                       (rating) => setEditReviewData({ ...editReviewData, rating }),
-                      (rating) => setHoverRating(rating),
-                      'w-6 h-6'
+                      (rating) => setEditHoverRating(rating),
+                      'w-6 h-6',
+                      editHoverRating
                     )}
                   </div>
                 </div>
@@ -611,11 +615,12 @@ const ReviewSection = ({
                   true,
                   (rating) => setNewReview({ ...newReview, rating }),
                   setHoverRating,
-                  'w-8 h-8'
+                  'w-8 h-8',
+                  hoverRating
                 )}
               </div>
               {hoverRating > 0 && (
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                   {hoverRating === 1 && 'Poor'}
                   {hoverRating === 2 && 'Fair'}
                   {hoverRating === 3 && 'Good'}
