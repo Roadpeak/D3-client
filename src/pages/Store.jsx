@@ -134,7 +134,7 @@
     const [services, setServices] = useState([]);
     const [branches, setBranches] = useState([]);
     const [reels, setReels] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [offersLoading, setOffersLoading] = useState(false);
     const [servicesLoading, setServicesLoading] = useState(false);
     const [branchesLoading, setBranchesLoading] = useState(false);
@@ -196,7 +196,7 @@
           {...props}
           src={imageSrc}
           alt={alt}
-          className={`${className} ${!isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+          className={className}
           onError={handleImageError}
           onLoad={handleImageLoad}
           loading={priority ? "eager" : "lazy"}
@@ -1107,7 +1107,7 @@
             <img
               src={thumbnailUrl}
               alt={reel.title || 'Reel'}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${thumbnailLoaded ? 'opacity-100' : 'opacity-0'}`}
+              className="absolute inset-0 w-full h-full object-cover"
               onLoad={() => setThumbnailLoaded(true)}
             />
           )}
@@ -1123,7 +1123,7 @@
           <video
             ref={videoRef}
             src={reel.video_url || reel.videoUrl}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className="w-full h-full object-cover"
             loop
             playsInline
             muted={isMuted}
