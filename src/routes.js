@@ -68,6 +68,12 @@ const RouteChangeHandler = ({ children }) => {
   return children;
 };
 
+// Redirect with search params preserved
+const RedirectWithParams = ({ to }) => {
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}`} replace />;
+};
+
 // 404 Not Found Component
 const NotFound = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -117,8 +123,8 @@ const AppRoutes = () => {
           <Route path='/accounts/reset-password' element={<ResetPassword />} />
           <Route path='/login' element={<Navigate to="/accounts/sign-in" replace />} />
           <Route path='/signup' element={<Navigate to="/accounts/sign-up" replace />} />
-          <Route path='/forgot-password' element={<Navigate to="/accounts/forgot-password" replace />} />
-          <Route path='/reset-password' element={<Navigate to="/accounts/reset-password" replace />} />
+          <Route path='/forgot-password' element={<RedirectWithParams to="/accounts/forgot-password" />} />
+          <Route path='/reset-password' element={<RedirectWithParams to="/accounts/reset-password" />} />
 
           {/* Reels - Fullscreen without Navbar/Footer */}
           <Route path='/reels' element={<Reels />} />
