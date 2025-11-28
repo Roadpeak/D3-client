@@ -223,15 +223,14 @@ class AuthService {
   }
 
   // Reset Password
-  async resetPassword(email, otp, newPassword, userType = 'user') {
+  async resetPassword(token, newPassword, userType = 'user') {
     try {
       const endpoint = userType === 'merchant'
         ? API_ENDPOINTS.merchant.resetPassword
         : API_ENDPOINTS.user.resetPassword;
 
       const response = await api.post(endpoint, {
-        email,
-        otp,
+        token,
         newPassword,
       });
 

@@ -3,6 +3,8 @@ import { Route, Routes, Navigate, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
 import SignUp from './pages/auth/SignUp'
 import Login from './pages/auth/Login'
+import RequestPasswordReset from './pages/auth/RequestPassworsReset'
+import ResetPassword from './pages/auth/ResetPassword'
 
 // Updated Offer Components
 import OffersPage from './pages/ViewOffer' // Our new enhanced offers page
@@ -111,8 +113,12 @@ const AppRoutes = () => {
           <Route path='/accounts/sign-up' element={<SignUp />} />
           <Route path='/accounts/sign-in' element={<Login />} />
           <Route path='/accounts/verify-otp' element={<VerifyOTP />} />
+          <Route path='/accounts/forgot-password' element={<RequestPasswordReset />} />
+          <Route path='/accounts/reset-password' element={<ResetPassword />} />
           <Route path='/login' element={<Navigate to="/accounts/sign-in" replace />} />
           <Route path='/signup' element={<Navigate to="/accounts/sign-up" replace />} />
+          <Route path='/forgot-password' element={<Navigate to="/accounts/forgot-password" replace />} />
+          <Route path='/reset-password' element={<Navigate to="/accounts/reset-password" replace />} />
 
           {/* Reels - Fullscreen without Navbar/Footer */}
           <Route path='/reels' element={<Reels />} />

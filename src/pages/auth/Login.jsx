@@ -267,7 +267,7 @@ const Login = () => {
                     Password
                   </label>
                   <Link
-                    to='/request-password-reset'
+                    to='/accounts/forgot-password'
                     className="text-xs text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-medium transition-colors"
                   >
                     Forgot your password?
