@@ -1574,12 +1574,7 @@
                 </div>
               </div>
 
-              {offersLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-gray-600 dark:text-gray-400" />
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading offers...</span>
-                </div>
-              ) : offers.length > 0 ? (
+              {offers.length > 0 ? (
                 <div className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-6'}>
                   {offers.map((offer) => (
                     <OfferCard key={offer.id} offer={offer} isListView={viewMode === 'list'} />
@@ -1602,12 +1597,7 @@
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Our Services</h2>
               </div>
 
-              {servicesLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400" />
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading services...</span>
-                </div>
-              ) : services.length > 0 ? (
+              {services.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {services.map((service) => (
                     <ServiceCard key={service.id} service={service} storeId={id} />
@@ -1661,14 +1651,7 @@
                 )}
               </div>
 
-              {reelsLoading ? (
-                // Skeleton grid - matches the actual layout
-                <div className="-mx-4 sm:mx-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 sm:gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <ReelSkeleton key={i} />
-                  ))}
-                </div>
-              ) : reels.length > 0 ? (
+              {reels.length > 0 ? (
                 // Mobile: full-width single column, larger screens: grid
                 <div className="-mx-4 sm:mx-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                   {reels.map((reel) => (
@@ -1695,12 +1678,7 @@
                 </span>
               </div>
 
-              {branchesLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-purple-500 dark:text-purple-400" />
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading outlets...</span>
-                </div>
-              ) : branches.length > 0 ? (
+              {branches.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {branches.map((branch) => (
                     <OutletCard key={branch.id} branch={branch} />
@@ -1735,14 +1713,7 @@
         case 'map':
           return (
             <div className="mb-6">
-              {branchesLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400" />
-                  <span className="ml-2 text-gray-600 dark:text-gray-400">Loading map...</span>
-                </div>
-              ) : (
-                <MapView />
-              )}
+              <MapView />
             </div>
           );
 

@@ -623,8 +623,15 @@ const ReviewSection = ({
               {renderStars(
                 newReview.rating,
                 true,
-                (rating) => setNewReview({ ...newReview, rating }),
-                setHoverRating,
+                (rating) => {
+                  console.log('Setting rating to:', rating);
+                  setNewReview({ ...newReview, rating });
+                  setHoverRating(0); // Reset hover after selection
+                },
+                (hover) => {
+                  console.log('Hover rating:', hover);
+                  setHoverRating(hover);
+                },
                 'w-8 h-8',
                 hoverRating
               )}

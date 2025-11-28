@@ -4,8 +4,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, Filter, MapPin, Tag, Star, Clock, ChevronDown, Grid, List, X, ArrowLeft } from 'lucide-react';
 import { offerAPI, storeAPI } from '../services/api';
 import RealTimeSearch from './RealTimeSearch';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import VerificationBadge from '../components/VerificationBadge';
 
 // Animation Variants
@@ -580,56 +578,51 @@ const SearchResultsPage = () => {
 
   if (!query.trim()) {
     return (
-      <>
-        <Navbar />
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-gray-800"
-        >
-          <div className="container mx-auto px-4 py-8">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-gray-800"
+      >
+        <div className="container mx-auto px-4 py-8">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-center py-12"
+          >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-center py-12"
+              animate={{
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatDelay: 1
+              }}
             >
-              <motion.div
-                animate={{
-                  scale: [1, 1.1, 1],
-                  rotate: [0, 5, -5, 0]
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 1
-                }}
-              >
-                <Search className="w-24 h-24 text-slate-300 dark:text-gray-600 mx-auto mb-6" />
-              </motion.div>
-              <h1 className="text-2xl font-bold text-slate-700 dark:text-white mb-2">D3 Search</h1>
-              <p className="text-slate-500 dark:text-gray-400 mb-6">Find Discounted services and stores!</p>
-
-              <div className="max-w-2xl mx-auto">
-                <RealTimeSearch
-                  placeholder="Search for deals, coupons & stores..."
-                  onNavigate={handleSearchNavigate}
-                  onStoreClick={handleStoreClick}
-                  onOfferClick={handleOfferClick}
-                  currentLocation={locationParam}
-                />
-              </div>
+              <Search className="w-24 h-24 text-slate-300 dark:text-gray-600 mx-auto mb-6" />
             </motion.div>
-          </div>
-        </motion.div>
-        <Footer />
-      </>
+            <h1 className="text-2xl font-bold text-slate-700 dark:text-white mb-2">D3 Search</h1>
+            <p className="text-slate-500 dark:text-gray-400 mb-6">Find Discounted services and stores!</p>
+
+            <div className="max-w-2xl mx-auto">
+              <RealTimeSearch
+                placeholder="Search for deals, coupons & stores..."
+                onNavigate={handleSearchNavigate}
+                onStoreClick={handleStoreClick}
+                onOfferClick={handleOfferClick}
+                currentLocation={locationParam}
+              />
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
     );
   }
 
   return (
     <>
-      <Navbar />
       <motion.div
         initial="initial"
         animate="animate"
@@ -1073,7 +1066,6 @@ const SearchResultsPage = () => {
           )}
         </div>
       </motion.div>
-      <Footer />
     </>
   );
 };
