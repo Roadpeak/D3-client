@@ -14,7 +14,6 @@ import {
   MapPin,
   User,
   ChevronDown,
-  Tag as TagIcon,
   Home,
   Flame,
   Store,
@@ -110,7 +109,6 @@ const Navbar = () => {
 
   const {
     currentLocation,
-    isLocationLoading,
     availableLocations,
     changeLocation,
     getShortLocationName,
@@ -124,7 +122,6 @@ const Navbar = () => {
   // User and authentication state
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   // Chat count state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -153,8 +150,6 @@ const Navbar = () => {
     } catch (error) {
       setIsAuthenticated(false);
       setUser(null);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -376,30 +371,6 @@ const Navbar = () => {
       {/* End of blue gradient section */}
     </div>
   ), [isAuthenticated, user, unreadChatCount, handleSearchNavigate, handleStoreClick, handleOfferClick]);
-
-  // Loading state
-  if (loading || isLocationLoading) {
-    return (
-      <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl font-bold">
-                <span className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-400 bg-clip-text text-transparent">
-                  D3
-                </span>
-                <TagIcon className="w-5 h-5 text-blue-500 inline ml-1" />
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg w-20 h-8"></div>
-              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-full w-8 h-8"></div>
-            </div>
-          </div>
-        </div>
-      </header>
-    );
-  }
 
   return (
     <>
