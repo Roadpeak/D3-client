@@ -211,12 +211,19 @@ const ReviewSection = ({
       return (
         <Star
           key={i}
-          className={`${size} ${interactive ? 'cursor-pointer' : ''} transition-colors ${isActive
+          className={`${size} ${interactive ? 'cursor-pointer touch-none' : ''} transition-colors ${isActive
               ? 'fill-yellow-400 text-yellow-400'
               : interactive ? 'text-gray-300 hover:text-yellow-400' : 'text-gray-300'
             }`}
-          onClick={interactive ? () => onRate(starValue) : undefined}
+          onClick={interactive ? () => {
+            onRate(starValue);
+            // On mobile, reset hover immediately after click
+            if ('ontouchstart' in window) {
+              onHover(0);
+            }
+          } : undefined}
           onMouseEnter={interactive ? () => onHover(starValue) : undefined}
+          onTouchStart={interactive ? () => onHover(starValue) : undefined}
         />
       );
     });

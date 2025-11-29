@@ -1899,7 +1899,7 @@
             {((storeData.socialLinksRaw && storeData.socialLinksRaw.length > 0) ||
               storeData.website_url ||
               (storeData.socialLinks && Object.keys(storeData.socialLinks).length > 0)) && (
-                <div className="mb-3 overflow-x-auto">
+                <div className="mb-3 overflow-x-auto min-h-[44px]">
                   <div className="flex items-center gap-2 sm:gap-3 pb-2">
                     {storeData.socialLinksRaw && storeData.socialLinksRaw.length > 0 ? (
                       <>
@@ -1967,11 +1967,11 @@
               )}
 
             {/* Action Buttons - Instagram Style (One Row) */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 min-h-[40px]">
               <button
                 onClick={toggleFollow}
                 disabled={toggleFollowLoading}
-                className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 ${isFollowing
+                className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg font-semibold text-sm disabled:opacity-50 min-w-0 ${isFollowing
                   ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                   : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}
@@ -1987,7 +1987,7 @@
               <button
                 onClick={handleChatClick}
                 disabled={startingChat}
-                className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm transition-colors disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm disabled:opacity-50 min-w-0"
               >
                 {startingChat ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1997,7 +1997,7 @@
               </button>
               <button
                 onClick={handleShareStore}
-                className="flex items-center justify-center gap-1 px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm transition-colors flex-shrink-0"
+                className="flex items-center justify-center gap-1 px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm flex-shrink-0"
               >
                 {linkCopied ? (
                   <Check className="w-4 h-4" />
