@@ -709,16 +709,34 @@ export const locationAPI = {
             const data = await response.json();
 
             if (data && data.address) {
-                // Enhanced address parsing for Kenya locations
-                const area = data.address.suburb ||
-                    data.address.neighbourhood ||
+                // Enhanced address parsing for Kenya locations with neighborhood-level precision
+                // Helper function to clean up area names (remove suffixes like 'ward', 'division', 'location')
+                const cleanAreaName = (name) => {
+                    if (!name) return null;
+
+                    // Remove common administrative suffixes
+                    const cleaned = name
+                        .replace(/\s+(ward|division|location|constituency|sub-county)$/i, '')
+                        .trim();
+
+                    return cleaned || name; // Return original if cleaning results in empty string
+                };
+
+                // Prioritize most specific location data (neighborhood > suburb > district)
+                // For Nairobi, OSM often uses city_block for neighborhoods like "Kilimani location"
+                let rawArea = data.address.city_block ||      // Most specific (e.g., "Kilimani location")
+                    data.address.neighbourhood ||              // Neighborhood level (e.g., "Kilimani ward")
+                    data.address.suburb ||                     // Suburb level (e.g., "Kilimani division")
                     data.address.residential ||
                     data.address.commercial ||
                     data.address.hamlet ||
                     data.address.quarter ||
-                    data.address.city_district ||
+                    data.address.city_district ||              // District level (e.g., "Westlands")
                     data.address.district ||
                     null;
+
+                // Clean the area name to remove administrative suffixes
+                const area = cleanAreaName(rawArea);
 
                 const city = data.address.city ||
                     data.address.town ||
@@ -733,14 +751,17 @@ export const locationAPI = {
                     locationName = city;
                 }
 
-                console.log(`✅ Geocoded to: ${locationName}`);
+                console.log(`✅ Geocoded to: ${locationName} (raw: ${rawArea})`);
 
                 return {
                     success: true,
                     location: locationName,
+                    neighborhood: area,  // Include neighborhood separately for filtering
+                    city: city,
                     coordinates: { latitude, longitude },
                     accuracy: 'high',
-                    source: 'openstreetmap'
+                    source: 'openstreetmap',
+                    rawAddress: data.display_name  // Keep full address for debugging
                 };
             }
 
