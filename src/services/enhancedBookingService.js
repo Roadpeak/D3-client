@@ -193,6 +193,60 @@ class EnhancedBookingService {
         }
     }
 
+    /**
+     * NEW: Get available slots with staff availability (slot-centric view)
+     * Supports hybrid UX where users see which staff are available for each slot
+     */
+    async getServiceSlotsWithStaffAvailability(serviceId, date) {
+        try {
+            if (!serviceId || !date) {
+                throw new Error('Service ID and date are required');
+            }
+
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                throw new Error('Date must be in YYYY-MM-DD format');
+            }
+
+            const response = await this.api.get('/bookings/service-slots-with-staff', {
+                params: { serviceId, date },
+                timeout: 15000
+            });
+
+            if (response.data && response.data.success) {
+                return {
+                    success: true,
+                    slots: response.data.slots || [],
+                    serviceName: response.data.serviceName,
+                    date: response.data.date,
+                    storeInfo: response.data.storeInfo,
+                    totalSlots: response.data.totalSlots || 0,
+                    availableSlots: response.data.availableSlots || 0
+                };
+            }
+
+            // Handle business rule violations
+            if (response.data && !response.data.success) {
+                return {
+                    success: false,
+                    message: response.data.message,
+                    slots: [],
+                    storeInfo: response.data.storeInfo
+                };
+            }
+
+            throw new Error('Unable to fetch slots with staff availability');
+
+        } catch (error) {
+            console.error('Error fetching slots with staff availability:', error);
+            return {
+                success: false,
+                message: error.response?.data?.message || error.message || 'Failed to fetch slots with staff availability',
+                slots: [],
+                storeInfo: error.response?.data?.storeInfo
+            };
+        }
+    }
+
     // Helper method to normalize slot responses
     normalizeSlotResponse(data, bookingType, entityId) {
         const result = {
