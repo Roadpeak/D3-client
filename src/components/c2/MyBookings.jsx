@@ -9,6 +9,7 @@ import {
   CreditCard, Smartphone, Zap, Building2, UserCheck,
   AlertCircle, Shield, Bell, Timer, Tag, Star, Info
 } from 'lucide-react';
+import moment from 'moment';
 import authService from '../../services/authService';
 import enhancedBookingService from '../../services/enhancedBookingService';
 
@@ -248,7 +249,7 @@ const MyBookingsEnhanced = () => {
     if (activeTab !== 'all') {
       filtered = filtered.filter(booking => {
         if (activeTab === 'upcoming') {
-          return new Date(booking.startTime) > new Date() &&
+          return moment.utc(booking.startTime).local().isAfter(moment()) &&
             ['confirmed', 'pending', 'checked_in'].includes(booking.status);
         }
         return booking.status === activeTab;
@@ -337,9 +338,9 @@ const MyBookingsEnhanced = () => {
   const canCancelBooking = (booking) => {
     if (['cancelled', 'completed'].includes(booking.status)) return false;
 
-    const bookingTime = new Date(booking.startTime);
-    const now = new Date();
-    const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
+    const bookingTime = moment.utc(booking.startTime).local();
+    const now = moment();
+    const hoursUntilBooking = bookingTime.diff(now, 'hours', true);
 
     let minCancellationHours = 2; // Default
     if (!booking.isOfferBooking && booking.entity?.min_cancellation_hours) {
@@ -352,9 +353,9 @@ const MyBookingsEnhanced = () => {
   const canRescheduleBooking = (booking) => {
     if (!booking || ['cancelled', 'completed', 'checked_in'].includes(booking.status)) return false;
 
-    const bookingTime = new Date(booking.startTime);
-    const now = new Date();
-    const hoursUntilBooking = (bookingTime - now) / (1000 * 60 * 60);
+    const bookingTime = moment.utc(booking.startTime).local();
+    const now = moment();
+    const hoursUntilBooking = bookingTime.diff(now, 'hours', true);
 
     return hoursUntilBooking >= 1;
   };
@@ -384,8 +385,9 @@ const MyBookingsEnhanced = () => {
       status: booking.status
     });
 
-    const bookingTime = new Date(booking.startTime);
-    const isUpcoming = bookingTime > new Date();
+    // Parse UTC time and convert to local timezone
+    const bookingTime = moment.utc(booking.startTime).local();
+    const isUpcoming = bookingTime.isAfter(moment());
 
     const statusColors = {
       confirmed: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700',
@@ -490,21 +492,13 @@ const MyBookingsEnhanced = () => {
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex-1">
                 <Calendar className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {bookingTime.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
+                  {bookingTime.format('MMM D, YYYY')}
                 </span>
               </div>
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex-1">
                 <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {bookingTime.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                  })}
+                  {bookingTime.format('hh:mm A')}
                 </span>
               </div>
             </div>
@@ -629,7 +623,7 @@ const MyBookingsEnhanced = () => {
   const FilterTabs = () => {
     const tabs = [
       { id: 'all', label: 'All Bookings', count: totalBookings },
-      { id: 'upcoming', label: 'Upcoming', count: filteredBookings.filter(b => new Date(b.startTime) > new Date()).length },
+      { id: 'upcoming', label: 'Upcoming', count: filteredBookings.filter(b => moment.utc(b.startTime).local().isAfter(moment())).length },
       { id: 'confirmed', label: 'Confirmed', count: filteredBookings.filter(b => b.status === 'confirmed').length },
       { id: 'pending', label: 'Pending', count: filteredBookings.filter(b => b.status === 'pending').length },
       { id: 'checked_in', label: 'Checked In', count: filteredBookings.filter(b => b.status === 'checked_in').length },
@@ -757,7 +751,7 @@ const MyBookingsEnhanced = () => {
                 {selectedBooking.entity?.title || selectedBooking.entity?.name || 'Booking'}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Current: {new Date(selectedBooking.startTime).toLocaleString()}
+                Current: {moment.utc(selectedBooking.startTime).local().format('MMM D, YYYY [at] hh:mm A')}
               </div>
             </div>
           )}
@@ -888,7 +882,7 @@ const MyBookingsEnhanced = () => {
                 {selectedBooking.entity?.title || selectedBooking.entity?.name || 'Booking'}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                {new Date(selectedBooking.startTime).toLocaleString()}
+                {moment.utc(selectedBooking.startTime).local().format('MMM D, YYYY [at] hh:mm A')}
               </div>
             </div>
           )}
