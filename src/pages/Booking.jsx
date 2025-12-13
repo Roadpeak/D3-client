@@ -26,6 +26,9 @@ const EnhancedBookingPage = () => {
   const [entityDetails, setEntityDetails] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [detailedSlots, setDetailedSlots] = useState([]);
+  const [slotsWithStaff, setSlotsWithStaff] = useState([]); // NEW: Slot-centric staff availability
+  const [selectedSlotData, setSelectedSlotData] = useState(null); // NEW: Data for selected slot
+  const [showStaffModal, setShowStaffModal] = useState(false); // NEW: Staff selection modal
   const [bookingRules, setBookingRules] = useState(null);
   const [branchInfo, setBranchInfo] = useState(null);
   const [branch, setBranch] = useState(null);
@@ -333,58 +336,74 @@ const EnhancedBookingPage = () => {
 
   const fetchAvailableSlots = useCallback(async (forceRefresh = false) => {
     if (!bookingData.date || !entityId) return;
-  
+
     try {
       if (forceRefresh) {
         setRefreshing(true);
       }
-      
+
       let response;
-      
+
       if (isOfferBooking) {
+        // Offers use the old flow (time-first, no staff availability)
         response = await bookingService.getAvailableSlotsForOffer(entityId, bookingData.date);
       } else {
-        response = await bookingService.getAvailableSlotsForService(entityId, bookingData.date);
+        // Services use NEW hybrid flow (shows staff availability per slot)
+        response = await bookingService.getServiceSlotsWithStaffAvailability(entityId, bookingData.date);
       }
-      
+
       // Handle business rule violations
       if (response?.businessRuleViolation || (!response?.success && response?.message)) {
         setAvailableSlots([]);
         setDetailedSlots([]);
-        
+        setSlotsWithStaff([]); // NEW: Clear slot-centric data
+
         if (response.storeInfo || response.branchInfo) {
           setBranchInfo(response.storeInfo || response.branchInfo);
         }
-        
+
         setError(response.message || 'Branch validation failed');
         return;
       }
-      
-      if (response?.success || response?.availableSlots) {
-        setAvailableSlots(response.availableSlots || []);
-        setDetailedSlots(response.detailedSlots || []);
+
+      if (response?.success) {
+        if (isOfferBooking) {
+          // OLD FLOW: For offers, use availableSlots array
+          setAvailableSlots(response.availableSlots || []);
+          setDetailedSlots(response.detailedSlots || []);
+          setSlotsWithStaff([]); // Clear for offers
+        } else {
+          // NEW FLOW: For services, use slots with staff data
+          setSlotsWithStaff(response.slots || []);
+          // Build availableSlots array for backward compatibility
+          setAvailableSlots((response.slots || []).map(slot => slot.time));
+          setDetailedSlots(response.slots || []);
+        }
+
         setBookingRules(response.bookingRules);
-        
+
         if (response.storeInfo || response.branchInfo) {
           setBranchInfo(response.storeInfo || response.branchInfo);
         }
-        
+
         setAccessFee(isOfferBooking ? (response.accessFee || 5.99) : 0);
         setError(null);
         return;
       }
-  
+
       setAvailableSlots([]);
       setDetailedSlots([]);
+      setSlotsWithStaff([]);
       setError('No available time slots for this date. Please try a different date.');
-      
+
     } catch (err) {
       setAvailableSlots([]);
       setDetailedSlots([]);
-      
+      setSlotsWithStaff([]);
+
       if (err.response?.data?.message) {
         setError(err.response.data.message);
-        
+
         if (err.response.data.storeInfo || err.response.data.branchInfo) {
           setBranchInfo(err.response.data.storeInfo || err.response.data.branchInfo);
         }
@@ -1061,13 +1080,26 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
                 {detailedSlots.length > 0 ? (
                   detailedSlots.map((slot) => {
                     const isSelected = bookingData.time === slot.time;
+
+                    // NEW: For services, show staff availability count
+                    const isServiceWithStaff = !isOfferBooking && slot.availableStaffCount !== undefined;
+                    const staffCount = isServiceWithStaff ? slot.availableStaffCount : null;
                     const availabilityColor = slot.available === slot.total ? 'text-green-600 dark:text-green-400' :
                                             slot.available > slot.total / 2 ? 'text-yellow-600 dark:text-yellow-400' : 'text-orange-600 dark:text-orange-400';
 
                     return (
                       <button
                         key={slot.time}
-                        onClick={() => setBookingData(prev => ({ ...prev, time: slot.time }))}
+                        onClick={() => {
+                          if (isServiceWithStaff) {
+                            // NEW: For services, open staff selection modal
+                            setSelectedSlotData(slot);
+                            setShowStaffModal(true);
+                          } else {
+                            // OLD: For offers, directly set time
+                            setBookingData(prev => ({ ...prev, time: slot.time }));
+                          }
+                        }}
                         className={`p-3 rounded-xl border-2 text-sm font-medium transition-all duration-200 ${
                           isSelected
                             ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/25'
@@ -1077,20 +1109,40 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
                         <div className="flex items-center justify-between">
                           <span className="font-semibold">{slot.time}</span>
                           <div className="flex items-center space-x-2">
-                            {slot.total > 1 && (
+                            {isServiceWithStaff ? (
+                              // NEW: Show staff availability for services
                               <>
-                                <Users className={`w-4 h-4 ${isSelected ? 'text-white' : availabilityColor}`} />
-                                <span className={`text-xs font-medium ${isSelected ? 'text-white' : availabilityColor}`}>
-                                  {slot.available}/{slot.total}
+                                <Users className={`w-4 h-4 ${isSelected ? 'text-white' : staffCount > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`} />
+                                <span className={`text-xs font-medium ${isSelected ? 'text-white' : staffCount > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}`}>
+                                  {staffCount} {staffCount === 1 ? 'staff' : 'staff'}
                                 </span>
                               </>
-                            )}
-                            {slot.available === 1 && slot.total === 1 && (
-                              <UserCheck className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-green-600 dark:text-green-400'}`} />
+                            ) : (
+                              // OLD: Show slot availability for offers
+                              <>
+                                {slot.total > 1 && (
+                                  <>
+                                    <Users className={`w-4 h-4 ${isSelected ? 'text-white' : availabilityColor}`} />
+                                    <span className={`text-xs font-medium ${isSelected ? 'text-white' : availabilityColor}`}>
+                                      {slot.available}/{slot.total}
+                                    </span>
+                                  </>
+                                )}
+                                {slot.available === 1 && slot.total === 1 && (
+                                  <UserCheck className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-green-600 dark:text-green-400'}`} />
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
-                        {slot.total > 1 && !isSelected && (
+                        {isServiceWithStaff && !isSelected && (
+                          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            {staffCount === 0 ? 'No staff available' :
+                             staffCount === 1 ? 'Click to select staff' :
+                             'Click to choose staff'}
+                          </div>
+                        )}
+                        {!isServiceWithStaff && slot.total > 1 && !isSelected && (
                           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                             {slot.available === slot.total ? 'All slots available' :
                              slot.available === 1 ? 'Last slot available' :
@@ -1936,6 +1988,132 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
       </div>
 
       {showPaymentModal && <PaymentModal />}
+
+      {/* Staff Selection Modal */}
+      {showStaffModal && selectedSlotData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Select Staff Member
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Time: {selectedSlotData.time}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowStaffModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-3">
+              {/* Any Available Staff Option */}
+              <button
+                onClick={() => {
+                  setBookingData(prev => ({
+                    ...prev,
+                    time: selectedSlotData.time,
+                    staff: null // null means any available staff
+                  }));
+                  setShowStaffModal(false);
+                }}
+                className="w-full p-4 border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-left"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900 dark:text-white">
+                      Any Available Staff
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      System will assign an available staff member
+                    </div>
+                  </div>
+                  <CheckCircle className="w-5 h-5 text-blue-500" />
+                </div>
+              </button>
+
+              {/* Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                    Or choose specific staff
+                  </span>
+                </div>
+              </div>
+
+              {/* Staff List */}
+              {selectedSlotData.availableStaff && selectedSlotData.availableStaff.length > 0 ? (
+                selectedSlotData.availableStaff.map((staff) => (
+                  <button
+                    key={staff.id}
+                    onClick={() => {
+                      setBookingData(prev => ({
+                        ...prev,
+                        time: selectedSlotData.time,
+                        staff: staff.id // Set specific staff ID
+                      }));
+                      setShowStaffModal(false);
+                    }}
+                    className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-semibold text-sm">
+                          {staff.name?.charAt(0).toUpperCase() || 'S'}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900 dark:text-white">
+                          {staff.name}
+                        </div>
+                        {staff.specialization && (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {staff.specialization}
+                          </div>
+                        )}
+                        {staff.email && (
+                          <div className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                            {staff.email}
+                          </div>
+                        )}
+                      </div>
+                      <User className="w-5 h-5 text-gray-400" />
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No specific staff available for this slot</p>
+                  <p className="text-sm mt-1">Please select "Any Available Staff"</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 p-4">
+              <button
+                onClick={() => setShowStaffModal(false)}
+                className="w-full py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
