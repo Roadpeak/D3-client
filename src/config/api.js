@@ -687,14 +687,17 @@ export const locationAPI = {
         }
     },
 
-    // Client-side reverse geocoding fallback
+    // Client-side reverse geocoding fallback with enhanced Kenya support
     clientReverseGeocode: async (latitude, longitude) => {
         try {
+            console.log(`📍 Client-side geocoding: ${latitude}, ${longitude}`);
+
+            // Try OpenStreetMap Nominatim first
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=en`,
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=en&zoom=16`,
                 {
                     headers: {
-                        'User-Agent': 'YourApp/1.0'
+                        'User-Agent': 'Discoun3ree/1.0'
                     }
                 }
             );
@@ -706,41 +709,89 @@ export const locationAPI = {
             const data = await response.json();
 
             if (data && data.address) {
+                // Enhanced address parsing for Kenya locations
                 const area = data.address.suburb ||
                     data.address.neighbourhood ||
                     data.address.residential ||
                     data.address.commercial ||
+                    data.address.hamlet ||
+                    data.address.quarter ||
                     data.address.city_district ||
-                    'Unknown Area';
+                    data.address.district ||
+                    null;
 
                 const city = data.address.city ||
                     data.address.town ||
                     data.address.municipality ||
-                    'Unknown City';
+                    data.address.county ||
+                    'Nairobi';
 
-                const locationName = `${area}, ${city}`;
+                let locationName;
+                if (area && area !== city) {
+                    locationName = `${area}, ${city}`;
+                } else {
+                    locationName = city;
+                }
+
+                console.log(`✅ Geocoded to: ${locationName}`);
 
                 return {
                     success: true,
                     location: locationName,
-                    coordinates: { latitude, longitude }
+                    coordinates: { latitude, longitude },
+                    accuracy: 'high',
+                    source: 'openstreetmap'
                 };
             }
 
             throw new Error('No address found in geocoding response');
         } catch (error) {
-            // Ultimate fallback for Kenya coordinates
+            console.warn('⚠️ OSM Geocoding failed, using fallback:', error.message);
+
+            // Enhanced fallback with more precise Kenya regions
             if (latitude >= -4.7 && latitude <= 4.6 && longitude >= 33.9 && longitude <= 41.9) {
+                // Determine approximate region in Kenya
+                let region = 'Nairobi, Kenya';
+
+                // Nairobi region (-1.15 to -1.45, 36.65 to 37.10)
+                if (latitude >= -1.45 && latitude <= -1.15 && longitude >= 36.65 && longitude <= 37.10) {
+                    region = 'Nairobi, Kenya';
+                }
+                // Mombasa region (-4.1 to -3.9, 39.5 to 39.8)
+                else if (latitude >= -4.1 && latitude <= -3.9 && longitude >= 39.5 && longitude <= 39.8) {
+                    region = 'Mombasa, Kenya';
+                }
+                // Kisumu region (-0.2 to 0.2, 34.6 to 35.0)
+                else if (latitude >= -0.2 && latitude <= 0.2 && longitude >= 34.6 && longitude <= 35.0) {
+                    region = 'Kisumu, Kenya';
+                }
+                // Nakuru region (-0.4 to -0.2, 36.0 to 36.2)
+                else if (latitude >= -0.4 && latitude <= -0.2 && longitude >= 36.0 && longitude <= 36.2) {
+                    region = 'Nakuru, Kenya';
+                }
+                // Eldoret region (0.45 to 0.65, 35.2 to 35.4)
+                else if (latitude >= 0.45 && latitude <= 0.65 && longitude >= 35.2 && longitude <= 35.4) {
+                    region = 'Eldoret, Kenya';
+                }
+
+                console.log(`🇰🇪 Fallback to Kenya region: ${region}`);
+
                 return {
                     success: true,
-                    location: 'Nairobi, Kenya',
-                    isApproximate: true
+                    location: region,
+                    coordinates: { latitude, longitude },
+                    isApproximate: true,
+                    accuracy: 'low',
+                    source: 'kenya-regions-fallback'
                 };
             }
 
+            console.error('❌ Location outside Kenya:', { latitude, longitude });
+
             return {
                 success: false,
-                error: error.message
+                error: error.message,
+                coordinates: { latitude, longitude }
             };
         }
     }

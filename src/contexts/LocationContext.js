@@ -128,8 +128,10 @@ export const LocationProvider = ({ children }) => {
     }
   }, []);
 
-  // FIXED: Memoized geolocation function
-  const getCurrentLocationFromBrowser = useCallback(async () => {
+  // ENHANCED: Improved geolocation with retry logic and better accuracy
+  const getCurrentLocationFromBrowser = useCallback(async (retryCount = 0) => {
+    const MAX_RETRIES = 2;
+
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
         const error = 'Geolocation is not supported by this browser';
@@ -140,11 +142,18 @@ export const LocationProvider = ({ children }) => {
       }
 
       setIsLocationLoading(true);
+      setLocationError(null);
+
+      // Try high accuracy first, fall back to low accuracy on retry
+      const useHighAccuracy = retryCount === 0;
+      const timeout = retryCount === 0 ? 15000 : 10000;
 
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            const { latitude, longitude } = position.coords;
+            const { latitude, longitude, accuracy } = position.coords;
+
+            console.log(`📍 Location detected: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
 
             // Use our API to reverse geocode
             const locationResult = await locationAPI.reverseGeocode(latitude, longitude);
@@ -152,42 +161,103 @@ export const LocationProvider = ({ children }) => {
             if (locationResult.success && locationResult.nearestAvailableLocation) {
               const detectedLocation = locationResult.nearestAvailableLocation;
 
+              console.log(`✅ Nearest location: ${detectedLocation}`);
+
               if (detectedLocation && detectedLocation !== 'All Locations') {
                 await changeLocation(detectedLocation);
-                resolve(detectedLocation);
+                setIsLocationLoading(false);
+                resolve({
+                  location: detectedLocation,
+                  coordinates: { latitude, longitude },
+                  accuracy
+                });
               } else {
-                resolve('All Locations');
+                setIsLocationLoading(false);
+                resolve({
+                  location: 'All Locations',
+                  coordinates: { latitude, longitude },
+                  accuracy
+                });
               }
             } else {
-              setLocationError('Could not determine your location');
-              resolve('All Locations');
+              setLocationError('Could not find nearby locations');
+              setIsLocationLoading(false);
+              resolve({
+                location: 'All Locations',
+                coordinates: { latitude, longitude },
+                accuracy
+              });
             }
           } catch (error) {
+            console.error('❌ Location detection error:', error);
             setLocationError('Could not determine your location');
-            resolve('All Locations');
-          } finally {
             setIsLocationLoading(false);
+            resolve({
+              location: 'All Locations',
+              error: error.message
+            });
           }
         },
-        (error) => {
+        async (error) => {
           let errorMessage = 'Unable to retrieve your location';
 
           if (error.code === error.PERMISSION_DENIED) {
-            errorMessage = 'Location access denied';
+            errorMessage = 'Location access denied. Please enable location permissions.';
+            console.warn('⚠️ Location permission denied');
+            setLocationError(errorMessage);
+            setIsLocationLoading(false);
+            reject(new Error(errorMessage));
           } else if (error.code === error.POSITION_UNAVAILABLE) {
             errorMessage = 'Location information unavailable';
+            console.warn('⚠️ Location unavailable');
+
+            // Retry with lower accuracy
+            if (retryCount < MAX_RETRIES) {
+              console.log(`🔄 Retrying location detection (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+              try {
+                const result = await getCurrentLocationFromBrowser(retryCount + 1);
+                resolve(result);
+              } catch (retryError) {
+                setLocationError(errorMessage);
+                setIsLocationLoading(false);
+                reject(new Error(errorMessage));
+              }
+            } else {
+              setLocationError(errorMessage);
+              setIsLocationLoading(false);
+              reject(new Error(errorMessage));
+            }
           } else if (error.code === error.TIMEOUT) {
             errorMessage = 'Location request timed out';
-          }
+            console.warn('⚠️ Location timeout');
 
-          setLocationError(errorMessage);
-          setIsLocationLoading(false);
-          reject(new Error(errorMessage));
+            // Retry once on timeout
+            if (retryCount < MAX_RETRIES) {
+              console.log(`🔄 Retrying location detection (attempt ${retryCount + 2}/${MAX_RETRIES + 1})...`);
+              try {
+                const result = await getCurrentLocationFromBrowser(retryCount + 1);
+                resolve(result);
+              } catch (retryError) {
+                setLocationError(errorMessage);
+                setIsLocationLoading(false);
+                reject(new Error(errorMessage));
+              }
+            } else {
+              setLocationError(errorMessage);
+              setIsLocationLoading(false);
+              reject(new Error(errorMessage));
+            }
+          } else {
+            console.error('❌ Unknown geolocation error:', error);
+            setLocationError(errorMessage);
+            setIsLocationLoading(false);
+            reject(new Error(errorMessage));
+          }
         },
         {
-          enableHighAccuracy: false,
-          timeout: 10000,
-          maximumAge: 600000
+          enableHighAccuracy: useHighAccuracy,
+          timeout: timeout,
+          maximumAge: 300000 // 5 minutes instead of 10
         }
       );
     });
