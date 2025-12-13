@@ -61,7 +61,7 @@ const EnhancedBookingPage = () => {
 
   const steps = [
     { id: 1, title: "Date & Time", icon: Calendar, completed: currentStep > 1 },
-    { id: 2, title: "Location & Staff", icon: MapPin, completed: currentStep > 2 },
+    { id: 2, title: "Location", icon: MapPin, completed: currentStep > 2 },
     { id: 3, title: "Review & Pay", icon: CreditCard, completed: currentStep > 3 },
     { id: 4, title: "Confirmation", icon: CheckCircle, completed: false }
   ];
@@ -1187,7 +1187,7 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
   );
   const BranchSelection = () => (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/20 p-4 sm:p-6 transition-colors duration-200">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">Service Location & Staff</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-6">Service Location</h2>
 
       {bookingData.time && (
         <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
@@ -1305,63 +1305,6 @@ const pollPaymentStatus = useCallback(async (paymentId, bookingId) => {
           </div>
         )}
       </div>
-  
-      {(bookingData.branch || branch) && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Staff Member (Optional)</h3>
-
-          <StaffSelectionInfo />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {staff.length > 0 ? staff.map((member) => (
-              <div
-                key={member.id}
-                onClick={() => setBookingData(prev => ({
-                  ...prev,
-                  staff: prev.staff?.id === member.id ? null : member
-                }))}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                  bookingData.staff?.id === member.id
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg shadow-blue-500/10'
-                    : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 bg-white dark:bg-gray-700'
-                }`}
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/50 dark:to-blue-800/50 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{member.name}</h4>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm">{member.role}</p>
-                    {member.assignedToService && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                        Assigned to this service
-                      </p>
-                    )}
-                  </div>
-                  {bookingData.staff?.id === member.id && (
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )) : (
-              <div className="col-span-2 text-center py-8 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 font-medium">No staff assigned to this service</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                  A staff member will be assigned automatically.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="mb-8">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
