@@ -193,6 +193,40 @@ export default function UserServiceRequestPage() {
     }
   };
 
+  // ✅ NEW: Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('🔔 Notification permission:', permission);
+      });
+    }
+  }, []);
+
+  // ✅ NEW: Show browser push notification for new offers
+  const showOfferNotification = (offer) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        const notification = new Notification('New Offer Received! 🎉', {
+          body: `${offer.storeName} quoted KSH ${offer.quotedPrice}\n${offer.message || 'Click to view details'}`,
+          icon: '/logo192.png',
+          badge: '/logo192.png',
+          tag: `offer-${offer.id}`,
+          requireInteraction: true,
+          vibrate: [200, 100, 200]
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+
+        console.log('🔔 Push notification shown for offer:', offer.id);
+      } catch (error) {
+        console.error('❌ Failed to show notification:', error);
+      }
+    }
+  };
+
   // Get user's location and reverse geocode
   const handleGetUserLocation = async () => {
     if (navigator.geolocation) {
@@ -449,6 +483,9 @@ export default function UserServiceRequestPage() {
 
         // ✅ PLAY BEEP SOUND FOR NEW OFFER
         playOfferSound();
+
+        // ✅ SHOW PUSH NOTIFICATION
+        showOfferNotification(offer);
 
         setLiveOffers(prev => {
           if (prev.find(o => o.id === offer.id)) return prev;
