@@ -411,14 +411,18 @@ export default function UserServiceRequestPage() {
       fetchOffersForRequest(activeRequest.id);
 
       // ✅ Restore view mode and load stores when request is restored from localStorage
-      if (viewMode === 'landing' && activeRequest.category) {
+      if (activeRequest.category) {
         console.log('📍 Restoring request state: loading stores for category', activeRequest.category);
         setSelectedCategory(activeRequest.category);
         setSelectedLocation(activeRequest.location || '');
 
         // Load stores for the request category
         fetchStoresByFilters({ category: activeRequest.category });
-        setViewMode('map');
+
+        // Ensure we're in map view
+        if (viewMode !== 'map') {
+          setViewMode('map');
+        }
       }
     }
   }, [activeRequest?.id]);

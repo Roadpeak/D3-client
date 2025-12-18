@@ -300,11 +300,18 @@ class UserServiceRequestService {
   }
 
   // ✅ NEW: Get all user's service requests
-  async getUserRequests() {
+  async getUserRequests(pagination = {}) {
     try {
       ensureUserAuthenticated();
 
-      const url = `${API_BASE_URL}/request-service/user/my-requests`;
+      const { page = 1, limit = 10, status = 'all' } = pagination;
+      const queryParams = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+
+      if (status !== 'all') {
+        queryParams.append('status', status);
+      }
+
+      const url = `${API_BASE_URL}/request-service/user/my-requests?${queryParams}`;
       const response = await makeUserAPIRequest(url, { requireAuth: true });
 
       if (!response.success) {

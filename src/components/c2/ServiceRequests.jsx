@@ -14,8 +14,6 @@ import {
   Search,
   RefreshCw
 } from 'lucide-react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
 import authService from '../../services/authService';
 import userServiceRequestService from '../../services/userServiceRequestService';
 
