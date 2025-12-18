@@ -323,6 +323,57 @@ export default function UserServiceRequestPage() {
     }
   };
 
+  // ✅ Fetch existing offers for active request
+  const fetchOffersForRequest = async (requestId) => {
+    try {
+      const response = await userServiceRequestService.getRequestOffers(requestId);
+      if (response.success && response.data.offers) {
+        const offers = response.data.offers;
+        console.log('📥 Fetched existing offers:', offers);
+
+        setLiveOffers(offers);
+
+        // Map offers to stores
+        const offerMap = {};
+        offers.forEach(offer => {
+          // Use storeId to map offers to stores
+          if (offer.storeId) {
+            offerMap[offer.storeId] = {
+              ...offer,
+              price: offer.quotedPrice,
+              message: offer.message,
+              availability: offer.availability
+            };
+          }
+        });
+
+        setStoreOffers(offerMap);
+        console.log('✅ Offers mapped to stores:', offerMap);
+      }
+    } catch (error) {
+      console.error('Failed to fetch offers:', error);
+    }
+  };
+
+  // ✅ Load existing offers when activeRequest is set or restored
+  useEffect(() => {
+    if (activeRequest && activeRequest.id) {
+      console.log('🔍 Loading offers for active request:', activeRequest.id);
+      fetchOffersForRequest(activeRequest.id);
+
+      // ✅ Restore view mode and load stores when request is restored from localStorage
+      if (viewMode === 'landing' && activeRequest.category) {
+        console.log('📍 Restoring request state: loading stores for category', activeRequest.category);
+        setSelectedCategory(activeRequest.category);
+        setSelectedLocation(activeRequest.location || '');
+
+        // Load stores for the request category
+        fetchStoresByFilters({ category: activeRequest.category });
+        setViewMode('map');
+      }
+    }
+  }, [activeRequest?.id]);
+
   // Socket.IO connection for realtime offers
   useEffect(() => {
     if (isAuthenticated && currentUser && activeRequest) {
@@ -341,18 +392,26 @@ export default function UserServiceRequestPage() {
       });
 
       socketRef.current.on('offer:new', (offer) => {
-        console.log('New offer received:', offer);
+        console.log('🔔 New offer received via Socket:', offer);
+
         setLiveOffers(prev => {
           if (prev.find(o => o.id === offer.id)) return prev;
           return [...prev, { ...offer, isNew: true }];
         });
 
-        // Map offer to store
-        if (offer.merchant && offer.merchant.id) {
+        // ✅ FIXED: Map offer to store using storeId
+        if (offer.storeId) {
           setStoreOffers(prev => ({
             ...prev,
-            [offer.merchant.id]: offer
+            [offer.storeId]: {
+              ...offer,
+              price: offer.quotedPrice,
+              message: offer.message,
+              availability: offer.availability,
+              isNew: true
+            }
           }));
+          console.log('✅ Offer mapped to store:', offer.storeId);
         }
       });
 
@@ -648,6 +707,16 @@ export default function UserServiceRequestPage() {
                 >
                   {loading ? 'Searching...' : "Find Service"}
                 </button>
+
+                {/* ✅ NEW: View My Requests Button */}
+                {isAuthenticated && (
+                  <button
+                    onClick={() => navigate('/my-requests')}
+                    className="w-full mt-3 py-3 bg-white dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-600 text-blue-600 dark:text-blue-400 font-bold text-sm rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                  >
+                    View My Requests & Offers
+                  </button>
+                )}
               </div>
 
               {/* Special Promotion Section - Optional */}
