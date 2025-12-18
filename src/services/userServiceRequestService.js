@@ -299,8 +299,48 @@ class UserServiceRequestService {
     }
   }
 
+  // ✅ NEW: Get all user's service requests
+  async getUserRequests() {
+    try {
+      ensureUserAuthenticated();
+
+      const url = `${API_BASE_URL}/request-service/user/my-requests`;
+      const response = await makeUserAPIRequest(url, { requireAuth: true });
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch user requests');
+      }
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // ✅ NEW: Get offers for a specific request
+  async getRequestOffers(requestId) {
+    try {
+      ensureUserAuthenticated();
+
+      if (!requestId) {
+        throw new Error('Request ID is required');
+      }
+
+      const url = `${API_BASE_URL}/request-service/${requestId}/offers`;
+      const response = await makeUserAPIRequest(url, { requireAuth: true });
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch request offers');
+      }
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // ✅ Accept an offer (user auth required)
-  async acceptOffer(offerId, requestId) {
+  async acceptOffer(requestId, offerId) {
     try {
       ensureUserAuthenticated();
 
