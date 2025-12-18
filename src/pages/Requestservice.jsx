@@ -98,7 +98,24 @@ export default function UserServiceRequestPage() {
   const [directions, setDirections] = useState(null);
 
   // View mode state
-  const [viewMode, setViewMode] = useState('landing');
+  const [viewMode, setViewMode] = useState(() => {
+    // ✅ Auto-redirect to map view if there's an active request
+    const savedRequest = localStorage.getItem('activeServiceRequest');
+    if (savedRequest) {
+      try {
+        const parsed = JSON.parse(savedRequest);
+        const requestTime = new Date(parsed.createdAt).getTime();
+        const now = new Date().getTime();
+        const hoursDiff = (now - requestTime) / (1000 * 60 * 60);
+        if (hoursDiff < 24) {
+          return 'map'; // Start in map view if there's an active request
+        }
+      } catch (e) {
+        console.error('Failed to check saved request:', e);
+      }
+    }
+    return 'landing';
+  });
 
   // Request state
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -150,6 +167,31 @@ export default function UserServiceRequestPage() {
       console.log('🗑️ Active request cleared from localStorage');
     }
   }, [activeRequest]);
+
+  // ✅ NEW: Play beep sound for incoming offers
+  const playOfferSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800; // Pleasant beep frequency
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+
+      console.log('🔊 Offer notification sound played');
+    } catch (error) {
+      console.error('❌ Failed to play offer sound:', error);
+    }
+  };
 
   // Get user's location and reverse geocode
   const handleGetUserLocation = async () => {
@@ -229,6 +271,13 @@ export default function UserServiceRequestPage() {
 
   // Handle search with form selections
   const handleSearchStores = async () => {
+    // ✅ BLOCK: Prevent new requests if there's an active one
+    if (activeRequest && activeRequest.status === 'open') {
+      alert('You already have an active service request. Please complete or cancel it before creating a new one.');
+      setViewMode('map'); // Redirect to existing request
+      return;
+    }
+
     if (!selectedCategory) {
       alert('Please select a service category');
       return;
@@ -394,6 +443,9 @@ export default function UserServiceRequestPage() {
       socketRef.current.on('offer:new', (offer) => {
         console.log('🔔 New offer received via Socket:', offer);
 
+        // ✅ PLAY BEEP SOUND FOR NEW OFFER
+        playOfferSound();
+
         setLiveOffers(prev => {
           if (prev.find(o => o.id === offer.id)) return prev;
           return [...prev, { ...offer, isNew: true }];
@@ -411,7 +463,9 @@ export default function UserServiceRequestPage() {
               isNew: true
             }
           }));
-          console.log('✅ Offer mapped to store:', offer.storeId);
+          console.log('✅ Offer mapped to store:', offer.storeId, 'Price:', offer.quotedPrice);
+        } else {
+          console.error('❌ Offer missing storeId:', offer);
         }
       });
 

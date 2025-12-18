@@ -32,11 +32,11 @@ const ServiceRequests = ({ onBack, onNavigate }) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch user's past requests
+  // ✅ UPDATED: Fetch user's requests using new API
   const fetchUserRequests = async (page = 1, reset = false) => {
     try {
       setLoading(true);
-      const response = await userServiceRequestService.getUserPastRequests({
+      const response = await userServiceRequestService.getUserRequests({
         page,
         limit: 10,
         status: statusFilter
@@ -168,13 +168,35 @@ const ServiceRequests = ({ onBack, onNavigate }) => {
     const statusDisplay = getStatusDisplay(request.status);
     const StatusIcon = statusDisplay.icon;
 
+    // ✅ NEW: Urgency badge
+    const getUrgencyBadge = (urgency) => {
+      const configs = {
+        'IMMEDIATE': { color: 'bg-red-100 text-red-800 border-red-300', label: '🔥 IMMEDIATE', icon: '⚡' },
+        'SCHEDULED': { color: 'bg-blue-100 text-blue-800 border-blue-300', label: '📅 SCHEDULED', icon: '📅' },
+        'CHECK_LATER': { color: 'bg-gray-100 text-gray-800 border-gray-300', label: '🕐 LATER', icon: '🕐' }
+      };
+      const config = configs[urgency] || configs['CHECK_LATER'];
+      return (
+        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${config.color}`}>
+          {config.label}
+        </span>
+      );
+    };
+
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+      <div className={`border rounded-lg p-6 hover:shadow-lg transition-shadow ${
+        request.urgency === 'IMMEDIATE'
+          ? 'bg-gradient-to-r from-red-50 to-orange-50 border-red-300 ring-2 ring-red-200'
+          : 'bg-white border-gray-200'
+      }`}>
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{request.title}</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">{request.title}</h3>
+              {request.urgency && getUrgencyBadge(request.urgency)}
+            </div>
             <p className="text-gray-600 text-sm mb-3 line-clamp-2">{request.description}</p>
-            
+
             <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-3">
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
@@ -182,12 +204,20 @@ const ServiceRequests = ({ onBack, onNavigate }) => {
               </div>
               <div className="flex items-center gap-1">
                 <DollarSign className="w-4 h-4" />
-                <span>KSH {request.budgetMin?.toLocaleString()} - {request.budgetMax?.toLocaleString()}</span>
+                <span className="font-semibold text-green-600">
+                  KSH {request.budgetMin?.toLocaleString()} - {request.budgetMax?.toLocaleString()}
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 <span>{request.timeline}</span>
               </div>
+              {request.urgency === 'SCHEDULED' && request.scheduledDateTime && (
+                <div className="flex items-center gap-1 font-medium text-blue-600">
+                  <Clock className="w-4 h-4" />
+                  <span>{new Date(request.scheduledDateTime).toLocaleString()}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-3">
@@ -195,9 +225,14 @@ const ServiceRequests = ({ onBack, onNavigate }) => {
                 <StatusIcon className="w-4 h-4" />
                 {statusDisplay.label}
               </span>
-              
-              <span className="text-xs text-gray-500">
-                {request.offersCount || 0} offers received
+
+              <span className={`text-sm font-bold ${
+                request.offerCount > 0 ? 'text-green-600' : 'text-gray-500'
+              }`}>
+                {request.offerCount || 0} offer{request.offerCount !== 1 ? 's' : ''} received
+                {request.urgency === 'IMMEDIATE' && request.offerCount === 0 && (
+                  <span className="ml-2 text-xs text-orange-600 animate-pulse">⏳ Waiting...</span>
+                )}
               </span>
             </div>
           </div>
