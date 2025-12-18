@@ -114,13 +114,42 @@ export default function UserServiceRequestPage() {
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
 
   // Active request and offers
-  const [activeRequest, setActiveRequest] = useState(null);
+  const [activeRequest, setActiveRequest] = useState(() => {
+    // ✅ Load from localStorage on mount
+    const savedRequest = localStorage.getItem('activeServiceRequest');
+    if (savedRequest) {
+      try {
+        const parsed = JSON.parse(savedRequest);
+        // Check if request is still recent (within 24 hours)
+        const requestTime = new Date(parsed.createdAt).getTime();
+        const now = new Date().getTime();
+        const hoursDiff = (now - requestTime) / (1000 * 60 * 60);
+        if (hoursDiff < 24) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to load saved request:', e);
+      }
+    }
+    return null;
+  });
   const [liveOffers, setLiveOffers] = useState([]);
   const [storeOffers, setStoreOffers] = useState({}); // Maps storeId to offer
   const [acceptedOffer, setAcceptedOffer] = useState(null);
 
   // Loading states
   const [loading, setLoading] = useState(false);
+
+  // ✅ Save activeRequest to localStorage whenever it changes
+  useEffect(() => {
+    if (activeRequest) {
+      localStorage.setItem('activeServiceRequest', JSON.stringify(activeRequest));
+      console.log('💾 Active request saved to localStorage');
+    } else {
+      localStorage.removeItem('activeServiceRequest');
+      console.log('🗑️ Active request cleared from localStorage');
+    }
+  }, [activeRequest]);
 
   // Get user's location and reverse geocode
   const handleGetUserLocation = async () => {
@@ -722,14 +751,14 @@ export default function UserServiceRequestPage() {
             </button>
           </div>
 
-          {/* Stores List - Bottom 40% with Rounded Top */}
-          <div className="flex flex-col bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl -mt-6 z-10" style={{ height: '40%' }}>
+          {/* ✅ ENHANCED: Stores List - Scrollable over map with better height */}
+          <div className="flex flex-col bg-white dark:bg-gray-800 rounded-t-3xl shadow-2xl -mt-6 z-20" style={{ height: '50%', minHeight: '300px', maxHeight: '70%' }}>
             {/* Drag Handle */}
-            <div className="flex justify-center py-2">
-              <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+            <div className="flex justify-center py-3 cursor-grab active:cursor-grabbing">
+              <div className="w-16 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full shadow-sm"></div>
             </div>
 
-            <div className="px-5 pb-3">
+            <div className="px-5 pb-3 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                   {nearbyStores.length} Provider{nearbyStores.length !== 1 ? 's' : ''} Found
@@ -738,10 +767,19 @@ export default function UserServiceRequestPage() {
                   <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">{selectedCategory}</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{selectedLocation || 'All locations'}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedLocation || 'All locations'}</p>
+                {nearbyStores.length > 3 && (
+                  <p className="text-xs text-blue-600 dark:text-blue-400 animate-bounce">⬇ Scroll for more</p>
+                )}
+              </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* ✅ ENHANCED: More prominent scrollable area with scroll indicator */}
+            <div className="flex-1 overflow-y-auto px-6 py-2 scroll-smooth" style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#3B82F6 #E5E7EB'
+            }}>
               {loading ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-gray-500 dark:text-gray-400">Loading...</div>
