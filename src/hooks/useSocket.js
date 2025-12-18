@@ -324,6 +324,38 @@ const useSocket = (user) => {
       }
     });
 
+    // ✅ NEW: Uber-style Service Request Events
+    newSocket.on('offer:new', (offerData) => {
+      console.log('💰 New offer received via socket:', offerData);
+      if (eventHandlers.current.has('offer:new')) {
+        eventHandlers.current.get('offer:new')(offerData);
+      }
+      if (eventHandlers.current.has('new_offer')) {
+        eventHandlers.current.get('new_offer')(offerData);
+      }
+    });
+
+    newSocket.on('offer:accepted', (data) => {
+      console.log('✅ Offer accepted via socket:', data);
+      if (eventHandlers.current.has('offer:accepted')) {
+        eventHandlers.current.get('offer:accepted')(data);
+      }
+    });
+
+    newSocket.on('service-request:new', (requestData) => {
+      console.log('🚨 New service request via socket:', requestData);
+      if (eventHandlers.current.has('service-request:new')) {
+        eventHandlers.current.get('service-request:new')(requestData);
+      }
+    });
+
+    newSocket.on('request-room-joined', (data) => {
+      console.log('✅ Joined request room:', data);
+      if (eventHandlers.current.has('request-room-joined')) {
+        eventHandlers.current.get('request-room-joined')(data);
+      }
+    });
+
     setSocket(newSocket);
 
     return () => {
@@ -462,6 +494,27 @@ const useSocket = (user) => {
     }
   }, [socket, isConnected, user]);
 
+  // ✅ NEW: Join request room to receive offers for IMMEDIATE requests
+  const joinRequestRoom = useCallback((requestId) => {
+    if (socket && isConnected) {
+      console.log('📥 Joining request room:', requestId);
+      socket.emit('join-request-room', { requestId });
+      return true;
+    }
+    console.warn('Cannot join request room: socket not connected');
+    return false;
+  }, [socket, isConnected]);
+
+  // ✅ NEW: Leave request room
+  const leaveRequestRoom = useCallback((requestId) => {
+    if (socket && isConnected) {
+      console.log('🚪 Leaving request room:', requestId);
+      socket.emit('leave-request-room', { requestId });
+      return true;
+    }
+    return false;
+  }, [socket, isConnected]);
+
   return {
     // Core socket functionality
     socket,
@@ -476,6 +529,10 @@ const useSocket = (user) => {
     // Conversation management
     joinConversation,
     leaveConversation,
+
+    // ✅ NEW: Service request room management
+    joinRequestRoom,
+    leaveRequestRoom,
 
     // Typing functionality
     handleTyping,

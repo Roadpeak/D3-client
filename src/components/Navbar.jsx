@@ -126,13 +126,48 @@ const Navbar = () => {
   // Chat count state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
 
+  // Scroll state for collapsible navbar
+  const [isNavbarVisible, setIsNavbarVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
   const navigate = useNavigate();
   const location = useRouterLocation();
+
+  // Check if we're on the request service page
+  const isRequestServicePage = location.pathname === '/requestservice';
 
   // Check authentication status on component mount
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Handle scroll behavior for collapsible navbar on request service page
+  useEffect(() => {
+    if (!isRequestServicePage) {
+      setIsNavbarVisible(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Show navbar when at top or scrolling up, hide when scrolling down
+      if (currentScrollY < 10) {
+        setIsNavbarVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        // Scrolling down - hide navbar
+        setIsNavbarVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up - show navbar
+        setIsNavbarVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isRequestServicePage, lastScrollY]);
 
   const checkAuthStatus = async () => {
     try {
@@ -374,7 +409,9 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-40 transition-all duration-200">
+      <header className={`bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-40 transition-transform duration-300 ${
+        isRequestServicePage && !isNavbarVisible ? '-translate-y-full' : 'translate-y-0'
+      }`}>
         <div className="container mx-auto lg:px-4">
           {/* Mobile Top Header */}
           {mobileNavbar}

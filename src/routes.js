@@ -133,11 +133,17 @@ const AppRoutes = () => {
           <Route path='/videos' element={<Navigate to="/reels" replace />} />
           <Route path='/shorts' element={<Navigate to="/reels" replace />} />
 
-          {/* Chat Routes - WITH Navbar but WITHOUT Footer */}
+          {/* Routes WITH Navbar but WITHOUT Footer */}
           <Route element={<ChatLayout />}>
+            {/* Chat */}
             <Route path='/chat' element={<Chat />} />
             <Route path='/chat/Store/:id' element={<Chat />} />
             <Route path='/messages' element={<Navigate to="/chat" replace />} />
+
+            {/* Service Request - Uber-style map with Navbar only */}
+            <Route path='/request-service' element={<Requestservice />} />
+            <Route path='/Requestservice' element={<Navigate to="/request-service" replace />} />
+            <Route path='/requestservice' element={<Navigate to="/request-service" replace />} />
           </Route>
 
           {/* Routes WITH persistent Navbar/Footer */}
@@ -186,8 +192,6 @@ const AppRoutes = () => {
             <Route path='/hotdeals' element={<Hotdeals />} />
             <Route path='/Hotdeals' element={<Navigate to="/hotdeals" replace />} />
             <Route path='/hot-deals' element={<Navigate to="/hotdeals" replace />} />
-            <Route path='/request-service' element={<Requestservice />} />
-            <Route path='/Requestservice' element={<Navigate to="/request-service" replace />} />
 
             {/* ==================== USER DASHBOARD ROUTES ==================== */}
             <Route path='/profile' element={<Profile />} />
