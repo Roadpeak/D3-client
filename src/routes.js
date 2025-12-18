@@ -31,6 +31,7 @@ import Profile from './pages/Profile'
 import SearchResults from './pages/SearchResults'
 import Footer from './components/Footer'
 import Requestservice from './pages/Requestservice'
+import MyRequests from './pages/MyRequests' // ✅ NEW: User's requests and offers page
 import Hotdeals from './pages/Hotdeals'
 import VerifyOTP from './pages/auth/VerifyOTP'
 
@@ -144,6 +145,11 @@ const AppRoutes = () => {
             <Route path='/request-service' element={<Requestservice />} />
             <Route path='/Requestservice' element={<Navigate to="/request-service" replace />} />
             <Route path='/requestservice' element={<Navigate to="/request-service" replace />} />
+
+            {/* ✅ NEW: My Requests - User's service requests and offers */}
+            <Route path='/my-requests' element={<MyRequests />} />
+            <Route path='/My-Requests' element={<Navigate to="/my-requests" replace />} />
+            <Route path='/myRequests' element={<Navigate to="/my-requests" replace />} />
           </Route>
 
           {/* Routes WITH persistent Navbar/Footer */}
