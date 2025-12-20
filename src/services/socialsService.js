@@ -3,10 +3,14 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+  const apiKey = process.env.REACT_APP_API_KEY;
+  if (!apiKey) {
+    console.error('CRITICAL: API key not configured. Please set REACT_APP_API_KEY.');
+  }
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`,
-    'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
+    'x-api-key': apiKey
   };
 };
 
@@ -63,10 +67,14 @@ const socialsService = {
   // Get social links for a store (public access)
   getSocialsByStore: async (storeId) => {
     try {
+      const apiKey = process.env.REACT_APP_API_KEY;
+      if (!apiKey) {
+        console.error('CRITICAL: API key not configured.');
+      }
       const response = await fetch(`${API_BASE_URL}/socials/store/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl'
+          'x-api-key': apiKey
         }
       });
 

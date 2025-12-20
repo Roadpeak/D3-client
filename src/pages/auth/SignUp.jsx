@@ -69,8 +69,10 @@ const SignUp = () => {
 
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long';
+    } else if (formData.password.length < 12) {
+      newErrors.password = 'Password must be at least 12 characters long';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+=\-{}\[\]:;"'<>,.\/\\|`~])/.test(formData.password)) {
+      newErrors.password = 'Password must contain uppercase, lowercase, number, and special character';
     }
 
     if (formData.password !== formData.password_confirmation) {
@@ -377,9 +379,15 @@ const SignUp = () => {
               </div>
 
               {/* Password Requirements */}
-              <p className="text-xs text-gray-500 dark:text-gray-400 -mt-4">
-                Password must be at least 8 characters long
-              </p>
+              <div className="text-xs text-gray-500 dark:text-gray-400 -mt-4 space-y-1">
+                <p>Password must contain:</p>
+                <ul className="list-disc list-inside ml-2 space-y-0.5">
+                  <li>At least 12 characters</li>
+                  <li>Uppercase and lowercase letters</li>
+                  <li>At least one number</li>
+                  <li>At least one special character (@$!%*?&#^()_+-=)</li>
+                </ul>
+              </div>
 
               {/* Terms & Conditions */}
               <div className="flex items-start space-x-3">

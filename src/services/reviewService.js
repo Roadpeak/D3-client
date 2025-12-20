@@ -252,7 +252,7 @@ class ReviewService {
 
       const token = this.getAuthToken();
       console.log('🎫 Token available:', !!token);
-      console.log('🎫 Token preview:', token ? `${token.substring(0, 20)}...` : 'None');
+      // SECURITY: Never log token values or previews
 
       if (!token) {
         return { authenticated: false, reason: 'No token found' };

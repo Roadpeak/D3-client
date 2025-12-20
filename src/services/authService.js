@@ -13,15 +13,12 @@ class AuthService {
         password: userData.password,
       });
 
-      const { access_token, user } = response.data;
-
-      if (access_token) {
-        setTokenToCookie(access_token);
-      }
+      // Token is now set as HttpOnly cookie by the backend
+      const { user } = response.data;
 
       return {
         success: true,
-        data: { user, token: access_token },
+        data: { user },
         message: 'Registration successful'
       };
     } catch (error) {
@@ -37,12 +34,7 @@ class AuthService {
         password,
       });
 
-      const { access_token } = response.data;
-
-      if (access_token) {
-        setTokenToCookie(access_token);
-      }
-
+      // Token is now set as HttpOnly cookie by the backend
       return {
         success: true,
         data: response.data,
@@ -65,14 +57,12 @@ class AuthService {
 
       const { access_token, user, isNewUser } = response.data;
 
-      if (access_token) {
-        setTokenToCookie(access_token);
-        console.log('✅ Google authentication token saved');
-      }
+      // Token is now set as HttpOnly cookie by the backend
+      console.log('✅ Google authentication successful');
 
       return {
         success: true,
-        data: { user, token: access_token, isNewUser },
+        data: { user, isNewUser },
         message: isNewUser ? 'Account created successfully with Google' : 'Google sign-in successful'
       };
     } catch (error) {
@@ -92,15 +82,12 @@ class AuthService {
         password: merchantData.password,
       });
 
-      const { access_token, merchant } = response.data;
-
-      if (access_token) {
-        setTokenToCookie(access_token);
-      }
+      // Token is now set as HttpOnly cookie by the backend
+      const { merchant } = response.data;
 
       return {
         success: true,
-        data: { merchant, token: access_token },
+        data: { merchant },
         message: 'Merchant registration successful'
       };
     } catch (error) {
@@ -136,7 +123,8 @@ class AuthService {
   async getCurrentUser() {
     try {
       const token = getTokenFromCookie();
-      console.log('🎫 Token from cookie:', token ? `Exists (${token.substring(0, 20)}...)` : 'No token');
+      console.log('🎫 Token from cookie:', token ? 'Present' : 'No token');
+      // SECURITY: Never log token values or previews
 
       if (!token) {
         return { success: false, message: 'No authentication token found' };

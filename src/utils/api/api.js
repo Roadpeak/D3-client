@@ -8,9 +8,14 @@ const BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3ree.
 const getToken = () => getCookie('access_token');
 
 const getHeaders = (includeAuth = true) => {
+  const apiKey = process.env.REACT_APP_API_KEY;
+  if (!apiKey) {
+    console.error('CRITICAL: API key not configured. Please set REACT_APP_API_KEY.');
+  }
+
   const headers = {
     'Content-Type': 'application/json',
-    'x-api-key': process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl',
+    'x-api-key': apiKey,
   };
 
   if (includeAuth) {

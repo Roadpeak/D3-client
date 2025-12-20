@@ -10,25 +10,19 @@ const api = axios.create({
         'Content-Type': 'application/json',
     },
     timeout: 10000, // 10 second timeout
+    withCredentials: true, // Send HttpOnly cookies with requests
 });
 
-// Request interceptor to add auth token if available
+// Request interceptor to add API key
+// Note: Auth tokens are now sent automatically via HttpOnly cookies
 api.interceptors.request.use(
     (config) => {
-        // Try multiple token sources
-        const token = localStorage.getItem('token') ||
-            localStorage.getItem('authToken') ||
-            localStorage.getItem('access_token') ||
-            getTokenFromCookie();
-
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-
         // Add API key if available
-        const apiKey = process.env.REACT_APP_API_KEY || 'API_KEY_12345ABCDEF!@#67890-xyZQvTPOl';
+        const apiKey = process.env.REACT_APP_API_KEY;
         if (apiKey) {
             config.headers['x-api-key'] = apiKey;
+        } else {
+            console.error('CRITICAL: API key not configured. Please set REACT_APP_API_KEY in environment variables.');
         }
 
         return config;

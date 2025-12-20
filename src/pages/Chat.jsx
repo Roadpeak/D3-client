@@ -292,7 +292,8 @@ const ChatPage = () => {
       setError(null);
 
       const currentToken = chatService.getAuthToken();
-      console.log('🔧 ChatService token for customer API call:', currentToken ? `Found (${currentToken.substring(0, 20)}...)` : 'Not found');
+      console.log('🔧 ChatService token for customer API call:', currentToken ? 'Present' : 'Not found');
+      // SECURITY: Never log token values or previews
 
       if (!currentToken) {
         console.log('❌ No token available for chat service');
