@@ -1,45 +1,31 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCookie } from '../cookieUtils';
+import authService from '../../services/authService';
 
 const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const token = getCookie('access_token');
-                if (token) {
-                    const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/profile', {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-                    if (response.ok) {
-                        const userData = await response.json();
-                        const mappedUser = {
-                            id: userData.id,
-                            email: userData.email,
-                            first_name: userData.first_name,
-                            last_name: userData.last_name,
-                            phone: userData.phone,
-                            user_type: userData.user_type,
-                            active: Boolean(userData.active),
-                            first_discount: userData.first_discount,
-                            active_status: userData.active_status,
-                            dark_mode: Boolean(userData.dark_mode)
-                        };
-                        setUser(mappedUser);
-                    } else {
-                        setUser(null);
-                    }
+                console.log('🔍 AuthContext: Fetching user profile...');
+                // Use authService which properly handles HttpOnly cookies
+                const result = await authService.getCurrentUser();
+
+                if (result.success && result.data) {
+                    console.log('✅ AuthContext: User authenticated', result.data);
+                    setUser(result.data);
                 } else {
+                    console.log('⚠️ AuthContext: No authenticated user');
                     setUser(null);
                 }
             } catch (error) {
-                console.error('Error fetching user:', error);
+                console.error('❌ AuthContext: Error fetching user:', error);
                 setUser(null);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -48,46 +34,45 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const response = await fetch('${process.env.REACT_APP_API_BASE_URL}/v1/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-            if (response.ok) {
-                const userData = await response.json();
-                const mappedUser = {
-                    id: userData.id,
-                    email: userData.email,
-                    first_name: userData.first_name,
-                    last_name: userData.last_name,
-                    phone: userData.phone,
-                    user_type: userData.user_type,
-                    active: Boolean(userData.active),
-                    first_discount: userData.first_discount,
-                    active_status: userData.active_status,
-                    dark_mode: Boolean(userData.dark_mode)
-                };
-                setUser(mappedUser);
-                localStorage.setItem('access_token', userData.token);
-            } else {
-                throw new Error('Login failed');
+            console.log('🔐 AuthContext: Logging in...');
+            const result = await authService.loginUser(email, password);
+
+            if (result.success && result.data) {
+                console.log('✅ AuthContext: Login successful');
+                // Fetch user profile after successful login
+                const profileResult = await authService.getCurrentUser();
+                if (profileResult.success && profileResult.data) {
+                    setUser(profileResult.data);
+                    return { success: true };
+                }
             }
+
+            throw new Error(result.message || 'Login failed');
         } catch (error) {
-            console.error('Error logging in:', error);
+            console.error('❌ AuthContext: Login error:', error);
             setUser(null);
-            throw new Error('Login failed');
+            throw error;
         }
     };
 
     const logout = () => {
-        localStorage.removeItem('access_token');
+        console.log('👋 AuthContext: Logging out...');
+        authService.logout();
         setUser(null);
     };
 
+    // Provide a method to refresh user data
+    const refreshUser = async () => {
+        const result = await authService.getCurrentUser();
+        if (result.success && result.data) {
+            setUser(result.data);
+        } else {
+            setUser(null);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
+        <AuthContext.Provider value={{ user, login, logout, refreshUser, loading }}>
             {children}
         </AuthContext.Provider>
     );
