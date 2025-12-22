@@ -13,7 +13,7 @@ const api = axios.create({
     withCredentials: true, // Send HttpOnly cookies with requests
 });
 
-// Request interceptor to add API key
+// Request interceptor to add API key and CSRF token
 // Note: Auth tokens are now sent automatically via HttpOnly cookies
 api.interceptors.request.use(
     (config) => {
@@ -25,12 +25,31 @@ api.interceptors.request.use(
             console.error('CRITICAL: API key not configured. Please set REACT_APP_API_KEY in environment variables.');
         }
 
+        // Add CSRF token for state-changing requests
+        // The backend sets XSRF-TOKEN cookie, we send it in X-XSRF-TOKEN header
+        const method = config.method?.toUpperCase();
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+            const csrfToken = getCsrfTokenFromCookie();
+            if (csrfToken) {
+                config.headers['X-XSRF-TOKEN'] = csrfToken;
+            }
+        }
+
         return config;
     },
     (error) => {
         return Promise.reject(error);
     }
 );
+
+// Helper to get CSRF token from cookie
+function getCsrfTokenFromCookie() {
+    const cookies = document.cookie.split(';');
+    const csrfCookie = cookies.find(cookie =>
+        cookie.trim().startsWith('XSRF-TOKEN=')
+    );
+    return csrfCookie ? csrfCookie.split('=')[1] : null;
+}
 
 // Helper to get token from cookie
 function getTokenFromCookie() {
