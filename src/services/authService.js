@@ -122,14 +122,8 @@ class AuthService {
   // Updated getCurrentUser function
   async getCurrentUser() {
     try {
-      const token = getTokenFromCookie();
-      console.log('🎫 Token from cookie:', token ? 'Present' : 'No token');
-      // SECURITY: Never log token values or previews
-
-      if (!token) {
-        return { success: false, message: 'No authentication token found' };
-      }
-
+      // HttpOnly cookies are automatically sent by the browser with withCredentials: true
+      // No need to manually check for token - just try to fetch the profile
       const response = await api.get(API_ENDPOINTS.user.profile);
       console.log('✅ Profile request successful');
       return {
@@ -152,8 +146,11 @@ class AuthService {
   }
 
   // Check if user is authenticated
-  isAuthenticated() {
-    return !!getTokenFromCookie();
+  // Note: HttpOnly cookies can't be read by JavaScript
+  // Best to call getCurrentUser() and check if it succeeds
+  async isAuthenticated() {
+    const result = await this.getCurrentUser();
+    return result.success;
   }
 
   // Verify OTP
