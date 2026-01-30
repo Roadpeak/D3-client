@@ -6,6 +6,7 @@ import chatService from '../services/chatService';
 import useSocket from '../hooks/useSocket';
 import authService from '../services/authService';
 import VerificationBadge from '../components/VerificationBadge';
+import { useAuth } from '../utils/context/AuthContext';
 
 const ChatPage = () => {
   const location = useLocation();
@@ -18,141 +19,23 @@ const ChatPage = () => {
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState(null);
-  const [user, setUser] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Enhanced cookie reading function
-  const getCookieValue = (name) => {
-    if (typeof document === 'undefined') return '';
+  // Use AuthContext for user - ProtectedRoute already verified auth
+  const { user: authUser, loading: authLoading } = useAuth();
 
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      const [key, value] = cookie.trim().split('=');
-      if (key === name) return decodeURIComponent(value);
-    }
-    return '';
-  };
-
-  // Initialize customer user
-  useEffect(() => {
-    const initializeUser = async () => {
-      try {
-        console.log('🚀 Initializing CUSTOMER for store chat...');
-
-        if (location.state?.user) {
-          console.log('✅ Customer found in location state');
-          const userData = {
-            ...location.state.user,
-            userType: 'customer',
-            role: 'customer'
-          };
-          setUser(userData);
-          return;
-        }
-
-        const tokenSources = {
-          localStorage_access_token: localStorage.getItem('access_token'),
-          localStorage_authToken: localStorage.getItem('authToken'),
-          localStorage_token: localStorage.getItem('token'),
-          cookie_authToken: getCookieValue('authToken'),
-          cookie_access_token: getCookieValue('access_token'),
-          cookie_token: getCookieValue('token')
-        };
-
-        const userToken = tokenSources.localStorage_access_token ||
-          tokenSources.localStorage_authToken ||
-          tokenSources.localStorage_token ||
-          tokenSources.cookie_authToken ||
-          tokenSources.cookie_access_token ||
-          tokenSources.cookie_token;
-
-        if (!userToken) {
-          console.log('❌ No token found, redirecting to login');
-          navigate('/accounts/sign-in', {
-            state: { from: { pathname: location.pathname } }
-          });
-          return;
-        }
-
-        // Try to get user info from localStorage first
-        let userInfo = null;
-        const possibleKeys = ['userInfo', 'user', 'userData', 'currentUser'];
-
-        for (const key of possibleKeys) {
-          try {
-            const stored = localStorage.getItem(key);
-            if (stored) {
-              const parsed = JSON.parse(stored);
-              if (parsed && (parsed.id || parsed.userId)) {
-                userInfo = parsed;
-                console.log(`✅ Customer info found in localStorage.${key}`);
-                break;
-              }
-            }
-          } catch (e) {
-            console.log(`⚠️ Failed to parse ${key}:`, e.message);
-          }
-        }
-
-        if (userInfo && (userInfo.id || userInfo.userId)) {
-          const userData = {
-            id: userInfo.id || userInfo.userId,
-            name: `${userInfo.firstName || userInfo.first_name || 'Customer'} ${userInfo.lastName || userInfo.last_name || ''}`.trim(),
-            email: userInfo.email,
-            avatar: userInfo.avatar,
-            userType: 'customer',
-            role: 'customer'
-          };
-
-          console.log('✅ Customer user set from localStorage:', userData);
-          setUser(userData);
-          return;
-        }
-
-        // Fetch from API as fallback
-        try {
-          console.log('Fetching user profile via authService...');
-          const result = await authService.getCurrentUser();
-
-          if (result.success && result.data) {
-            const userData = result.data.user || result.data;
-
-            const formattedUser = {
-              id: userData.id,
-              name: `${userData.firstName} ${userData.lastName}`.trim(),
-              email: userData.email,
-              avatar: userData.avatar,
-              userType: 'customer',
-              role: 'customer'
-            };
-
-            console.log('✅ Customer user set from API:', formattedUser);
-            localStorage.setItem('userInfo', JSON.stringify(userData));
-            setUser(formattedUser);
-            return;
-          }
-        } catch (apiError) {
-          console.error('API fetch error:', apiError.message);
-        }
-
-        console.log('❌ Could not get valid customer data, redirecting to login');
-        navigate('/accounts/sign-in', {
-          state: { from: { pathname: location.pathname } }
-        });
-
-      } catch (error) {
-        console.error('💥 Error initializing customer:', error);
-        navigate('/accounts/sign-in', {
-          state: { from: { pathname: location.pathname } }
-        });
-      }
-    };
-
-    initializeUser();
-  }, [location, navigate]);
+  // Transform authUser to chat user format
+  const user = authUser ? {
+    id: authUser.id,
+    name: `${authUser.firstName || ''} ${authUser.lastName || ''}`.trim() || 'Customer',
+    email: authUser.email,
+    avatar: authUser.avatar,
+    userType: 'customer',
+    role: 'customer'
+  } : null;
 
   // Initialize socket for customer
   const {
@@ -594,17 +477,19 @@ const ChatPage = () => {
     </div>
   );
 
-  // Loading state
-  if (loading) {
+  // Loading state - show skeleton while auth is loading OR chats are loading
+  if (authLoading || loading) {
     return <PageSkeleton />;
   }
 
+  // If no user after auth loading is done, ProtectedRoute should have redirected
+  // This is a fallback - should not normally happen
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400">Loading customer data...</p>
+            <p className="text-gray-600 dark:text-gray-400">Authentication required...</p>
           </div>
         </div>
       </div>

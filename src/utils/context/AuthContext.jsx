@@ -78,6 +78,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         authService.logout();
         setUser(null);
+        localStorage.removeItem('isLoggedIn');
     };
 
     // Provide a method to refresh user data

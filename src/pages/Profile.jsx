@@ -27,7 +27,7 @@ const EnhancedCouponProfilePage = () => {
   const location = useLocation();
 
   // Use AuthContext for authentication state - ProtectedRoute already verified auth
-  const { user: authUser, loading: authLoading } = useAuth();
+  const { user: authUser, loading: authLoading, logout } = useAuth();
 
   // Use favorites hook to get real-time favorites count
   const { getFavoritesCount, loading: favoritesLoading } = useFavorites();
@@ -175,15 +175,10 @@ const EnhancedCouponProfilePage = () => {
     }
   }, [getFavoritesCount, favoritesLoading]);
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      navigate('/accounts/sign-in');
-    } catch (error) {
-      console.error('Logout error:', error);
-      authService.clearStorage();
-      navigate('/accounts/sign-in');
-    }
+  const handleLogout = () => {
+    // Use AuthContext logout to properly clear state and storage
+    logout();
+    navigate('/accounts/sign-in');
   };
 
   const getVerificationBadges = () => {
