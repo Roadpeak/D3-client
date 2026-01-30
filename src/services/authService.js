@@ -37,7 +37,11 @@ class AuthService {
         password,
       });
 
-      // Token is now set as HttpOnly cookie by the backend
+      // Store token in localStorage as fallback (for cross-origin cookie issues)
+      if (response.data.access_token) {
+        localStorage.setItem('access_token', response.data.access_token);
+      }
+
       // Set auth flag in localStorage for synchronous auth checks
       localStorage.setItem('isLoggedIn', 'true');
 

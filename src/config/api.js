@@ -14,8 +14,7 @@ const api = axios.create({
     withCredentials: true, // Send HttpOnly cookies with requests
 });
 
-// Request interceptor to add API key and CSRF token
-// Note: Auth tokens are now sent automatically via HttpOnly cookies
+// Request interceptor to add API key, auth token, and CSRF token
 api.interceptors.request.use(
     (config) => {
         // Add API key if available
@@ -24,6 +23,12 @@ api.interceptors.request.use(
             config.headers['x-api-key'] = apiKey;
         } else {
             console.error('CRITICAL: API key not configured. Please set REACT_APP_API_KEY in environment variables.');
+        }
+
+        // Add Authorization header from localStorage (fallback for HttpOnly cookie issues)
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
         }
 
         // Add CSRF token for state-changing requests
