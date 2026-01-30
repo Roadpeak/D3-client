@@ -79,6 +79,7 @@ class ReviewService {
 
       const response = await fetch(fullUrl, {
         headers: this.getHeaders(),
+        credentials: 'include', // Send HttpOnly cookies with requests
         ...options,
       });
 
