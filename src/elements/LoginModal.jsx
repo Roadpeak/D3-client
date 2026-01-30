@@ -14,7 +14,7 @@ const LoginModal = ({ onClose, onLogin }) => {
         event.preventDefault();
         setLoading(true);
         try {
-            const endpoint = loginType === 'user' ? '${process.env.REACT_APP_API_BASE_URL}/user/login' : '${process.env.REACT_APP_API_BASE_URL}/seller/login';
+            const endpoint = loginType === 'user' ? `${process.env.REACT_APP_API_BASE_URL}/user/login` : `${process.env.REACT_APP_API_BASE_URL}/seller/login`;
             const response = await axios.post(endpoint, { email, password });
             const token = response.data.access_token;
             localStorage.setItem('access_token', token);

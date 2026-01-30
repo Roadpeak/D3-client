@@ -31,8 +31,8 @@ export const useRealTimeNotifications = (isAuthenticated) => {
 
     console.log('Connecting to WebSocket for real-time notifications...');
 
-    // Create socket connection
-    socketRef.current = io(process.env.REACT_APP_WS_URL || 'https://api.discoun3ree.com/api/v1', {
+    // Create socket connection - WebSocket URL should not include /api/v1
+    socketRef.current = io(process.env.REACT_APP_WS_URL || 'https://api.discoun3ree.com', {
       auth: {
         token: token
       },

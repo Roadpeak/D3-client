@@ -568,8 +568,9 @@ export const marketplaceAPI = {
 };
 
 // WebSocket configuration for real-time updates
+// Note: WebSocket URL should not include /api/v1 path
 export const WS_CONFIG = {
-    url: process.env.REACT_APP_WS_URL || process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3ree.com/api/v1',
+    url: process.env.REACT_APP_WS_URL || 'https://api.discoun3ree.com',
 
     events: {
         // Notification events

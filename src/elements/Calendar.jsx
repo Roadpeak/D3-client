@@ -61,7 +61,7 @@ const Calendar = ({ serviceId, shopId }) => {
             const token = getCookie('access_token')
             try {
                 await axios.post(
-                    '${process.env.REACT_APP_API_BASE_URL}/appointments',
+                    `${process.env.REACT_APP_API_BASE_URL}/appointments`,
                     {
                         service_id: serviceId,
                         appointment_time: appointmentDateTimeStart,

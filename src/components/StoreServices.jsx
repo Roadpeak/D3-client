@@ -18,7 +18,7 @@ const serviceAPI = {
         // First try the store-specific endpoint
         url = `${process.env.REACT_APP_API_BASE_URL}/services/store/${params.storeId}`;
       } else {
-        url = '${process.env.REACT_APP_API_BASE_URL}/services';
+        url = `${process.env.REACT_APP_API_BASE_URL}/services`;
       }
 
       const response = await fetch(url, {

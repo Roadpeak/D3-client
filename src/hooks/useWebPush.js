@@ -4,7 +4,7 @@ const useWebPush = (isAuthenticated) => {
     const [showPushPrompt, setShowPushPrompt] = useState(false);
 
     const VAPID_PUBLIC_KEY = 'BKejhBqZqa4GnoAc7nFnQXtCTTbQBpMXjABBS_cMyk4RRpRkgOB6_52y2VQxObMi9XBvRyim7seUpvUm1HaoFms';
-    const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://discoun3ree.com/api/v1';
+    const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3ree.com/api/v1';
 
     // Helper to get auth token
     const getAuthToken = () => {
