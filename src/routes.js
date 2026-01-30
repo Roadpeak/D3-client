@@ -19,7 +19,7 @@ import Reels from './pages/Reels'
 
 // Updated Service Components
 import ServiceDetailPage from './pages/ServiceDetailPage' // Our new enhanced service page
-import ViewService from './pages/ViewService' // Keep existing for backward compatibility
+// ViewService is deprecated - now redirects to ServiceDetailPage
 
 // Booking System
 import EnhancedBookingPage from './pages/Booking'
@@ -53,6 +53,9 @@ import AboutUs from './components/AboutUs'
 import SearchResultsPage from './components/SearchResultsPage'
 import Layout from './components/Layout';
 import ChatLayout from './components/ChatLayout';
+
+// Protected Route Component - redirects to login if not authenticated
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Route Change Handler Component - OPTIMIZED to prevent navbar flash
 const RouteChangeHandler = ({ children }) => {
@@ -136,9 +139,9 @@ const AppRoutes = () => {
 
           {/* Routes WITH Navbar but WITHOUT Footer */}
           <Route element={<ChatLayout />}>
-            {/* Chat */}
-            <Route path='/chat' element={<Chat />} />
-            <Route path='/chat/Store/:id' element={<Chat />} />
+            {/* Chat - Protected */}
+            <Route path='/chat' element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+            <Route path='/chat/Store/:id' element={<ProtectedRoute><Chat /></ProtectedRoute>} />
             <Route path='/messages' element={<Navigate to="/chat" replace />} />
 
             {/* Service Request - Uber-style map with Navbar only */}
@@ -146,8 +149,8 @@ const AppRoutes = () => {
             <Route path='/Requestservice' element={<Navigate to="/request-service" replace />} />
             <Route path='/requestservice' element={<Navigate to="/request-service" replace />} />
 
-            {/* ✅ NEW: My Requests - User's service requests and offers */}
-            <Route path='/my-requests' element={<MyRequests />} />
+            {/* ✅ NEW: My Requests - User's service requests and offers - Protected */}
+            <Route path='/my-requests' element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
             <Route path='/My-Requests' element={<Navigate to="/my-requests" replace />} />
             <Route path='/myRequests' element={<Navigate to="/my-requests" replace />} />
           </Route>
@@ -168,8 +171,8 @@ const AppRoutes = () => {
             <Route path='/services/:id' element={<ServiceDetailPage />} />
             <Route path="/store/:storeId/service/:serviceId" element={<ServiceDetailPage />} />
             <Route path="/store/:storeId/services/:serviceId" element={<ServiceDetailPage />} />
-            <Route path='/ViewService/:id' element={<Navigate to="/service/$2" replace />} />
-            <Route path='/view-service/:id' element={<ViewService />} />
+            <Route path='/ViewService/:id' element={<Navigate to="/service/:id" replace />} />
+            <Route path='/view-service/:id' element={<Navigate to="/service/:id" replace />} />
 
             {/* ==================== OFFER ROUTES ==================== */}
             <Route path="/store/:storeId/offer/:offerId" element={<ViewOffer />} />
@@ -199,26 +202,26 @@ const AppRoutes = () => {
             <Route path='/Hotdeals' element={<Navigate to="/hotdeals" replace />} />
             <Route path='/hot-deals' element={<Navigate to="/hotdeals" replace />} />
 
-            {/* ==================== USER DASHBOARD ROUTES ==================== */}
-            <Route path='/profile' element={<Profile />} />
+            {/* ==================== USER DASHBOARD ROUTES - PROTECTED ==================== */}
+            <Route path='/profile' element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path='/account' element={<Navigate to="/profile" replace />} />
-            <Route path='/profile/bookings' element={<MyBookingsStandalone />} />
+            <Route path='/profile/bookings' element={<ProtectedRoute><MyBookingsStandalone /></ProtectedRoute>} />
             <Route path='/profile/my-bookings' element={<Navigate to="/profile/bookings" replace />} />
-            <Route path='/profile/favourites' element={<FavouritesStandalone />} />
+            <Route path='/profile/favourites' element={<ProtectedRoute><FavouritesStandalone /></ProtectedRoute>} />
             <Route path='/profile/favorites' element={<Navigate to="/profile/favourites" replace />} />
-            <Route path='/profile/followed-stores' element={<FollowedStoresStandalone />} />
+            <Route path='/profile/followed-stores' element={<ProtectedRoute><FollowedStoresStandalone /></ProtectedRoute>} />
             <Route path='/profile/stores' element={<Navigate to="/profile/followed-stores" replace />} />
-            <Route path='/profile/earn' element={<EarnStandalone />} />
+            <Route path='/profile/earn' element={<ProtectedRoute><EarnStandalone /></ProtectedRoute>} />
             <Route path='/profile/earnings' element={<Navigate to="/profile/earn" replace />} />
             <Route path='/profile/rewards' element={<Navigate to="/profile/earn" replace />} />
-            <Route path='/profile/settings' element={<ProfileSettingsStandalone />} />
+            <Route path='/profile/settings' element={<ProtectedRoute><ProfileSettingsStandalone /></ProtectedRoute>} />
             <Route path='/profile/edit' element={<Navigate to="/profile/settings" replace />} />
             <Route path='/settings' element={<Navigate to="/profile/settings" replace />} />
-            <Route path='/profile/service-requests' element={<ServiceRequestsStandalone />} />
+            <Route path='/profile/service-requests' element={<ProtectedRoute><ServiceRequestsStandalone /></ProtectedRoute>} />
             <Route path='/profile/requests' element={<Navigate to="/profile/service-requests" replace />} />
             <Route path='/service-requests' element={<Navigate to="/profile/service-requests" replace />} />
             <Route path='/my-bookings' element={<Navigate to="/profile/bookings" replace />} />
-            <Route path="/booking-details/:bookingId" element={<BookingDetails />} />
+            <Route path="/booking-details/:bookingId" element={<ProtectedRoute><BookingDetails /></ProtectedRoute>} />
             <Route path='/my-favourites' element={<Navigate to="/profile/favourites" replace />} />
             <Route path='/my-stores' element={<Navigate to="/profile/followed-stores" replace />} />
             <Route path='/my-earnings' element={<Navigate to="/profile/earn" replace />} />

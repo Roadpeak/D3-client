@@ -1,7 +1,6 @@
-// hooks/useFavorites.js - FIXED VERSION - No infinite loops
-import { useState, useEffect, useCallback } from 'react';
+// hooks/useFavorites.js - FIXED VERSION - No infinite loops, no auth checks
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { favoritesAPI } from '../services/api';
-import authService from '../services/authService';
 
 export const useFavorites = () => {
   const [favorites, setFavorites] = useState([]);
@@ -38,17 +37,10 @@ export const useFavorites = () => {
 
   // Fetch all favorites
   const fetchFavorites = useCallback(async () => {
-    if (!authService.isAuthenticated()) {
-      setFavorites([]);
-      setFavoriteIds(new Set());
-      setInitialized(true);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await favoritesAPI.getFavorites();
       
       if (response.success && Array.isArray(response.favorites)) {
@@ -84,11 +76,6 @@ export const useFavorites = () => {
 
   // Add to favorites
   const addToFavorites = useCallback(async (offerId, offerData = null) => {
-    if (!authService.isAuthenticated()) {
-      setError('Please log in to add favorites');
-      return false;
-    }
-
     if (!offerId) {
       console.error('No offer ID provided to addToFavorites');
       return false;
@@ -135,10 +122,6 @@ export const useFavorites = () => {
 
   // Remove from favorites
   const removeFromFavorites = useCallback(async (offerId) => {
-    if (!authService.isAuthenticated()) {
-      return false;
-    }
-
     if (!offerId) {
       console.error('No offer ID provided to removeFromFavorites');
       return false;
@@ -204,25 +187,14 @@ export const useFavorites = () => {
     return favorites.length;
   }, [favorites.length]);
 
-  // Initialize favorites on mount - ONLY ONCE
-  useEffect(() => {
-    let mounted = true;
-    
-    const initFavorites = async () => {
-      if (mounted) {
-        await fetchFavorites();
-      }
-    };
-    
-    // Initialize regardless of auth status (fetchFavorites handles auth internally)
-    initFavorites();
-    
-    return () => {
-      mounted = false;
-    };
-  }, []); // Empty dependency array - only run once on mount
+  // REMOVED: Auto-fetch on mount was causing issues with unauthenticated users
+  // Now components should call refreshFavorites() when they know user is authenticated
+  // This prevents unnecessary 401 errors on initial page load
 
-  // REMOVED: Debug log that was firing on every favoriteIds change
+  // Mark as initialized immediately since we're not auto-fetching
+  useEffect(() => {
+    setInitialized(true);
+  }, []);
 
   return {
     favorites,

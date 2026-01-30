@@ -8,6 +8,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import api from '../config/api';
 import { useFavorites } from '../hooks/useFavorites';
+import { useAuth } from '../utils/context/AuthContext';
 
 // Enhanced Profile Page Component with all original functionality
 const EnhancedCouponProfilePage = () => {
@@ -25,6 +26,9 @@ const EnhancedCouponProfilePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Use AuthContext for authentication state - ProtectedRoute already verified auth
+  const { user: authUser, loading: authLoading } = useAuth();
+
   // Use favorites hook to get real-time favorites count
   const { getFavoritesCount, loading: favoritesLoading } = useFavorites();
 
@@ -38,44 +42,43 @@ const EnhancedCouponProfilePage = () => {
     return badges;
   };
 
-  // Fetch user profile data
+  // Fetch user profile data - No need to check auth, ProtectedRoute handles that
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        if (!authService.isAuthenticated()) {
-          navigate('/accounts/sign-in', {
-            state: { returnUrl: location.pathname }
-          });
-          return;
-        }
+    const loadUserData = async () => {
+      // Wait for AuthContext to finish loading
+      if (authLoading) return;
 
+      // If we have user from AuthContext, use it
+      if (authUser) {
+        setUser(authUser);
+        setLoading(false);
+        return;
+      }
+
+      // Fallback: fetch fresh user data from API
+      try {
         const result = await authService.getCurrentUser();
         if (result.success) {
-          setUser(result.data.user);
+          setUser(result.data.user || result.data);
         } else {
           setError('Failed to load user data');
-          setTimeout(() => {
-            navigate('/accounts/sign-in');
-          }, 2000);
         }
       } catch (error) {
         console.error('Error fetching user:', error);
-        setError('Authentication error occurred');
-        setTimeout(() => {
-          navigate('/accounts/sign-in');
-        }, 2000);
+        setError('Error loading profile data');
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
-  }, [navigate, location.pathname]);
+    loadUserData();
+  }, [authUser, authLoading]);
 
   // Fetch user statistics
   useEffect(() => {
     const fetchUserStats = async () => {
-      if (!authService.isAuthenticated()) return;
+      // Use AuthContext state instead of authService.isAuthenticated()
+      if (!authUser) return;
 
       try {
         setStatsLoading(true);

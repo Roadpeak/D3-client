@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { offerAPI } from '../services/api';
 import { useFavorites } from '../hooks/useFavorites';
-import authService from '../services/authService';
+import { useAuth } from '../utils/context/AuthContext';
 
 const Clock = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,16 +21,20 @@ const PopularListings = () => {
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const navigate = useNavigate();
+
+  // Use AuthContext for authentication state instead of making direct API calls
+  const { user, loading: authLoading } = useAuth();
+  const isAuthenticated = !!user;
 
   const {
     error: favoritesError,
     toggleFavorite,
     isFavorite,
     clearError: clearFavoritesError,
-    initialized: favoritesInitialized
+    initialized: favoritesInitialized,
+    refreshFavorites
   } = useFavorites();
 
   // Function to check if offer is expired
@@ -39,24 +43,12 @@ const PopularListings = () => {
     return new Date(expirationDate) < new Date();
   }, []);
 
-  // Check authentication status
+  // Load favorites when user is authenticated
   useEffect(() => {
-    const checkAuth = () => {
-      const authStatus = authService.isAuthenticated();
-      setIsAuthenticated(authStatus);
-    };
-
-    checkAuth();
-
-    const handleStorageChange = () => {
-      checkAuth();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+    if (isAuthenticated && !authLoading) {
+      refreshFavorites();
+    }
+  }, [isAuthenticated, authLoading, refreshFavorites]);
 
   // Fetch deals with highest discounts from backend
   useEffect(() => {

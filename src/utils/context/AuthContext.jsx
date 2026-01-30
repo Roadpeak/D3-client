@@ -10,20 +10,19 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                console.log('🔍 AuthContext: Fetching user profile...');
-                // Use authService which properly handles HttpOnly cookies
                 const result = await authService.getCurrentUser();
 
                 if (result.success && result.data) {
-                    console.log('✅ AuthContext: User authenticated', result.data);
                     setUser(result.data);
+                    // Sync localStorage flag for existing sessions
+                    localStorage.setItem('isLoggedIn', 'true');
                 } else {
-                    console.log('⚠️ AuthContext: No authenticated user');
                     setUser(null);
+                    localStorage.removeItem('isLoggedIn');
                 }
             } catch (error) {
-                console.error('❌ AuthContext: Error fetching user:', error);
                 setUser(null);
+                localStorage.removeItem('isLoggedIn');
             } finally {
                 setLoading(false);
             }
@@ -34,11 +33,9 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            console.log('🔐 AuthContext: Logging in...');
             const result = await authService.loginUser(email, password);
 
             if (result.success && result.data) {
-                console.log('✅ AuthContext: Login successful');
                 // Fetch user profile after successful login
                 const profileResult = await authService.getCurrentUser();
                 if (profileResult.success && profileResult.data) {
@@ -49,14 +46,12 @@ export const AuthProvider = ({ children }) => {
 
             throw new Error(result.message || 'Login failed');
         } catch (error) {
-            console.error('❌ AuthContext: Login error:', error);
             setUser(null);
             throw error;
         }
     };
 
     const logout = () => {
-        console.log('👋 AuthContext: Logging out...');
         authService.logout();
         setUser(null);
     };

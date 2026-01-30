@@ -164,11 +164,8 @@ const useSocket = (user) => {
       if (error.message.includes('Authentication error')) {
         clearTokens();
         setConnectionError('Authentication failed - please log in again');
-
-        setTimeout(() => {
-          window.location.href = '/accounts/sign-in';
-        }, 2000);
-
+        // DO NOT redirect here - let AuthContext handle auth state
+        // Redirecting here causes infinite reload loops
         return;
       }
 

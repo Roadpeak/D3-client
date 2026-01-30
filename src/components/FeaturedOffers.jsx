@@ -32,12 +32,8 @@ const FeaturedOffers = () => {
         setLoading(true);
         setError(null);
 
-        console.log('Fetching featured offers...');
-
         // Fetch featured offers
         const data = await offerAPI.getFeaturedOffers(12);
-
-        console.log('API Response:', data);
 
         // Handle different response structures
         const offersArray = data.offers || data || [];
@@ -65,10 +61,8 @@ const FeaturedOffers = () => {
           featured: offer.featured
         }));
 
-        console.log('Transformed offers:', transformedOffers);
         setFeaturedOffers(transformedOffers);
       } catch (err) {
-        console.error('Error fetching featured offers:', err);
         setError(err.message || 'Failed to load featured offers');
       } finally {
         setLoading(false);

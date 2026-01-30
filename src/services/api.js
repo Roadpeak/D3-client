@@ -139,10 +139,12 @@ export const API_ENDPOINTS = {
 };
 
 // Response interceptor for error handling
+// NOTE: DO NOT redirect on 401 errors - this causes infinite reload loops
+// Let AuthContext and protected routes handle auth state and redirects
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Handle specific error cases
+        // Handle 401 errors - clear tokens but DON'T redirect
         if (error.response?.status === 401) {
             // Clear all possible token storage locations
             localStorage.removeItem('token');
@@ -152,10 +154,8 @@ api.interceptors.response.use(
             // Remove cookie
             document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
-            // Only redirect if not already on login page
-            if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/sign-in')) {
-                window.location.href = '/accounts/sign-in';
-            }
+            // DO NOT redirect here - let protected routes and AuthContext handle this
+            // Redirecting here causes infinite reload loops when unauthenticated users visit public pages
         }
 
         return Promise.reject(error);

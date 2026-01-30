@@ -138,29 +138,24 @@ const MyBookingsEnhanced = () => {
   useEffect(() => {
     const initializeBookings = async () => {
       try {
-        if (!authService.isAuthenticated()) {
-          navigate('/accounts/sign-in');
-          return;
-        }
-
+        // Auth is verified by ProtectedRoute - just load user data
         const userResult = await authService.getCurrentUser();
         if (userResult.success) {
           setUser(userResult.data.user || userResult.data);
           await fetchBookings();
         } else {
-          navigate('/accounts/sign-in');
+          setError('Failed to load user information');
         }
       } catch (error) {
         console.error('Error initializing bookings:', error);
         setError('Failed to load user information');
-        navigate('/accounts/sign-in');
       } finally {
         setLoading(false);
       }
     };
 
     initializeBookings();
-  }, [navigate]);
+  }, []);
 
   // ==================== DATA FETCHING ====================
 

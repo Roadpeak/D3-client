@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { FiEye, FiEyeOff, FiMail, FiLock, FiTag, FiPercent } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import GoogleSignInButton from './GoogleSignInButton';
 import authService from '../../services/authService';
+import { useAuth } from '../../utils/context/AuthContext';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -18,38 +19,27 @@ const Login = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // Debug: Log redirect parameters
-  useEffect(() => {
-    const redirectParam = searchParams.get('redirect');
-    console.log('🔍 Login page loaded');
-    console.log('📍 Redirect param from URL:', redirectParam);
-    console.log('📍 Location state:', location.state);
-    console.log('📍 Full URL:', window.location.href);
-  }, [searchParams, location.state]);
+  // Use AuthContext for auth state instead of making API calls
+  const { user, loading: authLoading } = useAuth();
+  const hasRedirected = useRef(false);
 
-  // Check if user is already logged in
+  // If user is already logged in, redirect them (use AuthContext state instead of API call)
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const userResponse = await authService.getCurrentUser();
-        if (userResponse?.success) {
-          // User is already logged in, redirect them
-          const redirectParam = searchParams.get('redirect');
-          
-          if (redirectParam) {
-            const decodedPath = decodeURIComponent(redirectParam);
-            console.log('✅ Already logged in, redirecting to:', decodedPath);
-            navigate(decodedPath, { replace: true });
-          } else {
-            navigate('/', { replace: true });
-          }
-        }
-      } catch (err) {
-        console.log('User not authenticated');
+    // Only redirect once, and only after AuthContext has finished loading
+    if (authLoading || hasRedirected.current) return;
+
+    if (user) {
+      hasRedirected.current = true;
+      const redirectParam = searchParams.get('redirect');
+
+      if (redirectParam) {
+        const decodedPath = decodeURIComponent(redirectParam);
+        navigate(decodedPath, { replace: true });
+      } else {
+        navigate('/', { replace: true });
       }
-    };
-    checkAuth();
-  }, [navigate, searchParams]);
+    }
+  }, [user, authLoading, navigate, searchParams]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -102,7 +92,6 @@ const Login = () => {
       const result = await authService.loginUser(formData.email, formData.password);
 
       if (result.success) {
-        console.log('✅ Login successful!');
         toast.success('Welcome back! Logging you in...');
 
         // Get redirect path - check query params first, then location state
@@ -111,12 +100,8 @@ const Login = () => {
 
         if (redirectParam) {
           redirectPath = decodeURIComponent(redirectParam);
-          console.log('🎯 Redirecting to (from query param):', redirectPath);
         } else if (location.state?.from?.pathname) {
           redirectPath = location.state.from.pathname;
-          console.log('🎯 Redirecting to (from location state):', redirectPath);
-        } else {
-          console.log('🎯 No redirect param, going to home');
         }
 
         // Small delay to ensure auth state is updated
@@ -140,7 +125,6 @@ const Login = () => {
         }
       }
     } catch (error) {
-      console.error('Login error:', error);
       const errorMsg = 'An unexpected error occurred. Please try again.';
       setErrors({ general: errorMsg });
       toast.error(errorMsg);

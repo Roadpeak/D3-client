@@ -35,6 +35,9 @@ class AuthService {
       });
 
       // Token is now set as HttpOnly cookie by the backend
+      // Set auth flag in localStorage for synchronous auth checks
+      localStorage.setItem('isLoggedIn', 'true');
+
       return {
         success: true,
         data: response.data,
@@ -48,8 +51,6 @@ class AuthService {
   // NEW: Google Sign-In
   async googleSignIn(googleCredential, referralSlug = null) {
     try {
-      console.log('🚀 Sending Google credential to backend...');
-      
       const response = await api.post(API_ENDPOINTS.user.googleSignIn, {
         credential: googleCredential,
         referralSlug: referralSlug
@@ -57,16 +58,12 @@ class AuthService {
 
       const { access_token, user, isNewUser } = response.data;
 
-      // Token is now set as HttpOnly cookie by the backend
-      console.log('✅ Google authentication successful');
-
       return {
         success: true,
         data: { user, isNewUser },
         message: isNewUser ? 'Account created successfully with Google' : 'Google sign-in successful'
       };
     } catch (error) {
-      console.error('❌ Google Sign-In API error:', error);
       return this.handleAuthError(error);
     }
   }
@@ -123,15 +120,12 @@ class AuthService {
   async getCurrentUser() {
     try {
       // HttpOnly cookies are automatically sent by the browser with withCredentials: true
-      // No need to manually check for token - just try to fetch the profile
       const response = await api.get(API_ENDPOINTS.user.profile);
-      console.log('✅ Profile request successful');
       return {
         success: true,
         data: response.data,
       };
     } catch (error) {
-      console.error('❌ getCurrentUser error:', error.response?.data);
       return this.handleAuthError(error);
     }
   }
@@ -139,6 +133,8 @@ class AuthService {
   // Logout
   logout() {
     removeTokenFromCookie();
+    // Clear auth flag from localStorage
+    localStorage.removeItem('isLoggedIn');
     return {
       success: true,
       message: 'Logged out successfully'
@@ -146,11 +142,11 @@ class AuthService {
   }
 
   // Check if user is authenticated
-  // Note: HttpOnly cookies can't be read by JavaScript
-  // Best to call getCurrentUser() and check if it succeeds
-  async isAuthenticated() {
-    const result = await this.getCurrentUser();
-    return result.success;
+  // Uses localStorage flag that gets set on successful login and cleared on logout.
+  // This allows synchronous auth checks without needing to read HttpOnly cookies.
+  // Note: This is a hint - actual auth is still verified by the backend via cookies.
+  isAuthenticated() {
+    return localStorage.getItem('isLoggedIn') === 'true';
   }
 
   // Verify OTP

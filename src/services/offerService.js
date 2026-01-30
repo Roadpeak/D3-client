@@ -33,18 +33,16 @@ api.interceptors.request.use(
 );
 
 // Response interceptor for error handling
+// NOTE: DO NOT redirect on 401 - this causes infinite reload loops
 api.interceptors.response.use(
     (response) => {
         return response;
     },
     (error) => {
-        // Handle specific error cases
+        // Handle 401 errors - clear tokens but DON'T redirect
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
-            // Only redirect if not already on login page
-            if (!window.location.pathname.includes('/login')) {
-                window.location.href = '/login';
-            }
+            // DO NOT redirect here - let AuthContext handle auth state
         }
 
         return Promise.reject(error);

@@ -13,31 +13,24 @@ const FollowedStoresStandalone = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const loadData = async () => {
       try {
-        if (!authService.isAuthenticated()) {
-          navigate('/accounts/sign-in');
-          return;
-        }
-
+        // Auth is verified by ProtectedRoute - just load user data
         const result = await authService.getCurrentUser();
         if (result.success) {
-          setUser(result.data.user);
+          setUser(result.data.user || result.data);
           await fetchFollowedStores();
-        } else {
-          navigate('/accounts/sign-in');
         }
       } catch (error) {
         console.error('Error fetching user:', error);
-        setError('Authentication failed. Please log in again.');
-        setTimeout(() => navigate('/accounts/sign-in'), 2000);
+        setError('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
-  }, [navigate]);
+    loadData();
+  }, []);
 
   const fetchFollowedStores = async () => {
     try {

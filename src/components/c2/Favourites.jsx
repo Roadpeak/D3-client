@@ -21,29 +21,22 @@ const FavouritesStandalone = () => {
   } = useFavorites();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const loadUser = async () => {
       try {
-        if (!authService.isAuthenticated()) {
-          navigate('/accounts/sign-in');
-          return;
-        }
-
+        // Auth is verified by ProtectedRoute - just load user data
         const result = await authService.getCurrentUser();
         if (result.success) {
-          setUser(result.data.user);
-        } else {
-          navigate('/accounts/sign-in');
+          setUser(result.data.user || result.data);
         }
       } catch (error) {
         console.error('Error fetching user:', error);
-        navigate('/accounts/sign-in');
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
-  }, [navigate]);
+    loadUser();
+  }, []);
 
   // Debug log favorites data
   useEffect(() => {

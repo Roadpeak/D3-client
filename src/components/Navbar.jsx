@@ -1,11 +1,11 @@
-// components/Navbar.jsx - Updated with Dark Mode Support
+// components/Navbar.jsx - Updated with Dark Mode Support and AuthContext
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
-import authService from '../services/authService';
 import RealTimeSearch from './RealTimeSearch';
 import NotificationButton from './NotificationButton';
 import { useLocation } from '../contexts/LocationContext';
 import { useDarkMode } from '../contexts/DarkModeContext';
+import { useAuth } from '../utils/context/AuthContext';
 import chatService from '../services/chatService';
 
 // Import Lucide icons for desktop navigation
@@ -119,9 +119,9 @@ const Navbar = () => {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // User and authentication state
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Use AuthContext for authentication state instead of local state
+  const { user, loading: authLoading } = useAuth();
+  const isAuthenticated = !!user && !authLoading;
 
   // Chat count state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -135,11 +135,6 @@ const Navbar = () => {
 
   // Check if we're on the request service page
   const isRequestServicePage = location.pathname === '/requestservice';
-
-  // Check authentication status on component mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
 
   // Handle scroll behavior for collapsible navbar on request service page
   useEffect(() => {
@@ -169,35 +164,12 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isRequestServicePage, lastScrollY]);
 
-  const checkAuthStatus = async () => {
-    try {
-      setIsAuthenticated(authService.isAuthenticated());
-
-      if (authService.isAuthenticated()) {
-        const result = await authService.getCurrentUser();
-        if (result.success) {
-          setUser(result.data.user);
-        } else {
-          setIsAuthenticated(false);
-          setUser(null);
-        }
-      }
-    } catch (error) {
-      setIsAuthenticated(false);
-      setUser(null);
-    }
-  };
 
   // Load chat message counts
   const loadUnreadChatMessages = async () => {
     try {
-      if (!authService.isAuthenticated()) {
-        setUnreadChatCount(0);
-        return;
-      }
-
-      const chatToken = chatService.getAuthToken();
-      if (!chatToken) {
+      // Only load if we have an authenticated user
+      if (!isAuthenticated) {
         setUnreadChatCount(0);
         return;
       }

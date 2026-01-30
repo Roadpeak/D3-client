@@ -25,15 +25,12 @@ class EnhancedBookingService {
             return config;
         });
 
+        // NOTE: DO NOT redirect on 401 - let AuthContext handle auth state
         this.api.interceptors.response.use(
             (response) => response,
             (error) => {
-                if (error.response?.status === 401) {
-                    const currentPath = window.location.pathname;
-                    if (!currentPath.includes('/login')) {
-                        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-                    }
-                }
+                // DO NOT redirect on 401 - this causes infinite reload loops
+                // Let protected routes and AuthContext handle authentication redirects
                 return Promise.reject(error);
             }
         );
