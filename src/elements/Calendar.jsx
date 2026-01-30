@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../utils/context/AuthContext';
 import { getCookie } from '../utils/cookieUtils';
 import toast from 'react-hot-toast';
+import { BASE_URL } from '../config/api';
 
 const Calendar = ({ serviceId, shopId }) => {
     const [startDate, setStartDate] = useState(null);
@@ -24,7 +25,7 @@ const Calendar = ({ serviceId, shopId }) => {
             const fetchSlots = async () => {
                 try {
                     const response = await axios.get(
-                        `${process.env.REACT_APP_API_BASE_URL}/shops/${shopId}/services/${serviceId}/available-slots`,
+                        `${BASE_URL}/shops/${shopId}/services/${serviceId}/available-slots`,
                         { params: { start_date: format(startDate, 'yyyy-MM-dd'), end_date: format(endDate, 'yyyy-MM-dd') } }
                     );
                     setSlots(response.data);
@@ -61,7 +62,7 @@ const Calendar = ({ serviceId, shopId }) => {
             const token = getCookie('access_token')
             try {
                 await axios.post(
-                    `${process.env.REACT_APP_API_BASE_URL}/appointments`,
+                    `${BASE_URL}/appointments`,
                     {
                         service_id: serviceId,
                         appointment_time: appointmentDateTimeStart,

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { FiUpload } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { getCookie } from '../utils/cookieUtils';
+import { BASE_URL } from '../config/api';
 
 const SendMessageModal = ({ isOpen, onClose, sellerId }) => {
     const [newMessage, setNewMessage] = useState('');
@@ -24,7 +25,7 @@ const SendMessageModal = ({ isOpen, onClose, sellerId }) => {
         const accessToken = getCookie('access_token');
 
         try {
-            const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/messages/send`, formData, {
+            const response = await axios.post(`${BASE_URL}/messages/send`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${accessToken}`,

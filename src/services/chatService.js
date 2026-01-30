@@ -1,9 +1,11 @@
 // services/chatService.js - FIXED: Customer↔Store Communication Model
+import { BASE_URL, WS_CONFIG } from '../config/api';
+
 class ChatService {
   constructor() {
-    // REACT_APP_API_BASE_URL already includes /api/v1
-    this.API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000/api/v1';
-    this.SOCKET_URL = process.env.REACT_APP_WS_URL || 'http://localhost:4000';
+    // BASE_URL already includes /api/v1 with proper production fallback
+    this.API_BASE = BASE_URL;
+    this.SOCKET_URL = WS_CONFIG.url;
   }
   // Enhanced token retrieval
   getAuthToken() {

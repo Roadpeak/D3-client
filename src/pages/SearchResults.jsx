@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { BASE_URL } from '../config/api';
 import { useLocation } from 'react-router-dom';
 import { FaRegHeart } from 'react-icons/fa';
 import { fetchRandomDiscounts } from '../utils/api/api';
@@ -24,7 +25,7 @@ const SearchResults = () => {
     const fetchSearchResults = async (query) => {
         try {
             setLoading(true);
-            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/search?query=${query}`);
+            const response = await axios.get(`${BASE_URL}/search?query=${query}`);
             setDiscounts(response.data.discounts);
             setStores(response.data.shops);
         } catch (error) {

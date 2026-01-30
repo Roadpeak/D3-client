@@ -1,10 +1,10 @@
 // services/reelsService.js
-import { getTokenFromCookie } from '../config/api';
+import { getTokenFromCookie, BASE_URL } from '../config/api';
 
 class ReelService {
     constructor() {
-        // REACT_APP_API_BASE_URL already includes /api/v1
-        this.API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000/api/v1';
+        // BASE_URL already includes /api/v1 with proper production fallback
+        this.API_BASE = BASE_URL;
     }
 
     // Use the same token retrieval as authService and notificationService

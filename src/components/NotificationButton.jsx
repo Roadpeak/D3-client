@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import notificationService from '../services/notificationService';
 import chatService from '../services/chatService';
 import authService from '../services/authService';
-import { getTokenFromCookie } from '../config/api';
+import { getTokenFromCookie, BASE_URL } from '../config/api';
 
 // Icons
 const NotificationIcon = ({ className }) => (
@@ -63,7 +63,7 @@ const useWebPush = (isAuthenticated) => {
   const [showPushPrompt, setShowPushPrompt] = useState(false);
 
   const VAPID_PUBLIC_KEY = 'BKejhBqZqa4GnoAc7nFnQXtCTTbQBpMXjABBS_cMyk4RRpRkgOB6_52y2VQxObMi9XBvRyim7seUpvUm1HaoFms';
-  const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://discoun3ree.com/api/v1';
+  const API_BASE = BASE_URL;
 
   // Helper to get auth token
   const getAuthToken = () => {

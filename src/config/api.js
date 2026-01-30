@@ -2,7 +2,8 @@
 import axios from 'axios';
 
 // FIXED: Correct case-sensitive URL
-const BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3ree.com/api/v1';
+// Export BASE_URL so other components can use it directly with proper fallback
+export const BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'https://api.discoun3ree.com/api/v1';
 
 const api = axios.create({
     baseURL: BASE_URL,

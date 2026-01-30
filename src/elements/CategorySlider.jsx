@@ -4,6 +4,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { FaAngleLeft, FaChevronRight } from 'react-icons/fa';
 import axios from 'axios';
+import { BASE_URL } from '../config/api';
 
 const CategorySlider = () => {
     const [categories, setCategories] = useState([]);
@@ -17,7 +18,7 @@ const CategorySlider = () => {
                     setCategories(JSON.parse(storedCategories));
                 }
 
-                const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/random-categories`);
+                const response = await axios.get(`${BASE_URL}/random-categories`);
                 setCategories(response.data);
                 localStorage.setItem('cachedCategories', JSON.stringify(response.data));
                 setLoading(false);

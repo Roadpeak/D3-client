@@ -5,7 +5,7 @@ import ReelVideo from '../components/reels/ReelVideo';
 import authService from '../services/authService';
 import reelService from '../services/reelsService';
 import chatService from '../services/chatService';
-import { getTokenFromCookie } from '../config/api';
+import { getTokenFromCookie, BASE_URL } from '../config/api';
 import { X, Check } from 'lucide-react';
 
 // Fisher-Yates shuffle algorithm for randomizing reels order
@@ -70,7 +70,7 @@ const Reels = () => {
                 storeIds.map(async (storeId) => {
                     try {
                         const response = await fetch(
-                            `${process.env.REACT_APP_API_BASE_URL}/stores/${storeId}`,
+                            `${BASE_URL}/stores/${storeId}`,
                             {
                                 headers: getApiHeaders(true)
                             }
@@ -379,7 +379,7 @@ const Reels = () => {
                 )
             );
 
-            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${storeId}/toggle-follow`, {
+            const response = await fetch(`${BASE_URL}/stores/${storeId}/toggle-follow`, {
                 method: 'POST',
                 headers: getApiHeaders(true)
             });

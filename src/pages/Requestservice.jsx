@@ -5,7 +5,7 @@ import io from 'socket.io-client';
 import userServiceRequestService from '../services/userServiceRequestService';
 import authService from '../services/authService';
 import storeService from '../services/storeService';
-import { getTokenFromCookie } from '../config/api';
+import { getTokenFromCookie, BASE_URL } from '../config/api';
 
 // SVG Icons
 const Search = ({ className }) => (
@@ -604,7 +604,7 @@ export default function UserServiceRequestPage() {
 
         // Fetch full store details including phone number
         const storeResponse = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/stores/${store.id}`,
+          `${BASE_URL}/stores/${store.id}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`

@@ -1,12 +1,14 @@
+import { BASE_URL } from '../config/api';
+
 const serviceAPI = {
   getServices: async (params = {}) => {
     try {
       let url;
       if (params.storeId) {
-        // REACT_APP_API_BASE_URL already includes /api/v1
-        url = `${process.env.REACT_APP_API_BASE_URL}/services/store/${params.storeId}`;
+        // BASE_URL already includes /api/v1
+        url = `${BASE_URL}/services/store/${params.storeId}`;
       } else {
-        url = `${process.env.REACT_APP_API_BASE_URL}/services`;
+        url = `${BASE_URL}/services`;
       }
 
       const response = await fetch(url, {
@@ -28,7 +30,7 @@ const serviceAPI = {
 
       if (params.storeId) {
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services?storeId=${params.storeId}`, {
+          const response = await fetch(`${BASE_URL}/services?storeId=${params.storeId}`, {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
@@ -51,7 +53,7 @@ const serviceAPI = {
 
   getServiceById: async (serviceId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services/${serviceId}`, {
+      const response = await fetch(`${BASE_URL}/services/${serviceId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -73,7 +75,7 @@ const serviceAPI = {
 
   bookService: async (serviceId, bookingData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/services/${serviceId}/book`, {
+      const response = await fetch(`${BASE_URL}/services/${serviceId}/book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
