@@ -587,7 +587,7 @@ export default function UserServiceRequestPage() {
       const token = getTokenFromCookie();
 
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL}/api/v1/request-service/${activeRequest.id}/accept-offer/${offer.id}`,
+        `${process.env.REACT_APP_API_URL}/request-service/${activeRequest.id}/accept-offer/${offer.id}`,
         {
           method: 'PUT',
           headers: {
@@ -604,7 +604,7 @@ export default function UserServiceRequestPage() {
 
         // Fetch full store details including phone number
         const storeResponse = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/v1/stores/${store.id}`,
+          `${process.env.REACT_APP_API_BASE_URL}/stores/${store.id}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`

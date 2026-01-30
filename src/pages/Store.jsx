@@ -79,7 +79,7 @@
   const offerAPI = {
     getOffersByStore: async (storeId) => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/offers/store/${storeId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/offers/store/${storeId}`, {
           headers: getApiHeaders()
         });
         if (!response.ok) throw new Error('Failed to fetch offers');
@@ -95,7 +95,7 @@
   const branchAPI = {
     getBranchesByStore: async (storeId) => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${storeId}/branches`, {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${storeId}/branches`, {
           headers: getApiHeaders()
         });
 
@@ -104,7 +104,7 @@
           return data;
         }
 
-        const protectedResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/branches/store/${storeId}`, {
+        const protectedResponse = await fetch(`${process.env.REACT_APP_API_BASE_URL}/branches/store/${storeId}`, {
           headers: getApiHeaders()
         });
 
@@ -721,7 +721,7 @@
       try {
         setToggleFollowLoading(true);
 
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${id}/toggle-follow`, {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${id}/toggle-follow`, {
           method: 'POST',
           headers: getApiHeaders(true)
         });
@@ -805,7 +805,7 @@
       try {
         console.log('Frontend: Fetching social links for store:', storeId);
 
-        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/socials/store/${storeId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/socials/store/${storeId}`, {
           method: 'GET',
           headers: getApiHeaders()
         });

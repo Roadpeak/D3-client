@@ -2,7 +2,8 @@ import api, { API_ENDPOINTS, getTokenFromCookie } from '../config/api';
 
 class NotificationService {
   constructor() {
-    this.API_BASE = (process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
+    // REACT_APP_API_BASE_URL already includes /api/v1
+    this.API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000/api/v1';
 
     this.fallbackNotifications = {
       message: [],

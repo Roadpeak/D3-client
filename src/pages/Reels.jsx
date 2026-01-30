@@ -70,7 +70,7 @@ const Reels = () => {
                 storeIds.map(async (storeId) => {
                     try {
                         const response = await fetch(
-                            `${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${storeId}`,
+                            `${process.env.REACT_APP_API_BASE_URL}/stores/${storeId}`,
                             {
                                 headers: getApiHeaders(true)
                             }
@@ -379,7 +379,7 @@ const Reels = () => {
                 )
             );
 
-            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/v1/stores/${storeId}/toggle-follow`, {
+            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/stores/${storeId}/toggle-follow`, {
                 method: 'POST',
                 headers: getApiHeaders(true)
             });
