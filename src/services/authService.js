@@ -16,6 +16,9 @@ class AuthService {
       // Token is now set as HttpOnly cookie by the backend
       const { user } = response.data;
 
+      // Set auth flag in localStorage for synchronous auth checks
+      localStorage.setItem('isLoggedIn', 'true');
+
       return {
         success: true,
         data: { user },
@@ -56,7 +59,10 @@ class AuthService {
         referralSlug: referralSlug
       });
 
-      const { access_token, user, isNewUser } = response.data;
+      const { user, isNewUser } = response.data;
+
+      // Set auth flag in localStorage for synchronous auth checks
+      localStorage.setItem('isLoggedIn', 'true');
 
       return {
         success: true,

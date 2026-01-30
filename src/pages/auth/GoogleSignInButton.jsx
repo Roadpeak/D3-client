@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { FaGoogle } from 'react-icons/fa';
 import authService from '../../services/authService';
+import { useAuth } from '../../utils/context/AuthContext';
 
 const GoogleSignInButton = ({ buttonText = "Continue with Google", onSuccess, onError }) => {
   const [loading, setLoading] = useState(false);
@@ -9,6 +10,7 @@ const GoogleSignInButton = ({ buttonText = "Continue with Google", onSuccess, on
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const { refreshUser } = useAuth();
 
   // Google OAuth configuration
   const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
@@ -64,7 +66,10 @@ const GoogleSignInButton = ({ buttonText = "Continue with Google", onSuccess, on
 
       if (result.success) {
         console.log('✅ Google authentication successful');
-        
+
+        // Refresh user in AuthContext to update app-wide auth state
+        await refreshUser();
+
         // Call success callback if provided
         if (onSuccess) {
           onSuccess(result);
@@ -72,14 +77,14 @@ const GoogleSignInButton = ({ buttonText = "Continue with Google", onSuccess, on
 
         // Get redirect path - check localStorage first (for popup flow), then query params, then location state
         let redirectPath = localStorage.getItem('authRedirect');
-        
+
         if (!redirectPath) {
           const redirectParam = searchParams.get('redirect');
           if (redirectParam) {
             redirectPath = decodeURIComponent(redirectParam);
           }
         }
-        
+
         if (!redirectPath) {
           redirectPath = location.state?.from?.pathname;
         }
@@ -92,11 +97,8 @@ const GoogleSignInButton = ({ buttonText = "Continue with Google", onSuccess, on
         // Navigate to the redirect path or home
         const finalPath = redirectPath || '/';
         console.log('🎯 Google Auth redirecting to:', finalPath);
-        
-        // Small delay to ensure auth state is updated
-        setTimeout(() => {
-          navigate(finalPath, { replace: true });
-        }, 100);
+
+        navigate(finalPath, { replace: true });
       } else {
         console.error('Google authentication failed:', result.message);
         throw new Error(result.message || 'Google authentication failed');

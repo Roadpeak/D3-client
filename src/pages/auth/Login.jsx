@@ -20,7 +20,7 @@ const Login = () => {
   const [searchParams] = useSearchParams();
 
   // Use AuthContext for auth state instead of making API calls
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const hasRedirected = useRef(false);
 
   // If user is already logged in, redirect them (use AuthContext state instead of API call)
@@ -94,6 +94,9 @@ const Login = () => {
       if (result.success) {
         toast.success('Welcome back! Logging you in...');
 
+        // Refresh user in AuthContext to update app-wide auth state
+        await refreshUser();
+
         // Get redirect path - check query params first, then location state
         const redirectParam = searchParams.get('redirect');
         let redirectPath = '/';
@@ -104,10 +107,8 @@ const Login = () => {
           redirectPath = location.state.from.pathname;
         }
 
-        // Small delay to ensure auth state is updated
-        setTimeout(() => {
-          navigate(redirectPath, { replace: true });
-        }, 100);
+        // Navigate to redirect path
+        navigate(redirectPath, { replace: true });
 
       } else {
         // Handle login errors
