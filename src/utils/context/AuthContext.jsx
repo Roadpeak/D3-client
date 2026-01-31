@@ -23,15 +23,19 @@ export const AuthProvider = ({ children }) => {
                     const userData = extractUser(result.data);
                     if (userData) {
                         setUser(userData);
-                        // Sync localStorage flag for existing sessions
+                        // Sync localStorage for existing sessions
                         localStorage.setItem('isLoggedIn', 'true');
+                        // Store user info for other components that need it
+                        localStorage.setItem('userInfo', JSON.stringify(userData));
                     } else {
                         setUser(null);
                         localStorage.removeItem('isLoggedIn');
+                        localStorage.removeItem('userInfo');
                     }
                 } else {
                     setUser(null);
                     localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userInfo');
                 }
             } catch (error) {
                 setUser(null);
@@ -58,6 +62,8 @@ export const AuthProvider = ({ children }) => {
                         setUser(userData);
                         // Ensure localStorage flag is set
                         localStorage.setItem('isLoggedIn', 'true');
+                        // Store user info for other components that need it
+                        localStorage.setItem('userInfo', JSON.stringify(userData));
                         return { success: true };
                     }
                 }
@@ -79,6 +85,7 @@ export const AuthProvider = ({ children }) => {
         authService.logout();
         setUser(null);
         localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userInfo');
     };
 
     // Provide a method to refresh user data
@@ -90,14 +97,18 @@ export const AuthProvider = ({ children }) => {
                 if (userData) {
                     setUser(userData);
                     localStorage.setItem('isLoggedIn', 'true');
+                    // Store user info for other components that need it
+                    localStorage.setItem('userInfo', JSON.stringify(userData));
                     return;
                 }
             }
             setUser(null);
             localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userInfo');
         } catch (error) {
             setUser(null);
             localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userInfo');
         }
     };
 
