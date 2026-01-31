@@ -294,13 +294,16 @@
 
     const getAuthenticationStatus = () => {
       try {
+        // Use isAuthenticated from authService which checks localStorage.isLoggedIn
+        // The actual JWT token is in an HttpOnly cookie and cannot be read by JavaScript
+        // It will be sent automatically with requests via credentials: 'include'
         const isAuthenticated = authService.isAuthenticated();
-        const token = getTokenFromCookie() || localStorage.getItem('access_token') || localStorage.getItem('authToken');
+        const hasUserInfo = !!localStorage.getItem('userInfo');
 
         return {
-          isAuthenticated: isAuthenticated && !!token,
-          hasToken: !!token,
-          tokenType: token ? 'found' : 'missing'
+          isAuthenticated: isAuthenticated && hasUserInfo,
+          hasToken: true, // Token is in HttpOnly cookie, we trust isLoggedIn flag
+          tokenType: 'httponly-cookie'
         };
       } catch (error) {
         console.error('Error checking authentication status:', error);
