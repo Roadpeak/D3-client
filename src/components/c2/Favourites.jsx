@@ -27,6 +27,9 @@ const FavouritesStandalone = () => {
         const result = await authService.getCurrentUser();
         if (result.success) {
           setUser(result.data.user || result.data);
+          // Fetch favorites after user is authenticated
+          console.log('🔄 User authenticated, fetching favorites...');
+          await refreshFavorites();
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -36,7 +39,7 @@ const FavouritesStandalone = () => {
     };
 
     loadUser();
-  }, []);
+  }, [refreshFavorites]);
 
   // Debug log favorites data
   useEffect(() => {
