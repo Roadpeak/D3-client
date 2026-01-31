@@ -1,5 +1,5 @@
 // pages/ChatPage.jsx - Updated with dark mode support
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Send, Search, ArrowLeft, User, Clock, Check, CheckCheck, AlertCircle, Star, Loader2, MessageCircle, Store, Paperclip, X } from 'lucide-react';
 import chatService from '../services/chatService';
@@ -27,15 +27,18 @@ const ChatPage = () => {
   // Use AuthContext for user - ProtectedRoute already verified auth
   const { user: authUser, loading: authLoading } = useAuth();
 
-  // Transform authUser to chat user format
-  const user = authUser ? {
-    id: authUser.id,
-    name: `${authUser.firstName || ''} ${authUser.lastName || ''}`.trim() || 'Customer',
-    email: authUser.email,
-    avatar: authUser.avatar,
-    userType: 'customer',
-    role: 'customer'
-  } : null;
+  // Transform authUser to chat user format - memoized to prevent infinite re-renders
+  const user = useMemo(() => {
+    if (!authUser) return null;
+    return {
+      id: authUser.id,
+      name: `${authUser.firstName || ''} ${authUser.lastName || ''}`.trim() || 'Customer',
+      email: authUser.email,
+      avatar: authUser.avatar,
+      userType: 'customer',
+      role: 'customer'
+    };
+  }, [authUser?.id, authUser?.firstName, authUser?.lastName, authUser?.email, authUser?.avatar]);
 
   // Initialize socket for customer
   const {
