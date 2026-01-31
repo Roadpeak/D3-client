@@ -190,7 +190,9 @@ const ChatPage = () => {
       console.log('📡 Customer↔store chat API response:', response);
 
       if (response.success) {
-        setChats(response.data);
+        console.log('✅ Setting chats with data:', response.data);
+        console.log('✅ Number of chats:', response.data?.length || 0);
+        setChats(response.data || []);
 
         if (location.state?.newConversationId) {
           const newChat = response.data.find(chat => chat.id === location.state.newConversationId);
@@ -386,6 +388,9 @@ const ChatPage = () => {
     const storeName = chat.store?.name?.toLowerCase() || '';
     return storeName.includes(searchTerm.toLowerCase());
   });
+
+  // Debug: Log filtered chats on each render
+  console.log('🔍 Chat render - chats:', chats.length, 'filtered:', filteredChats.length, 'searchTerm:', searchTerm);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
