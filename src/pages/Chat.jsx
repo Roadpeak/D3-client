@@ -174,13 +174,14 @@ const ChatPage = () => {
       setLoading(true);
       setError(null);
 
-      const currentToken = chatService.getAuthToken();
-      console.log('🔧 ChatService token for customer API call:', currentToken ? 'Present' : 'Not found');
-      // SECURITY: Never log token values or previews
+      // Check if user is logged in using localStorage flag
+      // Actual auth token is in HttpOnly cookie and sent automatically via credentials: 'include'
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      console.log('🔧 User logged in status:', isLoggedIn);
 
-      if (!currentToken) {
-        console.log('❌ No token available for chat service');
-        setError('Authentication token not available');
+      if (!isLoggedIn) {
+        console.log('❌ User not logged in');
+        setError('Please log in to view your chats');
         return;
       }
 

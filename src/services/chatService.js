@@ -63,12 +63,21 @@ class ChatService {
   }
 
   getHeaders() {
+    // Token may be in localStorage (fallback) or HttpOnly cookie (primary)
+    // HttpOnly cookies are sent automatically via credentials: 'include'
     const token = this.getAuthToken();
-    return {
+    const headers = {
       'Content-Type': 'application/json',
-      'Authorization': token ? `Bearer ${token}` : '',
       'x-api-key': process.env.REACT_APP_API_KEY || '',
     };
+
+    // Only add Authorization header if we have a readable token
+    // If token is in HttpOnly cookie, it will be sent automatically
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
   }
 
   async handleResponse(response) {
