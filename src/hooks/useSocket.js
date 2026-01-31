@@ -97,30 +97,25 @@ const useSocket = (user) => {
       return;
     }
 
-    const token = getAuthToken();
-    if (!token) {
-      setConnectionError('No authentication token available');
+    // Check if user is logged in (token is in HttpOnly cookie, sent automatically)
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      setConnectionError('User not logged in');
       return;
     }
 
-    if (!validateToken(token)) {
-      setConnectionError('Invalid or expired authentication token');
-      return;
-    }
+    // Try to get token from localStorage as fallback (may not exist if using HttpOnly cookies)
+    const token = getAuthToken();
 
     const socketUrl = process.env.NODE_ENV === 'production'
       ? window.location.origin
-      : 'https://api.discoun3ree.com/api/v1';
+      : 'https://api.discoun3ree.com';
 
-    const newSocket = io(socketUrl, {
-      auth: { token },
+    // Socket.IO connection options
+    const socketOptions = {
       query: {
-        token,
         userId: user.id,
         userRole: user.role || user.userType || 'customer'
-      },
-      extraHeaders: {
-        'Authorization': `Bearer ${token}`
       },
       transports: ['websocket', 'polling'],
       timeout: 10000,
@@ -128,8 +123,21 @@ const useSocket = (user) => {
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      forceNew: true
-    });
+      forceNew: true,
+      // Enable credentials for HttpOnly cookie auth
+      withCredentials: true
+    };
+
+    // Only add token auth if we have a readable token
+    if (token) {
+      socketOptions.auth = { token };
+      socketOptions.query.token = token;
+      socketOptions.extraHeaders = {
+        'Authorization': `Bearer ${token}`
+      };
+    }
+
+    const newSocket = io(socketUrl, socketOptions);
 
     // Connection event handlers
     newSocket.on('connect', () => {
