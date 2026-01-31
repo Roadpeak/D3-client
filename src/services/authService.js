@@ -14,7 +14,12 @@ class AuthService {
       });
 
       // Token is now set as HttpOnly cookie by the backend
-      const { user } = response.data;
+      const { user, access_token } = response.data;
+
+      // Store token in localStorage as fallback (for cross-origin cookie issues)
+      if (access_token) {
+        localStorage.setItem('access_token', access_token);
+      }
 
       // Set auth flag in localStorage for synchronous auth checks
       localStorage.setItem('isLoggedIn', 'true');
@@ -63,7 +68,12 @@ class AuthService {
         referralSlug: referralSlug
       });
 
-      const { user, isNewUser } = response.data;
+      const { user, isNewUser, access_token } = response.data;
+
+      // Store token in localStorage as fallback (for cross-origin cookie issues)
+      if (access_token) {
+        localStorage.setItem('access_token', access_token);
+      }
 
       // Set auth flag in localStorage for synchronous auth checks
       localStorage.setItem('isLoggedIn', 'true');
@@ -131,6 +141,13 @@ class AuthService {
     try {
       // HttpOnly cookies are automatically sent by the browser with withCredentials: true
       const response = await api.get(API_ENDPOINTS.user.profile);
+
+      // Store token in localStorage as fallback (for cross-origin cookie issues)
+      // The server now returns access_token with the profile response
+      if (response.data.access_token) {
+        localStorage.setItem('access_token', response.data.access_token);
+      }
+
       return {
         success: true,
         data: response.data,
@@ -143,8 +160,9 @@ class AuthService {
   // Logout
   logout() {
     removeTokenFromCookie();
-    // Clear auth flag from localStorage
+    // Clear auth flag and token from localStorage
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('access_token');
     return {
       success: true,
       message: 'Logged out successfully'
