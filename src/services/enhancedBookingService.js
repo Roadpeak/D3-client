@@ -13,7 +13,8 @@ class EnhancedBookingService {
                 'Content-Type': 'application/json',
                 'x-api-key': process.env.REACT_APP_API_KEY || '',
             },
-            timeout: 20000
+            timeout: 20000,
+            withCredentials: true  // Send HttpOnly cookies with requests
         });
 
         // Add auth token to requests

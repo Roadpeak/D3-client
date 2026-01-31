@@ -9,12 +9,14 @@ const api = axios.create({
         'Content-Type': 'application/json',
     },
     timeout: 10000, // 10 second timeout
+    withCredentials: true,  // Send HttpOnly cookies with requests
 });
 
 // Request interceptor to add auth token if available
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
+        // Check all possible token storage locations
+        const token = localStorage.getItem('access_token') || localStorage.getItem('authToken') || localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

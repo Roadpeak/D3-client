@@ -723,7 +723,8 @@
 
         const response = await fetch(`${BASE_URL}/stores/${id}/toggle-follow`, {
           method: 'POST',
-          headers: getApiHeaders(true)
+          headers: getApiHeaders(true),
+          credentials: 'include'  // Send HttpOnly cookies with requests
         });
 
         if (!response.ok) {
