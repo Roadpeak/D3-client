@@ -1,4 +1,18 @@
-import { BASE_URL } from '../config/api';
+import { BASE_URL, getTokenFromCookie } from '../config/api';
+
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = getTokenFromCookie();
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'x-api-key': process.env.REACT_APP_API_KEY
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+};
 
 const serviceAPI = {
   getServices: async (params = {}) => {
@@ -12,11 +26,7 @@ const serviceAPI = {
       }
 
       const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY
-        },
+        headers: getAuthHeaders(),
         credentials: 'include'
       });
 
@@ -31,11 +41,7 @@ const serviceAPI = {
       if (params.storeId) {
         try {
           const response = await fetch(`${BASE_URL}/services?storeId=${params.storeId}`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'x-api-key': process.env.REACT_APP_API_KEY
-            },
+            headers: getAuthHeaders(),
             credentials: 'include'
           });
 
@@ -54,11 +60,7 @@ const serviceAPI = {
   getServiceById: async (serviceId) => {
     try {
       const response = await fetch(`${BASE_URL}/services/${serviceId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY
-        },
+        headers: getAuthHeaders(),
         credentials: 'include'
       });
 
@@ -77,11 +79,7 @@ const serviceAPI = {
     try {
       const response = await fetch(`${BASE_URL}/services/${serviceId}/book`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'x-api-key': process.env.REACT_APP_API_KEY
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify(bookingData)
       });

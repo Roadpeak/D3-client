@@ -57,8 +57,16 @@ function getCsrfTokenFromCookie() {
     return csrfCookie ? csrfCookie.split('=')[1] : null;
 }
 
-// Helper to get token from cookie
+// Helper to get auth token from localStorage or cookie
+// First checks localStorage (where token is stored after login), then falls back to cookie
 function getTokenFromCookie() {
+    // First try localStorage (primary storage for cross-origin compatibility)
+    const localStorageToken = localStorage.getItem('access_token');
+    if (localStorageToken) {
+        return localStorageToken;
+    }
+
+    // Fallback to cookie
     const cookies = document.cookie.split(';');
     const tokenCookie = cookies.find(cookie =>
         cookie.trim().startsWith('access_token=')

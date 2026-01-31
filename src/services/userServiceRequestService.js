@@ -8,10 +8,15 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api.discoun3ree.c
 const getAuthToken = () => {
   let token = null;
 
-  // 1. Use the same getTokenFromCookie that authService uses
-  token = getTokenFromCookie();
+  // 1. Try localStorage first (primary storage for cross-origin compatibility)
+  token = localStorage.getItem('access_token');
+  if (token) return token;
 
-  // 2. Fallback to manual cookie parsing if needed
+  // 2. Use the same getTokenFromCookie that authService uses (now also checks localStorage)
+  token = getTokenFromCookie();
+  if (token) return token;
+
+  // 3. Fallback to manual cookie parsing if needed
   if (!token) {
     const cookies = document.cookie.split(';');
     const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('authToken='));
@@ -20,12 +25,12 @@ const getAuthToken = () => {
     }
   }
 
-  // 3. Try localStorage as backup
+  // 4. Try other localStorage keys as backup
   if (!token) {
     token = localStorage.getItem('authToken') || localStorage.getItem('token');
   }
 
-  // 4. Try sessionStorage as final backup
+  // 5. Try sessionStorage as final backup
   if (!token) {
     token = sessionStorage.getItem('authToken') || sessionStorage.getItem('token');
   }
